@@ -5,17 +5,35 @@ import {
   createBrowserRouter,
   useLocation,
 } from "react-router-dom";
-import { AppShell } from "../components/AppShell";
-import { AuthPage } from "../features/auth/AuthPage";
-import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { LandingPage } from "../features/landing/LandingPage";
-import {
-  PrivacySettings,
-  ProfileSettings,
-  SecuritySettings,
-} from "../features/account/SettingsPages";
 import { useSession } from "../lib/auth/session";
-const Applications = lazy(() =>
+const AppShell = lazy(() =>
+    import("../components/AppShell").then((x) => ({ default: x.AppShell })),
+  ),
+  AuthPage = lazy(() =>
+    import("../features/auth/AuthPage").then((x) => ({ default: x.AuthPage })),
+  ),
+  DashboardPage = lazy(() =>
+    import("../features/dashboard/DashboardPage").then((x) => ({
+      default: x.DashboardPage,
+    })),
+  ),
+  ProfileSettings = lazy(() =>
+    import("../features/account/SettingsPages").then((x) => ({
+      default: x.ProfileSettings,
+    })),
+  ),
+  SecuritySettings = lazy(() =>
+    import("../features/account/SettingsPages").then((x) => ({
+      default: x.SecuritySettings,
+    })),
+  ),
+  PrivacySettings = lazy(() =>
+    import("../features/account/SettingsPages").then((x) => ({
+      default: x.PrivacySettings,
+    })),
+  ),
+  Applications = lazy(() =>
     import("../features/applications/ApplicationsPage").then((x) => ({
       default: x.ApplicationsPage,
     })),
@@ -44,7 +62,57 @@ const Applications = lazy(() =>
     import("../features/catalogue/CataloguePage").then((x) => ({
       default: x.CataloguePage,
     })),
-  ), WritingLibrary=lazy(()=>import("../features/writing/WritingPages").then(x=>({default:x.WritingLibrary}))),NewWriting=lazy(()=>import("../features/writing/WritingPages").then(x=>({default:x.NewWriting}))),WritingEditor=lazy(()=>import("../features/writing/WritingPages").then(x=>({default:x.WritingEditor}))),Stories=lazy(()=>import("../features/stories/StoriesPage").then(x=>({default:x.StoriesPage}))),References=lazy(()=>import("../features/references/ReferencePages").then(x=>({default:x.ReferencesPage}))),NewReference=lazy(()=>import("../features/references/ReferencePages").then(x=>({default:x.NewReference}))),Referee=lazy(()=>import("../features/references/ReferencePages").then(x=>({default:x.RefereePage}))),VerifyReference=lazy(()=>import("../features/references/ReferencePages").then(x=>({default:x.VerifyReference}))),Interview=lazy(()=>import("../features/interviews/InterviewPage").then(x=>({default:x.InterviewPage}))),AdminLaunch=lazy(()=>import("../features/admin/AdminLaunchPage").then(x=>({default:x.AdminLaunchPage})));
+  ),
+  WritingLibrary = lazy(() =>
+    import("../features/writing/WritingPages").then((x) => ({
+      default: x.WritingLibrary,
+    })),
+  ),
+  NewWriting = lazy(() =>
+    import("../features/writing/WritingPages").then((x) => ({
+      default: x.NewWriting,
+    })),
+  ),
+  WritingEditor = lazy(() =>
+    import("../features/writing/WritingPages").then((x) => ({
+      default: x.WritingEditor,
+    })),
+  ),
+  Stories = lazy(() =>
+    import("../features/stories/StoriesPage").then((x) => ({
+      default: x.StoriesPage,
+    })),
+  ),
+  References = lazy(() =>
+    import("../features/references/ReferencePages").then((x) => ({
+      default: x.ReferencesPage,
+    })),
+  ),
+  NewReference = lazy(() =>
+    import("../features/references/ReferencePages").then((x) => ({
+      default: x.NewReference,
+    })),
+  ),
+  Referee = lazy(() =>
+    import("../features/references/ReferencePages").then((x) => ({
+      default: x.RefereePage,
+    })),
+  ),
+  VerifyReference = lazy(() =>
+    import("../features/references/ReferencePages").then((x) => ({
+      default: x.VerifyReference,
+    })),
+  ),
+  Interview = lazy(() =>
+    import("../features/interviews/InterviewPage").then((x) => ({
+      default: x.InterviewPage,
+    })),
+  ),
+  AdminLaunch = lazy(() =>
+    import("../features/admin/AdminLaunchPage").then((x) => ({
+      default: x.AdminLaunchPage,
+    })),
+  );
 const load = (node: React.ReactNode) => (
   <Suspense
     fallback={
@@ -105,6 +173,25 @@ function Legal({ privacy = false }: { privacy?: boolean }) {
     </main>
   );
 }
+function AccessibilityStatement() {
+  return (
+    <main className="legal">
+      <a className="brand" href="/">
+        EliteApply
+      </a>
+      <h1>Accessibility</h1>
+      <p>
+        EliteApply is designed for keyboard operation, visible focus, reduced
+        motion, non-color status cues, and readable contrast at WCAG 2.2 AA.
+      </p>
+      <p>
+        If something prevents you from completing an application task, email
+        <a href="mailto:support@eliteapply.net"> support@eliteapply.net</a> and
+        include the page and assistive technology you were using.
+      </p>
+    </main>
+  );
+}
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
   {
@@ -128,15 +215,19 @@ const router = createBrowserRouter([
   { path: "/reset-password", element: <AuthPage mode="reset" /> },
   { path: "/terms", element: <Legal /> },
   { path: "/privacy", element: <Legal privacy /> },
+  { path: "/accessibility", element: <AccessibilityStatement /> },
   { path: "/referee/academic-reference/:token", element: load(<Referee />) },
-  { path: "/verify/academic-reference/:publicId", element: load(<VerifyReference />) },
+  {
+    path: "/verify/academic-reference/:publicId",
+    element: load(<VerifyReference />),
+  },
   {
     path: "/app",
     element: <Protected />,
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "onboarding", element: <DashboardPage /> },
+      { path: "dashboard", element: load(<DashboardPage />) },
+      { path: "onboarding", element: load(<DashboardPage />) },
       { path: "applications", element: load(<Applications />) },
       { path: "applications/:id", element: load(<Workspace />) },
       { path: "applications/import", element: load(<OpportunityImport />) },
@@ -151,9 +242,9 @@ const router = createBrowserRouter([
       { path: "references/new", element: load(<NewReference />) },
       { path: "interviews/new", element: load(<Interview />) },
       { path: "admin/launch", element: load(<AdminLaunch />) },
-      { path: "settings/profile", element: <ProfileSettings /> },
-      { path: "settings/security", element: <SecuritySettings /> },
-      { path: "settings/privacy", element: <PrivacySettings /> },
+      { path: "settings/profile", element: load(<ProfileSettings />) },
+      { path: "settings/security", element: load(<SecuritySettings />) },
+      { path: "settings/privacy", element: load(<PrivacySettings />) },
       { path: "unavailable", element: <Unavailable /> },
     ],
   },

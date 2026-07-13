@@ -1,0 +1,734 @@
+{
+  "schemaVersion": 3,
+  "generatedAt": "2026-07-13T16:06:05+01:00",
+  "title": "EliteApply Production Design System",
+  "description": "A calm, credible and quietly premium design system for scholarship and academic application workflows.",
+  "status": "production-ready baseline",
+  "sourceOfTruth": {
+    "tokens": "This JSON file is the machine-readable source of truth for tokens, component contracts and quality gates.",
+    "narrative": "The companion Markdown file is the human-readable source of truth for rationale, marketing, SEO and usage guidance.",
+    "conflictPolicy": "Token values in JSON win. Product and content decisions in Markdown win. Any mismatch must fail design-system CI."
+  },
+  "brand": {
+    "name": "EliteApply",
+    "northStar": "The Academic Compass",
+    "positioning": "A focused application workspace that helps students organise evidence, improve written materials and move each application forward with confidence.",
+    "promise": "Make the next responsible application step clear without taking ownership away from the student.",
+    "personality": [
+      "calm",
+      "credible",
+      "precise",
+      "supportive",
+      "quietly premium"
+    ],
+    "principles": [
+      {
+        "name": "Responsible clarity",
+        "rule": "The interface prioritises the next meaningful action, explains consequences and never manufactures urgency."
+      },
+      {
+        "name": "Evidence over spectacle",
+        "rule": "Trust is earned through transparent states, useful examples, product proof and specific language—not visual effects or unsupported claims."
+      },
+      {
+        "name": "Student control",
+        "rule": "Users can review, edit, save, export and recover work. AI-assisted output is always presented as editable support."
+      },
+      {
+        "name": "Academic warmth",
+        "rule": "Editorial typography and generous whitespace create authority without making the product feel institutional or cold."
+      },
+      {
+        "name": "Accessible by default",
+        "rule": "Keyboard access, visible focus, semantic HTML, non-colour state cues and reduced motion are component requirements, not optional polish."
+      }
+    ],
+    "antiPatterns": [
+      "Admission guarantees, invented acceptance rates, fake counters or fabricated testimonials.",
+      "Gradient text, neon AI glow, glassmorphism, oversized floating icons or repetitive feature-card grids.",
+      "Career or recruitment terminology in scholarship and academic application workflows.",
+      "Decorative cobalt, coral text on white, or colour-only status communication.",
+      "Autosave or AI generation that hides state, failure, conflicts, costs or user control."
+    ]
+  },
+  "tokens": {
+    "color": {
+      "primitive": {
+        "navy-950": "#040B1D",
+        "navy-900": "#071434",
+        "navy-800": "#101B3B",
+        "navy-700": "#263250",
+        "slate-700": "#3F4C66",
+        "slate-600": "#526079",
+        "slate-500": "#63708A",
+        "slate-400": "#8B96AA",
+        "slate-300": "#AEB8C9",
+        "slate-200": "#D7DEE9",
+        "slate-150": "#E5EAF1",
+        "slate-100": "#F1F4F9",
+        "slate-50": "#F7F9FC",
+        "white": "#FFFFFF",
+        "blue-800": "#0F3498",
+        "blue-700": "#123FB7",
+        "blue-600": "#174BD6",
+        "blue-500": "#2F63E9",
+        "blue-200": "#C7D6FF",
+        "blue-100": "#E8EEFF",
+        "blue-50": "#F3F6FF",
+        "green-700": "#066044",
+        "green-600": "#087B56",
+        "green-200": "#9DDAC2",
+        "green-50": "#EDFBF4",
+        "amber-700": "#7A4108",
+        "amber-600": "#A85B0D",
+        "amber-200": "#EDC28E",
+        "amber-50": "#FFF5E8",
+        "red-700": "#8D1B13",
+        "red-600": "#B42318",
+        "red-200": "#E8AAA5",
+        "red-50": "#FFF1F0",
+        "coral-500": "#FF715F",
+        "coral-100": "#FFF0ED"
+      },
+      "semantic": {
+        "background.canvas": "{tokens.color.primitive.slate-50}",
+        "background.surface": "{tokens.color.primitive.white}",
+        "background.subtle": "{tokens.color.primitive.slate-100}",
+        "background.selected": "{tokens.color.primitive.blue-50}",
+        "background.inverse": "{tokens.color.primitive.navy-900}",
+        "text.primary": "{tokens.color.primitive.navy-800}",
+        "text.secondary": "{tokens.color.primitive.slate-600}",
+        "text.muted": "{tokens.color.primitive.slate-500}",
+        "text.inverse": "{tokens.color.primitive.white}",
+        "text.link": "{tokens.color.primitive.blue-600}",
+        "border.default": "{tokens.color.primitive.slate-200}",
+        "border.strong": "{tokens.color.primitive.slate-300}",
+        "action.primary": "{tokens.color.primitive.blue-600}",
+        "action.primaryHover": "{tokens.color.primitive.blue-700}",
+        "action.primaryActive": "{tokens.color.primitive.blue-800}",
+        "action.primarySubtle": "{tokens.color.primitive.blue-50}",
+        "focus.ring": "{tokens.color.primitive.blue-600}",
+        "focus.halo": "{tokens.color.primitive.blue-200}",
+        "status.success.text": "{tokens.color.primitive.green-700}",
+        "status.success.background": "{tokens.color.primitive.green-50}",
+        "status.success.border": "{tokens.color.primitive.green-200}",
+        "status.warning.text": "{tokens.color.primitive.amber-700}",
+        "status.warning.background": "{tokens.color.primitive.amber-50}",
+        "status.warning.border": "{tokens.color.primitive.amber-200}",
+        "status.danger.text": "{tokens.color.primitive.red-700}",
+        "status.danger.background": "{tokens.color.primitive.red-50}",
+        "status.danger.border": "{tokens.color.primitive.red-200}",
+        "marketing.accent": "{tokens.color.primitive.coral-500}",
+        "marketing.accentSubtle": "{tokens.color.primitive.coral-100}"
+      },
+      "usageRules": [
+        "Coral is decorative or used with dark ink; it is never body text on white and never a routine product action.",
+        "Primary cobalt is reserved for links, primary actions, selection, focus and informative state.",
+        "Text contrast must be at least 4.5:1 for normal text and 3:1 for large text.",
+        "Interactive boundaries and focus indicators must reach at least 3:1 against adjacent colours."
+      ]
+    },
+    "typography": {
+      "fontFamilies": {
+        "display": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+        "interface": "\"DM Sans\", Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "mono": "\"IBM Plex Mono\", \"SFMono-Regular\", Consolas, monospace"
+      },
+      "fontLoading": {
+        "strategy": "self-host preferred; otherwise preconnect to the font origin and use font-display: swap",
+        "weights": {
+          "Source Serif 4": [600],
+          "DM Sans": [400, 500, 600, 700]
+        },
+        "rules": [
+          "Preload only the WOFF2 files needed above the fold.",
+          "Use metric-compatible fallbacks or size-adjust to reduce layout shift.",
+          "Do not load decorative font weights that are not used."
+        ]
+      },
+      "styles": {
+        "marketing.display": {
+          "family": "{tokens.typography.fontFamilies.display}",
+          "size": "clamp(2.75rem, 5.8vw, 5.5rem)",
+          "weight": 600,
+          "lineHeight": 0.98,
+          "letterSpacing": "-0.035em"
+        },
+        "marketing.h2": {
+          "family": "{tokens.typography.fontFamilies.display}",
+          "size": "clamp(2rem, 3.6vw, 3.5rem)",
+          "weight": 600,
+          "lineHeight": 1.05,
+          "letterSpacing": "-0.025em"
+        },
+        "workspace.h1": {
+          "family": "{tokens.typography.fontFamilies.display}",
+          "size": "clamp(2rem, 3vw, 2.75rem)",
+          "weight": 600,
+          "lineHeight": 1.08,
+          "letterSpacing": "-0.02em"
+        },
+        "section.h2": {
+          "family": "{tokens.typography.fontFamilies.display}",
+          "size": "clamp(1.5rem, 2vw, 2rem)",
+          "weight": 600,
+          "lineHeight": 1.15,
+          "letterSpacing": "-0.01em"
+        },
+        "card.h3": {
+          "family": "{tokens.typography.fontFamilies.display}",
+          "size": "1.25rem",
+          "weight": 600,
+          "lineHeight": 1.2,
+          "letterSpacing": "0"
+        },
+        "body.lg": {
+          "family": "{tokens.typography.fontFamilies.interface}",
+          "size": "1.125rem",
+          "weight": 400,
+          "lineHeight": 1.65,
+          "letterSpacing": "0"
+        },
+        "body.md": {
+          "family": "{tokens.typography.fontFamilies.interface}",
+          "size": "1rem",
+          "weight": 400,
+          "lineHeight": 1.6,
+          "letterSpacing": "0"
+        },
+        "body.sm": {
+          "family": "{tokens.typography.fontFamilies.interface}",
+          "size": "0.875rem",
+          "weight": 400,
+          "lineHeight": 1.5,
+          "letterSpacing": "0"
+        },
+        "label": {
+          "family": "{tokens.typography.fontFamilies.interface}",
+          "size": "0.875rem",
+          "weight": 600,
+          "lineHeight": 1.4,
+          "letterSpacing": "0"
+        },
+        "caption": {
+          "family": "{tokens.typography.fontFamilies.interface}",
+          "size": "0.75rem",
+          "weight": 500,
+          "lineHeight": 1.4,
+          "letterSpacing": "0.01em"
+        }
+      },
+      "rules": [
+        "Interactive labels use at least 14px. Twelve-pixel text is limited to non-essential metadata.",
+        "Marketing prose is limited to approximately 60–70 characters per line; long-form content to 65–75.",
+        "Use sentence case. Avoid all caps except short eyebrow labels with increased letter spacing.",
+        "Numerical data in tables may use tabular-nums."
+      ]
+    },
+    "spacing": {
+      "0": "0",
+      "0.5": "2px",
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px",
+      "12": "48px",
+      "16": "64px",
+      "20": "80px",
+      "24": "96px"
+    },
+    "radius": {
+      "control": "8px",
+      "card": "10px",
+      "panel": "12px",
+      "dialog": "14px",
+      "pill": "999px"
+    },
+    "border": {
+      "thin": "1px",
+      "selected": "2px",
+      "focus": "3px"
+    },
+    "shadow": {
+      "none": "none",
+      "focus": "0 0 0 3px {tokens.color.primitive.blue-200}",
+      "popover": "0 12px 30px rgba(16,27,59,0.12), 0 2px 8px rgba(16,27,59,0.08)",
+      "dialog": "0 24px 64px rgba(7,20,52,0.18)",
+      "marketingLift": "0 6px 8px rgba(23,75,214,0.14)"
+    },
+    "motion": {
+      "duration.fast": "120ms",
+      "duration.normal": "180ms",
+      "duration.slow": "240ms",
+      "ease.standard": "cubic-bezier(0.2, 0, 0, 1)",
+      "ease.exit": "cubic-bezier(0.4, 0, 1, 1)",
+      "rules": [
+        "Animate opacity and transform when possible; avoid layout-triggering animation.",
+        "No decorative looping animation in the authenticated product.",
+        "Under prefers-reduced-motion: reduce, disable non-essential movement and use instant state changes."
+      ]
+    },
+    "breakpoints": {
+      "xs": "480px",
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px",
+      "2xl": "1440px"
+    },
+    "layout": {
+      "marketingMaxWidth": "1200px",
+      "workspaceMaxWidth": "1440px",
+      "readingMaxWidth": "720px",
+      "sidebarWidth": "264px",
+      "sidebarCollapsedWidth": "76px",
+      "contentGutter": "clamp(16px, 3vw, 32px)",
+      "sectionSpace": "clamp(64px, 9vw, 112px)"
+    },
+    "zIndex": {
+      "base": 0,
+      "sticky": 20,
+      "dropdown": 40,
+      "overlay": 60,
+      "modal": 80,
+      "toast": 100
+    }
+  },
+  "accessibility": {
+    "target": "WCAG 2.2 AA",
+    "requirements": [
+      "All functionality is keyboard operable with a logical focus order.",
+      "Visible focus uses a 3px primary outline with 2px offset; never remove focus without an equivalent replacement.",
+      "Primary pointer targets are at least 44x44 CSS pixels. Dense desktop controls may be 36px only when spacing prevents accidental activation and a 44px touch presentation is used.",
+      "Inputs have persistent visible labels. Placeholder text is supplemental, never the only label.",
+      "Validation links the field to plain-language error and recovery text using aria-describedby.",
+      "Status changes use role=status or an appropriate live region without stealing focus.",
+      "Dialogs trap focus, have a labelled title, close with Escape when safe and restore focus to the trigger.",
+      "Drag-and-drop always has a keyboard and touch alternative.",
+      "Icons that communicate meaning have accessible names; decorative icons are hidden from assistive technology.",
+      "Zoom to 200% and reflow at 320 CSS pixels must not cause loss of content or two-dimensional scrolling except for genuinely tabular or board content."
+    ]
+  },
+  "content": {
+    "voice": [
+      "specific",
+      "encouraging",
+      "calm",
+      "transparent",
+      "non-judgmental"
+    ],
+    "rules": [
+      "Prefer direct actions: 'Add a deadline' rather than 'Deadline management'.",
+      "Explain system state and recovery: what happened, whether work is safe and what the user can do next.",
+      "Use 'AI-assisted' only when the feature actually uses AI and immediately explain user control.",
+      "Avoid 'guaranteed', 'perfect', 'beat the ATS', 'get accepted' and unsupported superlatives.",
+      "Never imply that an application has been reviewed by a university, scholarship provider or admissions expert unless it has."
+    ],
+    "stateCopy": {
+      "saving": "Saving your changes…",
+      "saved": "All changes saved.",
+      "offline": "You are offline. Changes will sync when your connection returns.",
+      "conflict": "This application changed in another session. Review the latest version before continuing.",
+      "generationPending": "Preparing a draft from the information you provided…",
+      "generationFailed": "We could not prepare this draft. Your original content is safe. Try again or continue manually.",
+      "emptyApplications": "No applications yet. Add one to organise its deadline, requirements and documents.",
+      "destructiveConfirm": "Delete this application and its workspace? This cannot be undone."
+    }
+  },
+  "components": {
+    "button": {
+      "variants": ["primary", "secondary", "ghost", "danger"],
+      "sizes": {
+        "default": {
+          "height": "44px",
+          "paddingInline": "16px",
+          "textStyle": "{tokens.typography.styles.label}"
+        },
+        "large": {
+          "height": "48px",
+          "paddingInline": "20px",
+          "textStyle": "{tokens.typography.styles.label}"
+        },
+        "compactDesktopOnly": {
+          "height": "36px",
+          "paddingInline": "12px",
+          "textStyle": "{tokens.typography.styles.label}"
+        }
+      },
+      "states": [
+        "rest",
+        "hover",
+        "active",
+        "focus-visible",
+        "loading",
+        "disabled"
+      ],
+      "requirements": [
+        "Loading preserves width, sets aria-busy=true and prevents duplicate submission.",
+        "Disabled buttons remain readable and expose a native disabled state.",
+        "One primary action per visual region unless a deliberate choice is being presented."
+      ]
+    },
+    "iconButton": {
+      "size": "44px",
+      "iconSize": "20px",
+      "requirements": [
+        "Must have an accessible name",
+        "Tooltip may supplement but never replace the accessible name"
+      ]
+    },
+    "link": {
+      "requirements": [
+        "Link text describes the destination or action; avoid standalone 'Learn more'.",
+        "External links are identified when opening a new context.",
+        "Links remain distinguishable without relying only on colour in body copy."
+      ]
+    },
+    "field": {
+      "height": "44px",
+      "radius": "{tokens.radius.control}",
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "filled",
+        "disabled",
+        "readonly",
+        "error",
+        "success"
+      ],
+      "requirements": [
+        "Persistent label, optional helper text and explicit error text.",
+        "Do not validate on every keystroke unless feedback is genuinely helpful.",
+        "Preserve entered values after recoverable errors."
+      ]
+    },
+    "textarea": {
+      "minHeight": "128px",
+      "resize": "vertical",
+      "requirements": [
+        "Show character or word guidance only when there is a real limit or recommendation.",
+        "Do not block paste, browser spelling tools or standard keyboard shortcuts."
+      ]
+    },
+    "select": {
+      "height": "44px",
+      "requirements": [
+        "Prefer native select for short, stable lists.",
+        "Use a combobox only for searchable lists and implement full keyboard semantics."
+      ]
+    },
+    "statusBadge": {
+      "variants": ["neutral", "info", "success", "warning", "danger"],
+      "requirements": [
+        "Use concise text and a non-colour cue where ambiguity is possible.",
+        "Do not use badge colour as the sole stage control."
+      ]
+    },
+    "alert": {
+      "variants": ["info", "success", "warning", "danger"],
+      "requirements": [
+        "Include a short title only when it improves scanning.",
+        "Blocking errors provide a direct recovery action.",
+        "Dismissal is optional and must not hide unresolved blocking information."
+      ]
+    },
+    "tabs": {
+      "requirements": [
+        "Use roving tabindex and arrow-key navigation for true tabs.",
+        "Use links instead when each destination has its own URL and page load.",
+        "Current state uses text, selected surface or underline—not colour alone."
+      ]
+    },
+    "sidebar": {
+      "width": "{tokens.layout.sidebarWidth}",
+      "collapseAt": "1024px",
+      "mobilePattern": "off-canvas dialog",
+      "requirements": [
+        "Active item includes aria-current=page.",
+        "Collapsed icon-only items expose labels through accessible names and tooltips.",
+        "Mobile drawer has a visible close action, scrim and focus restoration."
+      ]
+    },
+    "applicationCard": {
+      "minWidth": "280px",
+      "recommendedWidth": "300px",
+      "requirements": [
+        "Show institution or programme, application type, deadline, stage and one clear next action.",
+        "Avoid displaying more than two secondary metadata rows at rest.",
+        "The card itself is not a giant link when it contains nested controls.",
+        "Stage can be changed with a labelled select or explicit menu; drag-and-drop is enhancement only."
+      ]
+    },
+    "applicationBoard": {
+      "desktop": "Horizontally scrollable columns with sticky column headers and 300px cards.",
+      "tablet": "Two-column responsive grid where practical.",
+      "mobile": "Default to a filterable list grouped by stage; provide board as an optional view.",
+      "requirements": [
+        "Persist the user's selected view.",
+        "Announce stage changes and support undo for reversible movement.",
+        "Do not trap horizontal scrolling at the page level."
+      ]
+    },
+    "dialog": {
+      "maxWidth": {
+        "small": "480px",
+        "medium": "640px",
+        "large": "880px"
+      },
+      "requirements": [
+        "Use for focused decisions, not routine navigation.",
+        "Destructive confirmation names the object and consequence.",
+        "Primary action appears last in DOM and visually aligns with platform convention."
+      ]
+    },
+    "toast": {
+      "duration": "6s minimum for non-critical messages",
+      "requirements": [
+        "Never use a toast as the only place for an error that requires action.",
+        "Pause dismissal on hover or focus.",
+        "Do not stack more than three; consolidate repeated events."
+      ]
+    },
+    "skeleton": {
+      "requirements": [
+        "Match final geometry to reduce layout shift.",
+        "Use only when content is expected quickly; otherwise show explicit loading copy.",
+        "Disable shimmer under reduced motion."
+      ]
+    },
+    "emptyState": {
+      "requirements": [
+        "Explain why the area is empty, what value the first item provides and one primary action.",
+        "Do not use decorative illustration as a substitute for guidance."
+      ]
+    },
+    "dataTable": {
+      "requirements": [
+        "Use semantic table markup and scoped headers.",
+        "Provide a mobile alternative or controlled horizontal scroll.",
+        "Sorting controls announce direction and are keyboard operable."
+      ]
+    }
+  },
+  "marketing": {
+    "primaryAudience": "Students and applicants managing scholarship, university or programme applications.",
+    "secondaryAudience": "Advisers, mentors and teams supporting applicants, only where collaboration is actually supported.",
+    "messageHierarchy": [
+      "Outcome: organise stronger applications with less uncertainty.",
+      "Mechanism: one workspace for deadlines, requirements, evidence and written materials.",
+      "Control: AI-assisted support remains editable and transparent.",
+      "Proof: demonstrate real workflows, templates, exports, security and customer evidence that can be verified."
+    ],
+    "homepage": {
+      "hero": {
+        "eyebrow": "Scholarship and academic application workspace",
+        "headline": "Build stronger applications, without losing your voice.",
+        "supportingCopy": "Organise deadlines and requirements, shape your written materials and keep every application moving from one focused workspace.",
+        "primaryCta": "Start an application",
+        "secondaryCta": "See how it works",
+        "visualDirection": "Use a real product composition showing an application checklist, document status and deadline—not a generic AI illustration."
+      },
+      "sectionOrder": [
+        "Hero with product proof",
+        "Trust strip using only verifiable proof",
+        "Problem-to-outcome narrative",
+        "Three-part workflow: organise, write, review",
+        "Detailed product walkthrough",
+        "Templates or examples",
+        "Privacy and responsible AI",
+        "Pricing",
+        "FAQ",
+        "Focused closing CTA"
+      ],
+      "premiumDirection": [
+        "Use editorial asymmetry, generous negative space, a disciplined baseline grid and one strong product composition.",
+        "Alternate white and cool-workspace sections; reserve dark marketing ink for one proof or closing band.",
+        "Use coral only as a small waypoint, annotation or editorial marker.",
+        "Prefer thin rules, captions, document details and real UI crops over floating 3D objects.",
+        "Avoid more than three equal feature cards in one row; use narrative layouts and product-led proof."
+      ]
+    },
+    "claimsPolicy": {
+      "allowed": [
+        "Specific product capabilities verified against the backend and current release.",
+        "Customer quotes with documented permission and attribution.",
+        "Measured results with sample size, period, method and qualifying context."
+      ],
+      "prohibited": [
+        "Guaranteed scholarships, acceptance or admissions outcomes.",
+        "Unverifiable user counts, acceptance rates, money won or time saved.",
+        "Logos implying customers or partnerships without permission.",
+        "Artificial scarcity or countdown timers not tied to a real deadline."
+      ]
+    }
+  },
+  "seo": {
+    "indexing": {
+      "publicRoutes": "index,follow",
+      "authenticatedRoutes": "noindex,nofollow",
+      "previewAndStaging": "noindex,nofollow plus authentication where possible",
+      "rules": [
+        "Do not block a URL in robots.txt when relying on a page-level noindex; crawlers must be able to fetch the directive.",
+        "Include only canonical, indexable, 200-status public URLs in XML sitemaps.",
+        "Use one canonical HTTPS host and redirect all variants."
+      ]
+    },
+    "metadata": {
+      "titleTemplate": "%s | EliteApply",
+      "defaultTitle": "EliteApply — Scholarship & Academic Application Workspace",
+      "defaultDescription": "Organise deadlines, requirements and written materials in one focused workspace for scholarship and academic applications.",
+      "requirements": [
+        "Every indexable page has a unique title, meta description, canonical URL and one descriptive H1.",
+        "Open Graph and Twitter metadata use a 1200x630 image with readable text-safe margins.",
+        "Set language and direction on the HTML element; use hreflang only for fully localised equivalents."
+      ]
+    },
+    "recommendedPublicArchitecture": [
+      {
+        "route": "/",
+        "intent": "scholarship application platform",
+        "contentRole": "Category and brand landing page"
+      },
+      {
+        "route": "/scholarship-application-tracker",
+        "intent": "scholarship application tracker",
+        "contentRole": "Feature landing page; publish only when the workflow is available"
+      },
+      {
+        "route": "/scholarship-essay-builder",
+        "intent": "scholarship essay builder",
+        "contentRole": "Feature landing page; publish only when the workflow is available"
+      },
+      {
+        "route": "/personal-statement-builder",
+        "intent": "personal statement builder",
+        "contentRole": "Feature landing page; publish only when the workflow is available"
+      },
+      {
+        "route": "/templates",
+        "intent": "scholarship application templates",
+        "contentRole": "Indexable template hub with unique useful content"
+      },
+      {
+        "route": "/examples",
+        "intent": "scholarship application examples",
+        "contentRole": "Curated example hub; avoid thin programmatic pages"
+      },
+      {
+        "route": "/pricing",
+        "intent": "EliteApply pricing",
+        "contentRole": "Transparent pricing and plan comparison"
+      },
+      {
+        "route": "/resources",
+        "intent": "scholarship application guides",
+        "contentRole": "Editorial hub with author, review and update signals"
+      }
+    ],
+    "structuredData": {
+      "sitewide": ["Organization", "WebSite"],
+      "softwareLandingPages": ["SoftwareApplication", "BreadcrumbList"],
+      "editorialPages": ["Article or BlogPosting", "BreadcrumbList"],
+      "rules": [
+        "Structured data must match visible page content and current pricing/capabilities.",
+        "Use JSON-LD and validate in automated tests plus Google's Rich Results Test where applicable.",
+        "Do not add review or rating markup unless ratings are genuine, visible and policy-compliant."
+      ]
+    },
+    "contentQuality": [
+      "Write for a clear applicant question or decision, not keyword density.",
+      "Use expert review, concrete examples, update dates and transparent authorship where appropriate.",
+      "Avoid near-duplicate template and location pages with token-swapped copy.",
+      "Use descriptive internal links between features, examples, guides and pricing.",
+      "Add useful alt text to informative images and empty alt text to decorative images."
+    ],
+    "performanceBudgets": {
+      "coreWebVitalsP75": {
+        "LCP": "<= 2.5s",
+        "INP": "<= 200ms",
+        "CLS": "<= 0.1"
+      },
+      "marketingInitialJavaScriptGzip": "<= 180KB target",
+      "heroImage": "<= 220KB where practical, responsive AVIF/WebP with explicit dimensions",
+      "fontFiles": "<= 160KB total above-the-fold target",
+      "rules": [
+        "Server-render or statically render indexable marketing content.",
+        "Do not hide primary copy behind client-only rendering.",
+        "Reserve image dimensions, lazy-load below-fold media and defer non-critical scripts.",
+        "Track field data with real-user monitoring, not Lighthouse alone."
+      ]
+    }
+  },
+  "responsive": {
+    "rules": [
+      "Design mobile content order first; do not merely stack desktop columns.",
+      "At <=1024px, collapse the permanent sidebar and preserve the current page title and main action.",
+      "At <=768px, use a single primary column, 16px gutters and sticky actions only when they do not cover content.",
+      "At <=640px, show list view by default for applications and keep form controls full width where practical.",
+      "Do not place primary and destructive actions adjacent on narrow screens.",
+      "Tables and boards use contained horizontal scrolling with visible affordances, not page-level overflow."
+    ]
+  },
+  "analytics": {
+    "principles": [
+      "Collect the minimum data needed to improve the product.",
+      "Never include essay text, personal statements, document content or sensitive field values in analytics payloads.",
+      "Use stable event names and versioned properties."
+    ],
+    "recommendedEvents": [
+      "marketing_cta_clicked",
+      "signup_started",
+      "signup_completed",
+      "application_created",
+      "application_stage_changed",
+      "deadline_added",
+      "document_created",
+      "draft_generation_started",
+      "draft_generation_completed",
+      "draft_generation_failed",
+      "export_started",
+      "export_completed",
+      "upgrade_viewed",
+      "checkout_started",
+      "checkout_completed"
+    ]
+  },
+  "qualityGates": {
+    "designSystemCI": [
+      "JSON parses and all token references resolve.",
+      "No raw colour, spacing, radius, shadow or typography values in product components except documented exceptions.",
+      "JSON and Markdown version fields match.",
+      "Component stories cover all documented states."
+    ],
+    "automated": [
+      "axe-core reports no serious or critical violations on representative pages.",
+      "Playwright tests keyboard navigation, focus restoration, form errors, dialogs and responsive navigation.",
+      "Visual regression tests cover 375, 768, 1024 and 1440 pixel viewports.",
+      "Lighthouse CI enforces agreed performance, accessibility, SEO and best-practice thresholds.",
+      "Metadata tests verify title, description, canonical, robots and structured data for public routes.",
+      "Link checker rejects broken internal links and accidental staging URLs."
+    ],
+    "manual": [
+      "Keyboard-only completion of every primary workflow.",
+      "Screen-reader smoke test with VoiceOver or NVDA.",
+      "200% zoom and 320 CSS pixel reflow.",
+      "High-contrast mode and reduced-motion review.",
+      "Slow network, offline, timeout, expired session, conflict and partial-failure states.",
+      "Copy review for unsupported claims, academic terminology and recovery clarity."
+    ],
+    "releaseBlockers": [
+      "Missing visible focus, inaccessible primary workflow or colour contrast failure.",
+      "Indexable authenticated or staging content.",
+      "Unsupported marketing claim or fabricated proof.",
+      "Data loss on recoverable error, retry or session refresh.",
+      "Core metadata missing from an indexable route.",
+      "Critical layout overflow at supported viewport widths."
+    ]
+  },
+  "version": "3.0.0"
+}

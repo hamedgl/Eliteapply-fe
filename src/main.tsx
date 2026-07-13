@@ -1,1 +1,31 @@
-import{StrictMode,useEffect}from"react";import{createRoot}from"react-dom/client";import{QueryClient,QueryClientProvider}from"@tanstack/react-query";import{App}from"./app/App";import{authApi}from"./lib/api/auth";import{usersApi}from"./lib/api/users";import{useSession}from"./lib/auth/session";import{CapabilityProvider}from"./lib/capabilities/provider";import"./styles/index.css";const client=new QueryClient({defaultOptions:{queries:{staleTime:30_000,retry:1}}});function Bootstrap(){const setTokens=useSession(s=>s.setTokens),setUser=useSession(s=>s.setUser),setInitializing=useSession(s=>s.setInitializing);useEffect(()=>{let active=true;(async()=>{try{const tokens=await authApi.refresh();if(!active)return;setTokens(tokens);setUser(await usersApi.me())}catch{useSession.getState().clear()}finally{if(active)setInitializing(false)}})();return()=>{active=false}},[setTokens,setUser,setInitializing]);return <CapabilityProvider><App/></CapabilityProvider>}createRoot(document.getElementById("root")!).render(<StrictMode><QueryClientProvider client={client}><Bootstrap/></QueryClientProvider></StrictMode>);
+import { lazy, StrictMode, Suspense } from "react";
+import { createRoot } from "react-dom/client";
+import { App } from "./app/App";
+import "./styles/index.css";
+
+const PrivateRoot = lazy(() =>
+  import("./app/PrivateRoot").then((module) => ({
+    default: module.PrivateRoot,
+  })),
+);
+const standalonePublicPaths = new Set([
+  "/",
+  "/terms",
+  "/privacy",
+  "/accessibility",
+]);
+
+function Root() {
+  if (standalonePublicPaths.has(window.location.pathname)) return <App />;
+  return (
+    <Suspense fallback={<main className="loading">Loading EliteApply…</main>}>
+      <PrivateRoot />
+    </Suspense>
+  );
+}
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <Root />
+  </StrictMode>,
+);
