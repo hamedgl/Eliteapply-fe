@@ -8,6 +8,7 @@ import {
 import { AppShell } from "../components/AppShell";
 import { AuthPage } from "../features/auth/AuthPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { LandingPage } from "../features/landing/LandingPage";
 import {
   PrivacySettings,
   ProfileSettings,
@@ -81,33 +82,6 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
     children
   );
 }
-function Home() {
-  return (
-    <main className="landing">
-      <nav>
-        <span className="brand">EliteApply</span>
-        <a href="/login">Sign in</a>
-      </nav>
-      <section>
-        <h1>
-          Every application,
-          <br />
-          finally in one place.
-        </h1>
-        <p>
-          Organise university programmes, scholarships, documents, deadlines and
-          the writing that makes your story yours.
-        </p>
-        <div>
-          <a className="primary" href="/register">
-            Create your workspace
-          </a>
-          <a href="/login">I already have an account</a>
-        </div>
-      </section>
-    </main>
-  );
-}
 function Unavailable() {
   return (
     <div className="page unavailable">
@@ -132,7 +106,7 @@ function Legal({ privacy = false }: { privacy?: boolean }) {
   );
 }
 const router = createBrowserRouter([
-  { path: "/", element: <Home /> },
+  { path: "/", element: <LandingPage /> },
   {
     path: "/login",
     element: (
