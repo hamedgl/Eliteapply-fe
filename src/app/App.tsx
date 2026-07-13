@@ -112,6 +112,11 @@ const AppShell = lazy(() =>
     import("../features/admin/AdminLaunchPage").then((x) => ({
       default: x.AdminLaunchPage,
     })),
+  ),
+  MarketingPage = lazy(() =>
+    import("../features/marketing/MarketingPages").then((x) => ({
+      default: x.MarketingRoute,
+    })),
   );
 const load = (node: React.ReactNode) => (
   <Suspense
@@ -162,38 +167,20 @@ function Unavailable() {
     </div>
   );
 }
-function Legal({ privacy = false }: { privacy?: boolean }) {
-  return (
-    <main className="legal">
-      <a className="brand" href="/">
-        EliteApply
-      </a>
-      <h1>{privacy ? "Privacy Policy" : "Terms of Service"}</h1>
-      <p>Approved production legal copy is still required before launch.</p>
-    </main>
-  );
-}
-function AccessibilityStatement() {
-  return (
-    <main className="legal">
-      <a className="brand" href="/">
-        EliteApply
-      </a>
-      <h1>Accessibility</h1>
-      <p>
-        EliteApply is designed for keyboard operation, visible focus, reduced
-        motion, non-color status cues, and readable contrast at WCAG 2.2 AA.
-      </p>
-      <p>
-        If something prevents you from completing an application task, email
-        <a href="mailto:support@eliteapply.net"> support@eliteapply.net</a> and
-        include the page and assistive technology you were using.
-      </p>
-    </main>
-  );
-}
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
+  { path: "/features/*", element: load(<MarketingPage />) },
+  { path: "/how-it-works", element: load(<MarketingPage />) },
+  { path: "/for-students", element: load(<MarketingPage />) },
+  { path: "/pricing", element: load(<MarketingPage />) },
+  { path: "/security", element: load(<MarketingPage />) },
+  { path: "/about", element: load(<MarketingPage />) },
+  { path: "/contact", element: load(<MarketingPage />) },
+  { path: "/resources/*", element: load(<MarketingPage />) },
+  { path: "/scholarship-application-tracker", element: load(<MarketingPage />) },
+  { path: "/scholarship-application-organiser", element: load(<MarketingPage />) },
+  { path: "/scholarship-deadline-tracker", element: load(<MarketingPage />) },
+  { path: "/scholarship-application-checklist", element: load(<MarketingPage />) },
   {
     path: "/login",
     element: (
@@ -213,9 +200,9 @@ const router = createBrowserRouter([
   { path: "/confirm-email", element: <AuthPage mode="confirm" /> },
   { path: "/forgot-password", element: <AuthPage mode="forgot" /> },
   { path: "/reset-password", element: <AuthPage mode="reset" /> },
-  { path: "/terms", element: <Legal /> },
-  { path: "/privacy", element: <Legal privacy /> },
-  { path: "/accessibility", element: <AccessibilityStatement /> },
+  { path: "/terms", element: load(<MarketingPage />) },
+  { path: "/privacy", element: load(<MarketingPage />) },
+  { path: "/accessibility", element: load(<MarketingPage />) },
   { path: "/referee/academic-reference/:token", element: load(<Referee />) },
   {
     path: "/verify/academic-reference/:publicId",

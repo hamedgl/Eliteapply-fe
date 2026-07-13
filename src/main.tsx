@@ -10,13 +10,30 @@ const PrivateRoot = lazy(() =>
 );
 const standalonePublicPaths = new Set([
   "/",
+  "/how-it-works",
+  "/for-students",
+  "/pricing",
+  "/security",
+  "/about",
+  "/contact",
+  "/scholarship-application-tracker",
+  "/scholarship-application-organiser",
+  "/scholarship-deadline-tracker",
+  "/scholarship-application-checklist",
   "/terms",
   "/privacy",
   "/accessibility",
 ]);
 
+const isStandalonePublicRoute = (pathname: string) =>
+  standalonePublicPaths.has(pathname) ||
+  pathname === "/features" ||
+  pathname.startsWith("/features/") ||
+  pathname === "/resources" ||
+  pathname.startsWith("/resources/");
+
 function Root() {
-  if (standalonePublicPaths.has(window.location.pathname)) return <App />;
+  if (isStandalonePublicRoute(window.location.pathname)) return <App />;
   return (
     <Suspense fallback={<main className="loading">Loading EliteApply…</main>}>
       <PrivateRoot />

@@ -31,43 +31,51 @@ test("landing page stays self-contained and semantically ordered", async ({
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Build stronger scholarship applications in one calm workspace.",
+      name: "Plan, write and submit stronger scholarship applications.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("region", {
-      name: "Interactive EliteApply sample workspace",
+    page.getByRole("img", {
+      name: /sample workspace showing a next action/i,
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("img", { name: /EliteApply demonstration/i }),
-  ).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Today" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
+    page.getByRole("heading", {
+      name: "The structure behind a stronger application process.",
+    }),
+  ).toBeAttached();
+  await expect(
+    page.getByRole("heading", {
+      name: "Questions students ask before starting.",
+    }),
+  ).toBeAttached();
   await expect(page.locator(".workflow-window a")).toHaveCount(0);
   await expect(page.locator("h1 + h3")).toHaveCount(0);
+  await expect(
+    page.getByText(/guaranteed scholarship|acceptance rate|students served/i),
+  ).toHaveCount(0);
   expect(apiRequests).toEqual([]);
 
-  const heroType = await page.locator(".hero h1").evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      size: Number.parseFloat(style.fontSize),
-      tracking:
-        Number.parseFloat(style.letterSpacing) /
-        Number.parseFloat(style.fontSize),
-    };
-  });
-  expect(heroType.size).toBeLessThanOrEqual(88);
-  expect(heroType.tracking).toBeGreaterThanOrEqual(-0.0351);
+  const heroType = await page
+    .locator(".phase-one-hero h1")
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        size: Number.parseFloat(style.fontSize),
+        tracking:
+          Number.parseFloat(style.letterSpacing) /
+          Number.parseFloat(style.fontSize),
+      };
+    });
+  expect(heroType.size).toBeLessThanOrEqual(96);
+  expect(heroType.tracking).toBeGreaterThanOrEqual(-0.0401);
 
   const contrastRatio = await page
-    .locator(".demo-canvas small")
-    .first()
+    .locator(".phase-one-hero-copy > p")
+    .nth(1)
     .evaluate((element) => ({
       foreground: getComputedStyle(element).color,
-      background: getComputedStyle(element.closest(".workflow-window")!)
+      background: getComputedStyle(element.closest(".phase-one-hero")!)
         .backgroundColor,
     }));
   expect(
@@ -75,45 +83,54 @@ test("landing page stays self-contained and semantically ordered", async ({
   ).toBeGreaterThanOrEqual(4.5);
 });
 
-test("hero sample workspace supports keyboard and sample-data navigation", async ({
+test("hero product proof communicates the three required moments", async ({
   page,
 }) => {
   await page.goto("/");
 
-  const demo = page.getByRole("region", {
-    name: "Interactive EliteApply sample workspace",
+  const demo = page.getByRole("img", {
+    name: /sample workspace showing a next action/i,
   });
-  const today = demo.getByRole("tab", { name: "Today" });
-  const applications = demo.getByRole("tab", { name: "Applications" });
-  const documents = demo.getByRole("tab", { name: "Documents" });
+  await expect(demo.getByText("Next responsible action")).toBeVisible();
+  await expect(demo.getByText("Connect leadership evidence")).toBeVisible();
+  await expect(demo.getByText("Application readiness")).toBeVisible();
+  await expect(demo.getByText("72%", { exact: true })).toBeVisible();
+  await expect(demo.getByText("Next deadline")).toBeVisible();
+  await expect(demo.getByText("18 days")).toBeVisible();
+  await expect(demo.getByText("3 items need attention")).toBeVisible();
+});
 
-  await today.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(applications).toHaveAttribute("aria-selected", "true");
-  await expect(applications).toBeFocused();
-  await expect(demo.getByText("Three active applications")).toBeVisible();
+test("phase one includes product, trust, comparison and FAQ content", async ({
+  page,
+}) => {
+  await page.goto("/");
 
-  await demo
-    .locator(".demo-application-table")
-    .getByRole("button", { name: /Rhodes Scholarship/i })
-    .click();
-  await expect(demo.getByText("Connect research evidence")).toBeVisible();
+  for (const heading of [
+    "See every application, deadline and next action in one place.",
+    "Build each statement from evidence—not from a blank page.",
+    "Keep transcripts, certificates and supporting evidence connected to the right application.",
+    "Track reference requirements before they become last-minute emergencies.",
+    "Know what is ready, what is missing and what deserves one final review.",
+    "Built for serious applications at every stage.",
+    "Why not use a spreadsheet or a general notes app?",
+  ]) {
+    await expect(page.getByRole("heading", { name: heading })).toBeAttached();
+  }
 
-  await documents.click();
-  await demo.getByRole("button", { name: /Academic CV/i }).click();
-  await expect(demo.getByText("Ready to use")).toBeVisible();
-
-  await today.click();
-  await demo
-    .locator(".demo-application-rail")
-    .getByRole("button", { name: /Excellence Scholarship/i })
-    .click();
-  await expect(demo.getByText("Confirm programme requirements")).toBeVisible();
-
-  await demo
-    .getByRole("button", { name: /Open supporting documents/i })
-    .click();
-  await expect(documents).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByRole("table", { name: /Comparison of EliteApply/i }),
+  ).toContainText("Task manager");
+  const guarantee = page.getByText(
+    "Does EliteApply guarantee a scholarship?",
+    { exact: true },
+  );
+  await guarantee.click();
+  await expect(
+    page.getByText(/Scholarship decisions remain entirely with the provider/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Paid plans are not currently available/i),
+  ).toBeAttached();
 });
 
 test("landing page exposes descriptive search and sharing metadata", async ({
@@ -137,41 +154,57 @@ test("landing page exposes descriptive search and sharing metadata", async ({
   expect(structuredData).toContain("WebApplication");
 });
 
-test("guided tour auto-advances through distinct workflows", async ({
+test("landing page renders without browser console or runtime errors", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  await page.goto("/");
+  await page.locator("#faq").scrollIntoViewIfNeeded();
+  await page.getByText("Can I track multiple applications?", { exact: true }).click();
+  await expect(
+    page.getByText(/Each application can keep its own deadline/i),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("guided tour auto-advances and every stage remains selectable", async ({
   page,
 }) => {
   await page.goto("/");
   await page.locator("#how-it-works").scrollIntoViewIfNeeded();
 
+  const firstStep = page.getByRole("button", { name: /Add the opportunity/i });
+  const secondStep = page.getByRole("button", {
+    name: /Break down the requirements/i,
+  });
   const thirdStep = page.getByRole("button", {
-    name: /Shape your application/i,
+    name: /Prepare the application/i,
   });
   const fourthStep = page.getByRole("button", {
-    name: /Submit with clarity/i,
+    name: /Review and submit/i,
   });
-  await expect(thirdStep).toHaveAttribute("aria-pressed", "true");
-  await expect(fourthStep).toHaveAttribute("aria-pressed", "true", {
+  await expect(firstStep).toHaveAttribute("aria-pressed", "true");
+  await expect(secondStep).toHaveAttribute("aria-pressed", "true", {
     timeout: 6000,
   });
 
-  const firstStep = page.getByRole("button", { name: /Find your focus/i });
   await firstStep.click();
   await expect(firstStep).toHaveAttribute("aria-pressed", "true");
   await expect(
     page.getByRole("img", {
-      name: /Find your focus: Programme Shortlist/i,
+      name: /Add the opportunity: Opportunity details/i,
     }),
   ).toBeVisible();
-  await expect(page.locator("#workflow-preview")).toContainText(
+  await expect(page.locator(".discovery-demo")).toContainText(
     "Rhodes Scholarship",
   );
-  await expect(page.locator(".discovery-demo")).toBeVisible();
-  await expect(page.locator(".discovery-demo .gauge-value")).toHaveAttribute(
-    "stroke-dasharray",
-    "94 6",
-  );
 
-  await page.getByRole("button", { name: /Build your evidence/i }).click();
+  await secondStep.click();
   await expect(page.locator(".evidence-demo")).toContainText(
     "Community research partnership",
   );
@@ -182,10 +215,6 @@ test("guided tour auto-advances through distinct workflows", async ({
   await fourthStep.click();
   await expect(page.locator(".submission-demo")).toContainText(
     "Open final review",
-  );
-  await expect(page.locator(".submission-demo .gauge-value")).toHaveAttribute(
-    "stroke-dasharray",
-    "92 8",
   );
   await expect(
     page.getByRole("button", { name: "Pause product tour" }),
@@ -198,7 +227,7 @@ test("guided tour auto-advances through distinct workflows", async ({
   );
 });
 
-test("mobile navigation is touch-safe and restores focus on Escape", async ({
+test("mobile navigation traps focus, closes on Escape and stays touch-safe", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -206,14 +235,25 @@ test("mobile navigation is touch-safe and restores focus on Escape", async ({
 
   const menuButton = page.getByRole("button", { name: "Open navigation" });
   await menuButton.click();
-  await expect(page.getByRole("link", { name: "How it works" })).toBeFocused();
+  const productMenu = page
+    .getByRole("navigation", { name: "Main navigation" })
+    .locator("summary");
+  await expect(productMenu).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(
+    page.getByRole("button", { name: "Close navigation" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(productMenu).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Open navigation" }),
   ).toBeFocused();
 
   const undersized = await page
-    .locator(".marketing a:visible, .marketing button:visible")
+    .locator(
+      ".marketing a:visible, .marketing button:visible, .marketing summary:visible",
+    )
     .evaluateAll((elements) =>
       elements
         .map((element) => {
@@ -232,9 +272,27 @@ test("mobile navigation is touch-safe and restores focus on Escape", async ({
   );
 });
 
+test("marketing layout reflows without page overflow at supported widths", async ({
+  page,
+}) => {
+  for (const width of [320, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "Plan, write and submit stronger scholarship applications.",
+      }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(width);
+  }
+});
+
 test("footer accessibility link reaches a real statement", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Accessibility" }).click();
+  await page.getByRole("link", { name: "Accessibility" }).last().click();
   await expect(page).toHaveURL(/\/accessibility$/);
   await expect(
     page.getByRole("heading", { name: "Accessibility" }),
@@ -253,10 +311,7 @@ test("primary CTA crosses into the authenticated runtime", async ({ page }) => {
   });
 
   await page.goto("/");
-  await page
-    .getByRole("link", { name: "Start your workspace" })
-    .first()
-    .click();
+  await page.getByRole("link", { name: "Start free" }).first().click();
   await expect(page).toHaveURL(/\/register$/);
   await expect(
     page.getByRole("heading", { name: "Create your EliteApply account" }),
