@@ -1,0 +1,1 @@
+import{describe,expect,it}from"vitest";import{safeDashboard}from"../lib/api/platform";describe("dashboard adapter",()=>{it("guards open ended data",()=>{expect(safeDashboard({profile_completion_percent:500,upcoming_deadlines:[null,{title:"Test"}]})).toMatchObject({profile_completion_percent:100,upcoming_deadlines:[{title:"Test"}],missing_documents:0})})});
