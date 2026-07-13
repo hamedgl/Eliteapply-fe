@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock3, GraduationCap } from "lucide-react";
 import { profileApi } from "../../lib/api/phase2";
@@ -12,19 +12,60 @@ const known = [
 ];
 export function AcademicProfilePage() {
   const qc = useQueryClient(),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [selectedVersion, setSelectedVersion] = useState("");
+  const importDialog = useRef<HTMLDialogElement>(null);
   const q = useQuery({ queryKey: queryKeys.profile, queryFn: profileApi.get });
   const versions = useQuery({
     queryKey: queryKeys.profileVersions,
     queryFn: profileApi.versions,
     enabled: q.data != null,
   });
+  const version = useQuery({
+    queryKey: [...queryKeys.profileVersions, selectedVersion],
+    queryFn: () => profileApi.version(selectedVersion),
+    enabled: Boolean(selectedVersion),
+  });
+  const refreshRelated = async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: queryKeys.profile }),
+      qc.invalidateQueries({ queryKey: queryKeys.profileVersions }),
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
+      qc.invalidateQueries({ queryKey: queryKeys.onboarding }),
+      qc.invalidateQueries({ queryKey: ["application-intelligence"] }),
+    ]);
+  };
   const save = useMutation({
     mutationFn: profileApi.save,
     onSuccess: (profile) => {
       qc.setQueryData(queryKeys.profile, profile);
       setMessage("Academic profile saved.");
       void qc.invalidateQueries({ queryKey: queryKeys.profileVersions });
+    },
+  });
+  const restore = useMutation({
+    mutationFn: (id: string) =>
+      profileApi.restore(id, { expected_version: q.data?.version ?? null }),
+    onSuccess: async () => {
+      setMessage("The selected academic profile version was restored.");
+      await refreshRelated();
+    },
+  });
+  const importProfile = useMutation({
+    mutationFn: profileApi.import,
+    onSuccess: async () => {
+      importDialog.current?.close();
+      setMessage("Academic profile imported.");
+      await refreshRelated();
+    },
+  });
+  const remove = useMutation({
+    mutationFn: profileApi.remove,
+    onSuccess: async () => {
+      setSelectedVersion("");
+      setMessage("Academic profile deleted. Your account remains active.");
+      qc.setQueryData(queryKeys.profile, null);
+      await refreshRelated();
     },
   });
   if (q.isPending) return <div className="page">Loading academic profile…</div>;
@@ -75,8 +116,40 @@ export function AcademicProfilePage() {
           <h1>Academic Profile</h1>
           <p>Your reusable source of truth for every application.</p>
         </div>
-        <span>{p ? `Version ${p.version}` : "Not saved yet"}</span>
+        <div className="profile-heading-actions">
+          <span>{p ? `Version ${p.version}` : "Not saved yet"}</span>
+          <button type="button" onClick={() => importDialog.current?.showModal()}>
+            Import profile
+          </button>
+          {p ? <button className="danger" type="button" disabled={remove.isPending} onClick={() => {
+            if (confirm("Delete your academic profile and its reusable application context? This cannot be undone.")) remove.mutate();
+          }}>{remove.isPending ? "Deleting…" : "Delete profile"}</button> : null}
+        </div>
       </header>
+      <dialog ref={importDialog} className="dialog profile-import-dialog">
+        <form method="dialog" className="settings-form" onSubmit={(event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          importProfile.mutate({
+            expected_version: p?.version ?? null,
+            applicant_type: String(data.get("applicant_type")) || null,
+            intended_study_level: String(data.get("intended_study_level")) || null,
+            target_countries: String(data.get("target_countries")).split(",").map((item) => item.trim()).filter(Boolean),
+            sections: { education: { summary: String(data.get("education_summary")) } },
+            overwrite_existing: data.get("overwrite_existing") === "on",
+          });
+        }}>
+          <h2>Import academic profile</h2>
+          <p>Review the structured information before importing. Existing sections are preserved unless overwrite is selected.</p>
+          <label>Applicant category to import<input name="applicant_type" /></label>
+          <label>Study level to import<input name="intended_study_level" /></label>
+          <label>Country list to import<input name="target_countries" placeholder="Portugal, United Kingdom" /></label>
+          <label>Academic background to import<textarea name="education_summary" rows={5} /></label>
+          <label className="check"><input name="overwrite_existing" type="checkbox" />Overwrite matching existing fields</label>
+          {importProfile.isError ? <p className="form-error" role="alert">The profile could not be imported. Review the fields and try again.</p> : null}
+          <div className="dialog-actions"><button type="button" onClick={() => importDialog.current?.close()}>Cancel</button><button className="primary" disabled={importProfile.isPending}>{importProfile.isPending ? "Importing…" : "Import profile"}</button></div>
+        </form>
+      </dialog>
       <form className="profile-layout" onSubmit={submit}>
         <main>
           <section>
@@ -164,11 +237,11 @@ export function AcademicProfilePage() {
               </p>
             ) : versions.data?.length ? (
               versions.data.map((x) => (
-                <div className="version-row" key={x.id}>
+                <button className="version-row" type="button" key={x.id} onClick={() => setSelectedVersion(x.id)} aria-pressed={selectedVersion === x.id}>
                   <strong>Version {x.version_number}</strong>
                   <span>{formatVersionDate(x.created_at)}</span>
                   <small>{x.reason}</small>
-                </div>
+                </button>
               ))
             ) : (
               <p className="muted">No earlier versions yet.</p>
@@ -178,13 +251,18 @@ export function AcademicProfilePage() {
               Your first version will appear here after you save.
             </p>
           )}
-          <p className="muted">
-            History is read-only because the API has no restore endpoint.
-          </p>
+          {version.data ? <section className="version-detail"><h3>Version {version.data.version_number}</h3><p>{version.data.reason}</p><dl>{Object.entries(version.data.snapshot).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key.replaceAll("_", " ")}</dt><dd>{summary(value)}</dd></div>)}</dl><button type="button" disabled={restore.isPending} onClick={() => {
+            if (confirm(`Restore version ${version.data.version_number}? Your current profile remains in version history.`)) restore.mutate(version.data.id);
+          }}>{restore.isPending ? "Restoring…" : "Restore this version"}</button></section> : null}
         </aside>
       </form>
     </div>
   );
+}
+function summary(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.join(", ");
+  return value && typeof value === "object" ? "Structured information saved" : "Not provided";
 }
 function sectionSummary(value: unknown) {
   if (typeof value === "string") return value;

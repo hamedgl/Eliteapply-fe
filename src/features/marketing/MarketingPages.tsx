@@ -23,8 +23,10 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import type { components } from "../../generated/api/schema";
+import { billingApi } from "../../lib/api/billing";
 import { MarketingShell } from "./MarketingShell";
 import {
   featurePages,
@@ -41,7 +43,7 @@ const coreMetadata: Record<string, readonly [string, string]> = {
   "/features": ["Scholarship application workspace features", "Explore EliteApply's application tracker, writing, document, reference and readiness workflows for students."],
   "/how-it-works": ["How EliteApply works", "See how EliteApply turns a scholarship opportunity into a clear plan, connected preparation workspace and final review."],
   "/for-students": ["EliteApply for scholarship applicants", "A flexible scholarship application workspace for undergraduate, master's, PhD, international and fellowship applicants."],
-  "/pricing": ["EliteApply pricing", "EliteApply is free to start during early access. No credit card is required and paid plans are not currently available."],
+  "/pricing": ["EliteApply pricing", "Review current EliteApply access and any paid plans made available by the server-owned plan catalogue."],
   "/security": ["Security and account controls", "Understand the account, session, export, deletion and transparency controls currently implemented in EliteApply."],
   "/about": ["About EliteApply", "Why EliteApply is building a calm, student-controlled workspace for demanding scholarship applications."],
   "/contact": ["Contact EliteApply", "Contact EliteApply for product support, accessibility feedback, privacy questions or general enquiries."],
@@ -291,8 +293,19 @@ function ForStudentsPage() {
 }
 
 function PricingPage() {
+  const [plans, setPlans] = useState<components["schemas"]["PlanOption"][] | null>(null);
+  const [plansUnavailable, setPlansUnavailable] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void billingApi.plans().then((items) => {
+      if (active) setPlans(items);
+    }).catch(() => {
+      if (active) setPlansUnavailable(true);
+    });
+    return () => { active = false; };
+  }, []);
   const included = ["Multiple application workspaces", "Requirements and deadline tracking", "Personal statement workspace", "Document and evidence organisation", "Reference tracking", "Submission readiness review", "Data export and account deletion controls"];
-  return <><section className="mkt2-pricing-hero"><Breadcrumbs current="Pricing" /><h1>Start organising your applications for free.</h1><p>EliteApply is free to start during early access. No credit card is required, and paid plans are not currently available.</p><MarketingActions secondaryTo="/features" secondaryLabel="See what is included" /></section><section className="mkt2-pricing-body"><article><header><span>Current access</span><h2>Everything currently available in EliteApply.</h2><p>Use the workspace without entering payment details.</p></header><ul>{included.map((item) => <li key={item}><CheckCircle2 aria-hidden="true" />{item}</li>)}</ul><Link className="landing-button" to="/register" reloadDocument>Start free <ArrowRight aria-hidden="true" /></Link></article><aside><h2>What if pricing changes later?</h2><p>This page will explain any paid offer before a purchase is possible. EliteApply does not currently include checkout or billing controls.</p><dl><div><dt>Credit card today</dt><dd>Not required or requested</dd></div><div><dt>Paid plan today</dt><dd>Not available</dd></div><div><dt>Existing work</dt><dd>Export and account-deletion controls are available in account settings</dd></div></dl><Link to="/security">Review current account and data controls</Link></aside></section><FaqBlock items={[["Will I be charged now?", "No. Billing is not implemented and there is no paid plan to purchase."], ["Do I need a credit card?", "No. Registration does not ask for payment details."], ["What happens if a paid plan is introduced?", "The current offer would need to be explained on this page before a purchase could be made."], ["Can I export or delete my data?", "The authenticated account settings include export and account-deletion controls."]]} /><ClosingCta title="Start with one application—no credit card required." /></>;
+  return <><section className="mkt2-pricing-hero"><Breadcrumbs current="Pricing" /><h1>Start organising your applications for free.</h1><p>Free access remains available. When paid plans are enabled, availability comes directly from EliteApply's server-owned catalogue and checkout shows the current price before payment.</p><MarketingActions secondaryTo="/features" secondaryLabel="See what is included" /></section><section className="mkt2-pricing-body"><article><header><span>Current access</span><h2>Everything currently available in EliteApply.</h2><p>Start without entering payment details.</p></header><ul>{included.map((item) => <li key={item}><CheckCircle2 aria-hidden="true" />{item}</li>)}</ul><Link className="landing-button" to="/register" reloadDocument>Start free <ArrowRight aria-hidden="true" /></Link></article><aside><h2>Paid plan availability</h2>{plansUnavailable?<p role="alert">The plan catalogue is temporarily unavailable. Free access is unaffected.</p>:plans===null?<p role="status">Checking available plans…</p>:plans.length?<><p>{plans.length} paid {plans.length===1?"option is":"options are"} currently available. Sign in to review secure checkout.</p><dl>{plans.map((plan)=><div key={plan.key}><dt>{plan.plan === "pro" ? "Pro" : "Teams"} · {plan.interval}</dt><dd>{new Intl.NumberFormat().format(plan.token_limit)} AI tokens per period</dd></div>)}</dl><Link to="/login">Sign in to billing & usage</Link></>:<p>No paid plan is currently enabled in this environment. Free access remains available.</p>}<p>Plan prices are intentionally not shown here because the current catalogue does not provide price or currency metadata.</p><Link to="/security">Review current account and data controls</Link></aside></section><FaqBlock items={[["Will I be charged when I register?", "No. Registration starts with free access and does not require payment details."], ["Where will I see a paid price?", "If a paid plan is available, secure checkout shows the current price and currency before payment."], ["How is plan availability decided?", "The backend returns only plans configured for the current environment; the frontend does not unlock plans from local state."], ["Can I export or delete my data?", "The authenticated account settings include export and account-deletion controls."]]} /><ClosingCta title="Start with one application—no credit card required." /></>;
 }
 
 function SecurityPage() {

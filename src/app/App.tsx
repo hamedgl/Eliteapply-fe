@@ -38,6 +38,11 @@ const AppShell = lazy(() =>
       default: x.PrivacySettings,
     })),
   ),
+  Billing = lazy(() =>
+    import("../features/billing/BillingPage").then((x) => ({
+      default: x.BillingPage,
+    })),
+  ),
   Applications = lazy(() =>
     import("../features/applications/ApplicationsPage").then((x) => ({
       default: x.ApplicationsPage,
@@ -58,6 +63,11 @@ const AppShell = lazy(() =>
       default: x.DocumentsPage,
     })),
   ),
+  DocumentDetail = lazy(() =>
+    import("../features/documents/DocumentsPage").then((x) => ({
+      default: x.DocumentDetailPage,
+    })),
+  ),
   OpportunityImport = lazy(() =>
     import("../features/intelligence/ImportPage").then((x) => ({
       default: x.ImportPage,
@@ -66,6 +76,21 @@ const AppShell = lazy(() =>
   Catalogue = lazy(() =>
     import("../features/catalogue/CataloguePage").then((x) => ({
       default: x.CataloguePage,
+    })),
+  ),
+  Discovery = lazy(() =>
+    import("../features/catalogue/DiscoveryPage").then((x) => ({
+      default: x.DiscoveryPage,
+    })),
+  ),
+  AcceptInvitation = lazy(() =>
+    import("../features/collaboration/CollaborationRoutes").then((x) => ({
+      default: x.AcceptCollaboratorInvitation,
+    })),
+  ),
+  SharedWriting = lazy(() =>
+    import("../features/collaboration/CollaborationRoutes").then((x) => ({
+      default: x.SharedWritingPage,
     })),
   ),
   WritingLibrary = lazy(() =>
@@ -98,6 +123,11 @@ const AppShell = lazy(() =>
       default: x.NewReference,
     })),
   ),
+  ReferenceDetail = lazy(() =>
+    import("../features/references/ReferencePages").then((x) => ({
+      default: x.ReferenceDetail,
+    })),
+  ),
   Referee = lazy(() =>
     import("../features/references/ReferencePages").then((x) => ({
       default: x.RefereePage,
@@ -108,10 +138,22 @@ const AppShell = lazy(() =>
       default: x.VerifyReference,
     })),
   ),
-  Interview = lazy(() =>
+  Interviews = lazy(() =>
     import("../features/interviews/InterviewPage").then((x) => ({
-      default: x.InterviewPage,
+      default: x.InterviewsPage,
     })),
+  ),
+  NewInterview = lazy(() =>
+    import("../features/interviews/InterviewPage").then((x) => ({ default: x.NewInterviewPage })),
+  ),
+  Interview = lazy(() =>
+    import("../features/interviews/InterviewPage").then((x) => ({ default: x.InterviewPage })),
+  ),
+  Notifications = lazy(() =>
+    import("../features/notifications/NotificationsPage").then((x) => ({ default: x.NotificationsPage })),
+  ),
+  Reminders = lazy(() =>
+    import("../features/reminders/RemindersPage").then((x) => ({ default: x.RemindersPage })),
   ),
   AdminLaunch = lazy(() =>
     import("../features/admin/AdminLaunchPage").then((x) => ({
@@ -261,6 +303,15 @@ const router = createBrowserRouter([
   { path: "/terms", element: load(<MarketingPage />) },
   { path: "/privacy", element: load(<MarketingPage />) },
   { path: "/accessibility", element: load(<MarketingPage />) },
+  { path: "/share/:token", element: load(<SharedWriting />) },
+  {
+    path: "/collaborator-invitations/:token/accept",
+    element: load(<AcceptInvitation />),
+  },
+  {
+    path: "/collaborator-invitations/accept",
+    element: load(<AcceptInvitation />),
+  },
   { path: "/referee/academic-reference/:token", element: load(<Referee />) },
   {
     path: "/verify/academic-reference/:publicId",
@@ -279,18 +330,28 @@ const router = createBrowserRouter([
       { path: "applications/import", element: load(<OpportunityImport />) },
       { path: "academic-profile", element: load(<AcademicProfile />) },
       { path: "documents", element: load(<Documents />) },
+      { path: "documents/:id", element: load(<DocumentDetail />) },
       { path: "catalogue", element: load(<Catalogue />) },
+      { path: "catalogue/:kind/:id", element: load(<Catalogue />) },
+      { path: "discovery", element: load(<Discovery />) },
       { path: "writing", element: load(<WritingLibrary />) },
       { path: "writing/new", element: load(<NewWriting />) },
       { path: "writing/:id", element: load(<WritingEditor />) },
       { path: "stories", element: load(<Stories />) },
       { path: "references", element: load(<References />) },
       { path: "references/new", element: load(<NewReference />) },
-      { path: "interviews/new", element: load(<Interview />) },
+      { path: "references/:id", element: load(<ReferenceDetail />) },
+      { path: "interviews", element: load(<Interviews />) },
+      { path: "interviews/new", element: load(<NewInterview />) },
+      { path: "interviews/:id", element: load(<Interview />) },
+      { path: "notifications", element: load(<Notifications />) },
+      { path: "reminders", element: load(<Reminders />) },
       { path: "admin/launch", element: load(<AdminLaunch />) },
       { path: "settings/profile", element: load(<ProfileSettings />) },
       { path: "settings/security", element: load(<SecuritySettings />) },
       { path: "settings/privacy", element: load(<PrivacySettings />) },
+      { path: "settings/billing", element: load(<Billing />) },
+      { path: "settings/billing/:result", element: load(<Billing />) },
       { path: "unavailable", element: <Unavailable /> },
     ],
   },

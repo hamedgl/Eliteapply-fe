@@ -48,6 +48,84 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith("/users/me")) return route.fulfill({ json: user });
     if (url.endsWith("/platform/capabilities"))
       return route.fulfill({ json: [] });
+    if (new URL(url).pathname.endsWith("/catalogue/institutions"))
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: "00000000-0000-4000-8000-000000000021",
+              name: "University of Oxford",
+              country_code: "GB",
+              created_by_user_id: null,
+              source_provenance: { source: "official" },
+              last_verified_at: "2026-06-01T00:00:00Z",
+              created_at: "2026-01-01T00:00:00Z",
+              visibility: "canonical",
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+          total: 1,
+        },
+      });
+    if (new URL(url).pathname.endsWith("/catalogue/programmes"))
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: "00000000-0000-4000-8000-000000000031",
+              institution_id: "00000000-0000-4000-8000-000000000021",
+              name: "MSc Computer Science",
+              created_by_user_id: null,
+              visibility: "canonical",
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+          total: 1,
+        },
+      });
+    if (new URL(url).pathname.endsWith("/catalogue/scholarships"))
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: "00000000-0000-4000-8000-000000000032",
+              name: "Rhodes Scholarship",
+              provider_name: "Rhodes Trust",
+              created_by_user_id: null,
+              visibility: "canonical",
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+          total: 1,
+        },
+      });
+    if (new URL(url).pathname.endsWith("/saved-searches"))
+      return route.fulfill({ json: [] });
+    if (
+      new URL(url).pathname.endsWith(
+        "/application-intelligence/recommendations",
+      )
+    )
+      return route.fulfill({
+        json: {
+          items: [],
+          disclaimer:
+            "Recommendations organize relevant options and do not predict admission.",
+        },
+      });
+    if (new URL(url).pathname.includes("/share/"))
+      return route.fulfill({
+        json: {
+          title: "Research motivation statement",
+          html: "<h1>Research motivation</h1><p>Safe preview</p>",
+          scope: "comment",
+          word_count: 2,
+          character_count: 17,
+        },
+      });
     if (url.endsWith("/applications/board"))
       return route.fulfill({
         json: {
@@ -78,8 +156,93 @@ test.beforeEach(async ({ page }) => {
           total: 3,
         },
       });
+    if (new URL(url).pathname.endsWith("/applications"))
+      return route.fulfill({
+        json: {
+          items: [
+            app(
+              "00000000-0000-4000-8000-000000000013",
+              "MSc Computer Science",
+              "preparing",
+            ),
+          ],
+          next_cursor: null,
+          has_more: false,
+          total: 1,
+        },
+      });
     return route.fulfill({ json: {} });
   });
+});
+
+test("catalogue distinguishes canonical records and exposes discovery", async ({
+  page,
+}) => {
+  await page.goto("/app/catalogue");
+  await expect(
+    page.getByRole("heading", { name: "Academic catalogue" }),
+  ).toBeVisible();
+  await expect(page.getByText("University of Oxford")).toBeVisible();
+  await expect(page.getByText("Canonical", { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-phase2-catalogue.png",
+    fullPage: true,
+  });
+  await page.getByRole("link", { name: "Saved searches & matches" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Saved searches & matches" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/How to read this:.*do not predict admission/i),
+  ).toBeVisible();
+});
+
+test("public writing share is noindex and comment-capable", async ({
+  page,
+}) => {
+  await page.goto("/share/safe-token");
+  await expect(
+    page.getByRole("heading", { name: "Research motivation statement" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Leave a comment" }),
+  ).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex,nofollow",
+  );
+  await expect(page.locator("iframe")).toHaveAttribute("sandbox", "");
+  await page.screenshot({
+    path: "/tmp/eliteapply-phase2-share.png",
+    fullPage: true,
+  });
+});
+
+test("scholarship applications require and submit a catalogue scholarship", async ({
+  page,
+}) => {
+  let submitted: Record<string, unknown> | null = null;
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      new URL(request.url()).pathname.endsWith("/applications")
+    )
+      submitted = request.postDataJSON() as Record<string, unknown>;
+  });
+  await page.goto("/app/applications");
+  await page.getByRole("button", { name: "Add application" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add application" });
+  await dialog.getByLabel("Title").fill("Rhodes 2027");
+  await dialog.getByLabel("Type").selectOption("scholarship");
+  await expect(dialog.getByText("Scholarship opportunity")).toBeVisible();
+  await dialog
+    .locator('select[name="scholarship_id"]')
+    .selectOption({ label: "Rhodes Scholarship — Rhodes Trust" });
+  await dialog.getByRole("button", { name: "Create application" }).click();
+  await expect.poll(() => submitted?.scholarship_id).toBe(
+    "00000000-0000-4000-8000-000000000032",
+  );
+  expect(submitted?.programme_id).toBeNull();
 });
 test("board is keyboard operable and responsive", async ({ page }) => {
   await page.goto("/app/applications");

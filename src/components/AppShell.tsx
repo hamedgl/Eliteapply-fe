@@ -1,20 +1,28 @@
 import {
   BookOpen,
+  Compass,
   FileText,
   FolderKanban,
   GraduationCap,
   LayoutDashboard,
+  Library,
   LogOut,
   Menu,
   Mic2,
+  Bell,
+  CalendarClock,
+  Search,
   Settings,
   Users,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authApi } from "../lib/api/auth";
 import { useSession } from "../lib/auth/session";
+import { notificationsApi } from "../lib/api/phase3";
+import { queryKeys } from "../lib/api/queryKeys";
 
 const navigationGroups = [
   {
@@ -22,16 +30,20 @@ const navigationGroups = [
     items: [
       ["/app/dashboard", "Dashboard", LayoutDashboard],
       ["/app/applications", "Applications", FolderKanban],
+      ["/app/catalogue", "Catalogue", Compass],
+      ["/app/discovery", "Saved searches", Search],
     ],
   },
   {
     label: "Prepare",
     items: [
       ["/app/writing", "Writing Studio", BookOpen],
+      ["/app/stories", "Story Bank", Library],
       ["/app/academic-profile", "Academic Profile", GraduationCap],
       ["/app/documents", "Documents", FileText],
       ["/app/references", "References", Users],
-      ["/app/interviews/new", "Interview Practice", Mic2],
+      ["/app/interviews", "Interview Practice", Mic2],
+      ["/app/reminders", "Reminders", CalendarClock],
     ],
   },
   {
@@ -48,6 +60,13 @@ export function AppShell() {
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const unread = useQuery({ queryKey: queryKeys.unreadNotifications, queryFn: notificationsApi.unreadCount, refetchInterval: document.hidden ? false : 60_000 });
+
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="robots"]') ?? document.head.appendChild(document.createElement("meta"));
+    const previous = meta.content; meta.name = "robots"; meta.content = "noindex,nofollow";
+    return () => { meta.content = previous; };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -97,6 +116,7 @@ export function AppShell() {
           <span aria-hidden="true">E</span>
           EliteApply
         </NavLink>
+        <NavLink className="mobile-notifications" to="/app/notifications" aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}><Bell aria-hidden="true" />{unread.data?.unread_count ? <span>{unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}</span> : null}</NavLink>
         <button
           ref={menuButtonRef}
           className="mobile-menu"
@@ -141,6 +161,7 @@ export function AppShell() {
         </div>
 
         <nav aria-label="Primary navigation">
+          <NavLink className="notification-shortcut" to="/app/notifications" onClick={() => setOpen(false)}><Bell aria-hidden="true" /><span>Notifications</span>{unread.data?.unread_count ? <strong>{unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}</strong> : null}</NavLink>
           {navigationGroups.map((group) => (
             <div className="nav-group" key={group.label}>
               <p>{group.label}</p>

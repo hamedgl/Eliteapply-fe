@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import closingPathIllustration from "../../assets/illustrations/application-path.png";
+import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.png";
 import { MarketingShell } from "../marketing/MarketingShell";
 
 const guideSteps = [
@@ -146,10 +148,26 @@ const heroViews = [
 ] as const;
 type HeroView = (typeof heroViews)[number]["id"];
 const previewConnections = [
-  [Folder, "Applications", "Keep opportunities, deadlines and progress in one place."],
-  [FileText, "Evidence", "Connect documents and proof to the requirements they support."],
-  [PenLine, "Writing", "Shape drafts with the right prompt and evidence in view."],
-  [Users, "References", "Track requests, due dates and follow-up without exposing confidential content."],
+  [
+    Folder,
+    "Applications",
+    "Keep opportunities, deadlines and progress in one place.",
+  ],
+  [
+    FileText,
+    "Evidence",
+    "Connect documents and proof to the requirements they support.",
+  ],
+  [
+    PenLine,
+    "Writing",
+    "Shape drafts with the right prompt and evidence in view.",
+  ],
+  [
+    Users,
+    "References",
+    "Track requests, due dates and follow-up without exposing confidential content.",
+  ],
 ] as const;
 
 type HeroWorkspaceTask = {
@@ -283,9 +301,7 @@ function createInitialHeroTaskState() {
   return Object.fromEntries(
     heroWorkspaceApplications.map((application) => [
       application.id,
-      Object.fromEntries(
-        application.tasks.map((task) => [task.id, task.done]),
-      ),
+      Object.fromEntries(application.tasks.map((task) => [task.id, task.done])),
     ]),
   ) as Record<string, Record<string, boolean>>;
 }
@@ -400,19 +416,34 @@ export function LandingPage() {
               <Link to="/product-preview" onClick={() => setMenuOpen(false)}>
                 Interactive product preview
               </Link>
-              <Link to="/features/scholarship-application-tracker" onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/features/scholarship-application-tracker"
+                onClick={() => setMenuOpen(false)}
+              >
                 Application tracker
               </Link>
-              <Link to="/features/personal-statement-workspace" onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/features/personal-statement-workspace"
+                onClick={() => setMenuOpen(false)}
+              >
                 Writing workspace
               </Link>
-              <Link to="/features/document-organiser" onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/features/document-organiser"
+                onClick={() => setMenuOpen(false)}
+              >
                 Documents and evidence
               </Link>
-              <Link to="/features/reference-tracking" onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/features/reference-tracking"
+                onClick={() => setMenuOpen(false)}
+              >
                 Reference tracking
               </Link>
-              <Link to="/features/submission-readiness" onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/features/submission-readiness"
+                onClick={() => setMenuOpen(false)}
+              >
                 Readiness review
               </Link>
             </div>
@@ -458,9 +489,7 @@ export function LandingPage() {
       <section className="phase-one-hero" id="main-content" tabIndex={-1}>
         <div className="phase-one-hero-copy">
           <p className="hero-category">Scholarship application workspace</p>
-          <h1>
-            Plan, write and submit stronger scholarship applications.
-          </h1>
+          <h1>Plan, write and submit stronger scholarship applications.</h1>
           <p>
             Track deadlines, organise requirements, shape personal statements,
             manage evidence and references, and always know the next step—from
@@ -487,17 +516,32 @@ export function LandingPage() {
 
       <ProblemOutcome />
 
-      <section className="capabilities" id="product" aria-labelledby="capabilities-title">
+      <section
+        className="capabilities"
+        id="product"
+        aria-labelledby="capabilities-title"
+      >
         <header className="phase-one-section-heading capability-intro">
-          <p className="section-context">One connected workspace</p>
-          <h2 id="capabilities-title">
-            The structure behind a stronger application process.
-          </h2>
-          <p>
-            Each part of your application stays connected, so deadlines,
-            evidence, writing and people do not become separate systems to
-            maintain.
-          </p>
+          <div>
+            <p className="section-context">One connected workspace</p>
+            <h2 id="capabilities-title">
+              The structure behind a stronger application process.
+            </h2>
+            <p>
+              Each part of your application stays connected, so deadlines,
+              evidence, writing and people do not become separate systems to
+              maintain.
+            </p>
+          </div>
+          <img
+            src={connectedWorkspaceIllustration}
+            alt=""
+            width="1080"
+            height="1080"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+          />
         </header>
         <CapabilitySection
           id="application-tracker"
@@ -571,7 +615,10 @@ export function LandingPage() {
       <section ref={guidedRef} className="phase-one-workflow" id="how-it-works">
         <header className="phase-one-section-heading workflow-heading">
           <p className="section-context">How it works</p>
-          <h2>From opportunity to final check, keep the whole application connected.</h2>
+          <h2>
+            From opportunity to final check, keep the whole application
+            connected.
+          </h2>
           <p>
             Four concrete stages turn a complex application into a plan you can
             understand, review and own.
@@ -594,7 +641,11 @@ export function LandingPage() {
                     tourPaused ? "Play product tour" : "Pause product tour"
                   }
                 >
-                  {tourPaused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+                  {tourPaused ? (
+                    <Play aria-hidden="true" />
+                  ) : (
+                    <Pause aria-hidden="true" />
+                  )}
                   {tourPaused ? "Play" : "Pause"}
                 </button>
               )}
@@ -606,9 +657,15 @@ export function LandingPage() {
             >
               <i />
             </span>
-            <ol className="guide-steps" aria-label="EliteApply application workflow">
+            <ol
+              className="guide-steps"
+              aria-label="EliteApply application workflow"
+            >
               {guideSteps.map((step, index) => (
-                <li className={index === activeGuide ? "active" : ""} key={step.number}>
+                <li
+                  className={index === activeGuide ? "active" : ""}
+                  key={step.number}
+                >
                   <button
                     type="button"
                     className="guide-step-button"
@@ -662,9 +719,14 @@ export function LandingPage() {
           </p>
         </div>
         <div className="closing-route" aria-hidden="true">
-          <span />
-          <i />
-          <b />
+          <img
+            src={closingPathIllustration}
+            alt=""
+            width="1080"
+            height="1080"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
       </section>
 
@@ -680,10 +742,12 @@ export function ProductPreviewPage() {
 
   useEffect(() => {
     document.title = "Interactive product preview | EliteApply";
-    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
-      "content",
-      "Explore a realistic EliteApply sample workspace and see how applications, evidence, writing and references stay connected before signing up.",
-    );
+    document
+      .querySelector<HTMLMetaElement>('meta[name="description"]')
+      ?.setAttribute(
+        "content",
+        "Explore a realistic EliteApply sample workspace and see how applications, evidence, writing and references stay connected before signing up.",
+      );
   }, []);
 
   useEffect(() => {
@@ -736,15 +800,25 @@ export function ProductPreviewPage() {
         <div className="workflow-layout">
           <div className="workflow-controller">
             <div className="tour-meta">
-              <span aria-live="polite">Stage {activeGuide + 1} of {guideSteps.length}</span>
-              {reduceMotion ? <span>Manual tour</span> : (
+              <span aria-live="polite">
+                Stage {activeGuide + 1} of {guideSteps.length}
+              </span>
+              {reduceMotion ? (
+                <span>Manual tour</span>
+              ) : (
                 <button
                   type="button"
                   className="tour-toggle"
                   onClick={() => setPaused((value) => !value)}
-                  aria-label={paused ? "Play product tour" : "Pause product tour"}
+                  aria-label={
+                    paused ? "Play product tour" : "Pause product tour"
+                  }
                 >
-                  {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+                  {paused ? (
+                    <Play aria-hidden="true" />
+                  ) : (
+                    <Pause aria-hidden="true" />
+                  )}
                   {paused ? "Play" : "Pause"}
                 </button>
               )}
@@ -753,10 +827,18 @@ export function ProductPreviewPage() {
               className={`tour-progress ${!paused && !reduceMotion ? "running" : ""}`}
               aria-hidden="true"
               key={`${activeGuide}-${paused}`}
-            ><i /></span>
-            <ol className="guide-steps" aria-label="EliteApply application workflow">
+            >
+              <i />
+            </span>
+            <ol
+              className="guide-steps"
+              aria-label="EliteApply application workflow"
+            >
               {guideSteps.map((step, index) => (
-                <li className={index === activeGuide ? "active" : ""} key={step.number}>
+                <li
+                  className={index === activeGuide ? "active" : ""}
+                  key={step.number}
+                >
                   <button
                     type="button"
                     className="guide-step-button"
@@ -765,7 +847,10 @@ export function ProductPreviewPage() {
                     onClick={() => setActiveGuide(index)}
                   >
                     <span className="guide-step-number">{index + 1}</span>
-                    <span><strong>{step.label}</strong><small>{step.description}</small></span>
+                    <span>
+                      <strong>{step.label}</strong>
+                      <small>{step.description}</small>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -779,20 +864,31 @@ export function ProductPreviewPage() {
         </div>
       </section>
 
-      <section className="preview-connections" aria-labelledby="connections-title">
+      <section
+        className="preview-connections"
+        aria-labelledby="connections-title"
+      >
         <h2 id="connections-title">Everything stays connected.</h2>
         <div>
           {previewConnections.map(([Icon, title, copy]) => (
             <article key={title}>
-              <span aria-hidden="true"><Icon /></span>
-              <div><h3>{title}</h3><p>{copy}</p></div>
+              <span aria-hidden="true">
+                <Icon />
+              </span>
+              <div>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </div>
             </article>
           ))}
         </div>
       </section>
 
       <section className="preview-closing">
-        <div><h2>Ready to build your own workspace?</h2><p>Create your workspace and move from plans to progress.</p></div>
+        <div>
+          <h2>Ready to build your own workspace?</h2>
+          <p>Create your workspace and move from plans to progress.</p>
+        </div>
         <Link className="landing-button" to="/register" reloadDocument>
           Start free <ArrowRight aria-hidden="true" />
         </Link>
@@ -857,7 +953,9 @@ function HeroFocusPreview() {
     >
       <header>
         <div>
-          <span className="preview-mark" aria-hidden="true">E</span>
+          <span className="preview-mark" aria-hidden="true">
+            E
+          </span>
           <div>
             <small>Current application</small>
             <strong>{currentApplication.programme}</strong>
@@ -963,8 +1061,14 @@ function HeroFocusPreview() {
         ) : null}
       </div>
       <footer aria-live="polite">
-        <span><Check aria-hidden="true" /> {requirementsCovered} requirements covered</span>
-        <span>{attentionCount} {attentionCount === 1 ? "item needs" : "items need"} attention</span>
+        <span>
+          <Check aria-hidden="true" /> {requirementsCovered} requirements
+          covered
+        </span>
+        <span>
+          {attentionCount} {attentionCount === 1 ? "item needs" : "items need"}{" "}
+          attention
+        </span>
       </footer>
     </section>
   );
@@ -978,7 +1082,10 @@ function CredibilityStrip() {
     [Folder, "Designed for documents, evidence and references"],
   ] as const;
   return (
-    <section className="credibility-strip" aria-label="EliteApply product principles">
+    <section
+      className="credibility-strip"
+      aria-label="EliteApply product principles"
+    >
       {points.map(([Icon, text]) => (
         <div key={text}>
           <Icon aria-hidden="true" />
@@ -1011,7 +1118,9 @@ function ProblemOutcome() {
     <section className="problem-outcome" aria-labelledby="problem-title">
       <header className="problem-heading">
         <p className="section-context">From scattered to structured</p>
-        <h2 id="problem-title">Scholarship applications become difficult long before the deadline.</h2>
+        <h2 id="problem-title">
+          Scholarship applications become difficult long before the deadline.
+        </h2>
         <p>
           The pressure usually comes from disconnected details, repeated work
           and unclear next steps—not from a lack of effort.
@@ -1020,19 +1129,40 @@ function ProblemOutcome() {
       <div className="comparison-flow">
         <div className="comparison-column without-column">
           <h3>Without EliteApply</h3>
-          <ul>{withoutItems.map((item) => <li key={item}><X aria-hidden="true" />{item}</li>)}</ul>
+          <ul>
+            {withoutItems.map((item) => (
+              <li key={item}>
+                <X aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="comparison-arrow" aria-hidden="true"><ArrowRight /></div>
+        <div className="comparison-arrow" aria-hidden="true">
+          <ArrowRight />
+        </div>
         <div className="comparison-column with-column">
           <h3>With EliteApply</h3>
-          <ul>{withItems.map((item) => <li key={item}><Check aria-hidden="true" />{item}</li>)}</ul>
+          <ul>
+            {withItems.map((item) => (
+              <li key={item}>
+                <Check aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
   );
 }
 
-type CapabilityPreview = "tracker" | "writing" | "documents" | "references" | "readiness";
+type CapabilityPreview =
+  | "tracker"
+  | "writing"
+  | "documents"
+  | "references"
+  | "readiness";
 
 function CapabilitySection({
   id,
@@ -1054,13 +1184,25 @@ function CapabilitySection({
   reverse?: boolean;
 }) {
   return (
-    <article className={`capability-section ${reverse ? "reverse" : ""}`} id={id}>
+    <article
+      className={`capability-section ${reverse ? "reverse" : ""}`}
+      id={id}
+    >
       <div className="capability-copy">
         <p className="section-context">{label}</p>
         <h3>{title}</h3>
         <p>{description}</p>
-        <ul>{points.map((point) => <li key={point}><Check aria-hidden="true" />{point}</li>)}</ul>
-        <Link className="capability-link" to={route}>Explore this capability <ArrowRight aria-hidden="true" /></Link>
+        <ul>
+          {points.map((point) => (
+            <li key={point}>
+              <Check aria-hidden="true" />
+              {point}
+            </li>
+          ))}
+        </ul>
+        <Link className="capability-link" to={route}>
+          Explore this capability <ArrowRight aria-hidden="true" />
+        </Link>
       </div>
       <CapabilityProductPreview kind={preview} />
     </article>
@@ -1075,10 +1217,19 @@ function CapabilityProductPreview({ kind }: { kind: CapabilityPreview }) {
   return <ReadinessCapabilityPreview />;
 }
 
-function PreviewFrame({ title, children }: { title: string; children: React.ReactNode }) {
+function PreviewFrame({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="capability-preview">
-      <header><span>{title}</span><small>Sample workspace</small></header>
+      <header>
+        <span>{title}</span>
+        <small>Sample workspace</small>
+      </header>
       {children}
     </div>
   );
@@ -1092,10 +1243,45 @@ function TrackerPreview() {
   ];
   return (
     <PreviewFrame title="Applications">
-      <div className="preview-toolbar"><Search aria-hidden="true" /><span>Search applications</span><Filter aria-hidden="true" /></div>
-      <div className="tracker-table" role="table" aria-label="Sample scholarship applications">
-        <div className="tracker-row tracker-head" role="row"><span>Application</span><span>Status</span><span>Deadline</span><span>Progress</span><span>Next action</span></div>
-        {rows.map((row, index) => <div className={`tracker-row ${index === 0 ? "selected" : ""}`} role="row" key={row[0]}>{row.map((cell, cellIndex) => <span role="cell" key={cell}>{cellIndex === 3 ? <><i className="mini-progress"><b style={{ width: cell }} /></i>{cell}</> : cell}</span>)}</div>)}
+      <div className="preview-toolbar">
+        <Search aria-hidden="true" />
+        <span>Search applications</span>
+        <Filter aria-hidden="true" />
+      </div>
+      <div
+        className="tracker-table"
+        role="table"
+        aria-label="Sample scholarship applications"
+      >
+        <div className="tracker-row tracker-head" role="row">
+          <span>Application</span>
+          <span>Status</span>
+          <span>Deadline</span>
+          <span>Progress</span>
+          <span>Next action</span>
+        </div>
+        {rows.map((row, index) => (
+          <div
+            className={`tracker-row ${index === 0 ? "selected" : ""}`}
+            role="row"
+            key={row[0]}
+          >
+            {row.map((cell, cellIndex) => (
+              <span role="cell" key={cell}>
+                {cellIndex === 3 ? (
+                  <>
+                    <i className="mini-progress">
+                      <b style={{ width: cell }} />
+                    </i>
+                    {cell}
+                  </>
+                ) : (
+                  cell
+                )}
+              </span>
+            ))}
+          </div>
+        ))}
       </div>
     </PreviewFrame>
   );
@@ -1109,15 +1295,29 @@ function WritingCapabilityPreview() {
           <small>Prompt</small>
           <strong>Describe a time you created positive change.</strong>
           <div className="draft-block">
-            <span>Your draft</span><small>432 / 750 words</small>
-            <p>I noticed that students in my community needed clearer access to academic opportunities…</p>
+            <span>Your draft</span>
+            <small>432 / 750 words</small>
+            <p>
+              I noticed that students in my community needed clearer access to
+              academic opportunities…
+            </p>
           </div>
         </div>
         <aside>
           <strong>Connected evidence</strong>
-          <span><FileText aria-hidden="true" /> Community research project</span>
-          <span><FileText aria-hidden="true" /> Workshop outcomes</span>
-          <div className="clarity-note"><PenLine aria-hidden="true" /><span><strong>Clarity review</strong>Add one specific outcome to support this point.</span></div>
+          <span>
+            <FileText aria-hidden="true" /> Community research project
+          </span>
+          <span>
+            <FileText aria-hidden="true" /> Workshop outcomes
+          </span>
+          <div className="clarity-note">
+            <PenLine aria-hidden="true" />
+            <span>
+              <strong>Clarity review</strong>Add one specific outcome to support
+              this point.
+            </span>
+          </div>
         </aside>
       </div>
     </PreviewFrame>
@@ -1133,9 +1333,26 @@ function DocumentsCapabilityPreview() {
   return (
     <PreviewFrame title="Documents and evidence">
       <div className="document-preview-list">
-        {rows.map(([name, mapped, status]) => <div key={name}><FileText aria-hidden="true" /><span><strong>{name}</strong><small>Mapped to {mapped}</small></span><em className={status === "Update needed" ? "attention" : ""}>{status}</em></div>)}
+        {rows.map(([name, mapped, status]) => (
+          <div key={name}>
+            <FileText aria-hidden="true" />
+            <span>
+              <strong>{name}</strong>
+              <small>Mapped to {mapped}</small>
+            </span>
+            <em className={status === "Update needed" ? "attention" : ""}>
+              {status}
+            </em>
+          </div>
+        ))}
       </div>
-      <div className="preview-summary"><Folder aria-hidden="true" /><span><strong>Requirement coverage</strong>7 of 9 document requirements connected</span></div>
+      <div className="preview-summary">
+        <Folder aria-hidden="true" />
+        <span>
+          <strong>Requirement coverage</strong>7 of 9 document requirements
+          connected
+        </span>
+      </div>
     </PreviewFrame>
   );
 }
@@ -1149,9 +1366,24 @@ function ReferencesCapabilityPreview() {
   return (
     <PreviewFrame title="Reference tracking">
       <div className="reference-preview-list">
-        {rows.map(([name, requirement, status, due]) => <div key={name}><span><strong>{name}</strong><small>{requirement}</small></span><em data-status={status}>{status}</em><time>{due}</time></div>)}
+        {rows.map(([name, requirement, status, due]) => (
+          <div key={name}>
+            <span>
+              <strong>{name}</strong>
+              <small>{requirement}</small>
+            </span>
+            <em data-status={status}>{status}</em>
+            <time>{due}</time>
+          </div>
+        ))}
       </div>
-      <div className="preview-summary"><Users aria-hidden="true" /><span><strong>Shared context stays visible</strong>Prompt, deadline and supporting notes remain connected.</span></div>
+      <div className="preview-summary">
+        <Users aria-hidden="true" />
+        <span>
+          <strong>Shared context stays visible</strong>Prompt, deadline and
+          supporting notes remain connected.
+        </span>
+      </div>
     </PreviewFrame>
   );
 }
@@ -1166,51 +1398,154 @@ function ReadinessCapabilityPreview() {
   ];
   return (
     <PreviewFrame title="Application readiness">
-      <div className="readiness-overview"><span><strong>72%</strong> ready for final review</span><small>18 days to deadline</small></div>
-      <div className="readiness-list">{rows.map(([area, state, action]) => <div key={area}><span>{area}</span><em>{state}</em><b>{action}</b></div>)}</div>
-      <p className="readiness-disclaimer">Readiness shows what is complete or missing. It does not predict an award decision.</p>
+      <div className="readiness-overview">
+        <span>
+          <strong>72%</strong> ready for final review
+        </span>
+        <small>18 days to deadline</small>
+      </div>
+      <div className="readiness-list">
+        {rows.map(([area, state, action]) => (
+          <div key={area}>
+            <span>{area}</span>
+            <em>{state}</em>
+            <b>{action}</b>
+          </div>
+        ))}
+      </div>
+      <p className="readiness-disclaimer">
+        Readiness shows what is complete or missing. It does not predict an
+        award decision.
+      </p>
     </PreviewFrame>
   );
 }
 
 function StudentUseCases() {
   const cases = [
-    ["Undergraduate scholarships", "Keep first major applications structured while building reusable evidence."],
-    ["Master's scholarships", "Coordinate programme requirements, funding essays and supporting documents."],
-    ["PhD funding", "Connect research proposals, supervisor context, evidence and references."],
-    ["International scholarships", "Keep country-specific documents, deadlines and application details visible."],
-    ["Fellowships and competitive programmes", "Manage multi-stage requirements without splitting the story across tools."],
+    [
+      "Undergraduate scholarships",
+      "Keep first major applications structured while building reusable evidence.",
+    ],
+    [
+      "Master's scholarships",
+      "Coordinate programme requirements, funding essays and supporting documents.",
+    ],
+    [
+      "PhD funding",
+      "Connect research proposals, supervisor context, evidence and references.",
+    ],
+    [
+      "International scholarships",
+      "Keep country-specific documents, deadlines and application details visible.",
+    ],
+    [
+      "Fellowships and competitive programmes",
+      "Manage multi-stage requirements without splitting the story across tools.",
+    ],
   ] as const;
   const applicationAreas = [
-    { label: "Eligibility", detail: "Requirements confirmed", status: "Complete", Icon: ClipboardCheck },
-    { label: "Writing", detail: "Core drafts prepared", status: "Complete", Icon: PenLine },
-    { label: "Evidence", detail: "2 items to connect", status: "In progress", Icon: Link2 },
-    { label: "Documents", detail: "1 document missing", status: "In progress", Icon: Folder },
-    { label: "References", detail: "Requests being tracked", status: "In progress", Icon: Users },
-    { label: "Final checks", detail: "Available when ready", status: "Upcoming", Icon: ListChecks },
+    {
+      label: "Eligibility",
+      detail: "Requirements confirmed",
+      status: "Complete",
+      Icon: ClipboardCheck,
+    },
+    {
+      label: "Writing",
+      detail: "Core drafts prepared",
+      status: "Complete",
+      Icon: PenLine,
+    },
+    {
+      label: "Evidence",
+      detail: "2 items to connect",
+      status: "In progress",
+      Icon: Link2,
+    },
+    {
+      label: "Documents",
+      detail: "1 document missing",
+      status: "In progress",
+      Icon: Folder,
+    },
+    {
+      label: "References",
+      detail: "Requests being tracked",
+      status: "In progress",
+      Icon: Users,
+    },
+    {
+      label: "Final checks",
+      detail: "Available when ready",
+      status: "Upcoming",
+      Icon: ListChecks,
+    },
   ] as const;
   return (
-    <section className="student-use-cases" id="for-students" aria-labelledby="students-title">
+    <section
+      className="student-use-cases"
+      id="for-students"
+      aria-labelledby="students-title"
+    >
       <header className="phase-one-section-heading">
         <p className="section-context">For students</p>
-        <h2 id="students-title">Built for serious applications at every stage.</h2>
-        <p>One flexible structure for different application types—without pretending every process is identical.</p>
+        <h2 id="students-title">
+          Built for serious applications at every stage.
+        </h2>
+        <p>
+          One flexible structure for different application types—without
+          pretending every process is identical.
+        </p>
       </header>
       <div className="use-case-layout">
-        <ol>{cases.map(([title, copy], index) => <li key={title}><span>{index + 1}</span><div><h3>{title}</h3><p>{copy}</p></div><ChevronRight aria-hidden="true" /></li>)}</ol>
-        <div className="application-map" aria-label="Example connected application workspace">
+        <ol>
+          {cases.map(([title, copy], index) => (
+            <li key={title}>
+              <span>{index + 1}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </div>
+              <ChevronRight aria-hidden="true" />
+            </li>
+          ))}
+        </ol>
+        <div
+          className="application-map"
+          aria-label="Example connected application workspace"
+        >
           <div className="map-root">
-            <span className="map-root-icon"><GraduationCap aria-hidden="true" /></span>
-            <span><small>Application workspace</small><strong>One connected application</strong></span>
+            <span className="map-root-icon">
+              <GraduationCap aria-hidden="true" />
+            </span>
+            <span>
+              <small>Application workspace</small>
+              <strong>One connected application</strong>
+            </span>
             <span className="map-summary">5 of 6 areas underway</span>
           </div>
           <div className="map-branches">
             {applicationAreas.map(({ label, detail, status, Icon }) => (
-              <article key={label} className={`map-area map-area-${status.toLowerCase().replace(" ", "-")}`}>
-                <span className="map-area-icon"><Icon aria-hidden="true" /></span>
-                <span className="map-area-copy"><strong>{label}</strong><small>{detail}</small></span>
+              <article
+                key={label}
+                className={`map-area map-area-${status.toLowerCase().replace(" ", "-")}`}
+              >
+                <span className="map-area-icon">
+                  <Icon aria-hidden="true" />
+                </span>
+                <span className="map-area-copy">
+                  <strong>{label}</strong>
+                  <small>{detail}</small>
+                </span>
                 <span className="map-status">
-                  {status === "Complete" ? <CheckCircle2 aria-hidden="true" /> : status === "In progress" ? <Clock3 aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
+                  {status === "Complete" ? (
+                    <CheckCircle2 aria-hidden="true" />
+                  ) : status === "In progress" ? (
+                    <Clock3 aria-hidden="true" />
+                  ) : (
+                    <ChevronRight aria-hidden="true" />
+                  )}
                   {status}
                 </span>
               </article>
@@ -1225,26 +1560,73 @@ function StudentUseCases() {
 const comparisonRows = [
   ["Requirement structure", "Built for", "Partial", "Partial", "Partial"],
   ["Deadline tracking", "Built for", "Partial", "Built for", "Partial"],
-  ["Draft and evidence connection", "Built for", "Partial", "Partial", "Partial"],
+  [
+    "Draft and evidence connection",
+    "Built for",
+    "Partial",
+    "Partial",
+    "Partial",
+  ],
   ["Reference tracking", "Built for", "Partial", "Partial", "Partial"],
-  ["Readiness review", "Built for", "Not purpose-built", "Partial", "Not purpose-built"],
+  [
+    "Readiness review",
+    "Built for",
+    "Not purpose-built",
+    "Partial",
+    "Not purpose-built",
+  ],
   ["Reusable documents", "Built for", "Partial", "Partial", "Built for"],
-  ["Guided next action", "Built for", "Not purpose-built", "Partial", "Not purpose-built"],
+  [
+    "Guided next action",
+    "Built for",
+    "Not purpose-built",
+    "Partial",
+    "Not purpose-built",
+  ],
 ] as const;
 
 function TrustAndComparison() {
   const trust = [
-    [LockKeyhole, "Private account workspace", "Your application workspace requires your account session."],
-    [ShieldCheck, "Memory-only active session", "Access tokens are kept in browser memory, not persistent browser storage."],
-    [Trash2, "Document and account controls", "Download or delete documents, export your data and request account deletion."],
-    [PenLine, "Transparent assistance", "Writing guidance supports your process; it does not replace your voice or promise an outcome."],
+    [
+      LockKeyhole,
+      "Private account workspace",
+      "Your application workspace requires your account session.",
+    ],
+    [
+      ShieldCheck,
+      "Memory-only active session",
+      "Access tokens are kept in browser memory, not persistent browser storage.",
+    ],
+    [
+      Trash2,
+      "Document and account controls",
+      "Download or delete documents, export your data and request account deletion.",
+    ],
+    [
+      PenLine,
+      "Transparent assistance",
+      "Writing guidance supports your process; it does not replace your voice or promise an outcome.",
+    ],
   ] as const;
   return (
     <section className="trust-comparison" id="privacy">
       <div className="trust-panel">
         <p className="section-context">Privacy and control</p>
-        <h2>Your applications contain personal work. Treating them carefully is part of the product.</h2>
-        <div className="trust-list">{trust.map(([Icon, title, copy]) => <article key={title}><Icon aria-hidden="true" /><div><h3>{title}</h3><p>{copy}</p></div></article>)}</div>
+        <h2>
+          Your applications contain personal work. Treating them carefully is
+          part of the product.
+        </h2>
+        <div className="trust-list">
+          {trust.map(([Icon, title, copy]) => (
+            <article key={title}>
+              <Icon aria-hidden="true" />
+              <div>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </div>
+            </article>
+          ))}
+        </div>
         <nav aria-label="Trust and legal information">
           <Link to="/security">Security approach</Link>
           <Link to="/privacy">Privacy</Link>
@@ -1254,12 +1636,49 @@ function TrustAndComparison() {
         </nav>
       </div>
       <div className="tool-comparison">
-        <header><p className="section-context">Purpose-built structure</p><h2>Why not use a spreadsheet or a general notes app?</h2><p>General tools can help with parts of the process. EliteApply connects the parts around a scholarship application.</p></header>
-        <div className="comparison-table-wrap" tabIndex={0} aria-label="Scrollable comparison table">
+        <header>
+          <p className="section-context">Purpose-built structure</p>
+          <h2>Why not use a spreadsheet or a general notes app?</h2>
+          <p>
+            General tools can help with parts of the process. EliteApply
+            connects the parts around a scholarship application.
+          </p>
+        </header>
+        <div
+          className="comparison-table-wrap"
+          tabIndex={0}
+          aria-label="Scrollable comparison table"
+        >
           <table>
-            <caption className="sr-only">Comparison of EliteApply with general productivity tools</caption>
-            <thead><tr><th>Capability</th><th>EliteApply</th><th>Spreadsheet</th><th>Task manager</th><th>Notes app</th></tr></thead>
-            <tbody>{comparisonRows.map((row) => <tr key={row[0]}>{row.map((cell, index) => index === 0 ? <th scope="row" key={cell}>{cell}</th> : <td key={`${row[0]}-${cell}-${index}`}><span data-fit={cell}>{cell}</span></td>)}</tr>)}</tbody>
+            <caption className="sr-only">
+              Comparison of EliteApply with general productivity tools
+            </caption>
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>EliteApply</th>
+                <th>Spreadsheet</th>
+                <th>Task manager</th>
+                <th>Notes app</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparisonRows.map((row) => (
+                <tr key={row[0]}>
+                  {row.map((cell, index) =>
+                    index === 0 ? (
+                      <th scope="row" key={cell}>
+                        {cell}
+                      </th>
+                    ) : (
+                      <td key={`${row[0]}-${cell}-${index}`}>
+                        <span data-fit={cell}>{cell}</span>
+                      </td>
+                    ),
+                  )}
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       </div>
@@ -1269,41 +1688,101 @@ function TrustAndComparison() {
 
 function ProductNote() {
   return (
-    <section className="product-note" id="pricing" aria-labelledby="product-note-title">
+    <section
+      className="product-note"
+      id="pricing"
+      aria-labelledby="product-note-title"
+    >
       <div>
         <p className="section-context">A note from the product</p>
-        <h2 id="product-note-title">Built around the real structure of applications.</h2>
-        <p>EliteApply connects requirements, evidence, written materials, documents, references and deadlines so you can present your best work.</p>
-        <p>It does not promise outcomes, influence selection decisions or replace your voice. You remain the author of your application.</p>
+        <h2 id="product-note-title">
+          Built around the real structure of applications.
+        </h2>
+        <p>
+          EliteApply connects requirements, evidence, written materials,
+          documents, references and deadlines so you can present your best work.
+        </p>
+        <p>
+          It does not promise outcomes, influence selection decisions or replace
+          your voice. You remain the author of your application.
+        </p>
       </div>
       <aside>
         <span>Pricing</span>
         <strong>Free to start while EliteApply is in early access.</strong>
-        <p>Paid plans are not currently available. No credit card is required.</p>
-        <Link className="landing-button" to="/register" reloadDocument>Start free <ArrowRight aria-hidden="true" /></Link>
+        <p>
+          Paid plans are not currently available. No credit card is required.
+        </p>
+        <Link className="landing-button" to="/register" reloadDocument>
+          Start free <ArrowRight aria-hidden="true" />
+        </Link>
       </aside>
     </section>
   );
 }
 
 const faqs = [
-  ["What is EliteApply?", "EliteApply is a scholarship application workspace for tracking opportunities, requirements, deadlines, writing, evidence, documents and references in one connected place."],
-  ["Is EliteApply a scholarship search engine?", "No. EliteApply helps you organise opportunities you are considering or applying for. It is not currently a scholarship search engine."],
-  ["Can I track multiple applications?", "Yes. Each application can keep its own deadline, status, requirements, tasks, documents and next actions."],
-  ["Does EliteApply write my personal statement?", "No. EliteApply can help you structure ideas, connect evidence and review clarity, but you stay responsible for the content and your authentic voice."],
-  ["Can I organise references and supporting documents?", "Yes. You can organise academic documents, connect them to applications and track reference requests and their status."],
-  ["Is my application content private?", "Your workspace requires an account session, and access tokens are kept in browser memory. Review the Privacy Policy for the approved legal details before relying on any privacy claim."],
-  ["Can I start for free?", "Yes. EliteApply is free to start during early access and does not currently offer paid plans."],
-  ["Can international students use EliteApply?", "Yes. The workspace is designed for applicants managing scholarships, programmes, fellowships and grants across countries."],
-  ["Does EliteApply guarantee a scholarship?", "No. EliteApply organises your process and helps surface missing work. Scholarship decisions remain entirely with the provider."],
-  ["Can I export or delete my data?", "Yes. Account settings include data export and account deletion controls, and document controls include download and deletion."],
+  [
+    "What is EliteApply?",
+    "EliteApply is a scholarship application workspace for tracking opportunities, requirements, deadlines, writing, evidence, documents and references in one connected place.",
+  ],
+  [
+    "Is EliteApply a scholarship search engine?",
+    "No. EliteApply helps you organise opportunities you are considering or applying for. It is not currently a scholarship search engine.",
+  ],
+  [
+    "Can I track multiple applications?",
+    "Yes. Each application can keep its own deadline, status, requirements, tasks, documents and next actions.",
+  ],
+  [
+    "Does EliteApply write my personal statement?",
+    "No. EliteApply can help you structure ideas, connect evidence and review clarity, but you stay responsible for the content and your authentic voice.",
+  ],
+  [
+    "Can I organise references and supporting documents?",
+    "Yes. You can organise academic documents, connect them to applications and track reference requests and their status.",
+  ],
+  [
+    "Is my application content private?",
+    "Your workspace requires an account session, and access tokens are kept in browser memory. Review the Privacy Policy for the approved legal details before relying on any privacy claim.",
+  ],
+  [
+    "Can I start for free?",
+    "Yes. EliteApply is free to start during early access and does not currently offer paid plans.",
+  ],
+  [
+    "Can international students use EliteApply?",
+    "Yes. The workspace is designed for applicants managing scholarships, programmes, fellowships and grants across countries.",
+  ],
+  [
+    "Does EliteApply guarantee a scholarship?",
+    "No. EliteApply organises your process and helps surface missing work. Scholarship decisions remain entirely with the provider.",
+  ],
+  [
+    "Can I export or delete my data?",
+    "Yes. Account settings include data export and account deletion controls, and document controls include download and deletion.",
+  ],
 ] as const;
 
 function FaqSection() {
   return (
     <section className="faq-section" id="faq" aria-labelledby="faq-title">
-      <header className="phase-one-section-heading"><p className="section-context">Student questions</p><h2 id="faq-title">Questions students ask before starting.</h2><p>Direct answers, without promises the product cannot make.</p></header>
-      <div className="faq-list">{faqs.map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<ChevronDown aria-hidden="true" /></summary><p>{answer}</p></details>)}</div>
+      <header className="phase-one-section-heading">
+        <p className="section-context">Student questions</p>
+        <h2 id="faq-title">Questions students ask before starting.</h2>
+        <p>Direct answers, without promises the product cannot make.</p>
+      </header>
+      <div className="faq-list">
+        {faqs.map(([question, answer], index) => (
+          <details key={question} open={index === 0}>
+            <summary>
+              {question}
+              <ChevronDown aria-hidden="true" />
+            </summary>
+            <p>{answer}</p>
+          </details>
+        ))}
+      </div>
     </section>
   );
 }
@@ -1311,11 +1790,45 @@ function FaqSection() {
 function PhaseOneFooter() {
   return (
     <footer className="phase-one-footer">
-      <div><Link className="marketing-brand inverse-brand" to="/">EliteApply</Link><p>A calm workspace for scholarship applications.</p></div>
-      <nav aria-label="Product"><strong>Product</strong><Link to="/features/scholarship-application-tracker">Application tracker</Link><Link to="/features/personal-statement-workspace">Writing workspace</Link><Link to="/features/document-organiser">Documents and evidence</Link><Link to="/features/reference-tracking">References</Link></nav>
-      <nav aria-label="Explore"><strong>Explore</strong><Link to="/how-it-works">How it works</Link><Link to="/for-students">For students</Link><Link to="/pricing">Pricing</Link><Link to="/resources">Resources</Link></nav>
-      <nav aria-label="Company and legal"><strong>Company</strong><Link to="/about">About</Link><Link to="/security">Security</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/accessibility">Accessibility</Link><Link to="/contact">Contact</Link></nav>
-      <div className="footer-bottom"><span>© 2026 EliteApply</span><Link to="/login" reloadDocument>Sign in</Link></div>
+      <div>
+        <Link className="marketing-brand inverse-brand" to="/">
+          EliteApply
+        </Link>
+        <p>A calm workspace for scholarship applications.</p>
+      </div>
+      <nav aria-label="Product">
+        <strong>Product</strong>
+        <Link to="/features/scholarship-application-tracker">
+          Application tracker
+        </Link>
+        <Link to="/features/personal-statement-workspace">
+          Writing workspace
+        </Link>
+        <Link to="/features/document-organiser">Documents and evidence</Link>
+        <Link to="/features/reference-tracking">References</Link>
+      </nav>
+      <nav aria-label="Explore">
+        <strong>Explore</strong>
+        <Link to="/how-it-works">How it works</Link>
+        <Link to="/for-students">For students</Link>
+        <Link to="/pricing">Pricing</Link>
+        <Link to="/resources">Resources</Link>
+      </nav>
+      <nav aria-label="Company and legal">
+        <strong>Company</strong>
+        <Link to="/about">About</Link>
+        <Link to="/security">Security</Link>
+        <Link to="/privacy">Privacy</Link>
+        <Link to="/terms">Terms</Link>
+        <Link to="/accessibility">Accessibility</Link>
+        <Link to="/contact">Contact</Link>
+      </nav>
+      <div className="footer-bottom">
+        <span>© 2026 EliteApply</span>
+        <Link to="/login" reloadDocument>
+          Sign in
+        </Link>
+      </div>
     </footer>
   );
 }

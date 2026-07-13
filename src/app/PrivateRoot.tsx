@@ -5,6 +5,7 @@ import { authApi } from "../lib/api/auth";
 import { usersApi } from "../lib/api/users";
 import { useSession } from "../lib/auth/session";
 import { CapabilityProvider } from "../lib/capabilities/provider";
+import { EntitlementProvider } from "../lib/billing/provider";
 
 const client = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -36,7 +37,9 @@ function Bootstrap() {
 
   return (
     <CapabilityProvider>
-      <App />
+      <EntitlementProvider>
+        <App />
+      </EntitlementProvider>
     </CapabilityProvider>
   );
 }

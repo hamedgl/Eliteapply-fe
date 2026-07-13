@@ -1,10 +1,33 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CalendarDays, Columns3, List, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { applicationsApi } from "../../lib/api/phase2";
-import { queryKeys } from "../../lib/api/queryKeys";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  Archive,
+  ArrowRight,
+  CalendarDays,
+  Columns3,
+  Copy,
+  Download,
+  List,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import type { components } from "../../generated/api/schema";
+import { ConflictNotice } from "../../components/ConflictNotice";
 import { ApiError } from "../../lib/api/errors";
+import { downloadResponse } from "../../lib/api/download";
+import { newMutationId } from "../../lib/api/mutations";
+import {
+  applicationsApi,
+  catalogueApi,
+  type ApplicationFilters,
+} from "../../lib/api/phase2";
+import { queryKeys } from "../../lib/api/queryKeys";
 import {
   formatDate,
   label,
@@ -14,50 +37,215 @@ import {
   types,
   type Application,
 } from "./model";
+
+type Schema = components["schemas"];
+type View = "board" | "list";
+
 export function ApplicationsPage() {
-  const qc = useQueryClient(),
-    [view, setView] = useState<"board" | "list">(() =>
-      window.matchMedia("(max-width: 700px)").matches ? "list" : "board",
-    ),
-    [stage, setStage] = useState("all"),
-    [type, setType] = useState("all"),
-    [priority, setPriority] = useState("all"),
-    [creating, setCreating] = useState(false);
-  const query = useQuery({
-    queryKey: queryKeys.board,
-    queryFn: async () => parseBoard(await applicationsApi.board()),
+  const qc = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreating] = useState(() => params.get("create") === "1");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStage, setBulkStage] = useState("");
+  const [bulkPriority, setBulkPriority] = useState("");
+  const [bulkTags, setBulkTags] = useState("");
+  const [duplicateApp, setDuplicateApp] = useState<Application | null>(null);
+  const [notice, setNotice] = useState("");
+  const view =
+    (params.get("view") as View | null) ??
+    (window.matchMedia("(max-width: 700px)").matches ? "list" : "board");
+  const value = (key: string) => params.get(key) ?? "";
+  const setParam = (key: string, next: string) => {
+    const copy = new URLSearchParams(params);
+    if (next) copy.set(key, next);
+    else copy.delete(key);
+    if (key !== "view") copy.set("view", view);
+    setParams(copy, { replace: true });
+  };
+  const filters: ApplicationFilters = {
+    search: value("search") || undefined,
+    stage: value("stage") || undefined,
+    applicationType: value("type") || undefined,
+    priority: value("priority") || undefined,
+    institutionId: value("institution") || undefined,
+    programmeId: value("programme") || undefined,
+    scholarshipId: value("scholarship") || undefined,
+    deadlineFrom: value("deadlineFrom") || undefined,
+    deadlineTo: value("deadlineTo") || undefined,
+    tag: value("tag") || undefined,
+    archived: value("archived") === "true" || undefined,
+    sort: value("sort") || undefined,
+  };
+  const boardFilters = {
+    applicationType: filters.applicationType,
+    priority: filters.priority,
+    institutionId: filters.institutionId,
+    deadlineBefore: filters.deadlineTo,
+  };
+  const boardKey = [...queryKeys.board, boardFilters] as const;
+  const boardQuery = useQuery({
+    queryKey: boardKey,
+    queryFn: async () => parseBoard(await applicationsApi.board(boardFilters)),
+    enabled: view === "board",
   });
+  const listQuery = useInfiniteQuery({
+    queryKey: [...queryKeys.applications, "list", filters],
+    queryFn: ({ pageParam }) =>
+      applicationsApi.list({ ...filters, cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.next_cursor ?? undefined,
+    enabled: view === "list",
+  });
+  const listApps = useMemo(
+    () => listQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [listQuery.data],
+  );
+  const boardApps = useMemo(() => {
+    const all = Object.values(boardQuery.data?.columns ?? {}).flat();
+    const search = filters.search?.toLocaleLowerCase();
+    return all.filter(
+      (app) =>
+        (!filters.stage || app.stage === filters.stage) &&
+        (!search || app.title.toLocaleLowerCase().includes(search)),
+    );
+  }, [boardQuery.data, filters.search, filters.stage]);
+  const visibleApps = view === "board" ? boardApps : listApps;
   const update = useMutation({
     mutationFn: ({ app, next }: { app: Application; next: string }) =>
       applicationsApi.update(app.id, {
         expected_version: app.version,
         stage: next as (typeof stages)[number],
       }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.board });
-      void qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+    onMutate: async ({ app, next }) => {
+      await qc.cancelQueries({ queryKey: boardKey });
+      const previous =
+        qc.getQueryData<Schema["ApplicationBoardResponse"]>(boardKey);
+      if (previous) {
+        const moved = { ...app, stage: next };
+        const columns = Object.fromEntries(
+          Object.entries(previous.columns).map(([stage, items]) => [
+            stage,
+            items.filter((item) => item.id !== app.id),
+          ]),
+        );
+        columns[next] = [...(columns[next] ?? []), moved];
+        qc.setQueryData(boardKey, { ...previous, columns });
+      }
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) qc.setQueryData(boardKey, context.previous);
+    },
+    onSettled: () => refreshApplications(qc),
+  });
+  const bulk = useMutation({
+    mutationFn: (mutationId: string) =>
+      applicationsApi.bulkUpdate({
+        mutation_id: mutationId,
+        items: visibleApps
+          .filter((app) => selected.has(app.id))
+          .map((app) => ({
+            application_id: app.id,
+            expected_version: app.version,
+            stage: bulkStage
+              ? (bulkStage as (typeof stages)[number])
+              : undefined,
+            priority: bulkPriority
+              ? (bulkPriority as (typeof priorities)[number])
+              : undefined,
+            tags: bulkTags
+              ? bulkTags
+                  .split(",")
+                  .map((tag) => tag.trim())
+                  .filter(Boolean)
+              : undefined,
+          })),
+      }),
+    onSuccess: (result) => {
+      const updated = result.results.filter(
+        (item) => item.status === "updated",
+      ).length;
+      const failed = result.results.length - updated;
+      setNotice(
+        `${updated} updated${failed ? `; ${failed} need review` : ""}.`,
+      );
+      setSelected(new Set());
+      void refreshApplications(qc);
     },
   });
-  const apps = useMemo(
-    () =>
-      Object.values(query.data?.columns ?? {})
-        .flat()
-        .filter(
-          (a) =>
-            (stage === "all" || a.stage === stage) &&
-            (type === "all" || a.application_type === type) &&
-            (priority === "all" || a.priority === priority),
-        ),
-    [query.data, stage, type, priority],
-  );
-  if (query.isPending) return <State text="Loading applications…" />;
-  if (query.isError)
+  const action = useMutation({
+    mutationFn: async ({
+      app,
+      kind,
+      duplicate,
+      mutationId,
+    }: {
+      app: Application;
+      kind: "duplicate" | "archive" | "delete" | "export";
+      duplicate?: {
+        copy_requirements: boolean;
+        copy_tasks: boolean;
+        title_suffix: string;
+      };
+      mutationId?: string;
+    }) => {
+      if (kind === "duplicate")
+        return applicationsApi.duplicate(app.id, {
+          mutation_id: mutationId ?? newMutationId(),
+          copy_requirements: duplicate?.copy_requirements ?? false,
+          copy_tasks: duplicate?.copy_tasks ?? false,
+          title_suffix: duplicate?.title_suffix || "(copy)",
+        });
+      if (kind === "archive")
+        return applicationsApi.archive(app.id, {
+          expected_version: app.version,
+        });
+      if (kind === "delete") return applicationsApi.remove(app.id);
+      const data = await applicationsApi.export(app.id);
+      await downloadResponse(
+        new Response(JSON.stringify(data, null, 2), {
+          headers: { "content-type": "application/json" },
+        }),
+        `${safeFilename(app.title)}.json`,
+      );
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.kind !== "export") void refreshApplications(qc);
+      setNotice(`${label(variables.kind)} complete.`);
+    },
+  });
+  const activeQuery = view === "board" ? boardQuery : listQuery;
+  if (activeQuery.isPending) return <State text="Loading applications…" />;
+  if (activeQuery.isError)
     return (
       <State
         text="We couldn’t load your applications."
-        action={() => query.refetch()}
+        action={() => activeQuery.refetch()}
       />
     );
+  const runAction = (
+    app: Application,
+    kind: "duplicate" | "archive" | "delete" | "export",
+  ) => {
+    if (kind === "duplicate") {
+      setDuplicateApp(app);
+      return;
+    }
+    if (
+      kind === "archive" &&
+      !window.confirm(
+        `Archive “${app.title}”? Its current stage will be kept for a future restore.`,
+      )
+    )
+      return;
+    if (
+      kind === "delete" &&
+      !window.confirm(`Delete “${app.title}”? This cannot be undone.`)
+    )
+      return;
+    action.mutate({ app, kind });
+  };
+
   return (
     <div className="page applications-page">
       <header className="page-heading">
@@ -70,8 +258,7 @@ export function ApplicationsPage() {
           type="button"
           onClick={() => setCreating(true)}
         >
-          <Plus aria-hidden="true" />
-          Add application
+          <Plus aria-hidden="true" /> Add application
         </button>
       </header>
       <div className="application-toolbar">
@@ -79,77 +266,213 @@ export function ApplicationsPage() {
           <button
             type="button"
             className={view === "board" ? "selected" : ""}
-            onClick={() => setView("board")}
+            onClick={() => setParam("view", "board")}
             aria-pressed={view === "board"}
           >
-            <Columns3 aria-hidden="true" />
-            Board
+            <Columns3 aria-hidden="true" /> Board
           </button>
           <button
             type="button"
             className={view === "list" ? "selected" : ""}
-            onClick={() => setView("list")}
+            onClick={() => setParam("view", "list")}
             aria-pressed={view === "list"}
           >
-            <List aria-hidden="true" />
-            List
+            <List aria-hidden="true" /> List
           </button>
         </div>
-        <label>
-          Stage
-          <select value={stage} onChange={(e) => setStage(e.target.value)}>
-            <option value="all">All stages</option>
-            {stages.map((x) => (
-              <option value={x} key={x}>
-                {label(x)}
-              </option>
-            ))}
-          </select>
+        <label className="application-search">
+          Search
+          <input
+            type="search"
+            value={value("search")}
+            onChange={(event) => setParam("search", event.target.value)}
+            placeholder="Title or tag"
+          />
         </label>
-        <label>
-          Type
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="all">All types</option>
-            {types.map((x) => (
-              <option value={x} key={x}>
-                {label(x)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Priority
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-          >
-            <option value="all">All priorities</option>
-            {priorities.map((x) => (
-              <option value={x} key={x}>
-                {label(x)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Filter
+          label="Stage"
+          value={value("stage")}
+          onChange={(next) => setParam("stage", next)}
+          options={stages}
+        />
+        <Filter
+          label="Type"
+          value={value("type")}
+          onChange={(next) => setParam("type", next)}
+          options={types}
+        />
+        <Filter
+          label="Priority"
+          value={value("priority")}
+          onChange={(next) => setParam("priority", next)}
+          options={priorities}
+        />
       </div>
-      {update.error && (
+      <details className="application-advanced-filters">
+        <summary>More filters</summary>
+        <div>
+          <label>
+            Institution ID
+            <input
+              value={value("institution")}
+              onChange={(event) => setParam("institution", event.target.value)}
+            />
+          </label>
+          <label>
+            Programme ID
+            <input
+              value={value("programme")}
+              onChange={(event) => setParam("programme", event.target.value)}
+            />
+          </label>
+          <label>
+            Scholarship ID
+            <input
+              value={value("scholarship")}
+              onChange={(event) => setParam("scholarship", event.target.value)}
+            />
+          </label>
+          <label>
+            Deadline from
+            <input
+              type="date"
+              value={value("deadlineFrom")}
+              onChange={(event) => setParam("deadlineFrom", event.target.value)}
+            />
+          </label>
+          <label>
+            Deadline to
+            <input
+              type="date"
+              value={value("deadlineTo")}
+              onChange={(event) => setParam("deadlineTo", event.target.value)}
+            />
+          </label>
+          <label>
+            Tag
+            <input
+              value={value("tag")}
+              onChange={(event) => setParam("tag", event.target.value)}
+            />
+          </label>
+          <label>
+            Sort
+            <select
+              value={value("sort")}
+              onChange={(event) => setParam("sort", event.target.value)}
+            >
+              <option value="">Recommended</option>
+              <option value="deadline_asc">Deadline</option>
+              <option value="updated_desc">Recently updated</option>
+              <option value="priority_desc">Priority</option>
+            </select>
+          </label>
+          <label className="check-field">
+            <input
+              type="checkbox"
+              checked={value("archived") === "true"}
+              onChange={(event) =>
+                setParam("archived", event.target.checked ? "true" : "")
+              }
+            />{" "}
+            Include archived
+          </label>
+          <label>
+            Priority
+            <select
+              value={bulkPriority}
+              onChange={(event) => setBulkPriority(event.target.value)}
+            >
+              <option value="">Keep priority</option>
+              {priorities.map((item) => (
+                <option value={item} key={item}>
+                  {label(item)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Replace tags
+            <input
+              value={bulkTags}
+              onChange={(event) => setBulkTags(event.target.value)}
+              placeholder="funding, UK"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setParams({ view }, { replace: true })}
+          >
+            Clear filters
+          </button>
+        </div>
+      </details>
+      {update.error instanceof ApiError && update.error.code === "CONFLICT" ? (
+        <ConflictNotice onRefresh={() => void activeQuery.refetch()} />
+      ) : null}
+      {bulk.error ||
+      action.error ||
+      (update.error &&
+        !(
+          update.error instanceof ApiError && update.error.code === "CONFLICT"
+        )) ? (
         <p role="alert" className="form-error">
-          {update.error instanceof ApiError && update.error.code === "CONFLICT"
-            ? "This application changed elsewhere. The board has been refreshed; review it before moving again."
-            : "The application could not be moved."}
+          That change could not be completed. Refresh and try again.
         </p>
-      )}
+      ) : null}
+      {notice ? (
+        <p className="inline-success" role="status">
+          {notice}
+        </p>
+      ) : null}
+      {view === "list" && selected.size ? (
+        <div
+          className="bulk-action-bar"
+          role="region"
+          aria-label="Bulk application actions"
+        >
+          <strong>{selected.size} selected</strong>
+          <label>
+            Move to
+            <select
+              value={bulkStage}
+              onChange={(event) => setBulkStage(event.target.value)}
+            >
+              <option value="">Choose stage</option>
+              {stages.map((item) => (
+                <option value={item} key={item}>
+                  {label(item)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="primary"
+            type="button"
+            disabled={
+              (!bulkStage && !bulkPriority && !bulkTags.trim()) ||
+              bulk.isPending
+            }
+            onClick={() => bulk.mutate(newMutationId())}
+          >
+            Apply
+          </button>
+          <button type="button" onClick={() => setSelected(new Set())}>
+            Clear
+          </button>
+        </div>
+      ) : null}
       {view === "board" ? (
         <div className="board" aria-label="Application board">
-          {stages.map((column) => (
-            <section className="board-column" key={column}>
-              <h2>
-                {label(column)}
-                <span>{apps.filter((a) => a.stage === column).length}</span>
-              </h2>
-              {apps
-                .filter((a) => a.stage === column)
-                .map((app) => (
+          {stages.map((column) => {
+            const columnApps = boardApps.filter((app) => app.stage === column);
+            return (
+              <section className="board-column" key={column}>
+                <h2>
+                  {label(column)}
+                  <span>{columnApps.length}</span>
+                </h2>
+                {columnApps.map((app) => (
                   <article className="application-card" key={app.id}>
                     <Link to={`/app/applications/${app.id}`}>
                       <h3>{app.title}</h3>
@@ -176,17 +499,22 @@ export function ApplicationsPage() {
                         aria-label={`Move ${app.title}`}
                         value={app.stage}
                         disabled={update.isPending}
-                        onChange={(e) =>
-                          update.mutate({ app, next: e.target.value })
+                        onChange={(event) =>
+                          update.mutate({ app, next: event.target.value })
                         }
                       >
-                        {stages.map((x) => (
-                          <option key={x} value={x}>
-                            {label(x)}
+                        {stages.map((item) => (
+                          <option key={item} value={item}>
+                            {label(item)}
                           </option>
                         ))}
                       </select>
                     </label>
+                    <ApplicationActions
+                      app={app}
+                      pending={action.isPending}
+                      run={runAction}
+                    />
                     <Link
                       className="card-link"
                       to={`/app/applications/${app.id}`}
@@ -195,15 +523,32 @@ export function ApplicationsPage() {
                     </Link>
                   </article>
                 ))}
-              {apps.filter((a) => a.stage === column).length === 0 ? (
-                <div className="column-empty">No applications</div>
-              ) : null}
-            </section>
-          ))}
+                {!columnApps.length ? (
+                  <div className="column-empty">No applications</div>
+                ) : null}
+              </section>
+            );
+          })}
         </div>
       ) : (
-        <ApplicationList apps={apps} />
+        <ApplicationList
+          apps={listApps}
+          selected={selected}
+          setSelected={setSelected}
+          pending={action.isPending}
+          run={runAction}
+        />
       )}
+      {view === "list" && listQuery.hasNextPage ? (
+        <button
+          className="load-more"
+          type="button"
+          disabled={listQuery.isFetchingNextPage}
+          onClick={() => listQuery.fetchNextPage()}
+        >
+          {listQuery.isFetchingNextPage ? "Loading…" : "Load more applications"}
+        </button>
+      ) : null}
       {view === "board" ? (
         <p className="keyboard-tip">
           Keyboard tip: Tab to a card’s move control, then use arrow keys to
@@ -211,47 +556,210 @@ export function ApplicationsPage() {
         </p>
       ) : null}
       {creating ? (
-        <CreateApplication onClose={() => setCreating(false)} />
+        <CreateApplication
+          defaults={{
+            title: value("title"),
+            catalogueType: value("catalogueType"),
+            catalogueId: value("catalogueId"),
+          }}
+          onClose={() => setCreating(false)}
+        />
+      ) : null}
+      {duplicateApp ? (
+        <DuplicateApplication
+          app={duplicateApp}
+          pending={action.isPending}
+          onClose={() => setDuplicateApp(null)}
+          onSubmit={(duplicate) =>
+            action.mutate(
+              {
+                app: duplicateApp,
+                kind: "duplicate",
+                duplicate,
+                mutationId: newMutationId(),
+              },
+              { onSuccess: () => setDuplicateApp(null) },
+            )
+          }
+        />
       ) : null}
     </div>
   );
 }
-function ApplicationList({ apps }: { apps: Application[] }) {
-  if (apps.length === 0) {
+
+function DuplicateApplication({
+  app,
+  pending,
+  onClose,
+  onSubmit,
+}: {
+  app: Application;
+  pending: boolean;
+  onClose: () => void;
+  onSubmit: (options: {
+    copy_requirements: boolean;
+    copy_tasks: boolean;
+    title_suffix: string;
+  }) => void;
+}) {
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <section
+        className="dialog duplicate-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="duplicate-title"
+      >
+        <header>
+          <div>
+            <h2 id="duplicate-title">Duplicate application</h2>
+            <p>Create a new copy of {app.title}.</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </header>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const data = new FormData(event.currentTarget);
+            onSubmit({
+              copy_requirements: data.get("requirements") === "on",
+              copy_tasks: data.get("tasks") === "on",
+              title_suffix: String(data.get("suffix")) || "(copy)",
+            });
+          }}
+        >
+          <label>
+            Title suffix
+            <input name="suffix" defaultValue="(copy)" required autoFocus />
+          </label>
+          <label className="check-field">
+            <input name="requirements" type="checkbox" /> Copy requirements
+          </label>
+          <label className="check-field">
+            <input name="tasks" type="checkbox" /> Copy tasks
+          </label>
+          <div className="dialog-actions">
+            <button type="button" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="primary" disabled={pending}>
+              {pending ? "Duplicating…" : "Duplicate"}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function Filter({
+  label: text,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+}) {
+  return (
+    <label>
+      {text}
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">All {text.toLocaleLowerCase()}s</option>
+        {options.map((item) => (
+          <option value={item} key={item}>
+            {label(item)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ApplicationList({
+  apps,
+  selected,
+  setSelected,
+  pending,
+  run,
+}: {
+  apps: Application[];
+  selected: Set<string>;
+  setSelected: (value: Set<string>) => void;
+  pending: boolean;
+  run: (
+    app: Application,
+    kind: "duplicate" | "archive" | "delete" | "export",
+  ) => void;
+}) {
+  if (!apps.length)
     return (
       <div className="filtered-empty" role="status">
         <strong>No applications match these filters</strong>
         <p>Change or clear a filter to see more applications.</p>
       </div>
     );
-  }
-
+  const allSelected = apps.every((app) => selected.has(app.id));
   return (
     <div className="table-wrap application-list-wrap">
       <table className="application-list-table">
         <thead>
           <tr>
+            <th>
+              <input
+                type="checkbox"
+                aria-label="Select all visible applications"
+                checked={allSelected}
+                onChange={(event) =>
+                  setSelected(
+                    event.target.checked
+                      ? new Set(apps.map((app) => app.id))
+                      : new Set(),
+                  )
+                }
+              />
+            </th>
             <th>Application</th>
             <th>Type</th>
             <th>Stage</th>
             <th>Deadline</th>
             <th>Priority</th>
-            <th></th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {apps.map((a) => (
-            <tr key={a.id}>
-              <td data-label="Application">
-                <strong>{a.title}</strong>
+          {apps.map((app) => (
+            <tr key={app.id}>
+              <td data-label="Select">
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${app.title}`}
+                  checked={selected.has(app.id)}
+                  onChange={(event) => {
+                    const next = new Set(selected);
+                    if (event.target.checked) next.add(app.id);
+                    else next.delete(app.id);
+                    setSelected(next);
+                  }}
+                />
               </td>
-              <td data-label="Type">{label(a.application_type)}</td>
-              <td data-label="Stage">{label(a.stage)}</td>
-              <td data-label="Deadline">{formatDate(a.primary_deadline_at)}</td>
-              <td data-label="Priority">{label(a.priority)}</td>
+              <td data-label="Application">
+                <strong>{app.title}</strong>
+              </td>
+              <td data-label="Type">{label(app.application_type)}</td>
+              <td data-label="Stage">{label(app.stage)}</td>
+              <td data-label="Deadline">
+                {formatDate(app.primary_deadline_at)}
+              </td>
+              <td data-label="Priority">{label(app.priority)}</td>
               <td className="application-list-action">
-                <Link to={`/app/applications/${a.id}`}>
-                  Open workspace <ArrowRight aria-hidden="true" />
+                <ApplicationActions app={app} pending={pending} run={run} />
+                <Link to={`/app/applications/${app.id}`}>
+                  Open <ArrowRight aria-hidden="true" />
                 </Link>
               </td>
             </tr>
@@ -261,36 +769,137 @@ function ApplicationList({ apps }: { apps: Application[] }) {
     </div>
   );
 }
-function CreateApplication({ onClose }: { onClose: () => void }) {
-  const qc = useQueryClient(),
-    [error, setError] = useState("");
+
+function ApplicationActions({
+  app,
+  pending,
+  run,
+}: {
+  app: Application;
+  pending: boolean;
+  run: (
+    app: Application,
+    kind: "duplicate" | "archive" | "delete" | "export",
+  ) => void;
+}) {
+  return (
+    <div
+      className="application-actions"
+      aria-label={`Actions for ${app.title}`}
+    >
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => run(app, "duplicate")}
+        aria-label={`Duplicate ${app.title}`}
+        title="Duplicate"
+      >
+        <Copy />
+      </button>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => run(app, "archive")}
+        aria-label={`Archive ${app.title}`}
+        title="Archive"
+      >
+        <Archive />
+      </button>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => run(app, "export")}
+        aria-label={`Export ${app.title}`}
+        title="Export"
+      >
+        <Download />
+      </button>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => run(app, "delete")}
+        aria-label={`Delete ${app.title}`}
+        title="Delete"
+      >
+        <Trash2 />
+      </button>
+    </div>
+  );
+}
+
+function CreateApplication({
+  onClose,
+  defaults,
+}: {
+  onClose: () => void;
+  defaults?: { title?: string; catalogueType?: string; catalogueId?: string };
+}) {
+  const qc = useQueryClient();
+  const [error, setError] = useState("");
+  const [applicationType, setApplicationType] = useState<
+    (typeof types)[number]
+  >(
+    defaults?.catalogueType === "scholarship"
+      ? "scholarship"
+      : defaults?.catalogueType === "programme"
+        ? "programme"
+        : "programme",
+  );
   const mutationId = useState(() => crypto.randomUUID())[0];
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const d = Object.fromEntries(new FormData(e.currentTarget));
+  const programmes = useQuery({
+    queryKey: queryKeys.catalogue("programmes", {
+      surface: "application-create",
+    }),
+    queryFn: ({ signal }) => catalogueApi.programmes({}, signal),
+    enabled: applicationType === "programme",
+  });
+  const scholarships = useQuery({
+    queryKey: queryKeys.catalogue("scholarships", {
+      surface: "application-create",
+    }),
+    queryFn: ({ signal }) => catalogueApi.scholarships({}, signal),
+    enabled: applicationType === "scholarship",
+  });
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.currentTarget));
     try {
       await applicationsApi.create({
         mutation_id: mutationId,
-        title: String(d.title),
-        application_type: d.application_type as (typeof types)[number],
-        stage: d.stage as (typeof stages)[number],
-        priority: d.priority as (typeof priorities)[number],
-        intake: String(d.intake) || null,
-        primary_deadline_at: d.deadline
-          ? new Date(String(d.deadline) + "T12:00:00Z").toISOString()
+        title: String(data.title),
+        application_type: applicationType,
+        institution_id:
+          defaults?.catalogueType === "institution"
+            ? defaults.catalogueId || null
+            : null,
+        programme_id:
+          applicationType === "programme"
+            ? String(data.programme_id) || null
+            : null,
+        scholarship_id:
+          applicationType === "scholarship"
+            ? String(data.scholarship_id) || null
+            : null,
+        stage: data.stage as (typeof stages)[number],
+        priority: data.priority as (typeof priorities)[number],
+        intake: String(data.intake) || null,
+        primary_deadline_at: data.deadline
+          ? new Date(`${String(data.deadline)}T12:00:00Z`).toISOString()
           : null,
-        source_url: String(d.source_url) || null,
-        notes: String(d.notes) || null,
-        tags: String(d.tags)
+        source_url: String(data.source_url) || null,
+        notes: String(data.notes) || null,
+        tags: String(data.tags)
           .split(",")
-          .map((x) => x.trim())
+          .map((item) => item.trim())
           .filter(Boolean),
       });
-      await qc.invalidateQueries({ queryKey: queryKeys.board });
+      await refreshApplications(qc);
       onClose();
-    } catch (x) {
+    } catch (caught) {
       setError(
-        x instanceof ApiError ? x.message : "Could not create application.",
+        caught instanceof ApiError
+          ? caught.message
+          : "Could not create application.",
       );
     }
   }
@@ -304,31 +913,124 @@ function CreateApplication({ onClose }: { onClose: () => void }) {
       >
         <header>
           <h2 id="create-title">Add application</h2>
-          <button onClick={onClose} aria-label="Close">
+          <button type="button" onClick={onClose} aria-label="Close">
             ×
           </button>
         </header>
         <form className="form-grid" onSubmit={submit}>
           <label className="wide">
             Title
-            <input name="title" required minLength={2} />
+            <input
+              name="title"
+              required
+              minLength={2}
+              autoFocus
+              defaultValue={defaults?.title}
+            />
           </label>
           <label>
             Type
-            <select name="application_type">
-              {types.map((x) => (
-                <option value={x} key={x}>
-                  {label(x)}
+            <select
+              name="application_type"
+              value={applicationType}
+              onChange={(event) => {
+                setApplicationType(
+                  event.target.value as (typeof types)[number],
+                );
+                setError("");
+              }}
+            >
+              {types.map((item) => (
+                <option value={item} key={item}>
+                  {label(item)}
                 </option>
               ))}
             </select>
           </label>
+          {applicationType === "programme" ? (
+            <label>
+              Programme opportunity
+              <select
+                name="programme_id"
+                required
+                defaultValue={
+                  defaults?.catalogueType === "programme"
+                    ? defaults.catalogueId
+                    : ""
+                }
+                disabled={programmes.isPending}
+              >
+                <option value="">
+                  {programmes.isPending
+                    ? "Loading programmes…"
+                    : "Select a programme"}
+                </option>
+                {defaults?.catalogueType === "programme" &&
+                defaults.catalogueId &&
+                !programmes.data?.items.some(
+                  (item) => item.id === defaults.catalogueId,
+                ) ? (
+                  <option value={defaults.catalogueId}>
+                    {defaults.title || "Selected programme"}
+                  </option>
+                ) : null}
+                {programmes.data?.items.map((item) => (
+                  <option value={item.id} key={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {applicationType === "scholarship" ? (
+            <label>
+              Scholarship opportunity
+              <select
+                name="scholarship_id"
+                required
+                defaultValue={
+                  defaults?.catalogueType === "scholarship"
+                    ? defaults.catalogueId
+                    : ""
+                }
+                disabled={scholarships.isPending}
+              >
+                <option value="">
+                  {scholarships.isPending
+                    ? "Loading scholarships…"
+                    : "Select a scholarship"}
+                </option>
+                {defaults?.catalogueType === "scholarship" &&
+                defaults.catalogueId &&
+                !scholarships.data?.items.some(
+                  (item) => item.id === defaults.catalogueId,
+                ) ? (
+                  <option value={defaults.catalogueId}>
+                    {defaults.title || "Selected scholarship"}
+                  </option>
+                ) : null}
+                {scholarships.data?.items.map((item) => (
+                  <option value={item.id} key={item.id}>
+                    {item.name}
+                    {item.provider_name ? ` — ${item.provider_name}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {(applicationType === "programme" && programmes.isError) ||
+          (applicationType === "scholarship" && scholarships.isError) ? (
+            <p className="form-error wide" role="alert">
+              The catalogue choices could not be loaded. Close this form and
+              try again, or add the opportunity from the Catalogue page.
+            </p>
+          ) : null}
           <label>
             Stage
             <select name="stage">
-              {stages.map((x) => (
-                <option value={x} key={x}>
-                  {label(x)}
+              {stages.map((item) => (
+                <option value={item} key={item}>
+                  {label(item)}
                 </option>
               ))}
             </select>
@@ -336,9 +1038,9 @@ function CreateApplication({ onClose }: { onClose: () => void }) {
           <label>
             Priority
             <select name="priority">
-              {priorities.map((x) => (
-                <option value={x} key={x}>
-                  {label(x)}
+              {priorities.map((item) => (
+                <option value={item} key={item}>
+                  {label(item)}
                 </option>
               ))}
             </select>
@@ -379,6 +1081,7 @@ function CreateApplication({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
 function State({ text, action }: { text: string; action?: () => void }) {
   return (
     <div className="page error-state">
@@ -389,5 +1092,20 @@ function State({ text, action }: { text: string; action?: () => void }) {
         </button>
       ) : null}
     </div>
+  );
+}
+
+function refreshApplications(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: queryKeys.applications });
+  void qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+}
+
+function safeFilename(value: string) {
+  return (
+    value
+      .trim()
+      .replace(/[^a-z0-9]+/gi, "-")
+      .replace(/^-|-$/g, "")
+      .toLocaleLowerCase() || "application"
   );
 }
