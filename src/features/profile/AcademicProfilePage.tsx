@@ -17,12 +17,13 @@ export function AcademicProfilePage() {
   const versions = useQuery({
     queryKey: queryKeys.profileVersions,
     queryFn: profileApi.versions,
+    enabled: q.data != null,
   });
   const save = useMutation({
     mutationFn: profileApi.save,
-    onSuccess: () => {
+    onSuccess: (profile) => {
+      qc.setQueryData(queryKeys.profile, profile);
       setMessage("Academic profile saved.");
-      void qc.invalidateQueries({ queryKey: queryKeys.profile });
       void qc.invalidateQueries({ queryKey: queryKeys.profileVersions });
     },
   });
@@ -36,11 +37,14 @@ export function AcademicProfilePage() {
         </button>
       </div>
     );
-  const p = q.data;
+  const p = q.data ?? null;
+  const completionEntries = Object.entries(p?.completion ?? {});
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setMessage("");
+    save.reset();
     const d = new FormData(e.currentTarget);
-    const sections = { ...(p.sections ?? {}) };
+    const sections = { ...(p?.sections ?? {}) };
     for (const key of known) {
       const value = String(d.get(key) ?? "").trim();
       if (value)
@@ -60,8 +64,8 @@ export function AcademicProfilePage() {
         .map((x) => x.trim())
         .filter(Boolean),
       sections,
-      provenance: p.provenance,
-      completion: p.completion,
+      provenance: p?.provenance,
+      completion: p?.completion,
     });
   }
   return (
@@ -71,7 +75,7 @@ export function AcademicProfilePage() {
           <h1>Academic Profile</h1>
           <p>Your reusable source of truth for every application.</p>
         </div>
-        <span>Version {p.version}</span>
+        <span>{p ? `Version ${p.version}` : "Not saved yet"}</span>
       </header>
       <form className="profile-layout" onSubmit={submit}>
         <main>
@@ -82,7 +86,7 @@ export function AcademicProfilePage() {
                 Applicant type
                 <input
                   name="applicant_type"
-                  defaultValue={p.applicant_type ?? ""}
+                  defaultValue={p?.applicant_type ?? ""}
                   placeholder="International student"
                 />
               </label>
@@ -90,7 +94,7 @@ export function AcademicProfilePage() {
                 Intended study level
                 <input
                   name="intended_study_level"
-                  defaultValue={p.intended_study_level ?? ""}
+                  defaultValue={p?.intended_study_level ?? ""}
                   placeholder="Postgraduate"
                 />
               </label>
@@ -98,7 +102,7 @@ export function AcademicProfilePage() {
                 Target countries
                 <input
                   name="target_countries"
-                  defaultValue={(p.target_countries ?? []).join(", ")}
+                  defaultValue={(p?.target_countries ?? []).join(", ")}
                   placeholder="Portugal, United Kingdom"
                 />
               </label>
@@ -112,13 +116,20 @@ export function AcademicProfilePage() {
                 <textarea
                   name={key}
                   rows={3}
-                  defaultValue={sectionSummary((p.sections ?? {})[key])}
+                  defaultValue={sectionSummary((p?.sections ?? {})[key])}
                   placeholder="Add a concise factual summary. Structured editors will evolve with the contract."
                 />
               </label>
             ))}
           </section>
-          <button className="primary" disabled={save.isPending}>
+          {save.isError ? (
+            <p className="form-error" role="alert">
+              {save.error instanceof Error
+                ? save.error.message
+                : "We couldn’t save your academic profile. Your entries are still here; try again."}
+            </p>
+          ) : null}
+          <button className="primary" type="submit" disabled={save.isPending}>
             {save.isPending ? "Saving…" : "Save academic profile"}
           </button>
           <p role="status">{message}</p>
@@ -127,27 +138,46 @@ export function AcademicProfilePage() {
           <GraduationCap />
           <h2>Completion</h2>
           <ul>
-          {Object.entries(p.completion ?? {}).map(([key, value]) => (
-              <li key={key}>
-                <span>{key.replaceAll("_", " ")}</span>
-                <strong>{value ? "Complete" : "Needs attention"}</strong>
+            {completionEntries.length ? (
+              completionEntries.map(([key, value]) => (
+                <li key={key}>
+                  <span>{key.replaceAll("_", " ")}</span>
+                  <strong>{value ? "Complete" : "Needs attention"}</strong>
+                </li>
+              ))
+            ) : (
+              <li>
+                <span>Academic profile</span>
+                <strong>Not started</strong>
               </li>
-            ))}
+            )}
           </ul>
           <h2>
             <Clock3 /> Version history
           </h2>
-          {versions.data?.map((x) => (
-            <div className="version-row" key={x.id}>
-              <strong>Version {x.version_number}</strong>
-              <span>
-                {new Intl.DateTimeFormat(undefined, {
-                  dateStyle: "medium",
-                }).format(new Date(x.created_at))}
-              </span>
-              <small>{x.reason}</small>
-            </div>
-          ))}
+          {p ? (
+            versions.isError ? (
+              <p className="muted">Version history could not be loaded.</p>
+            ) : versions.isPending ? (
+              <p className="muted" role="status">
+                Loading version history…
+              </p>
+            ) : versions.data?.length ? (
+              versions.data.map((x) => (
+                <div className="version-row" key={x.id}>
+                  <strong>Version {x.version_number}</strong>
+                  <span>{formatVersionDate(x.created_at)}</span>
+                  <small>{x.reason}</small>
+                </div>
+              ))
+            ) : (
+              <p className="muted">No earlier versions yet.</p>
+            )
+          ) : (
+            <p className="muted">
+              Your first version will appear here after you save.
+            </p>
+          )}
           <p className="muted">
             History is read-only because the API has no restore endpoint.
           </p>
@@ -165,4 +195,12 @@ function sectionSummary(value: unknown) {
   )
     return String((value as Record<string, unknown>).summary);
   return "";
+}
+
+function formatVersionDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
 }

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { MarketingShell } from "../marketing/MarketingShell";
 
 const guideSteps = [
   {
@@ -144,6 +145,12 @@ const heroViews = [
   { id: "documents", label: "Documents", Icon: FileText },
 ] as const;
 type HeroView = (typeof heroViews)[number]["id"];
+const previewConnections = [
+  [Folder, "Applications", "Keep opportunities, deadlines and progress in one place."],
+  [FileText, "Evidence", "Connect documents and proof to the requirements they support."],
+  [PenLine, "Writing", "Shape drafts with the right prompt and evidence in view."],
+  [Users, "References", "Track requests, due dates and follow-up without exposing confidential content."],
+] as const;
 
 type HeroWorkspaceTask = {
   id: string;
@@ -390,6 +397,9 @@ export function LandingPage() {
               Product <ChevronDown aria-hidden="true" />
             </summary>
             <div className="product-menu-panel">
+              <Link to="/product-preview" onClick={() => setMenuOpen(false)}>
+                Interactive product preview
+              </Link>
               <Link to="/features/scholarship-application-tracker" onClick={() => setMenuOpen(false)}>
                 Application tracker
               </Link>
@@ -660,6 +670,134 @@ export function LandingPage() {
 
       <PhaseOneFooter />
     </main>
+  );
+}
+
+export function ProductPreviewPage() {
+  const [activeGuide, setActiveGuide] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    document.title = "Interactive product preview | EliteApply";
+    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
+      "content",
+      "Explore a realistic EliteApply sample workspace and see how applications, evidence, writing and references stay connected before signing up.",
+    );
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPreference = () => setReduceMotion(media.matches);
+    syncPreference();
+    media.addEventListener("change", syncPreference);
+    return () => media.removeEventListener("change", syncPreference);
+  }, []);
+
+  useEffect(() => {
+    if (paused || reduceMotion) return;
+    const timer = window.setTimeout(
+      () => setActiveGuide((current) => (current + 1) % guideSteps.length),
+      4800,
+    );
+    return () => window.clearTimeout(timer);
+  }, [activeGuide, paused, reduceMotion]);
+
+  return (
+    <MarketingShell>
+      <section className="product-preview-hero">
+        <div className="product-preview-copy">
+          <h1>See how every application comes together.</h1>
+          <p>
+            Explore a realistic sample workspace, move through the workflow and
+            see how deadlines, evidence, writing and references stay connected
+            before you create an account.
+          </p>
+          <div className="phase-one-actions">
+            <Link className="landing-button" to="/register" reloadDocument>
+              Start free <ArrowRight aria-hidden="true" />
+            </Link>
+            <a className="landing-button secondary" href="#preview-workflow">
+              Explore the workflow
+            </a>
+          </div>
+        </div>
+        <ProductPreview />
+      </section>
+
+      <section className="preview-page-workflow" id="preview-workflow">
+        <header className="preview-workflow-heading">
+          <h2>Follow the path from opportunity to final review.</h2>
+          <p>
+            Four practical stages turn a complex application into a plan you can
+            understand, review and own.
+          </p>
+        </header>
+        <div className="workflow-layout">
+          <div className="workflow-controller">
+            <div className="tour-meta">
+              <span aria-live="polite">Stage {activeGuide + 1} of {guideSteps.length}</span>
+              {reduceMotion ? <span>Manual tour</span> : (
+                <button
+                  type="button"
+                  className="tour-toggle"
+                  onClick={() => setPaused((value) => !value)}
+                  aria-label={paused ? "Play product tour" : "Pause product tour"}
+                >
+                  {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+                  {paused ? "Play" : "Pause"}
+                </button>
+              )}
+            </div>
+            <span
+              className={`tour-progress ${!paused && !reduceMotion ? "running" : ""}`}
+              aria-hidden="true"
+              key={`${activeGuide}-${paused}`}
+            ><i /></span>
+            <ol className="guide-steps" aria-label="EliteApply application workflow">
+              {guideSteps.map((step, index) => (
+                <li className={index === activeGuide ? "active" : ""} key={step.number}>
+                  <button
+                    type="button"
+                    className="guide-step-button"
+                    aria-pressed={index === activeGuide}
+                    aria-controls="workflow-preview"
+                    onClick={() => setActiveGuide(index)}
+                  >
+                    <span className="guide-step-number">{index + 1}</span>
+                    <span><strong>{step.label}</strong><small>{step.description}</small></span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <WorkflowPreview
+            key={guideSteps[activeGuide].number}
+            step={guideSteps[activeGuide]}
+            animated={!reduceMotion}
+          />
+        </div>
+      </section>
+
+      <section className="preview-connections" aria-labelledby="connections-title">
+        <h2 id="connections-title">Everything stays connected.</h2>
+        <div>
+          {previewConnections.map(([Icon, title, copy]) => (
+            <article key={title}>
+              <span aria-hidden="true"><Icon /></span>
+              <div><h3>{title}</h3><p>{copy}</p></div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="preview-closing">
+        <div><h2>Ready to build your own workspace?</h2><p>Create your workspace and move from plans to progress.</p></div>
+        <Link className="landing-button" to="/register" reloadDocument>
+          Start free <ArrowRight aria-hidden="true" />
+        </Link>
+      </section>
+    </MarketingShell>
   );
 }
 
@@ -1184,8 +1322,7 @@ function PhaseOneFooter() {
 
 function ProductPreview() {
   const [activeView, setActiveView] = useState<HeroView>("overview");
-  const [selectedApplicationId, setSelectedApplicationId] =
-    useState("stanford");
+  const [selectedApplicationId, setSelectedApplicationId] = useState("rhodes");
   const [selectedDocumentId, setSelectedDocumentId] = useState("statement");
   const activeApplication =
     heroApplications.find(({ id }) => id === selectedApplicationId) ??

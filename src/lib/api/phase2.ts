@@ -3,7 +3,8 @@ import { apiRequest } from "./client";
 type S = components["schemas"];
 const enc = encodeURIComponent;
 export const profileApi = {
-  get: () => apiRequest<S["AcademicProfileResponse"]>("/academic-profile"),
+  get: () =>
+    apiRequest<S["AcademicProfileResponse"] | null>("/academic-profile"),
   save: (body: S["AcademicProfileUpsert"]) =>
     apiRequest<S["AcademicProfileResponse"]>("/academic-profile", {
       method: "PUT",

@@ -3,9 +3,14 @@ import {
   Navigate,
   RouterProvider,
   createBrowserRouter,
+  isRouteErrorResponse,
   useLocation,
+  useRouteError,
 } from "react-router-dom";
-import { LandingPage } from "../features/landing/LandingPage";
+import {
+  LandingPage,
+  ProductPreviewPage,
+} from "../features/landing/LandingPage";
 import { useSession } from "../lib/auth/session";
 const AppShell = lazy(() =>
     import("../components/AppShell").then((x) => ({ default: x.AppShell })),
@@ -167,8 +172,52 @@ function Unavailable() {
     </div>
   );
 }
+
+function AppRouteError() {
+  const error = useRouteError();
+  const status = isRouteErrorResponse(error) ? error.status : null;
+  const sessionProblem = status === 401 || status === 403;
+
+  return (
+    <main className="app-route-error" role="alert">
+      <a className="app-brand" href="/app/dashboard">
+        <span aria-hidden="true">E</span>
+        EliteApply
+      </a>
+      <section>
+        <span className="route-error-code" aria-hidden="true">
+          {status ?? "!"}
+        </span>
+        <h1>
+          {sessionProblem
+            ? "Your session needs attention"
+            : "We hit an unexpected problem"}
+        </h1>
+        <p>
+          {sessionProblem
+            ? "Sign in again to continue securely. Your saved application data has not been changed."
+            : "This workspace could not finish loading. Your saved data is safe, and reloading usually resolves the problem."}
+        </p>
+        <div>
+          <button
+            className="primary"
+            type="button"
+            onClick={() => location.reload()}
+          >
+            Reload page
+          </button>
+          <a href={sessionProblem ? "/login" : "/app/dashboard"}>
+            {sessionProblem ? "Go to sign in" : "Return to dashboard"}
+          </a>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
+  { path: "/product-preview", element: <ProductPreviewPage /> },
   { path: "/features/*", element: load(<MarketingPage />) },
   { path: "/how-it-works", element: load(<MarketingPage />) },
   { path: "/for-students", element: load(<MarketingPage />) },
@@ -177,10 +226,19 @@ const router = createBrowserRouter([
   { path: "/about", element: load(<MarketingPage />) },
   { path: "/contact", element: load(<MarketingPage />) },
   { path: "/resources/*", element: load(<MarketingPage />) },
-  { path: "/scholarship-application-tracker", element: load(<MarketingPage />) },
-  { path: "/scholarship-application-organiser", element: load(<MarketingPage />) },
+  {
+    path: "/scholarship-application-tracker",
+    element: load(<MarketingPage />),
+  },
+  {
+    path: "/scholarship-application-organiser",
+    element: load(<MarketingPage />),
+  },
   { path: "/scholarship-deadline-tracker", element: load(<MarketingPage />) },
-  { path: "/scholarship-application-checklist", element: load(<MarketingPage />) },
+  {
+    path: "/scholarship-application-checklist",
+    element: load(<MarketingPage />),
+  },
   {
     path: "/login",
     element: (
@@ -211,6 +269,7 @@ const router = createBrowserRouter([
   {
     path: "/app",
     element: <Protected />,
+    errorElement: <AppRouteError />,
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: "dashboard", element: load(<DashboardPage />) },

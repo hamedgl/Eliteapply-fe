@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 const productLinks = [
+  ["Interactive product preview", "/product-preview"],
   ["Application tracker", "/features/scholarship-application-tracker"],
   ["Writing workspace", "/features/personal-statement-workspace"],
   ["Documents and evidence", "/features/document-organiser"],

@@ -357,3 +357,13 @@ test("primary CTA crosses into the authenticated runtime", async ({ page }) => {
     page.getByRole("heading", { name: "Create your EliteApply account" }),
   ).toBeVisible();
 });
+
+test("product preview demonstrates the workflow before signup", async ({ page }) => {
+  await page.goto("/product-preview");
+  await expect(page.getByRole("heading", { level: 1, name: "See how every application comes together." })).toBeVisible();
+  await page.getByRole("tab", { name: "Applications" }).click();
+  await expect(page.getByText("Selected application")).toBeVisible();
+  await page.getByRole("button", { name: /Prepare the application/ }).click();
+  await expect(page.getByText("Personal Statement Draft")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Start free/ }).first()).toHaveAttribute("href", "/register");
+});

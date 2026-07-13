@@ -10,6 +10,7 @@ const PrivateRoot = lazy(() =>
 );
 const standalonePublicPaths = new Set([
   "/",
+  "/product-preview",
   "/how-it-works",
   "/for-students",
   "/pricing",
