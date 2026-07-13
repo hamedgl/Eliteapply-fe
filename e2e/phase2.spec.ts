@@ -238,11 +238,65 @@ test("scholarship applications require and submit a catalogue scholarship", asyn
   await dialog
     .locator('select[name="scholarship_id"]')
     .selectOption({ label: "Rhodes Scholarship — Rhodes Trust" });
+  expect(
+    await dialog
+      .locator(":is(input, select, textarea):required")
+      .evaluateAll((controls) =>
+        controls
+          .filter(
+            (control) =>
+              getComputedStyle(control.closest("label")!, "::before")
+                .content !== '"*"',
+          )
+          .map((control) => control.getAttribute("name")),
+      ),
+  ).toEqual([]);
+  await page.screenshot({
+    path: "/tmp/eliteapply-required-fields.png",
+    fullPage: true,
+  });
   await dialog.getByRole("button", { name: "Create application" }).click();
   await expect.poll(() => submitted?.scholarship_id).toBe(
     "00000000-0000-4000-8000-000000000032",
   );
   expect(submitted?.programme_id).toBeNull();
+});
+
+test("application modal opens a usable private programme form", async ({
+  page,
+}) => {
+  let submitted: Record<string, unknown> | null = null;
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      new URL(request.url()).pathname.endsWith("/catalogue/programmes")
+    )
+      submitted = request.postDataJSON() as Record<string, unknown>;
+  });
+  await page.goto("/app/applications");
+  await page.getByRole("button", { name: "Add application" }).click();
+  const addProgramme = page
+    .getByRole("dialog", { name: "Add application" })
+    .getByRole("link", { name: "Add a private programme" });
+  await expect(addProgramme).toHaveAttribute("target", "_blank");
+  await page.goto((await addProgramme.getAttribute("href"))!);
+  await expect(page).toHaveURL(/\/app\/catalogue\?kind=programmes&create=1$/);
+  await expect(page.getByRole("heading", { name: "Add private programme" })).toBeVisible();
+  await expect(page.locator('select[name="institution_id"]')).toContainText(
+    "University of Oxford",
+  );
+  const form = page.locator("form").filter({
+    has: page.getByRole("heading", { name: "Add private programme" }),
+  });
+  await form.getByLabel("Name").fill("MSc Public Policy");
+  await form
+    .locator('select[name="institution_id"]')
+    .selectOption("00000000-0000-4000-8000-000000000021");
+  await form.getByRole("button", { name: "Create private record" }).click();
+  await expect.poll(() => submitted?.institution_id).toBe(
+    "00000000-0000-4000-8000-000000000021",
+  );
+  expect(submitted?.name).toBe("MSc Public Policy");
 });
 test("board is keyboard operable and responsive", async ({ page }) => {
   await page.goto("/app/applications");

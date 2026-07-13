@@ -37,6 +37,8 @@ The app shell adds a live unread badge, notifications shortcut, reminders and du
 
 - The corrected backend enforces `scholarship_id` for scholarship applications and `programme_id` for programme applications, although those cross-field requirements are not expressible as required properties in the generated union-free schema.
 - The ordinary Add application modal now loads the existing catalogue lists, conditionally requires the matching opportunity selector, preserves catalogue deep-link defaults and sends only the matching ID.
+- Empty or incomplete lists expose direct “Add private programme/scholarship” links. Programme creation now uses a real institution-name selector and links to institution creation when none exist; raw catalogue UUID entry is no longer required.
+- A shared native-required rule marks required fields consistently with a red star across frontend forms. Add application now declares Type, Stage and Priority as required alongside Title and the conditional catalogue opportunity; optional fields remain unmarked.
 - A Playwright regression reproduces the reported standalone scholarship flow and asserts the POST body contains `scholarship_id` with `programme_id: null`.
 
 ### Academic references and referee portal
@@ -141,7 +143,7 @@ The app shell adds a live unread badge, notifications shortcut, reminders and du
 | `git diff --check` | Pass |
 | Phase 3 Chromium E2E | Pass — 4/4 |
 | Scholarship application regression | Pass — selected catalogue UUID present in POST body |
-| Phase 2 catalogue/application Chromium suite | Pass — 4/4 |
+| Phase 2 catalogue/application Chromium suite | Pass — 5/5 |
 | Desktop notification → interview interaction | Pass, no console errors |
 | Mobile interview history at 390×844 | Pass |
 | Public referee code URL/header check | Pass |

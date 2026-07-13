@@ -932,6 +932,7 @@ function CreateApplication({
             Type
             <select
               name="application_type"
+              required
               value={applicationType}
               onChange={(event) => {
                 setApplicationType(
@@ -980,6 +981,16 @@ function CreateApplication({
                   </option>
                 ))}
               </select>
+              <small>
+                Can’t find it?{" "}
+                <Link
+                  to="/app/catalogue?kind=programmes&create=1"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Add a private programme
+                </Link>
+              </small>
             </label>
           ) : null}
           {applicationType === "scholarship" ? (
@@ -1016,6 +1027,16 @@ function CreateApplication({
                   </option>
                 ))}
               </select>
+              <small>
+                Can’t find it?{" "}
+                <Link
+                  to="/app/catalogue?kind=scholarships&create=1"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Add a private scholarship
+                </Link>
+              </small>
             </label>
           ) : null}
           {(applicationType === "programme" && programmes.isError) ||
@@ -1027,7 +1048,7 @@ function CreateApplication({
           ) : null}
           <label>
             Stage
-            <select name="stage">
+            <select name="stage" required>
               {stages.map((item) => (
                 <option value={item} key={item}>
                   {label(item)}
@@ -1037,7 +1058,7 @@ function CreateApplication({
           </label>
           <label>
             Priority
-            <select name="priority">
+            <select name="priority" required>
               {priorities.map((item) => (
                 <option value={item} key={item}>
                   {label(item)}

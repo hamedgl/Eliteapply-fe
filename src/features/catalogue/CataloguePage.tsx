@@ -72,7 +72,7 @@ export function CataloguePage() {
   const { kind: routeKind, id } = useParams(),
     navigate = useNavigate(),
     [params, setParams] = useSearchParams(),
-    [creating, setCreating] = useState(false),
+    [creating, setCreating] = useState(() => params.get("create") === "1"),
     kind = (
       ["institutions", "programmes", "scholarships"].includes(routeKind ?? "")
         ? routeKind
@@ -454,6 +454,13 @@ function CatalogueCreateDialog({
   onCreated: () => void;
 }) {
   const [error, setError] = useState("");
+  const institutions = useQuery({
+    queryKey: queryKeys.catalogue("institutions", {
+      surface: "catalogue-create",
+    }),
+    queryFn: ({ signal }) => catalogueApi.institutions({}, signal),
+    enabled: kind !== "institutions",
+  });
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget),
@@ -507,7 +514,34 @@ function CatalogueCreateDialog({
         {kind === "institutions" ? (
           <label>Country code<input name="country_code" required minLength={2} maxLength={2} /></label>
         ) : (
-          <label>Institution ID {kind === "scholarships" ? "(optional)" : ""}<input name="institution_id" required={kind === "programmes"} /></label>
+          <label>
+            Institution {kind === "scholarships" ? "(optional)" : ""}
+            <select
+              name="institution_id"
+              required={kind === "programmes"}
+              disabled={institutions.isPending}
+            >
+              <option value="">
+                {institutions.isPending
+                  ? "Loading institutions…"
+                  : kind === "programmes"
+                    ? "Select an institution"
+                    : "No institution"}
+              </option>
+              {institutions.data?.items.map((institution) => (
+                <option key={institution.id} value={institution.id}>
+                  {institution.name}
+                </option>
+              ))}
+            </select>
+            {!institutions.isPending && !institutions.data?.items.length ? (
+              <small>
+                <Link to="/app/catalogue?kind=institutions&create=1">
+                  Add a private institution first
+                </Link>
+              </small>
+            ) : null}
+          </label>
         )}
         {kind === "programmes" ? <><label>Degree level<input name="degree_level" /></label><label>Field of study<input name="field_of_study" /></label></> : null}
         {kind === "scholarships" ? <><label>Provider<input name="provider_name" /></label><label>Award summary<textarea name="award_summary" rows={4} /></label></> : null}
