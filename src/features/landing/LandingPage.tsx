@@ -23,6 +23,7 @@ import {
   Pause,
   PenLine,
   Play,
+  RotateCcw,
   Search,
   Send,
   ShieldCheck,
@@ -143,6 +144,144 @@ const heroViews = [
   { id: "documents", label: "Documents", Icon: FileText },
 ] as const;
 type HeroView = (typeof heroViews)[number]["id"];
+
+type HeroWorkspaceTask = {
+  id: string;
+  label: string;
+  detail: string;
+  done: boolean;
+};
+
+const heroWorkspaceApplications = [
+  {
+    id: "rhodes",
+    programme: "Rhodes Scholarship",
+    status: "In progress",
+    nextAction: "Connect leadership evidence",
+    actionDetail: "Personal statement · Evidence map",
+    deadlineDays: 18,
+    deadlineDate: "15 September",
+    readiness: 72,
+    requirementsCovered: 9,
+    tasks: [
+      {
+        id: "leadership",
+        label: "Connect leadership evidence",
+        detail: "Link one verified outcome to your personal statement.",
+        done: false,
+      },
+      {
+        id: "opening",
+        label: "Shape the opening narrative",
+        detail: "Draft reviewed and connected to your motivation notes.",
+        done: true,
+      },
+      {
+        id: "referee",
+        label: "Confirm referee availability",
+        detail: "Send the final briefing note to your academic referee.",
+        done: false,
+      },
+      {
+        id: "transcript",
+        label: "Verify academic transcript",
+        detail: "Official PDF checked against the application requirements.",
+        done: true,
+      },
+      {
+        id: "eligibility",
+        label: "Review eligibility declaration",
+        detail: "Complete the final residency and age criteria check.",
+        done: false,
+      },
+    ],
+  },
+  {
+    id: "knight-hennessy",
+    programme: "Knight-Hennessy Scholars",
+    status: "Drafting",
+    nextAction: "Strengthen the personal statement",
+    actionDetail: "Personal statement · Motivation",
+    deadlineDays: 34,
+    deadlineDate: "1 October",
+    readiness: 61,
+    requirementsCovered: 7,
+    tasks: [
+      {
+        id: "statement",
+        label: "Strengthen the personal statement",
+        detail: "Connect your long-term goal to a specific Stanford resource.",
+        done: false,
+      },
+      {
+        id: "video",
+        label: "Outline the video statement",
+        detail: "Three story beats are ready for a first recording.",
+        done: true,
+      },
+      {
+        id: "resume",
+        label: "Condense the leadership résumé",
+        detail: "Reduce two older entries and quantify current impact.",
+        done: false,
+      },
+      {
+        id: "references",
+        label: "Brief both recommenders",
+        detail: "Background notes and submission dates have been shared.",
+        done: true,
+      },
+    ],
+  },
+  {
+    id: "eth",
+    programme: "ETH Excellence Scholarship",
+    status: "Planning",
+    nextAction: "Confirm programme requirements",
+    actionDetail: "Eligibility · Document checklist",
+    deadlineDays: 79,
+    deadlineDate: "15 November",
+    readiness: 48,
+    requirementsCovered: 5,
+    tasks: [
+      {
+        id: "requirements",
+        label: "Confirm programme requirements",
+        detail: "Compare the department checklist with the scholarship call.",
+        done: false,
+      },
+      {
+        id: "proposal",
+        label: "Draft the pre-proposal outline",
+        detail: "Research question and methodology still need review.",
+        done: false,
+      },
+      {
+        id: "grades",
+        label: "Convert the grade summary",
+        detail: "Institutional grading scale is attached and verified.",
+        done: true,
+      },
+      {
+        id: "supervisor",
+        label: "Shortlist potential supervisors",
+        detail: "Add one more faculty fit before requesting feedback.",
+        done: false,
+      },
+    ],
+  },
+] as const;
+
+function createInitialHeroTaskState() {
+  return Object.fromEntries(
+    heroWorkspaceApplications.map((application) => [
+      application.id,
+      Object.fromEntries(
+        application.tasks.map((task) => [task.id, task.done]),
+      ),
+    ]),
+  ) as Record<string, Record<string, boolean>>;
+}
 
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -525,55 +664,171 @@ export function LandingPage() {
 }
 
 function HeroFocusPreview() {
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string>(
+    heroWorkspaceApplications[0].id,
+  );
+  const [taskState, setTaskState] = useState(createInitialHeroTaskState);
+  const [actionPanelOpen, setActionPanelOpen] = useState(false);
+
+  const currentApplication =
+    heroWorkspaceApplications.find(
+      (application) => application.id === selectedApplicationId,
+    ) ?? heroWorkspaceApplications[0];
+  const initialCompleted = currentApplication.tasks.filter(
+    (task) => task.done,
+  ).length;
+  const completedTasks = currentApplication.tasks.filter(
+    (task) => taskState[currentApplication.id]?.[task.id],
+  ).length;
+  const completionDifference = completedTasks - initialCompleted;
+  const readiness = Math.max(
+    0,
+    Math.min(100, currentApplication.readiness + completionDifference * 8),
+  );
+  const requirementsCovered = Math.max(
+    0,
+    currentApplication.requirementsCovered + completionDifference,
+  );
+  const attentionCount = currentApplication.tasks.length - completedTasks;
+
+  const handleTaskChange = (task: HeroWorkspaceTask, checked: boolean) => {
+    setTaskState((previous) => ({
+      ...previous,
+      [currentApplication.id]: {
+        ...previous[currentApplication.id],
+        [task.id]: checked,
+      },
+    }));
+  };
+
+  const handleApplicationChange = (applicationId: string) => {
+    setSelectedApplicationId(applicationId);
+    setActionPanelOpen(false);
+  };
+
+  const resetSample = () => {
+    setTaskState(createInitialHeroTaskState());
+    setActionPanelOpen(false);
+  };
+
   return (
-    <div
+    <section
       className="hero-focus-preview"
       id="sample-workspace"
-      role="img"
-      aria-label="EliteApply sample workspace showing a next action, application readiness and deadline"
+      aria-label="Interactive EliteApply sample workspace"
     >
       <header>
         <div>
           <span className="preview-mark" aria-hidden="true">E</span>
           <div>
             <small>Current application</small>
-            <strong>Rhodes Scholarship</strong>
+            <strong>{currentApplication.programme}</strong>
           </div>
         </div>
-        <span className="preview-state">In progress</span>
+        <span className="preview-state">{currentApplication.status}</span>
       </header>
+      <div className="hero-sample-toolbar">
+        <label>
+          <span>Try a sample application</span>
+          <select
+            aria-label="Sample application"
+            value={selectedApplicationId}
+            onChange={(event) => handleApplicationChange(event.target.value)}
+          >
+            {heroWorkspaceApplications.map((application) => (
+              <option key={application.id} value={application.id}>
+                {application.programme}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" onClick={resetSample}>
+          <RotateCcw aria-hidden="true" /> Reset
+        </button>
+      </div>
       <div className="hero-moments">
-        <article className="hero-next-action">
+        <button
+          className="hero-next-action"
+          type="button"
+          aria-expanded={actionPanelOpen}
+          aria-controls="hero-action-panel"
+          onClick={() => setActionPanelOpen((open) => !open)}
+        >
           <ClipboardCheck aria-hidden="true" />
           <div>
             <small>Next responsible action</small>
-            <strong>Connect leadership evidence</strong>
-            <span>Personal statement · Evidence map</span>
+            <strong>{currentApplication.nextAction}</strong>
+            <span>{currentApplication.actionDetail}</span>
           </div>
-          <ChevronRight aria-hidden="true" />
-        </article>
+          <span className="hero-action-cta">
+            <span>{actionPanelOpen ? "Close" : "Open task list"}</span>
+            <ChevronRight aria-hidden="true" />
+          </span>
+        </button>
         <article>
           <CheckCircle2 aria-hidden="true" />
           <div>
             <small>Application readiness</small>
-            <strong>72%</strong>
-            <span className="preview-progress" aria-label="72% ready"><i /></span>
+            <strong aria-live="polite">{readiness}%</strong>
+            <span
+              className="preview-progress"
+              role="progressbar"
+              aria-label={`${readiness}% ready`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={readiness}
+            >
+              <i style={{ width: `${readiness}%` }} />
+            </span>
           </div>
         </article>
         <article>
           <CalendarDays aria-hidden="true" />
           <div>
             <small>Next deadline</small>
-            <strong>18 days</strong>
-            <span>15 September</span>
+            <strong>{currentApplication.deadlineDays} days</strong>
+            <span>{currentApplication.deadlineDate}</span>
           </div>
         </article>
+        {actionPanelOpen ? (
+          <div className="hero-action-panel" id="hero-action-panel">
+            <header>
+              <div>
+                <strong>Priority checklist</strong>
+                <span>Check an item to see readiness update.</span>
+              </div>
+              <span>{attentionCount} remaining</span>
+            </header>
+            <div className="hero-task-list">
+              {currentApplication.tasks.map((task) => {
+                const checked = Boolean(
+                  taskState[currentApplication.id]?.[task.id],
+                );
+                return (
+                  <label className={checked ? "complete" : ""} key={task.id}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) =>
+                        handleTaskChange(task, event.target.checked)
+                      }
+                    />
+                    <span>
+                      <strong>{task.label}</strong>
+                      <small>{task.detail}</small>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
-      <footer>
-        <span><Check aria-hidden="true" /> 9 requirements covered</span>
-        <span>3 items need attention</span>
+      <footer aria-live="polite">
+        <span><Check aria-hidden="true" /> {requirementsCovered} requirements covered</span>
+        <span>{attentionCount} {attentionCount === 1 ? "item needs" : "items need"} attention</span>
       </footer>
-    </div>
+    </section>
   );
 }
 

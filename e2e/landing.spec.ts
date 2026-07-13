@@ -35,8 +35,8 @@ test("landing page stays self-contained and semantically ordered", async ({
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("img", {
-      name: /sample workspace showing a next action/i,
+    page.getByRole("region", {
+      name: /interactive eliteapply sample workspace/i,
     }),
   ).toBeVisible();
   await expect(
@@ -88,8 +88,8 @@ test("hero product proof communicates the three required moments", async ({
 }) => {
   await page.goto("/");
 
-  const demo = page.getByRole("img", {
-    name: /sample workspace showing a next action/i,
+  const demo = page.getByRole("region", {
+    name: /interactive eliteapply sample workspace/i,
   });
   await expect(demo.getByText("Next responsible action")).toBeVisible();
   await expect(demo.getByText("Connect leadership evidence")).toBeVisible();
@@ -97,6 +97,46 @@ test("hero product proof communicates the three required moments", async ({
   await expect(demo.getByText("72%", { exact: true })).toBeVisible();
   await expect(demo.getByText("Next deadline")).toBeVisible();
   await expect(demo.getByText("18 days")).toBeVisible();
+  await expect(demo.getByText("3 items need attention")).toBeVisible();
+});
+
+test("hero sample workspace supports switching, completing and resetting tasks", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const demo = page.getByRole("region", {
+    name: /interactive eliteapply sample workspace/i,
+  });
+  await demo
+    .getByRole("button", { name: /connect leadership evidence/i })
+    .click();
+  const leadershipTask = demo.getByRole("checkbox", {
+    name: /connect leadership evidence/i,
+  });
+  await expect(leadershipTask).not.toBeChecked();
+  await leadershipTask.check();
+  await expect(demo.getByText("80%", { exact: true })).toBeVisible();
+  await expect(demo.getByText("2 items need attention")).toBeVisible();
+  await expect(demo.getByText("10 requirements covered")).toBeVisible();
+
+  await demo
+    .getByRole("combobox", { name: "Sample application" })
+    .selectOption("knight-hennessy");
+  await expect(demo.locator(":scope > header strong")).toHaveText(
+    "Knight-Hennessy Scholars",
+  );
+  await expect(
+    demo.getByText("Strengthen the personal statement"),
+  ).toBeVisible();
+  await expect(demo.getByText("61%", { exact: true })).toBeVisible();
+
+  await demo
+    .getByRole("combobox", { name: "Sample application" })
+    .selectOption("rhodes");
+  await expect(demo.getByText("80%", { exact: true })).toBeVisible();
+  await demo.getByRole("button", { name: "Reset" }).click();
+  await expect(demo.getByText("72%", { exact: true })).toBeVisible();
   await expect(demo.getByText("3 items need attention")).toBeVisible();
 });
 
