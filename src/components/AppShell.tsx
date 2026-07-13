@@ -1,104 +1,181 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BookOpen,
-  CalendarCheck,
   FileText,
   FolderKanban,
   GraduationCap,
   LayoutDashboard,
-  LockKeyhole,
+  LogOut,
   Menu,
   Mic2,
   Settings,
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
-import { useSession } from "../lib/auth/session";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authApi } from "../lib/api/auth";
-const items = [
-  ["/app/dashboard", "Dashboard", LayoutDashboard, true],
-  ["/app/applications", "Applications", FolderKanban, true],
-  ["/app/writing", "Writing Studio", BookOpen, true],
-  ["/app/academic-profile", "Academic Profile", GraduationCap, true],
-  ["/app/documents", "Documents", FileText, true],
-  ["/app/references", "References", Users, true],
-  ["/app/interviews/new", "Interview Practice", Mic2, true],
-  ["/app/settings/profile", "Settings", Settings, true],
+import { useSession } from "../lib/auth/session";
+
+const navigationGroups = [
+  {
+    label: "Workspace",
+    items: [
+      ["/app/dashboard", "Dashboard", LayoutDashboard],
+      ["/app/applications", "Applications", FolderKanban],
+    ],
+  },
+  {
+    label: "Prepare",
+    items: [
+      ["/app/writing", "Writing Studio", BookOpen],
+      ["/app/academic-profile", "Academic Profile", GraduationCap],
+      ["/app/documents", "Documents", FileText],
+      ["/app/references", "References", Users],
+      ["/app/interviews/new", "Interview Practice", Mic2],
+    ],
+  },
+  {
+    label: "Account",
+    items: [["/app/settings/profile", "Settings", Settings]],
+  },
 ] as const;
+
 export function AppShell() {
-  const [open, setOpen] = useState(false),
-    user = useSession((s) => s.user),
-    clear = useSession((s) => s.clear),
-    nav = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const user = useSession((state) => state.user);
+  const clear = useSession((state) => state.clear);
+  const navigate = useNavigate();
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sidebarRef.current
+      ?.querySelector<HTMLButtonElement>(".sidebar-close")
+      ?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
     try {
       await authApi.logout();
     } finally {
       clear();
-      nav("/login");
+      navigate("/login");
     }
   }
+
+  const displayName = user?.full_name?.trim() || "Your account";
+  const avatarLabel = (user?.full_name || user?.email || "EA")
+    .slice(0, 1)
+    .toUpperCase();
+
   return (
     <div className="app-shell">
-      <button
-        className="mobile-menu"
-        onClick={() => setOpen(true)}
-        aria-label="Open navigation"
-      >
-        <Menu />
-      </button>
+      <a className="app-skip-link" href="#app-content">
+        Skip to workspace
+      </a>
+
+      <header className="mobile-appbar">
+        <NavLink to="/app/dashboard" className="app-brand">
+          <span aria-hidden="true">E</span>
+          EliteApply
+        </NavLink>
+        <button
+          ref={menuButtonRef}
+          className="mobile-menu"
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+          aria-controls="app-sidebar"
+          aria-label="Open navigation"
+        >
+          <Menu aria-hidden="true" />
+        </button>
+      </header>
+
       {open ? (
         <button
           className="scrim"
+          type="button"
           onClick={() => setOpen(false)}
           aria-label="Close navigation"
         />
       ) : null}
-      <aside className={open ? "sidebar open" : "sidebar"}>
+
+      <aside
+        ref={sidebarRef}
+        id="app-sidebar"
+        className={open ? "sidebar open" : "sidebar"}
+        aria-label="Application navigation"
+      >
         <div className="sidebar-head">
-          <NavLink to="/app/dashboard" className="brand">
+          <NavLink to="/app/dashboard" className="app-brand">
+            <span aria-hidden="true">E</span>
             EliteApply
           </NavLink>
-          <button onClick={() => setOpen(false)} aria-label="Close navigation">
-            <X />
+          <button
+            className="sidebar-close"
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close navigation"
+          >
+            <X aria-hidden="true" />
           </button>
         </div>
-        <nav aria-label="Primary">
-          {items.map(([href, label, Icon, enabled]) => (
-            <NavLink
-              key={href}
-              to={enabled ? href : "/app/unavailable"}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              <Icon />
-              <span>{label}</span>
-              {!enabled ? (
-                <LockKeyhole className="lock" aria-label="Unavailable" />
-              ) : null}
-            </NavLink>
+
+        <nav aria-label="Primary navigation">
+          {navigationGroups.map((group) => (
+            <div className="nav-group" key={group.label}>
+              <p>{group.label}</p>
+              {group.items.map(([href, label, Icon]) => (
+                <NavLink
+                  key={href}
+                  to={href}
+                  end={href === "/app/dashboard"}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <CalendarCheck />
-          <strong>Built around your deadlines</strong>
-          <span>
-            Applications, writing, references and interview practice are ready.
-          </span>
-        </div>
-        <div className="account">
-          <span>
-            {(user?.full_name ?? user?.email ?? "EA").slice(0, 1).toUpperCase()}
+
+        <footer className="sidebar-account">
+          <span className="account-avatar" aria-hidden="true">
+            {avatarLabel}
           </span>
           <div>
-            <strong>{user?.full_name ?? "Your account"}</strong>
-            <small>{user?.email}</small>
+            <strong title={displayName}>{displayName}</strong>
+            <small title={user?.email ?? undefined}>{user?.email}</small>
           </div>
-          <button onClick={logout}>Log out</button>
-        </div>
+          <button type="button" onClick={logout} disabled={loggingOut}>
+            <LogOut aria-hidden="true" />
+            {loggingOut ? "Signing out…" : "Log out"}
+          </button>
+        </footer>
       </aside>
-      <main className="workspace">
+
+      <main className="workspace" id="app-content" tabIndex={-1}>
         <Outlet />
       </main>
     </div>
