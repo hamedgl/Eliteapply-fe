@@ -256,9 +256,9 @@ test("scholarship applications require and submit a catalogue scholarship", asyn
     fullPage: true,
   });
   await dialog.getByRole("button", { name: "Create application" }).click();
-  await expect.poll(() => submitted?.scholarship_id).toBe(
-    "00000000-0000-4000-8000-000000000032",
-  );
+  await expect
+    .poll(() => submitted?.scholarship_id)
+    .toBe("00000000-0000-4000-8000-000000000032");
   expect(submitted?.programme_id).toBeNull();
 });
 
@@ -281,7 +281,9 @@ test("application modal opens a usable private programme form", async ({
   await expect(addProgramme).toHaveAttribute("target", "_blank");
   await page.goto((await addProgramme.getAttribute("href"))!);
   await expect(page).toHaveURL(/\/app\/catalogue\?kind=programmes&create=1$/);
-  await expect(page.getByRole("heading", { name: "Add private programme" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Add private programme" }),
+  ).toBeVisible();
   await expect(page.locator('select[name="institution_id"]')).toContainText(
     "University of Oxford",
   );
@@ -293,9 +295,9 @@ test("application modal opens a usable private programme form", async ({
     .locator('select[name="institution_id"]')
     .selectOption("00000000-0000-4000-8000-000000000021");
   await form.getByRole("button", { name: "Create private record" }).click();
-  await expect.poll(() => submitted?.institution_id).toBe(
-    "00000000-0000-4000-8000-000000000021",
-  );
+  await expect
+    .poll(() => submitted?.institution_id)
+    .toBe("00000000-0000-4000-8000-000000000021");
   expect(submitted?.name).toBe("MSc Public Policy");
 });
 test("board is keyboard operable and responsive", async ({ page }) => {
@@ -324,5 +326,125 @@ test("board is keyboard operable and responsive", async ({ page }) => {
   await page.screenshot({
     path: "/tmp/eliteapply-phase2-mobile.png",
     fullPage: true,
+  });
+});
+
+test("board cards drag between stages and columns collapse", async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => consoleErrors.push(error.message));
+  let stage = "preparing";
+  let update: Record<string, unknown> | null = null;
+  await page.route("**/api/v1/applications/board*", (route) =>
+    route.fulfill({
+      json: {
+        columns: {
+          preparing:
+            stage === "preparing"
+              ? [
+                  app(
+                    "00000000-0000-4000-8000-000000000013",
+                    "MSc Computer Science",
+                    stage,
+                  ),
+                ]
+              : [],
+          shortlisted:
+            stage === "shortlisted"
+              ? [
+                  app(
+                    "00000000-0000-4000-8000-000000000013",
+                    "MSc Computer Science",
+                    stage,
+                  ),
+                ]
+              : [],
+        },
+        total: 1,
+      },
+    }),
+  );
+  await page.route(
+    "**/api/v1/applications/00000000-0000-4000-8000-000000000013",
+    async (route) => {
+      update = route.request().postDataJSON() as Record<string, unknown>;
+      stage = String(update.stage);
+      await route.fulfill({
+        json: app(
+          "00000000-0000-4000-8000-000000000013",
+          "MSc Computer Science",
+          stage,
+        ),
+      });
+    },
+  );
+
+  await page.goto("/app/applications?view=board");
+  const card = page.getByRole("article", { name: "MSc Computer Science" });
+  const shortlisted = page.getByRole("region", { name: "Shortlisted" });
+  const handle = card.locator(".application-drag-handle");
+  await expect(handle).toHaveAttribute("draggable", "true");
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await handle.dispatchEvent("dragstart", { dataTransfer });
+  await shortlisted.dispatchEvent("dragover", { dataTransfer });
+  await shortlisted.dispatchEvent("drop", { dataTransfer });
+  await expect.poll(() => update?.stage).toBe("shortlisted");
+  await expect(
+    shortlisted.getByRole("article", { name: "MSc Computer Science" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-kanban-moved.png",
+    fullPage: false,
+  });
+
+  const collapse = page.getByRole("button", { name: "Collapse Shortlisted" });
+  await collapse.click();
+  await expect(
+    page.getByRole("button", { name: "Expand Shortlisted" }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(shortlisted.locator(".board-column-content")).toBeHidden();
+  await expect(shortlisted).toHaveCSS("flex-basis", "160px");
+  await page.screenshot({
+    path: "/tmp/eliteapply-kanban-collapsed.png",
+    fullPage: false,
+  });
+  expect(consoleErrors).toEqual([]);
+});
+
+test("board shows the backend reason when a move fails", async ({ page }) => {
+  await page.route(
+    "**/api/v1/applications/00000000-0000-4000-8000-000000000013",
+    (route) =>
+      route.fulfill({
+        status: 422,
+        headers: { "x-correlation-id": "req-test-422" },
+        json: {
+          correlation_id: "req-test-422",
+          detail: [
+            {
+              type: "value_error",
+              loc: ["body"],
+              msg: "Value error, application is locked while submission is in progress.",
+            },
+          ],
+        },
+      }),
+  );
+  await page.goto("/app/applications?view=board");
+  await page
+    .getByLabel("Move MSc Computer Science")
+    .selectOption("shortlisted");
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText(
+    "application is locked while submission is in progress.",
+  );
+  await expect(alert).toContainText("req-test-422");
+  await page.screenshot({
+    path: "/tmp/eliteapply-kanban-error.png",
+    fullPage: false,
   });
 });

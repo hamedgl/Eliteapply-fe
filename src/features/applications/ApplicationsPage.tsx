@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -9,9 +9,12 @@ import {
   Archive,
   ArrowRight,
   CalendarDays,
+  ChevronDown,
+  ChevronRight,
   Columns3,
   Copy,
   Download,
+  GripVertical,
   List,
   Plus,
   Trash2,
@@ -51,6 +54,13 @@ export function ApplicationsPage() {
   const [bulkTags, setBulkTags] = useState("");
   const [duplicateApp, setDuplicateApp] = useState<Application | null>(null);
   const [notice, setNotice] = useState("");
+  const [operationError, setOperationError] = useState("");
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(
+    new Set(),
+  );
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const draggedIdRef = useRef<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const view =
     (params.get("view") as View | null) ??
     (window.matchMedia("(max-width: 700px)").matches ? "list" : "board");
@@ -109,6 +119,13 @@ export function ApplicationsPage() {
         (!search || app.title.toLocaleLowerCase().includes(search)),
     );
   }, [boardQuery.data, filters.search, filters.stage]);
+  const appsByStage = useMemo(() => {
+    const grouped = new Map<string, Application[]>(
+      stages.map((stage) => [stage, []]),
+    );
+    for (const app of boardApps) grouped.get(app.stage)?.push(app);
+    return grouped;
+  }, [boardApps]);
   const visibleApps = view === "board" ? boardApps : listApps;
   const update = useMutation({
     mutationFn: ({ app, next }: { app: Application; next: string }) =>
@@ -117,6 +134,8 @@ export function ApplicationsPage() {
         stage: next as (typeof stages)[number],
       }),
     onMutate: async ({ app, next }) => {
+      setOperationError("");
+      setNotice("");
       await qc.cancelQueries({ queryKey: boardKey });
       const previous =
         qc.getQueryData<Schema["ApplicationBoardResponse"]>(boardKey);
@@ -161,6 +180,10 @@ export function ApplicationsPage() {
               : undefined,
           })),
       }),
+    onMutate: () => {
+      setOperationError("");
+      setNotice("");
+    },
     onSuccess: (result) => {
       const updated = result.results.filter(
         (item) => item.status === "updated",
@@ -169,6 +192,12 @@ export function ApplicationsPage() {
       setNotice(
         `${updated} updated${failed ? `; ${failed} need review` : ""}.`,
       );
+      const reasons = result.results
+        .filter((item) => item.status !== "updated")
+        .map((item) => item.detail)
+        .filter((detail): detail is string => Boolean(detail));
+      if (reasons.length)
+        setOperationError([...new Set(reasons)].slice(0, 3).join(" "));
       setSelected(new Set());
       void refreshApplications(qc);
     },
@@ -209,6 +238,10 @@ export function ApplicationsPage() {
         `${safeFilename(app.title)}.json`,
       );
     },
+    onMutate: () => {
+      setOperationError("");
+      setNotice("");
+    },
     onSuccess: (_data, variables) => {
       if (variables.kind !== "export") void refreshApplications(qc);
       setNotice(`${label(variables.kind)} complete.`);
@@ -245,6 +278,25 @@ export function ApplicationsPage() {
       return;
     action.mutate({ app, kind });
   };
+  const moveApplication = (app: Application, next: string) => {
+    if (app.stage === next || update.isPending) return;
+    update.mutate({ app, next });
+  };
+  const toggleStage = (stage: string) => {
+    setCollapsedStages((current) => {
+      const next = new Set(current);
+      if (next.has(stage)) next.delete(stage);
+      else next.add(stage);
+      return next;
+    });
+  };
+  const mutationError = bulk.error ?? action.error ?? update.error;
+  const mutationErrorMessage =
+    operationError ||
+    (mutationError &&
+    !(mutationError instanceof ApiError && mutationError.code === "CONFLICT")
+      ? readableApiError(mutationError)
+      : "");
 
   return (
     <div className="page applications-page">
@@ -410,14 +462,9 @@ export function ApplicationsPage() {
       {update.error instanceof ApiError && update.error.code === "CONFLICT" ? (
         <ConflictNotice onRefresh={() => void activeQuery.refetch()} />
       ) : null}
-      {bulk.error ||
-      action.error ||
-      (update.error &&
-        !(
-          update.error instanceof ApiError && update.error.code === "CONFLICT"
-        )) ? (
+      {mutationErrorMessage ? (
         <p role="alert" className="form-error">
-          That change could not be completed. Refresh and try again.
+          <strong>We couldn’t save that change.</strong> {mutationErrorMessage}
         </p>
       ) : null}
       {notice ? (
@@ -465,67 +512,149 @@ export function ApplicationsPage() {
       {view === "board" ? (
         <div className="board" aria-label="Application board">
           {stages.map((column) => {
-            const columnApps = boardApps.filter((app) => app.stage === column);
+            const columnApps = appsByStage.get(column) ?? [];
+            const collapsed = collapsedStages.has(column);
+            const isDropTarget = dragOverStage === column;
             return (
-              <section className="board-column" key={column}>
-                <h2>
-                  {label(column)}
-                  <span>{columnApps.length}</span>
-                </h2>
-                {columnApps.map((app) => (
-                  <article className="application-card" key={app.id}>
-                    <Link to={`/app/applications/${app.id}`}>
-                      <h3>{app.title}</h3>
-                    </Link>
-                    <p>{label(app.application_type)}</p>
-                    <dl>
-                      <div>
-                        <dt>Deadline</dt>
-                        <dd>
-                          <CalendarDays />
-                          {formatDate(app.primary_deadline_at)}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Priority</dt>
-                        <dd className={`priority-${app.priority}`}>
-                          {label(app.priority)}
-                        </dd>
-                      </div>
-                    </dl>
-                    <label>
-                      Move application
-                      <select
-                        aria-label={`Move ${app.title}`}
-                        value={app.stage}
-                        disabled={update.isPending}
-                        onChange={(event) =>
-                          update.mutate({ app, next: event.target.value })
-                        }
-                      >
-                        {stages.map((item) => (
-                          <option key={item} value={item}>
-                            {label(item)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <ApplicationActions
-                      app={app}
-                      pending={action.isPending}
-                      run={runAction}
-                    />
-                    <Link
-                      className="card-link"
-                      to={`/app/applications/${app.id}`}
+              <section
+                className={`board-column${collapsed ? " is-collapsed" : ""}${isDropTarget ? " is-drop-target" : ""}`}
+                key={column}
+                aria-labelledby={`column-${column}-title`}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                  if (dragOverStage !== column) setDragOverStage(column);
+                }}
+                onDragLeave={(event) => {
+                  if (
+                    !event.relatedTarget ||
+                    !event.currentTarget.contains(event.relatedTarget as Node)
+                  )
+                    setDragOverStage(null);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const appId =
+                    event.dataTransfer.getData("text/plain") ||
+                    draggedIdRef.current;
+                  const app = boardApps.find((item) => item.id === appId);
+                  draggedIdRef.current = null;
+                  setDraggedId(null);
+                  setDragOverStage(null);
+                  if (app) moveApplication(app, column);
+                }}
+              >
+                <header className="board-column-header">
+                  <button
+                    type="button"
+                    className="board-column-toggle"
+                    aria-expanded={!collapsed}
+                    aria-controls={`column-${column}-content`}
+                    aria-label={`${collapsed ? "Expand" : "Collapse"} ${label(column)}`}
+                    title={label(column)}
+                    onClick={() => toggleStage(column)}
+                  >
+                    {collapsed ? (
+                      <ChevronRight aria-hidden="true" />
+                    ) : (
+                      <ChevronDown aria-hidden="true" />
+                    )}
+                    <span id={`column-${column}-title`}>{label(column)}</span>
+                    <strong>{columnApps.length}</strong>
+                  </button>
+                </header>
+                <div
+                  className="board-column-content"
+                  id={`column-${column}-content`}
+                  hidden={collapsed}
+                >
+                  {columnApps.map((app) => (
+                    <article
+                      className={`application-card${draggedId === app.id ? " is-dragging" : ""}`}
+                      key={app.id}
+                      aria-labelledby={`application-${app.id}-title`}
                     >
-                      Open workspace <ArrowRight />
-                    </Link>
-                  </article>
-                ))}
-                {!columnApps.length ? (
-                  <div className="column-empty">No applications</div>
-                ) : null}
+                      <div className="application-card-heading">
+                        <span
+                          className="application-drag-handle"
+                          draggable={!update.isPending}
+                          title={`Drag ${app.title}`}
+                          onDragStart={(event) => {
+                            event.dataTransfer.effectAllowed = "move";
+                            event.dataTransfer.setData("text/plain", app.id);
+                            draggedIdRef.current = app.id;
+                            setDraggedId(app.id);
+                          }}
+                          onDragEnd={() => {
+                            draggedIdRef.current = null;
+                            setDraggedId(null);
+                            setDragOverStage(null);
+                          }}
+                        >
+                          <GripVertical aria-hidden="true" />
+                        </span>
+                        <div>
+                          <Link to={`/app/applications/${app.id}`}>
+                            <h3 id={`application-${app.id}-title`}>
+                              {app.title}
+                            </h3>
+                          </Link>
+                          <p>{label(app.application_type)}</p>
+                        </div>
+                      </div>
+                      <dl>
+                        <div>
+                          <dt>Deadline</dt>
+                          <dd>
+                            <CalendarDays aria-hidden="true" />
+                            {formatDate(app.primary_deadline_at)}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Priority</dt>
+                          <dd className={`priority-${app.priority}`}>
+                            {label(app.priority)}
+                          </dd>
+                        </div>
+                      </dl>
+                      <label className="card-stage-control">
+                        Move to
+                        <select
+                          aria-label={`Move ${app.title}`}
+                          value={app.stage}
+                          disabled={update.isPending}
+                          onChange={(event) =>
+                            moveApplication(app, event.target.value)
+                          }
+                        >
+                          {stages.map((item) => (
+                            <option key={item} value={item}>
+                              {label(item)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <ApplicationActions
+                        app={app}
+                        pending={action.isPending}
+                        run={runAction}
+                      />
+                      <Link
+                        className="card-link"
+                        to={`/app/applications/${app.id}`}
+                      >
+                        Open workspace <ArrowRight aria-hidden="true" />
+                      </Link>
+                    </article>
+                  ))}
+                  {!columnApps.length ? (
+                    <div className="column-empty">
+                      {draggedId
+                        ? "Drop application here"
+                        : "No applications in this stage"}
+                    </div>
+                  ) : null}
+                </div>
               </section>
             );
           })}
@@ -551,8 +680,8 @@ export function ApplicationsPage() {
       ) : null}
       {view === "board" ? (
         <p className="keyboard-tip">
-          Keyboard tip: Tab to a card’s move control, then use arrow keys to
-          choose a stage.
+          Drag cards between stages, or Tab to a card’s “Move to” control and
+          use the arrow keys. Collapse stages you do not need right now.
         </p>
       ) : null}
       {creating ? (
@@ -896,11 +1025,7 @@ function CreateApplication({
       await refreshApplications(qc);
       onClose();
     } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught.message
-          : "Could not create application.",
-      );
+      setError(readableApiError(caught));
     }
   }
   return (
@@ -1042,8 +1167,8 @@ function CreateApplication({
           {(applicationType === "programme" && programmes.isError) ||
           (applicationType === "scholarship" && scholarships.isError) ? (
             <p className="form-error wide" role="alert">
-              The catalogue choices could not be loaded. Close this form and
-              try again, or add the opportunity from the Catalogue page.
+              The catalogue choices could not be loaded. Close this form and try
+              again, or add the opportunity from the Catalogue page.
             </p>
           ) : null}
           <label>
@@ -1129,4 +1254,21 @@ function safeFilename(value: string) {
       .replace(/^-|-$/g, "")
       .toLocaleLowerCase() || "application"
   );
+}
+
+function readableApiError(error: unknown) {
+  if (!(error instanceof ApiError))
+    return error instanceof Error
+      ? error.message
+      : "Please refresh and try again.";
+  const details = error.fields.map(({ field, message }) => {
+    const cleanMessage = message.replace(/^Value error,\s*/i, "");
+    return !field || field === "global"
+      ? cleanMessage
+      : `${label(field)}: ${cleanMessage}`;
+  });
+  const reason = [...new Set(details)].join(" ") || error.message;
+  return error.correlationId
+    ? `${reason} Reference: ${error.correlationId}.`
+    : reason;
 }
