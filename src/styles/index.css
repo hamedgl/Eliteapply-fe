@@ -1600,6 +1600,7 @@ th {
   font: 600 1.35rem "Source Serif 4";
   clip-path: polygon(50% 0, 100% 16%, 92% 80%, 50% 100%, 8% 80%, 0 16%);
 }
+
 .marketing-nav {
   margin-left: auto;
   display: flex;
@@ -10859,4 +10860,26 @@ th {
   .phase3-card {
     transition: none;
   }
+}
+
+/* One transparent brand asset across public, auth, and product surfaces. */
+:where(.brand, .marketing-brand, .app-brand) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+:where(.brand, .marketing-brand, .app-brand)::before {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  content: "";
+  background: transparent url("/logo.png") center / contain no-repeat;
+}
+.brand-mark,
+.app-brand > span {
+  display: none;
+}
+.inverse-brand::before,
+.auth-brand .brand::before {
+  filter: brightness(0) invert(1);
 }
