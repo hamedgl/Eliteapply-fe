@@ -327,6 +327,7 @@ const router = createBrowserRouter([
       { path: "onboarding", element: load(<DashboardPage />) },
       { path: "applications", element: load(<Applications />) },
       { path: "applications/:id", element: load(<Workspace />) },
+      { path: "applications/:id/:resource", element: load(<Workspace />) },
       { path: "applications/import", element: load(<OpportunityImport />) },
       { path: "academic-profile", element: load(<AcademicProfile />) },
       { path: "documents", element: load(<Documents />) },

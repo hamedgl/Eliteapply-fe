@@ -10,7 +10,7 @@ import {
   Unlink,
   UserPlus,
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   applicationsApi,
   documentsApi,
@@ -22,6 +22,13 @@ import { newMutationId } from "../../lib/api/mutations";
 import { ApiError } from "../../lib/api/errors";
 import { ConflictNotice } from "../../components/ConflictNotice";
 import { formatDate, label } from "./model";
+import {
+  invalidateApplicationResource,
+  seedApplicationWorkspace,
+  useApplicationRequirements,
+  useApplicationTasks,
+  type ApplicationResource,
+} from "./applicationQueries";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
 type Tab =
@@ -33,24 +40,38 @@ type Tab =
   | "collaborators"
   | "activity";
 export function ApplicationWorkspace() {
-  const { id = "" } = useParams(),
+  const { id = "", resource } = useParams(),
+    navigate = useNavigate(),
     qc = useQueryClient(),
     [tab, setTab] = useState<Tab>("overview");
+  const directResource: ApplicationResource | null =
+    resource === "requirements" || resource === "tasks" ? resource : null;
+  const activeTab = directResource ?? tab;
   const q = useQuery({
     queryKey: queryKeys.workspace(id),
-    queryFn: () => applicationsApi.workspace(id),
-    enabled: Boolean(id),
+    queryFn: async ({ signal }) => {
+      const workspace = await applicationsApi.workspace(id, signal);
+      seedApplicationWorkspace(qc, id, workspace);
+      return workspace;
+    },
+    enabled: Boolean(id) && !directResource,
+  });
+  const requirements = useApplicationRequirements(id, {
+    enabled: directResource === "requirements",
+  });
+  const tasks = useApplicationTasks(id, {
+    enabled: directResource === "tasks",
   });
   const collaboratorView = useQuery({
     queryKey: queryKeys.collaboratorView(id),
     queryFn: () => collaborationApi.view(id),
-    enabled: Boolean(id),
+    enabled: Boolean(id) && !directResource,
     retry: false,
   });
   const readiness = useQuery({
-    queryKey: [...queryKeys.workspace(id), "readiness"],
+    queryKey: queryKeys.readiness(id),
     queryFn: () => applicationsApi.readiness(id),
-    enabled: Boolean(id),
+    enabled: Boolean(id) && !directResource,
   });
   const submit = useMutation({
     mutationFn: async (version: number) => {
@@ -71,23 +92,43 @@ export function ApplicationWorkspace() {
         qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
       ]),
   });
+  if (resource && !directResource)
+    return <div className="page error-state">Resource not found.</div>;
   if (
     collaboratorView.data &&
     ["viewer", "commenter"].includes(collaboratorView.data.role)
   )
     return <ReadOnlyCollaboratorWorkspace view={collaboratorView.data} />;
-  if (q.isPending) return <div className="page">Loading workspace…</div>;
-  if (q.isError)
+  if (!directResource && q.isPending)
+    return <div className="page">Loading workspace…</div>;
+  if (!directResource && q.isError)
     return (
       <div className="page error-state">
         <h1>Application workspace unavailable</h1>
+        <p>Retry the workspace or open one resource independently.</p>
         <button onClick={() => q.refetch()} className="primary">
           Try again
         </button>
+        <div className="workspace-recovery-links">
+          <Link to={`/app/applications/${id}/requirements`}>
+            Open requirements
+          </Link>
+          <Link to={`/app/applications/${id}/tasks`}>Open tasks</Link>
+        </div>
       </div>
     );
-  const w = q.data,
-    a = w.application;
+  const w = q.data;
+  const a =
+    w?.application ??
+    qc.getQueryData<S["ApplicationResponse"]>(queryKeys.application(id));
+  const openTab = (next: Tab) => {
+    if (next === "requirements" || next === "tasks") {
+      navigate(`/app/applications/${id}/${next}`);
+      return;
+    }
+    setTab(next);
+    if (directResource) navigate(`/app/applications/${id}`);
+  };
   return (
     <div className="page workspace-page">
       <Link to="/app/applications" className="back">
@@ -96,28 +137,39 @@ export function ApplicationWorkspace() {
       </Link>
       <header className="workspace-header">
         <div>
-          <h1>{a.title}</h1>
-          <p>
-            {label(a.application_type)} · {label(a.stage)} ·{" "}
-            {formatDate(a.primary_deadline_at)}
-          </p>
+          <h1>
+            {a?.title ??
+              (directResource === "requirements"
+                ? "Application requirements"
+                : "Application tasks")}
+          </h1>
+          {a ? (
+            <p>
+              {label(a.application_type)} · {label(a.stage)} ·{" "}
+              {formatDate(a.primary_deadline_at)}
+            </p>
+          ) : (
+            <p>Manage this application’s {directResource} independently.</p>
+          )}
         </div>
-        <div className="workspace-header-actions">
-          <button onClick={() => setTab("eligibility")}>
-            Review eligibility
-          </button>
-          <button
-            className="primary"
-            disabled={
-              readiness.isPending ||
-              submit.isPending ||
-              readiness.data?.overall_state !== "ready"
-            }
-            onClick={() => submit.mutate(a.version)}
-          >
-            {submit.isPending ? "Submitting…" : "Mark submitted"}
-          </button>
-        </div>
+        {a && w ? (
+          <div className="workspace-header-actions">
+            <button onClick={() => openTab("eligibility")}>
+              Review eligibility
+            </button>
+            <button
+              className="primary"
+              disabled={
+                readiness.isPending ||
+                submit.isPending ||
+                readiness.data?.overall_state !== "ready"
+              }
+              onClick={() => submit.mutate(a.version)}
+            >
+              {submit.isPending ? "Submitting…" : "Mark submitted"}
+            </button>
+          </div>
+        ) : null}
       </header>
       <nav className="tabs" aria-label="Application workspace">
         {(
@@ -133,8 +185,8 @@ export function ApplicationWorkspace() {
         ).map((x) => (
           <button
             key={x}
-            className={tab === x ? "active" : ""}
-            onClick={() => setTab(x)}
+            className={activeTab === x ? "active" : ""}
+            onClick={() => openTab(x)}
           >
             {label(x)}
           </button>
@@ -145,7 +197,7 @@ export function ApplicationWorkspace() {
           {submit.error.message}
         </p>
       ) : null}
-      {tab === "overview" ? (
+      {activeTab === "overview" && w ? (
         <Overview
           workspace={w}
           readiness={readiness.data}
@@ -153,35 +205,53 @@ export function ApplicationWorkspace() {
           refresh={() => void readiness.refetch()}
         />
       ) : null}
-      {tab === "requirements" ? (
-        <Requirements
-          applicationId={id}
-          items={w.requirements}
-          refresh={() =>
-            qc.invalidateQueries({ queryKey: queryKeys.workspace(id) })
-          }
-        />
+      {activeTab === "requirements" ? (
+        requirements.isPending ? (
+          <ResourceLoading resource="requirements" />
+        ) : requirements.isError ? (
+          <ResourceFailure
+            resource="requirements"
+            retry={() => void requirements.refetch()}
+          />
+        ) : (
+          <Requirements
+            applicationId={id}
+            items={requirements.data}
+            refresh={() => requirements.refetch()}
+            refreshing={requirements.isFetching}
+          />
+        )
       ) : null}
-      {tab === "tasks" ? (
-        <Tasks
-          applicationId={id}
-          items={w.tasks}
-          refresh={() =>
-            qc.invalidateQueries({ queryKey: queryKeys.workspace(id) })
-          }
-        />
+      {activeTab === "tasks" ? (
+        tasks.isPending ? (
+          <ResourceLoading resource="tasks" />
+        ) : tasks.isError ? (
+          <ResourceFailure
+            resource="tasks"
+            retry={() => void tasks.refetch()}
+          />
+        ) : (
+          <Tasks
+            applicationId={id}
+            items={tasks.data}
+            refresh={() => tasks.refetch()}
+            refreshing={tasks.isFetching}
+          />
+        )
       ) : null}
-      {tab === "documents" ? (
+      {activeTab === "documents" && w ? (
         <ApplicationDocuments
           applicationId={id}
           requirements={w.requirements}
         />
       ) : null}
-      {tab === "eligibility" ? <EligibilityPanel applicationId={id} /> : null}
-      {tab === "collaborators" ? (
+      {activeTab === "eligibility" ? (
+        <EligibilityPanel applicationId={id} />
+      ) : null}
+      {activeTab === "collaborators" ? (
         <CollaboratorsPanel applicationId={id} />
       ) : null}
-      {tab === "activity" ? (
+      {activeTab === "activity" && w ? (
         <section className="workspace-section">
           <h2>Activity</h2>
           {w.history.length ? (
@@ -202,6 +272,33 @@ export function ApplicationWorkspace() {
         </section>
       ) : null}
     </div>
+  );
+}
+
+function ResourceLoading({ resource }: { resource: ApplicationResource }) {
+  return (
+    <section className="workspace-section" aria-live="polite">
+      <h2>{label(resource)}</h2>
+      <p role="status">Loading {resource}…</p>
+    </section>
+  );
+}
+
+function ResourceFailure({
+  resource,
+  retry,
+}: {
+  resource: ApplicationResource;
+  retry: () => void;
+}) {
+  return (
+    <section className="workspace-section resource-error">
+      <h2>{label(resource)} could not be loaded</h2>
+      <p>Your other application data is unchanged.</p>
+      <button className="primary" type="button" onClick={retry}>
+        Try again
+      </button>
+    </section>
   );
 }
 
@@ -532,16 +629,25 @@ function Requirements({
   applicationId,
   items,
   refresh,
+  refreshing,
 }: {
   applicationId: string;
   items: S["RequirementResponse"][];
   refresh: () => Promise<unknown>;
+  refreshing: boolean;
 }) {
+  const qc = useQueryClient();
   const [bulkText, setBulkText] = useState("");
+  const sync = () =>
+    invalidateApplicationResource(qc, applicationId, "requirements");
+  const links = useQuery({
+    queryKey: queryKeys.applicationDocuments(applicationId),
+    queryFn: () => applicationsApi.documentLinks(applicationId),
+  });
   const add = useMutation({
     mutationFn: (body: S["RequirementCreate"]) =>
       applicationsApi.addRequirement(applicationId, body),
-    onSuccess: refresh,
+    onSuccess: sync,
   });
   const bulk = useMutation({
     mutationFn: ({ text, mutationId }: { text: string; mutationId: string }) =>
@@ -561,7 +667,7 @@ function Requirements({
       }),
     onSuccess: async () => {
       setBulkText("");
-      await refresh();
+      await sync();
     },
   });
   const reorder = useMutation({
@@ -569,7 +675,7 @@ function Requirements({
       applicationsApi.reorderRequirements(applicationId, {
         requirement_ids: ids,
       }),
-    onSuccess: refresh,
+    onSuccess: sync,
   });
   const validate = useMutation({
     mutationFn: (id: string) =>
@@ -577,15 +683,26 @@ function Requirements({
         validation_state: "valid",
         source: "user_confirmed",
       }),
-    onSuccess: refresh,
+    onSuccess: sync,
   });
   const update = useMutation({
-    mutationFn: (requirement: S["RequirementResponse"]) =>
+    mutationFn: ({
+      requirement,
+      patch,
+    }: {
+      requirement: S["RequirementResponse"];
+      patch: S["RequirementUpdate"];
+    }) =>
       applicationsApi.updateRequirement(applicationId, requirement.id, {
+        ...patch,
         expected_version: requirement.version,
-        status: requirement.status === "ready" ? "not_started" : "ready",
       }),
-    onSuccess: refresh,
+    onSuccess: sync,
+  });
+  const remove = useMutation({
+    mutationFn: (requirementId: string) =>
+      applicationsApi.deleteRequirement(applicationId, requirementId),
+    onSuccess: sync,
   });
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -603,6 +720,16 @@ function Requirements({
     );
   }
   const ordered = [...items].sort((a, b) => a.position - b.position);
+  const completed = items.filter((item) =>
+    ["ready", "submitted", "waived"].includes(item.status),
+  ).length;
+  const linkedDocuments = new Map<string, number>();
+  for (const link of links.data ?? [])
+    if (link.requirement_id)
+      linkedDocuments.set(
+        link.requirement_id,
+        (linkedDocuments.get(link.requirement_id) ?? 0) + 1,
+      );
   const move = (index: number, direction: -1 | 1) => {
     const next = [...ordered];
     const target = index + direction;
@@ -623,7 +750,24 @@ function Requirements({
   };
   return (
     <section className="workspace-section">
-      <h2>Requirements</h2>
+      <header className="resource-section-header">
+        <div>
+          <h2>Requirements</h2>
+          <p>
+            {completed} of {items.length} complete
+          </p>
+          <progress max={items.length || 1} value={completed}>
+            {completed} of {items.length}
+          </progress>
+        </div>
+        <button
+          type="button"
+          disabled={refreshing}
+          onClick={() => void refresh()}
+        >
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
+      </header>
       <form className="inline-form" onSubmit={submit}>
         <input
           name="title"
@@ -656,6 +800,7 @@ function Requirements({
           />
         </label>
         <button
+          className="primary"
           type="button"
           disabled={!bulkText.trim() || bulk.isPending}
           onClick={() =>
@@ -687,6 +832,12 @@ function Requirements({
                     ? ` (${label(x.validation_source)})`
                     : ""}
                 </small>
+                <small>
+                  {linkedDocuments.get(x.id) ?? 0} linked{" "}
+                  {(linkedDocuments.get(x.id) ?? 0) === 1
+                    ? "document"
+                    : "documents"}
+                </small>
               </div>
               <div className="row-actions">
                 <button
@@ -717,9 +868,37 @@ function Requirements({
                 <button
                   type="button"
                   disabled={update.isPending}
-                  onClick={() => update.mutate(x)}
+                  onClick={() =>
+                    update.mutate({
+                      requirement: x,
+                      patch: {
+                        status: x.status === "ready" ? "not_started" : "ready",
+                      },
+                    })
+                  }
                 >
                   {x.status === "ready" ? "Reopen" : "Mark ready"}
+                </button>
+                <button
+                  type="button"
+                  disabled={update.isPending}
+                  onClick={() => {
+                    const title = prompt("Requirement title", x.title)?.trim();
+                    if (title && title !== x.title)
+                      update.mutate({ requirement: x, patch: { title } });
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="danger"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    if (confirm(`Delete “${x.title}”?`)) remove.mutate(x.id);
+                  }}
+                >
+                  Delete
                 </button>
                 <span>{x.required ? "Required" : "Optional"}</span>
               </div>
@@ -735,6 +914,7 @@ function Requirements({
         reorder.error,
         validate.error,
         update.error,
+        remove.error,
       ].some(
         (error) => error instanceof ApiError && error.code === "CONFLICT",
       ) ? (
@@ -743,9 +923,16 @@ function Requirements({
         bulk.isError ||
         reorder.isError ||
         validate.isError ||
-        update.isError ? (
+        update.isError ||
+        remove.isError ? (
         <p className="form-error" role="alert">
           The requirement change could not be saved. Refresh and try again.
+        </p>
+      ) : null}
+      {links.isError ? (
+        <p className="form-error" role="alert">
+          Linked document counts could not be loaded. Requirement data is
+          unchanged.
         </p>
       ) : null}
     </section>
@@ -755,16 +942,20 @@ function Tasks({
   applicationId,
   items,
   refresh,
+  refreshing,
 }: {
   applicationId: string;
   items: S["TaskResponse"][];
   refresh: () => Promise<unknown>;
+  refreshing: boolean;
 }) {
+  const qc = useQueryClient();
   const [bulkText, setBulkText] = useState("");
+  const sync = () => invalidateApplicationResource(qc, applicationId, "tasks");
   const add = useMutation({
     mutationFn: (body: S["TaskCreate"]) =>
       applicationsApi.addTask(applicationId, body),
-    onSuccess: refresh,
+    onSuccess: sync,
   });
   const bulk = useMutation({
     mutationFn: ({ text, mutationId }: { text: string; mutationId: string }) =>
@@ -778,21 +969,32 @@ function Tasks({
       }),
     onSuccess: async () => {
       setBulkText("");
-      await refresh();
+      await sync();
     },
   });
   const reorder = useMutation({
     mutationFn: (ids: string[]) =>
       applicationsApi.reorderTasks(applicationId, { task_ids: ids }),
-    onSuccess: refresh,
+    onSuccess: sync,
   });
   const update = useMutation({
-    mutationFn: (task: S["TaskResponse"]) =>
+    mutationFn: ({
+      task,
+      patch,
+    }: {
+      task: S["TaskResponse"];
+      patch: S["TaskUpdate"];
+    }) =>
       applicationsApi.updateTask(applicationId, task.id, {
+        ...patch,
         expected_version: task.version,
-        status: task.status === "completed" ? "open" : "completed",
       }),
-    onSuccess: refresh,
+    onSuccess: sync,
+  });
+  const remove = useMutation({
+    mutationFn: (taskId: string) =>
+      applicationsApi.deleteTask(applicationId, taskId),
+    onSuccess: sync,
   });
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -809,6 +1011,12 @@ function Tasks({
     );
   }
   const ordered = [...items].sort((a, b) => a.position - b.position);
+  const groups = ["overdue", "upcoming", "unscheduled", "completed"].map(
+    (group) => ({
+      group,
+      items: ordered.filter((item) => taskGroup(item) === group),
+    }),
+  );
   const move = (index: number, direction: -1 | 1) => {
     const next = [...ordered],
       target = index + direction;
@@ -829,7 +1037,28 @@ function Tasks({
   };
   return (
     <section className="workspace-section">
-      <h2>Tasks</h2>
+      <header className="resource-section-header">
+        <div>
+          <h2>Tasks</h2>
+          <p>
+            {items.filter((item) => item.status !== "completed").length} open
+          </p>
+          <div className="task-summary" aria-label="Task schedule summary">
+            {groups.map(({ group, items: groupItems }) => (
+              <span key={group}>
+                {label(group)} <strong>{groupItems.length}</strong>
+              </span>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          disabled={refreshing}
+          onClick={() => void refresh()}
+        >
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
+      </header>
       <form className="inline-form" onSubmit={submit}>
         <input name="title" required minLength={2} placeholder="Next task" />
         <input name="due_at" type="date" />
@@ -846,6 +1075,7 @@ function Tasks({
           />
         </label>
         <button
+          className="primary"
           type="button"
           disabled={!bulkText.trim() || bulk.isPending}
           onClick={() =>
@@ -871,7 +1101,8 @@ function Tasks({
               <div>
                 <strong>{x.title}</strong>
                 <small>
-                  {label(x.status)} · {formatDate(x.due_at ?? null)}
+                  {label(taskGroup(x))} · {label(x.status)} ·{" "}
+                  {formatDate(x.due_at ?? null)}
                 </small>
               </div>
               <div className="row-actions">
@@ -894,9 +1125,37 @@ function Tasks({
                 <button
                   type="button"
                   disabled={update.isPending}
-                  onClick={() => update.mutate(x)}
+                  onClick={() =>
+                    update.mutate({
+                      task: x,
+                      patch: {
+                        status: x.status === "completed" ? "open" : "completed",
+                      },
+                    })
+                  }
                 >
                   {x.status === "completed" ? "Reopen" : "Complete"}
+                </button>
+                <button
+                  type="button"
+                  disabled={update.isPending}
+                  onClick={() => {
+                    const title = prompt("Task title", x.title)?.trim();
+                    if (title && title !== x.title)
+                      update.mutate({ task: x, patch: { title } });
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="danger"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    if (confirm(`Delete “${x.title}”?`)) remove.mutate(x.id);
+                  }}
+                >
+                  Delete
                 </button>
               </div>
             </li>
@@ -905,11 +1164,15 @@ function Tasks({
       ) : (
         <Empty text="No tasks yet." />
       )}
-      {[add.error, bulk.error, reorder.error, update.error].some(
+      {[add.error, bulk.error, reorder.error, update.error, remove.error].some(
         (error) => error instanceof ApiError && error.code === "CONFLICT",
       ) ? (
         <ConflictNotice onRefresh={() => void refresh()} />
-      ) : add.isError || bulk.isError || reorder.isError || update.isError ? (
+      ) : add.isError ||
+        bulk.isError ||
+        reorder.isError ||
+        update.isError ||
+        remove.isError ? (
         <p className="form-error" role="alert">
           The task change could not be saved. Refresh and try again.
         </p>
@@ -917,6 +1180,15 @@ function Tasks({
     </section>
   );
 }
+
+function taskGroup(task: S["TaskResponse"]) {
+  if (task.status === "completed") return "completed";
+  if (!task.due_at) return "unscheduled";
+  const due = Date.parse(task.due_at);
+  if (!Number.isFinite(due)) return "unscheduled";
+  return due < Date.now() ? "overdue" : "upcoming";
+}
+
 function EligibilityPanel({ applicationId }: { applicationId: string }) {
   const qc = useQueryClient();
   const current = useQuery({
@@ -940,7 +1212,7 @@ function EligibilityPanel({ applicationId }: { applicationId: string }) {
           queryKey: queryKeys.eligibilityHistory(applicationId),
         }),
         qc.invalidateQueries({
-          queryKey: [...queryKeys.workspace(applicationId), "readiness"],
+          queryKey: queryKeys.readiness(applicationId),
         }),
         qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
       ]);

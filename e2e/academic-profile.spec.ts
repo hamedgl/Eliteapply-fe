@@ -70,6 +70,9 @@ test("new academic profiles handle a null response and become versioned after sa
     page.getByRole("heading", { name: "Academic Profile", level: 1 }),
   ).toBeVisible();
   await expect(page.getByText("Not saved yet")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Import profile" })).toHaveClass(
+    /secondary-action/,
+  );
   await expect(
     page.getByText("Your first version will appear here after you save."),
   ).toBeVisible();
@@ -92,6 +95,9 @@ test("new academic profiles handle a null response and become versioned after sa
   await expect(
     page.getByText("Version 1", { exact: true }).first(),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete profile" })).toHaveClass(
+    /secondary-action danger/,
+  );
   expect(savedPayload).toMatchObject({
     applicant_type: "International student",
     intended_study_level: "Postgraduate",

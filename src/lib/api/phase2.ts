@@ -75,8 +75,10 @@ export const applicationsApi = {
       method: "POST",
       body,
     }),
-  get: (id: string) =>
-    apiRequest<S["ApplicationResponse"]>(`/applications/${enc(id)}`),
+  get: (id: string, signal?: AbortSignal) =>
+    apiRequest<S["ApplicationResponse"]>(`/applications/${enc(id)}`, {
+      signal,
+    }),
   update: (id: string, body: S["ApplicationUpdate"]) =>
     apiRequest<S["ApplicationResponse"]>(`/applications/${enc(id)}`, {
       method: "PATCH",
@@ -115,9 +117,10 @@ export const applicationsApi = {
       method: "POST",
       body,
     }),
-  workspace: (id: string) =>
+  workspace: (id: string, signal?: AbortSignal) =>
     apiRequest<S["ApplicationWorkspaceResponse"]>(
       `/applications/${enc(id)}/workspace`,
+      { signal },
     ),
   history: (id: string) =>
     apiRequest<S["AuditEventResponse"][]>(`/applications/${enc(id)}/history`),
@@ -125,6 +128,11 @@ export const applicationsApi = {
     apiRequest<S["RequirementResponse"]>(
       `/applications/${enc(id)}/requirements`,
       { method: "POST", body },
+    ),
+  requirements: (id: string, signal?: AbortSignal) =>
+    apiRequest<S["RequirementResponse"][]>(
+      `/applications/${enc(id)}/requirements`,
+      { signal },
     ),
   addRequirements: (id: string, body: S["RequirementBulkCreate"]) =>
     apiRequest<S["RequirementResponse"][]>(
@@ -171,6 +179,10 @@ export const applicationsApi = {
     apiRequest<S["TaskResponse"]>(`/applications/${enc(id)}/tasks`, {
       method: "POST",
       body,
+    }),
+  tasks: (id: string, signal?: AbortSignal) =>
+    apiRequest<S["TaskResponse"][]>(`/applications/${enc(id)}/tasks`, {
+      signal,
     }),
   addTasks: (id: string, body: S["TaskBulkCreate"]) =>
     apiRequest<S["TaskResponse"][]>(`/applications/${enc(id)}/tasks/bulk`, {

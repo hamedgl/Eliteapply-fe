@@ -116,12 +116,12 @@ export function AcademicProfilePage() {
           <h1>Academic Profile</h1>
           <p>Your reusable source of truth for every application.</p>
         </div>
-        <div className="profile-heading-actions">
-          <span>{p ? `Version ${p.version}` : "Not saved yet"}</span>
-          <button type="button" onClick={() => importDialog.current?.showModal()}>
+        <div className="page-heading-actions profile-heading-actions">
+          <span className="muted">{p ? `Version ${p.version}` : "Not saved yet"}</span>
+          <button className="secondary-action" type="button" onClick={() => importDialog.current?.showModal()}>
             Import profile
           </button>
-          {p ? <button className="danger" type="button" disabled={remove.isPending} onClick={() => {
+          {p ? <button className="secondary-action danger" type="button" disabled={remove.isPending} onClick={() => {
             if (confirm("Delete your academic profile and its reusable application context? This cannot be undone.")) remove.mutate();
           }}>{remove.isPending ? "Deleting…" : "Delete profile"}</button> : null}
         </div>

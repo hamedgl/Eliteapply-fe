@@ -70,6 +70,10 @@ test.beforeEach(async ({ page }) => {
       return route.fulfill({ json: { items: [{ id: "00000000-0000-4000-8000-000000000040", category: "interview", notification_type: "interview_ready", title: "Your practice session is ready", body: "Continue with your next scholarship question.", data: { path: `/app/interviews/${interview.id}` }, mandatory: false, is_read: false, read_at: null, created_at: "2026-07-14T09:05:00Z" }], next_cursor: null, has_more: false } });
     if (url.endsWith("/notification-preferences"))
       return route.fulfill({ json: { category_settings: { interview: { in_app: true, email: true }, security: { in_app: true, email: true } }, updated_at: "2026-07-14T09:00:00Z" } });
+    if (new URL(url).pathname.endsWith("/reminders") && method === "GET")
+      return route.fulfill({ json: { items: [], next_cursor: null, has_more: false } });
+    if (url.endsWith("/calendar-feed/token") && method === "POST")
+      return route.fulfill({ json: { feed_url: "https://calendar.example.test/private-feed.ics" } });
     if (url.endsWith("/notifications/00000000-0000-4000-8000-000000000040/read"))
       return route.fulfill({ json: { is_read: true } });
     if (new URL(url).pathname.endsWith("/academic-interviews") && method === "GET")
@@ -160,4 +164,21 @@ test("interview history remains usable on mobile", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Interview practice" })).toBeVisible();
   await expect(page.getByText("scholarship panel")).toBeVisible();
   await page.screenshot({ path: "/tmp/eliteapply-phase3-interviews-mobile.png", fullPage: true });
+});
+
+test("settings actions use the shared button variants", async ({ page }) => {
+  await page.goto("/app/reminders");
+  const create = page.getByRole("button", { name: "Create calendar feed" });
+  await expect(create).toHaveClass(/primary/);
+  await create.click();
+  await expect(page.getByRole("button", { name: "Copy" })).toHaveClass(
+    /secondary-action/,
+  );
+  await expect(page.getByRole("button", { name: "Revoke feed" })).toHaveClass(
+    /secondary-action danger/,
+  );
+  await page.screenshot({
+    path: "/tmp/eliteapply-calendar-feed-buttons.png",
+    fullPage: true,
+  });
 });

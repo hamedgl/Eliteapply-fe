@@ -9,7 +9,12 @@ export const queryKeys = {
   profileVersions: ["academic-profile", "versions"] as const,
   applications: ["applications"] as const,
   board: ["applications", "board"] as const,
+  application: (id: string) => ["applications", id] as const,
   workspace: (id: string) => ["applications", id, "workspace"] as const,
+  requirements: (id: string) => ["applications", id, "requirements"] as const,
+  tasks: (id: string) => ["applications", id, "tasks"] as const,
+  readiness: (id: string) => ["applications", id, "readiness"] as const,
+  applicationHistory: (id: string) => ["applications", id, "history"] as const,
   applicationDocuments: (id: string) =>
     ["applications", id, "documents"] as const,
   collaborators: (id: string) => ["applications", id, "collaborators"] as const,

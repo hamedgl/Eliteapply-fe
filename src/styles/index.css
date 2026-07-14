@@ -1003,6 +1003,55 @@ th {
 .workspace-section {
   margin-top: 1.5rem;
 }
+.resource-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.resource-section-header h2,
+.resource-section-header p {
+  margin: 0;
+}
+.resource-section-header p {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+.resource-section-header progress {
+  width: min(20rem, 100%);
+  margin-top: 0.7rem;
+  accent-color: var(--blue);
+}
+.resource-section-header > button,
+.workspace-recovery-links a {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  font-weight: 700;
+}
+.workspace-recovery-links,
+.task-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.workspace-recovery-links {
+  margin-top: 1rem;
+}
+.task-summary {
+  margin-top: 0.7rem;
+}
+.task-summary span {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.task-summary strong {
+  color: var(--ink);
+}
 .inline-form {
   display: flex;
   gap: 0.6rem;
@@ -4446,6 +4495,9 @@ th {
     flex-basis: 100%;
     justify-content: flex-start;
   }
+  .workspace-section .rows > li {
+    flex-wrap: wrap;
+  }
   .app-shell .writing-list > article,
   .app-shell .writing-list > article > a {
     grid-template-columns: 1fr;
@@ -5994,7 +6046,8 @@ th {
   line-height: 1.55;
 }
 
-.secondary-action {
+.secondary-action,
+.app-shell .rows .row-actions button {
   min-height: 40px;
   padding: 0.55rem 0.7rem;
   display: inline-flex;
@@ -6002,15 +6055,24 @@ th {
   justify-content: center;
   gap: 0.4rem;
   color: var(--app-ink);
+  border: 1px solid var(--app-line);
   border-radius: 7px;
   background: #fff;
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.secondary-action:hover {
+.secondary-action:hover,
+.app-shell .rows .row-actions button:hover:not(:disabled) {
   color: var(--app-blue);
   background: #f4f6fb;
+}
+
+.secondary-action:disabled,
+.app-shell .rows .row-actions button:disabled {
+  color: #8490a6;
+  background: #eef1f6;
+  cursor: not-allowed;
 }
 
 .secondary-action svg {
