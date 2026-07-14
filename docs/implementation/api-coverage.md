@@ -26,7 +26,7 @@
 | POST | `/api/v1/analytics/events` | `AnalyticsEventCreate` | `track` | milestone wrapper | typed compile | `implemented_unverified` | Sensitive keys stripped. |
 | GET | `/health`, `/ready`, `/metric`, `/metrics` | infrastructure | none | none | n/a | `not_required_ui` | Per prompt. |
 
-Phase 2/3 endpoints remain `deferred_to_phase_2` / `deferred_to_phase_3` and are intentionally not implemented in Phase 1.
+The nine-operation completion programme is tracked in `api-coverage-matrix.md` and the machine-checked `docs/api/openapi-operation-usage.json` manifest.
 
 ## Phase 2 additions
 
@@ -60,3 +60,7 @@ Phase 2/3 endpoints remain `deferred_to_phase_2` / `deferred_to_phase_3` and are
 ## Phase 3 additions
 
 All writing document list/create/get/update/attach/revisions/restore/generate/analyze/export routes are implemented in `writingApi`; library/editor/revision/generation/quality/export UI is present. Story GET/POST is implemented. Academic reference GET/POST/revoke, referee GET/submit with `X-Reference-Code`, and public verification are implemented. Interview create/answer is implemented for chat/written current-session use. Admin feature flag/gate/readiness methods exist and launch readiness/gate UI is role-guarded. Exact generated schema types are used throughout. Status: `implemented_unverified` for live mutations; public header secrecy, writing editor, board regression, generated types, unit tests and browser routes are `implemented` under mocked contract fixtures. Generation polling, voice transport and durable interview history are `blocked_backend`.
+
+## Previously unused operation completion
+
+Requirements and tasks are direct SPA operations. Calendar ICS is classified as `external-calendar-client`. Local storage upload/download are classified as `indirect-signed-url` behind `signedTransport.ts`. Health, readiness, metrics, and the deprecated metric alias remain explicitly `not-yet-implemented` because the user excluded infrastructure and monitoring work.

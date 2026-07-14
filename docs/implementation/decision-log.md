@@ -54,4 +54,16 @@ Invitation tokens and referee codes exist only in component memory. Reference co
 
 ## 2026-07-13 — Honest interview capability
 
-Chat/written current-session flows are implemented. Voice is disabled because no confirmed audio/transcription contract exists, and no history page is built.
+Chat, written, and voice flows follow the published session and audio contracts. Voice requires explicit consent, uses signed upload transport, and retains the recording locally when transfer fails.
+
+## 2026-07-14 — External calendar consumption
+
+The SPA creates, masks, copies, opens, and revokes the calendar subscription URL but never fetches or parses the ICS feed. External calendar clients are the operation consumer, and the secret remains session-only.
+
+## 2026-07-14 — One provider-neutral signed transport
+
+Academic documents and interview audio now use one exact-URL upload adapter for PUT or multipart POST. Signed downloads use direct safe navigation by default, with optional Blob download when CORS permits. These requests bypass the authenticated JSON client and never add bearer authentication.
+
+## 2026-07-14 — Operational endpoints remain out of scope
+
+The user explicitly excluded health, readiness, and monitoring APIs. They remain visible as `not-yet-implemented` in the checked usage manifest; no customer React polling, deployment script, Prometheus configuration, or deprecated `/metric` adoption was added.

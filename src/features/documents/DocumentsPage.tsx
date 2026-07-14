@@ -10,9 +10,9 @@ import {
   Upload,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { downloadResponse } from "../../lib/api/download";
 import { documentsApi, uploadAcademicDocument } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
+import { openSignedDownload } from "../../lib/api/signedTransport";
 import { formatDate, label } from "../applications/model";
 
 export function DocumentsPage() {
@@ -170,10 +170,7 @@ export function DocumentDetailPage() {
   });
   async function download() {
     if (!query.data || !scan.data?.usable_for_protected_workflows) return;
-    await downloadResponse(
-      await documentsApi.download(id),
-      query.data.display_name,
-    );
+    openSignedDownload((await documentsApi.download(id)).download_url);
   }
   if (query.isPending)
     return <div className="page" role="status">Loading document details…</div>;

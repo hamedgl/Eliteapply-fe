@@ -10443,7 +10443,6 @@ th {
 
 .phase3-actions,
 .reference-row-actions,
-.calendar-token,
 .phase3-section-head,
 .admin-inline-form {
   display: flex;
@@ -10678,13 +10677,99 @@ th {
   display: grid;
   gap: 0.35rem;
 }
-.calendar-token {
-  width: 100%;
-  margin: 1rem 0;
+.calendar-sync-header {
+  align-items: flex-start;
 }
-.calendar-token input {
-  flex: 1;
-  min-width: 12rem;
+.calendar-sync-header h2,
+.calendar-sync-header p {
+  margin: 0;
+}
+.calendar-sync-header p {
+  max-width: 58ch;
+  margin-top: 0.35rem;
+  color: var(--app-muted, var(--muted));
+}
+.calendar-feed-url {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--app-line, var(--line));
+  border-radius: 10px;
+  background: var(--app-soft, var(--soft));
+}
+.calendar-feed-url > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+}
+.calendar-feed-url span {
+  color: var(--app-muted, var(--muted));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.calendar-feed-url code {
+  overflow: hidden;
+  color: var(--app-ink, var(--ink));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendar-sync-actions a {
+  min-height: 44px;
+}
+.calendar-security,
+.calendar-sync-empty > p {
+  max-width: 65ch;
+  color: var(--app-muted, var(--muted));
+  line-height: 1.55;
+}
+.calendar-sync-empty {
+  margin-top: 1.25rem;
+}
+.calendar-setup,
+.calendar-revoke {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--app-line, var(--line));
+}
+.calendar-setup summary {
+  font-weight: 700;
+}
+.calendar-setup ol {
+  display: grid;
+  gap: 0;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.calendar-setup li {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.3fr) 1fr;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--app-line, var(--line));
+}
+.calendar-setup li span,
+.calendar-status {
+  color: var(--app-muted, var(--muted));
+}
+.calendar-status:empty {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .calendar-feed-url,
+  .calendar-setup li {
+    grid-template-columns: 1fr;
+  }
+  .calendar-feed-url .secondary-action,
+  .calendar-sync-actions > *,
+  .calendar-sync-empty .primary,
+  .calendar-revoke .danger {
+    width: 100%;
+  }
 }
 
 .notification-shortcut {

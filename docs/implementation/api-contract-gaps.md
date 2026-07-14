@@ -27,7 +27,13 @@ No sanitized live-user payloads were captured.
 
 - Writing generation returns `202 GenerationRunResponse` but no generation-run GET/status endpoint exists. The UI shows accepted/current returned status; durable polling and refresh recovery are `blocked_backend`.
 - Writing `content`, `evidence_map`, quality scores/findings/warnings, revision AI insertions, interview questions/context/scoring/feedback/warnings, referee public payloads and admin readiness payloads are open-ended. All are guarded; richer branching needs child schemas.
-- Interview sessions have no list/get/finish endpoint and voice has no upload/transcription transport. History is not claimed and voice is disabled.
 - Story edit/delete and writing-document delete do not exist; controls are absent.
 - Billing/quota remains absent, so generation shows typed 429 errors without fabricated balances.
 - Approved CSP, Sentry ownership/source-map credentials, legal text, production CORS and live sanitized fixtures remain launch dependencies.
+
+## Unused endpoint completion
+
+- Calendar feed create/revoke has no authenticated read operation, so an existing secret cannot be redisplayed after reload.
+- Signed upload form fields are generated as unknown values; the frontend accepts string/Blob values and rejects other shapes without rewriting them.
+- Cross-origin Blob downloads depend on provider CORS; direct signed navigation remains the reliable default.
+- Health, readiness, Prometheus, and deprecated metrics-alias consumers remain excluded by explicit user scope and need a platform-operations owner.

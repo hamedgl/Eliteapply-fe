@@ -1,5 +1,6 @@
 import type { components } from "../../generated/api/schema";
 import { apiRequest } from "./client";
+import { uploadToSignedUrl } from "./signedTransport";
 type S = components["schemas"];
 const enc = encodeURIComponent;
 const query = (
@@ -237,9 +238,9 @@ export const documentsApi = {
       body,
     }),
   download: (id: string) =>
-    apiRequest<Response>(`/academic-documents/${enc(id)}/download`, {
-      raw: true,
-    }),
+    apiRequest<S["DocumentDownloadResponse"]>(
+      `/academic-documents/${enc(id)}/download`,
+    ),
   remove: (id: string) =>
     apiRequest<void>(`/academic-documents/${enc(id)}`, { method: "DELETE" }),
 };
@@ -424,30 +425,15 @@ export async function uploadAcademicDocument(
     filename: file.name,
     content_type: file.type as S["DocumentUploadRequest"]["content_type"],
   });
-  if (file.size > signed.max_size_bytes)
-    throw new Error(
-      `File exceeds ${Math.round(signed.max_size_bytes / 1048576)} MB.`,
-    );
-  if (signed.upload_method.toUpperCase() === "PUT") {
-    const response = await fetch(signed.upload_url, {
-      method: "PUT",
-      body: file,
-      headers: { "content-type": file.type },
-      signal,
-    });
-    if (!response.ok) throw new Error("Storage upload failed.");
-  } else {
-    const body = new FormData();
-    for (const [key, value] of Object.entries(signed.upload_fields))
-      body.append(key, String(value));
-    body.append("file", file);
-    const response = await fetch(signed.upload_url, {
-      method: signed.upload_method || "POST",
-      body,
-      signal,
-    });
-    if (!response.ok) throw new Error("Storage upload failed.");
-  }
+  await uploadToSignedUrl({
+    uploadUrl: signed.upload_url,
+    method: signed.upload_method,
+    fields: signed.upload_fields,
+    file,
+    contentType: file.type,
+    maxSizeBytes: signed.max_size_bytes,
+    signal,
+  });
   return documentsApi.register({
     category,
     display_name: file.name,

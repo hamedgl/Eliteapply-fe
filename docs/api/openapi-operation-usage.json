@@ -1,0 +1,106 @@
+{
+  "scope": "unused-endpoints-programme",
+  "reviewedAt": "2026-07-14",
+  "operations": [
+    {
+      "operationId": "list_requirements_api_v1_applications__application_id__requirements_get",
+      "method": "GET",
+      "path": "/api/v1/applications/{application_id}/requirements",
+      "classification": "direct-spa",
+      "reason": "URL-addressable Requirements UI supports granular refresh and workspace failure recovery.",
+      "intendedConsumer": "EliteApply SPA",
+      "evidence": ["src/features/applications/applicationQueries.ts", "e2e/unused-endpoints-phase1.spec.ts"],
+      "owner": "frontend-platform",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "list_tasks_api_v1_applications__application_id__tasks_get",
+      "method": "GET",
+      "path": "/api/v1/applications/{application_id}/tasks",
+      "classification": "direct-spa",
+      "reason": "URL-addressable Tasks UI supports granular refresh and workspace failure recovery.",
+      "intendedConsumer": "EliteApply SPA",
+      "evidence": ["src/features/applications/applicationQueries.ts", "e2e/unused-endpoints-phase1.spec.ts"],
+      "owner": "frontend-platform",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "calendar_feed_api_v1_calendar_feed__token__ics_get",
+      "method": "GET",
+      "path": "/api/v1/calendar-feed/{token}.ics",
+      "classification": "external-calendar-client",
+      "reason": "The SPA exposes the secret subscription URL; calendar applications consume the ICS response directly.",
+      "intendedConsumer": "Google Calendar, Apple Calendar, Outlook, and other calendar clients",
+      "evidence": ["src/features/reminders/RemindersPage.tsx", "src/lib/calendarFeed.ts", "e2e/phase3.spec.ts"],
+      "owner": "frontend-platform",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "upload_file_api_v1_storage_upload_put",
+      "method": "PUT",
+      "path": "/api/v1/storage/upload",
+      "classification": "indirect-signed-url",
+      "reason": "The exact local or provider URL returned by an authenticated upload-url operation is consumed by the shared signed transport.",
+      "intendedConsumer": "Browser signed-upload transport",
+      "evidence": ["src/lib/api/signedTransport.ts", "src/tests/signed-transport.test.ts"],
+      "owner": "frontend-platform",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "download_file_api_v1_storage_file_get",
+      "method": "GET",
+      "path": "/api/v1/storage/file",
+      "classification": "indirect-signed-url",
+      "reason": "The exact local or provider URL returned by a download operation is opened by the shared signed transport.",
+      "intendedConsumer": "Browser signed-download transport",
+      "evidence": ["src/lib/api/signedTransport.ts", "src/tests/signed-transport.test.ts"],
+      "owner": "frontend-platform",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "health_check_health_get",
+      "method": "GET",
+      "path": "/health",
+      "classification": "not-yet-implemented",
+      "reason": "Explicitly excluded from this frontend task; no customer-facing React consumer is appropriate.",
+      "intendedConsumer": "Deployment platform",
+      "evidence": ["docs/implementation/unused-endpoints-baseline.md"],
+      "owner": "platform-operations",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "readiness_check_ready_get",
+      "method": "GET",
+      "path": "/ready",
+      "classification": "not-yet-implemented",
+      "reason": "Explicitly excluded from this frontend task; no customer-facing React consumer is appropriate.",
+      "intendedConsumer": "Deployment platform",
+      "evidence": ["docs/implementation/unused-endpoints-baseline.md"],
+      "owner": "platform-operations",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "metrics_endpoint_metrics_get",
+      "method": "GET",
+      "path": "/metrics",
+      "classification": "not-yet-implemented",
+      "reason": "Explicitly excluded from this task; raw Prometheus output is not a React product surface.",
+      "intendedConsumer": "External Prometheus scraper",
+      "evidence": ["docs/implementation/unused-endpoints-baseline.md"],
+      "owner": "platform-operations",
+      "reviewDate": "2026-10-14"
+    },
+    {
+      "operationId": "metrics_endpoint_deprecated_alias_metric_get",
+      "method": "GET",
+      "path": "/metric",
+      "classification": "not-yet-implemented",
+      "reason": "Explicitly excluded and intentionally not adopted; the OpenAPI marks this alias deprecated in favor of /metrics.",
+      "intendedConsumer": "Legacy external scraper only",
+      "evidence": ["docs/api/openapi.json", "docs/implementation/unused-endpoints-baseline.md"],
+      "owner": "platform-operations",
+      "reviewDate": "2026-10-14",
+      "deprecationRemovalDate": null
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import type { components } from "../../generated/api/schema";
 import { apiRequest } from "./client";
+import { uploadToSignedUrl } from "./signedTransport";
 type S = components["schemas"];
 const e = encodeURIComponent;
 const qs = (
@@ -473,29 +474,14 @@ export async function uploadInterviewAudio(
     content_type: contentType,
     consent: true,
   });
-  if (blob.size > signed.max_size_bytes)
-    throw new Error(
-      `Recording exceeds ${Math.round(signed.max_size_bytes / 1048576)} MB.`,
-    );
-  if (signed.upload_method.toUpperCase() === "PUT") {
-    const response = await fetch(signed.upload_url, {
-      method: "PUT",
-      headers: { "content-type": contentType },
-      body: blob,
-    });
-    if (!response.ok) throw new Error("Audio upload failed.");
-  } else {
-    const body = new FormData();
-    Object.entries(signed.upload_fields).forEach(([key, value]) =>
-      body.append(key, String(value)),
-    );
-    body.append("file", blob);
-    const response = await fetch(signed.upload_url, {
-      method: signed.upload_method || "POST",
-      body,
-    });
-    if (!response.ok) throw new Error("Audio upload failed.");
-  }
+  await uploadToSignedUrl({
+    uploadUrl: signed.upload_url,
+    method: signed.upload_method,
+    fields: signed.upload_fields,
+    file: blob,
+    contentType,
+    maxSizeBytes: signed.max_size_bytes,
+  });
   return interviewsApi.audioComplete(interviewId, {
     audio_id: signed.audio_id,
     size_bytes: blob.size,

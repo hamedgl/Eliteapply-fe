@@ -166,19 +166,89 @@ test("interview history remains usable on mobile", async ({ page }) => {
   await page.screenshot({ path: "/tmp/eliteapply-phase3-interviews-mobile.png", fullPage: true });
 });
 
-test("settings actions use the shared button variants", async ({ page }) => {
+test("calendar sync creates, copies, opens and revokes a private feed", async ({
+  page,
+}) => {
+  const secret = "calendar-secret-never-display";
+  const feedUrl = `https://calendar.example.test/api/v1/calendar-feed/${secret}.ics`;
+  let creates = 0,
+    revokes = 0,
+    feedGets = 0;
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: async (value: string) => {
+          (window as Window & { __copiedFeed?: string }).__copiedFeed = value;
+        },
+      },
+    });
+  });
+  page.on("request", (request) => {
+    if (request.url().endsWith(".ics")) feedGets += 1;
+  });
+  await page.route("**/api/v1/calendar-feed/token", async (route) => {
+    if (route.request().method() === "POST") {
+      creates += 1;
+      return route.fulfill({
+        json: { feed_url: feedUrl, created_at: "2026-07-14T09:00:00Z" },
+      });
+    }
+    revokes += 1;
+    return route.fulfill({ status: 204 });
+  });
+
   await page.goto("/app/reminders");
-  const create = page.getByRole("button", { name: "Create calendar feed" });
-  await expect(create).toHaveClass(/primary/);
-  await create.click();
-  await expect(page.getByRole("button", { name: "Copy" })).toHaveClass(
-    /secondary-action/,
+  await page.getByRole("button", { name: "Create calendar link" }).click();
+  await expect(page.getByText("Calendar subscription link created.")).toBeVisible();
+  await expect(page.getByText("••••••••.ics", { exact: false })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(secret);
+  await expect(page.getByRole("link", { name: "Open in calendar app" })).toHaveAttribute(
+    "href",
+    feedUrl.replace("https:", "webcal:"),
   );
-  await expect(page.getByRole("button", { name: "Revoke feed" })).toHaveClass(
-    /secondary-action danger/,
+  const openIcs = page.getByRole("link", { name: "Open .ics feed" });
+  await expect(openIcs).toHaveAttribute("href", feedUrl);
+  await expect(openIcs).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(page.getByRole("link", { name: "Download .ics" })).toHaveAttribute(
+    "download",
+    "eliteapply-calendar.ics",
   );
+
+  await page.getByRole("button", { name: "Copy URL" }).click();
+  await expect.poll(() =>
+    page.evaluate(
+      () => (window as Window & { __copiedFeed?: string }).__copiedFeed,
+    ),
+  ).toBe(feedUrl);
+  await page.getByText("Set up Google Calendar").click();
+  await expect(page.getByText("Subscribe from web", { exact: false })).toBeVisible();
   await page.screenshot({
-    path: "/tmp/eliteapply-calendar-feed-buttons.png",
+    path: "/tmp/eliteapply-calendar-sync-desktop.png",
     fullPage: true,
   });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator(".calendar-sync").screenshot({
+    path: "/tmp/eliteapply-calendar-sync-mobile.png",
+    animations: "disabled",
+  });
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Revoke calendar link" }).click();
+  await expect(page.getByText("The calendar link has been revoked.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create calendar link" })).toBeVisible();
+  expect(creates).toBe(1);
+  expect(revokes).toBe(1);
+  expect(feedGets).toBe(0);
+});
+
+test("calendar sync shows a safe recoverable create error", async ({ page }) => {
+  await page.route("**/api/v1/calendar-feed/token", (route) =>
+    route.fulfill({ status: 503, json: { detail: "calendar-secret" } }),
+  );
+  await page.goto("/app/reminders");
+  await page.getByRole("button", { name: "Create calendar link" }).click();
+  await expect(
+    page.getByText("We couldn’t create the calendar link. Try again shortly."),
+  ).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("calendar-secret");
 });
