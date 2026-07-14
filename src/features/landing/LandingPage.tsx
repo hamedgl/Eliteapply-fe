@@ -35,6 +35,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import closingPathIllustration from "../../assets/illustrations/application-path.png";
 import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.png";
+import comparisonWith from "../../assets/comparison-with.webp";
+import comparisonWithout from "../../assets/comparison-without.webp";
 import { MarketingShell } from "../marketing/MarketingShell";
 
 const guideSteps = [
@@ -1119,39 +1121,78 @@ function ProblemOutcome() {
       <header className="problem-heading">
         <p className="section-context">From scattered to structured</p>
         <h2 id="problem-title">
-          Scholarship applications become difficult long before the deadline.
+          Turn scholarship application <span>chaos</span> into a{" "}
+          <strong>clear</strong> submission plan.
         </h2>
         <p>
-          The pressure usually comes from disconnected details, repeated work
-          and unclear next steps—not from a lack of effort.
+          EliteApply brings every detail together—so you always know what to do
+          next.
         </p>
       </header>
       <div className="comparison-flow">
-        <div className="comparison-column without-column">
-          <h3>Without EliteApply</h3>
+        <article className="comparison-column without-column">
+          <header>
+            <span className="comparison-status-icon" aria-hidden="true">
+              <X />
+            </span>
+            <div>
+              <h3>Without EliteApply</h3>
+              <p>Disconnected. Manual. Stressful.</p>
+            </div>
+          </header>
+          <img
+            className="comparison-media"
+            src={comparisonWithout}
+            alt="Scholarship deadlines, emails, requirements and document drafts scattered across tabs and notes."
+            width="1052"
+            height="712"
+            loading="lazy"
+            decoding="async"
+          />
           <ul>
             {withoutItems.map((item) => (
               <li key={item}>
-                <X aria-hidden="true" />
+                <span className="comparison-list-icon" aria-hidden="true">
+                  <X />
+                </span>
                 {item}
               </li>
             ))}
           </ul>
-        </div>
+        </article>
         <div className="comparison-arrow" aria-hidden="true">
           <ArrowRight />
         </div>
-        <div className="comparison-column with-column">
-          <h3>With EliteApply</h3>
+        <article className="comparison-column with-column">
+          <header>
+            <span className="comparison-status-icon" aria-hidden="true">
+              <Check />
+            </span>
+            <div>
+              <h3>With EliteApply</h3>
+              <p>Structured. Visible. Confident.</p>
+            </div>
+          </header>
+          <img
+            className="comparison-media"
+            src={comparisonWith}
+            alt="EliteApply timeline, actionable tasks, centralized documents and progress tracking in one structured workspace."
+            width="1052"
+            height="712"
+            loading="lazy"
+            decoding="async"
+          />
           <ul>
             {withItems.map((item) => (
               <li key={item}>
-                <Check aria-hidden="true" />
+                <span className="comparison-list-icon" aria-hidden="true">
+                  <Check />
+                </span>
                 {item}
               </li>
             ))}
           </ul>
-        </div>
+        </article>
       </div>
     </section>
   );

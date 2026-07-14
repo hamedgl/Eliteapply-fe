@@ -8350,18 +8350,33 @@ th {
   box-shadow: none;
 }
 .phase-one-hero {
-  width: min(100%, var(--m-section-width));
+  width: 100%;
   min-height: 720px;
-  margin: 0 auto;
-  padding: clamp(4.5rem, 7vw, 7.5rem) var(--m-gutter) clamp(4rem, 6vw, 6rem);
+  margin: 0;
+  padding: clamp(4.5rem, 7vw, 7.5rem)
+    max(
+      var(--m-gutter),
+      calc((100% - var(--m-section-width)) / 2 + var(--m-gutter))
+    )
+    clamp(4rem, 6vw, 6rem);
   display: grid;
   grid-template-columns: minmax(340px, 0.84fr) minmax(560px, 1.16fr);
   align-items: center;
   gap: clamp(3rem, 7vw, 7rem);
-  background: var(--m-white);
+  background-color: var(--m-white);
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.78) 58%,
+      rgba(255, 255, 255, 0.84) 100%
+    ),
+    url("../assets/hero-campus.webp");
+  background-position: center;
+  background-size: cover;
 }
 .phase-one-hero-copy {
-  max-width: 660px;
+  max-width: 640px;
 }
 .hero-category,
 .section-context {
@@ -8375,19 +8390,21 @@ th {
 }
 .phase-one-hero h1 {
   margin: 0;
-  max-width: 660px;
+  max-width: 640px;
   color: var(--m-ink);
-  font-size: clamp(3.4rem, 5.3vw, 5.25rem);
-  line-height: 0.98;
-  letter-spacing: -0.035em;
-  font-weight: 600;
+  font-size: clamp(3.4rem, 4.6vw, 4.75rem);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  text-wrap: balance;
 }
 .phase-one-hero-copy > p:not(.hero-category, .phase-one-assurance) {
-  max-width: 610px;
-  margin: 2rem 0;
+  max-width: 570px;
+  margin: 1.8rem 0;
   color: var(--m-text-strong);
-  font-size: clamp(1.08rem, 1.45vw, 1.28rem);
-  line-height: 1.65;
+  font-size: clamp(1.05rem, 1.35vw, 1.2rem);
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 .phase-one-actions {
   display: flex;
@@ -8785,20 +8802,16 @@ th {
   color: var(--m-blue);
 }
 .problem-outcome {
-  padding: var(--m-space-section) var(--m-gutter);
+  padding: 0.5rem var(--m-gutter) clamp(4rem, 6vw, 6rem);
   background: var(--m-white);
 }
 .problem-heading {
   width: min(100%, var(--m-section-width));
-  margin: 0 auto clamp(3.5rem, 6vw, 6rem);
-  display: grid;
-  grid-template-columns: minmax(280px, 0.9fr) minmax(440px, 1.1fr);
-  gap: 1rem clamp(3rem, 8vw, 9rem);
-  align-items: end;
+  margin: 0 auto 1.75rem;
+  text-align: center;
 }
 .problem-heading .section-context {
-  grid-column: 1 / -1;
-  margin-bottom: 0;
+  margin-bottom: 0.8rem;
 }
 .problem-heading h2,
 .phase-one-section-heading h2,
@@ -8813,6 +8826,22 @@ th {
   letter-spacing: -0.03em;
   font-weight: 600;
 }
+.problem-heading h2 {
+  max-width: 1400px;
+  margin-inline: auto;
+  font-size: clamp(2.4rem, 3vw, 3rem);
+  line-height: 1.08;
+  font-weight: 500;
+  text-wrap: balance;
+}
+.problem-heading h2 span {
+  color: #d9483b;
+  font: inherit;
+}
+.problem-heading h2 strong {
+  color: var(--m-blue);
+  font: inherit;
+}
 .problem-heading > p:last-child,
 .phase-one-section-heading > p:last-child,
 .tool-comparison header > p:last-child {
@@ -8822,26 +8851,74 @@ th {
   font-size: 1.08rem;
   line-height: 1.7;
 }
+.problem-heading > p:last-child {
+  margin: 0.75rem auto 0;
+  text-align: center;
+}
 .comparison-flow {
-  width: min(100%, var(--m-section-width));
+  width: min(100%, 1436px);
   margin: auto;
   display: grid;
-  grid-template-columns: 1fr 80px 1fr;
+  grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
   align-items: stretch;
 }
 .comparison-column {
-  padding: clamp(1.75rem, 3vw, 3rem);
-  border-block: 1px solid var(--m-line-strong);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 14px;
 }
 .without-column {
-  background: var(--m-canvas);
+  border-color: #f0d7d3;
+  background: #fffbfa;
 }
 .with-column {
-  background: var(--m-pale);
+  border-color: #d6e2fb;
+  background: #f8faff;
+}
+.comparison-column > header {
+  min-height: 88px;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 .comparison-column h3 {
-  margin: 0 0 1.75rem;
+  margin: 0;
   font-size: 1.55rem;
+}
+.comparison-column header p {
+  margin: 0.15rem 0 0;
+  color: var(--m-text);
+  line-height: 1.45;
+}
+.comparison-status-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--m-white);
+  border-radius: 50%;
+}
+.without-column .comparison-status-icon {
+  background: #df4d41;
+}
+.with-column .comparison-status-icon {
+  background: var(--m-blue);
+}
+.comparison-status-icon svg {
+  width: 25px;
+  height: 25px;
+  stroke-width: 2.5;
+}
+.comparison-media {
+  width: calc(100% - 4rem);
+  height: clamp(280px, 18.5vw, 310px);
+  margin: 0 2rem;
+  display: block;
+  object-fit: contain;
+  border-radius: 10px;
 }
 .comparison-column ul,
 .capability-copy ul {
@@ -8849,35 +8926,58 @@ th {
   margin: 0;
   list-style: none;
 }
+.comparison-column ul {
+  padding: 1rem 2rem;
+}
 .comparison-column li {
-  min-height: 52px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   color: var(--m-text-strong);
   border-top: 1px solid var(--m-line);
+  font-size: 0.95rem;
   line-height: 1.45;
 }
 .comparison-column li:last-child {
   border-bottom: 1px solid var(--m-line);
 }
-.comparison-column li svg {
-  width: 18px;
+.comparison-list-icon {
+  width: 20px;
+  height: 20px;
+  display: grid;
   flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
 }
-.without-column li svg {
-  color: var(--m-icon);
+.comparison-list-icon svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.5;
 }
-.with-column li svg {
-  color: var(--m-blue);
+.without-column .comparison-list-icon {
+  color: #df4d41;
+  border: 1px solid currentColor;
+}
+.with-column .comparison-list-icon {
+  color: var(--m-white);
+  background: var(--m-blue);
 }
 .comparison-arrow {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 250px;
   color: var(--m-blue);
 }
 .comparison-arrow svg {
-  width: 32px;
+  width: 30px;
+  height: 30px;
+  padding: 18px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: var(--m-white);
+  box-shadow: 0 6px 8px rgba(16, 27, 59, 0.12);
 }
 .capabilities {
   padding: var(--m-space-section) 0 0;
@@ -9988,6 +10088,9 @@ th {
   .phase-one-hero {
     min-height: 0;
     grid-template-columns: 1fr;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.86)),
+      url("../assets/hero-campus.webp");
   }
   .phase-one-hero-copy {
     max-width: 780px;
@@ -10010,6 +10113,18 @@ th {
   }
   .problem-heading .section-context {
     grid-column: auto;
+  }
+  .comparison-flow {
+    width: min(100%, 760px);
+    grid-template-columns: 1fr;
+  }
+  .comparison-arrow {
+    height: 76px;
+    align-items: center;
+    padding-top: 0;
+  }
+  .comparison-arrow svg {
+    transform: rotate(90deg);
   }
   .capability-section,
   .capability-section.reverse {
@@ -10205,7 +10320,20 @@ th {
     transform: rotate(90deg);
   }
   .comparison-column {
-    padding: 1.25rem;
+    padding: 0;
+  }
+  .comparison-column > header {
+    min-height: 80px;
+    padding: 1rem 1.25rem;
+  }
+  .comparison-media {
+    width: calc(100% - 2.5rem);
+    height: auto;
+    margin-inline: 1.25rem;
+    aspect-ratio: 1052 / 712;
+  }
+  .comparison-column ul {
+    padding: 1rem 1.25rem 1.25rem;
   }
   .capability-intro {
     grid-template-columns: 1fr;

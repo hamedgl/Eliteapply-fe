@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-07-13T16:06:05+01:00",
+  "generatedAt": "2026-07-14T21:39:08+01:00",
   "title": "EliteApply Production Design System",
   "description": "A calm, credible and quietly premium design system for scholarship and academic application workflows.",
   "status": "production-ready baseline",
@@ -137,7 +137,7 @@
       "fontLoading": {
         "strategy": "self-host preferred; otherwise preconnect to the font origin and use font-display: swap",
         "weights": {
-          "Source Serif 4": [600],
+          "Source Serif 4": [500, 600],
           "DM Sans": [400, 500, 600, 700]
         },
         "rules": [
@@ -149,10 +149,10 @@
       "styles": {
         "marketing.display": {
           "family": "{tokens.typography.fontFamilies.display}",
-          "size": "clamp(2.75rem, 5.8vw, 5.5rem)",
-          "weight": 600,
-          "lineHeight": 0.98,
-          "letterSpacing": "-0.035em"
+          "size": "clamp(3.4rem, 4.6vw, 4.75rem)",
+          "weight": 500,
+          "lineHeight": 0.96,
+          "letterSpacing": "-0.03em"
         },
         "marketing.h2": {
           "family": "{tokens.typography.fontFamilies.display}",
@@ -531,7 +531,10 @@
         "supportingCopy": "Organise deadlines and requirements, shape your written materials and keep every application moving from one focused workspace.",
         "primaryCta": "Start an application",
         "secondaryCta": "See how it works",
-        "visualDirection": "Use a real product composition showing an application checklist, document status and deadline—not a generic AI illustration."
+        "visualDirection": "Place the live product composition over a full-bleed, white-washed campus photograph so academic atmosphere supports rather than competes with the workflow proof.",
+        "backgroundAsset": "src/assets/hero-campus.webp",
+        "backgroundFormat": "1600x894 WebP at approximately 220KB",
+        "responsiveTreatment": "Use a directional white wash on desktop and a stronger uniform wash when the copy and preview stack on tablet or mobile."
       },
       "sectionOrder": [
         "Hero with product proof",
@@ -730,5 +733,5 @@
       "Critical layout overflow at supported viewport widths."
     ]
   },
-  "version": "3.0.0"
+  "version": "3.1.0"
 }

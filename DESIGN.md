@@ -1,6 +1,6 @@
 ---
 name: EliteApply
-version: 3.0.0
+version: 3.1.0
 status: production-ready baseline
 description: A calm, credible and quietly premium design system for scholarship and academic application workflows.
 sourceOfTruth:
@@ -121,6 +121,7 @@ Source Serif creates academic authority and warmth. DM Sans keeps controls and d
 Rules:
 
 - Display typography is for marketing statements and primary hierarchy, not buttons or tables.
+- Homepage hero display uses Source Serif 4 at weight 500, `clamp(3.4rem, 4.6vw, 4.75rem)`, `0.96` line-height and `-0.03em` letter-spacing for a composed academic-editorial rhythm.
 - Interactive labels are at least 14px.
 - Twelve-pixel text is limited to non-essential metadata.
 - Use sentence case.
@@ -335,6 +336,22 @@ Premium does not mean more effects. It means better hierarchy, spacing, composit
 **Secondary CTA:** See how it works
 
 Use a real product composition showing an application checklist, document state and deadline. Avoid a generic student stock photo, floating AI orb or abstract 3D objects.
+
+#### Homepage hero visual specification
+
+- Use the supplied Oxford campus photograph as a full-bleed architectural backdrop behind both the message and live product preview.
+- Ship the background as a 1600×894 WebP near the 220KB hero-image budget; do not load the multi-megabyte source JPEG in production.
+- Apply a white directional wash that is strongest beneath the copy and slightly lighter beneath the product preview. The image supplies academic atmosphere without reducing text contrast or product legibility.
+- Treat the CSS background as decorative. The adjacent copy and interactive preview carry the hero's meaning, so no duplicate image description is required.
+- On tablet and mobile, retain the image with a stronger uniform white wash, stack the product preview below the message and preserve the existing touch-safe actions.
+- Keep the display serif at weight 500 with a compact `0.96` line-height; interface copy, CTAs and the product preview remain DM Sans.
+
+#### Before-and-after proof section
+
+- Center the editorial headline and use coral only for the problem word and brand blue only for the outcome word.
+- Present “Without EliteApply” and “With EliteApply” as equal, lightly tinted comparison cards with real optimized WebP imagery, status icons and six concise proof rows.
+- Keep the desktop transformation arrow between the cards; rotate it vertically when the cards stack below 1024px.
+- Preserve the supplied 1052×712 image ratio on mobile and use descriptive alt text for both comparison assets.
 
 ### Recommended homepage sequence
 
