@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap");
 :root {
   font-family: "DM Sans", sans-serif;
   color: #101b3b;
@@ -5768,7 +5767,6 @@ th {
   display: block;
   border-radius: inherit;
   background: var(--app-blue);
-  transition: width 180ms ease-out;
 }
 
 .dashboard-layout {
@@ -8642,7 +8640,6 @@ th {
   display: block;
   height: 100%;
   background: var(--m-success);
-  transition: width 220ms ease-out;
 }
 .hero-action-cta {
   margin: 0 0 0 auto !important;

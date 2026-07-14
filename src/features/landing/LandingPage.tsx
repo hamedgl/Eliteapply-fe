@@ -37,6 +37,7 @@ import closingPathIllustration from "../../assets/illustrations/application-path
 import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.png";
 import comparisonWith from "../../assets/comparison-with.webp";
 import comparisonWithout from "../../assets/comparison-without.webp";
+import { usePageSeo } from "../../seo/usePageSeo";
 import { MarketingShell } from "../marketing/MarketingShell";
 
 const guideSteps = [
@@ -309,6 +310,7 @@ function createInitialHeroTaskState() {
 }
 
 export function LandingPage() {
+  usePageSeo("/");
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeGuide, setActiveGuide] = useState(0);
   const [tourPaused, setTourPaused] = useState(false);
@@ -738,19 +740,10 @@ export function LandingPage() {
 }
 
 export function ProductPreviewPage() {
+  usePageSeo("/product-preview");
   const [activeGuide, setActiveGuide] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    document.title = "Interactive product preview | EliteApply";
-    document
-      .querySelector<HTMLMetaElement>('meta[name="description"]')
-      ?.setAttribute(
-        "content",
-        "Explore a realistic EliteApply sample workspace and see how applications, evidence, writing and references stay connected before signing up.",
-      );
-  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");

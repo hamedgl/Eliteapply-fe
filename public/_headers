@@ -1,0 +1,51 @@
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-src 'self'; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-site
+  X-DNS-Prefetch-Control: off
+  X-Permitted-Cross-Domain-Policies: none
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+/app/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/login
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/register
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/confirm-email
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/forgot-password
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/reset-password
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/share/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/collaborator-invitations/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/referee/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/verify/*
+  X-Robots-Tag: noindex, nofollow, noarchive

@@ -15,4 +15,11 @@ Tokens are kept in browser memory. Session restoration uses the backend's HttpOn
 
 `npm run typecheck`, `npm test`, `npm run build`, and `npm run api:check`.
 
+`npm run build` now emits route-specific prerendered HTML, a validated sitemap,
+robots policy, noindex application shell, social metadata and a static 404 into
+`dist`. Deploy the full `dist` directory. Hosts that support Netlify/Cloudflare
+Pages conventions should honor `_headers` and `_redirects`; Vercel uses the
+versioned `vercel.json` configuration. Keep the canonical HTTPS/domain redirect
+enabled at the edge.
+
 Implementation status and phase handoffs live in `docs/implementation/`.

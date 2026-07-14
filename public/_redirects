@@ -1,0 +1,13 @@
+http://eliteapply.net/* https://eliteapply.net/:splat 301!
+https://www.eliteapply.net/* https://eliteapply.net/:splat 301!
+
+/app/* /app-shell.html 200
+/login /app-shell.html 200
+/register /app-shell.html 200
+/confirm-email /app-shell.html 200
+/forgot-password /app-shell.html 200
+/reset-password /app-shell.html 200
+/share/* /app-shell.html 200
+/collaborator-invitations/* /app-shell.html 200
+/referee/* /app-shell.html 200
+/verify/* /app-shell.html 200

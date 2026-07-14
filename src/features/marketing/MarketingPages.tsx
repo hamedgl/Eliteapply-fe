@@ -27,6 +27,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
 import { billingApi } from "../../lib/api/billing";
+import { usePageSeo } from "../../seo/usePageSeo";
 import { MarketingShell } from "./MarketingShell";
 import {
   featurePages,
@@ -39,34 +40,16 @@ import {
   type ResourceGuide,
 } from "./marketingData";
 
-const coreMetadata: Record<string, readonly [string, string]> = {
-  "/features": ["Scholarship application workspace features", "Explore EliteApply's application tracker, writing, document, reference and readiness workflows for students."],
-  "/how-it-works": ["How EliteApply works", "See how EliteApply turns a scholarship opportunity into a clear plan, connected preparation workspace and final review."],
-  "/for-students": ["EliteApply for scholarship applicants", "A flexible scholarship application workspace for undergraduate, master's, PhD, international and fellowship applicants."],
-  "/pricing": ["EliteApply pricing", "Review current EliteApply access and any paid plans made available by the server-owned plan catalogue."],
-  "/security": ["Security and account controls", "Understand the account, session, export, deletion and transparency controls currently implemented in EliteApply."],
-  "/about": ["About EliteApply", "Why EliteApply is building a calm, student-controlled workspace for demanding scholarship applications."],
-  "/contact": ["Contact EliteApply", "Contact EliteApply for product support, accessibility feedback, privacy questions or general enquiries."],
-  "/resources": ["Scholarship application resources", "Practical, provider-led guidance for organising, writing and preparing scholarship applications."],
-  "/privacy": ["Privacy information", "A plain-language summary of current EliteApply account and data controls, with a launch-status notice for approved legal copy."],
-  "/terms": ["Terms information", "A plain-language product-use summary and launch-status notice for EliteApply's approved terms of service."],
-  "/accessibility": ["Accessibility statement", "EliteApply's accessibility approach, supported interaction principles and contact route for reporting barriers."],
-};
-
 export function MarketingRoute() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const pathname =
+    location.pathname === "/"
+      ? "/"
+      : location.pathname.replace(/\/$/, "");
   const feature = featurePages.find((page) => page.path === pathname);
   const intent = intentPages.find((page) => page.path === pathname);
   const guide = resourceGuides.find((item) => item.path === pathname);
-  const metadata = feature
-    ? [feature.name, feature.description]
-    : intent
-      ? [intent.name, intent.description]
-      : guide
-        ? [guide.title, guide.description]
-        : coreMetadata[pathname] ?? ["Page not found", "The requested EliteApply page could not be found."];
-
-  usePageMetadata(metadata[0], metadata[1]);
+  usePageSeo(pathname);
 
   let page: React.ReactNode;
   if (feature) page = <FeatureDetailPage page={feature} />;
@@ -90,24 +73,6 @@ export function MarketingRoute() {
   }
 
   return <MarketingShell>{page}</MarketingShell>;
-}
-
-function usePageMetadata(title: string, description: string) {
-  useEffect(() => {
-    document.title = `${title} | EliteApply`;
-    const setMeta = (selector: string, attribute: "name" | "property", key: string, content: string) => {
-      let element = document.head.querySelector<HTMLMetaElement>(selector);
-      if (!element) {
-        element = document.createElement("meta");
-        element.setAttribute(attribute, key);
-        document.head.appendChild(element);
-      }
-      element.content = content;
-    };
-    setMeta('meta[name="description"]', "name", "description", description);
-    setMeta('meta[property="og:title"]', "property", "og:title", `${title} | EliteApply`);
-    setMeta('meta[property="og:description"]', "property", "og:description", description);
-  }, [description, title]);
 }
 
 function Breadcrumbs({ current }: { current: string }) {
@@ -355,4 +320,9 @@ function ClosingCta({ title }: { title: string }) {
 
 function MarketingNotFound() {
   return <section className="mkt2-page-hero centered"><Breadcrumbs current="Page not found" /><h1>This page is not part of the application plan.</h1><p>The route may have changed. Return to the public feature overview or resource hub.</p><div className="mkt2-actions"><Link className="landing-button" to="/features">Explore features</Link><Link className="landing-button secondary" to="/resources">Open resources</Link></div></section>;
+}
+
+export function MarketingNotFoundPage() {
+  usePageSeo("/404");
+  return <MarketingShell><MarketingNotFound /></MarketingShell>;
 }

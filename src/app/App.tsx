@@ -164,6 +164,11 @@ const AppShell = lazy(() =>
     import("../features/marketing/MarketingPages").then((x) => ({
       default: x.MarketingRoute,
     })),
+  ),
+  MarketingNotFoundPage = lazy(() =>
+    import("../features/marketing/MarketingPages").then((x) => ({
+      default: x.MarketingNotFoundPage,
+    })),
   );
 const load = (node: React.ReactNode) => (
   <Suspense
@@ -356,6 +361,7 @@ const router = createBrowserRouter([
       { path: "unavailable", element: <Unavailable /> },
     ],
   },
+  { path: "*", element: load(<MarketingNotFoundPage />) },
 ]);
 export function App() {
   return <RouterProvider router={router} />;
