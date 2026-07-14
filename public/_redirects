@@ -1,6 +1,3 @@
-http://eliteapply.net/* https://eliteapply.net/:splat 301!
-https://www.eliteapply.net/* https://eliteapply.net/:splat 301!
-
 /app/* /app-shell.html 200
 /login /app-shell.html 200
 /register /app-shell.html 200

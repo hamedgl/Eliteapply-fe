@@ -19,7 +19,8 @@ Tokens are kept in browser memory. Session restoration uses the backend's HttpOn
 robots policy, noindex application shell, social metadata and a static 404 into
 `dist`. Deploy the full `dist` directory. Hosts that support Netlify/Cloudflare
 Pages conventions should honor `_headers` and `_redirects`; Vercel uses the
-versioned `vercel.json` configuration. Keep the canonical HTTPS/domain redirect
-enabled at the edge.
+versioned `vercel.json` configuration. On Cloudflare, configure HTTP and `www`
+canonical-host redirects with Redirect Rules at the edge; `_redirects` contains
+relative path rewrites only.
 
 Implementation status and phase handoffs live in `docs/implementation/`.

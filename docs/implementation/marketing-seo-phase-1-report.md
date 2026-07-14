@@ -25,7 +25,8 @@ Status: implemented and build-verified
 
 ## External launch checks
 
-- Confirm the production edge applies the repository headers and redirects.
+- Confirm the production edge applies the repository headers and configure the
+  HTTP/`www` canonical-host redirects with Cloudflare Redirect Rules.
 - Confirm unknown direct requests return HTTP 404 and private routes return `X-Robots-Tag: noindex, nofollow, noarchive`.
 - Replace the temporary terms/privacy summaries with approved legal copy before making them indexable.
 - Submit `https://eliteapply.net/sitemap.xml` in the chosen webmaster consoles after deployment.

@@ -120,7 +120,15 @@ for (const header of [
 ])
   assert.ok(headers.includes(header), `missing deployment header: ${header}`);
 assert.match(redirects, /\/app\/\* \/app-shell\.html 200/);
-assert.match(redirects, /http:\/\/eliteapply\.net\/\*/);
+for (const [index, line] of redirects.split(/\r?\n/).entries()) {
+  const source = line.trim().split(/\s+/, 1)[0];
+  if (source) {
+    assert.ok(
+      source.startsWith("/"),
+      `_redirects line ${index + 1} must use a relative source path`,
+    );
+  }
+}
 assert.ok(vercel.headers?.length > 0, "vercel headers missing");
 assert.ok(vercel.rewrites?.length > 0, "vercel private-route rewrites missing");
 assert.equal(webManifest.name, "EliteApply");
