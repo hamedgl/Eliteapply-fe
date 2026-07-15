@@ -116,6 +116,7 @@ export function WritingLibrary() {
 }
 export function NewWriting() {
   const nav = useNavigate(),
+    qc = useQueryClient(),
     [error, setError] = useState(""),
     [documentType, setDocumentType] =
       useState<(typeof types)[number]>("motivation_letter"),
@@ -150,6 +151,12 @@ export function NewWriting() {
         evidence_map: {},
         theme: {},
       });
+      qc.setQueryData(queryKeys.writingDocument(x.id), x);
+      for (const includeArchived of [false, true])
+        qc.setQueryData<S["WritingDocumentResponse"][]>(
+          ["writing", { includeArchived }],
+          (current) => [x, ...(current ?? []).filter((item) => item.id !== x.id)],
+        );
       nav(`/app/writing/${x.id}`);
     } catch (x) {
       setError(x instanceof Error ? x.message : "Could not create document.");
@@ -393,10 +400,23 @@ export function WritingEditor() {
     );
   }
   if (q.isPending) return <div className="page">Loading editor…</div>;
-  if (q.isError || !q.data)
+  if (!q.data)
     return (
       <div className="page error-state">
         <h1>Document unavailable</h1>
+        <p>
+          {q.isError
+            ? "The document could not be loaded. It may be a temporary connection problem."
+            : "This document is not available."}
+        </p>
+        <div className="detail-actions">
+          <button type="button" onClick={() => void q.refetch()}>
+            Try again
+          </button>
+          <Link className="secondary-action" to="/app/writing">
+            Back to Writing Studio
+          </Link>
+        </div>
       </div>
     );
   return (
@@ -463,6 +483,13 @@ export function WritingEditor() {
           </button>
         </div>
       </header>
+      {q.isRefetchError ? (
+        <p className="form-error writing-sync-error" role="alert">
+          The latest version could not be loaded. Your open document is still
+          available; try saving or refreshing again when the connection
+          recovers.
+        </p>
+      ) : null}
       <div className="editor-grid">
         <aside>
           <h2>Document outline</h2>

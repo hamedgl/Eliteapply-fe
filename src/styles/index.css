@@ -5666,6 +5666,60 @@ th {
   text-wrap: pretty;
 }
 
+.app-shell :where(button:not(.primary), .secondary-action) {
+  min-height: 40px;
+  padding: 0.55rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: var(--app-ink);
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface);
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.app-shell
+  :where(button:not(.primary), .secondary-action):hover:not(:disabled) {
+  color: var(--app-blue);
+  border-color: var(--app-line-strong);
+  background: #f4f6fb;
+}
+
+.app-shell
+  :where(button:not(.primary), .secondary-action):active:not(:disabled) {
+  background: #e9edf5;
+}
+
+.app-shell :where(button:not(.primary), .secondary-action):disabled {
+  color: #8490a6;
+  border-color: #d8dee8;
+  background: #eef1f6;
+  cursor: not-allowed;
+}
+
+.app-shell :where(button.danger, button.danger-link) {
+  color: #9f2018;
+  border-color: #e4aaa5;
+  background: #fff;
+}
+
+.app-shell
+  :where(button.danger, button.danger-link):hover:not(:disabled) {
+  color: #7f1812;
+  border-color: #cf746c;
+  background: #fff3f2;
+}
+
 .app-shell .primary {
   min-height: 44px;
   padding: 0.7rem 1rem;

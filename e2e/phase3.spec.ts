@@ -129,6 +129,74 @@ test("writing library and editor are responsive and save-state aware", async ({
     fullPage: true,
   });
 });
+
+test("new writing survives an empty library cache and a failed completion refresh", async ({
+  page,
+}) => {
+  const runId = "00000000-0000-4000-8000-000000000099";
+  await page.route("**/api/v1/writing-studio/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path.endsWith("/templates")) return route.fulfill({ json: [] });
+    if (path.endsWith("/documents") && method === "GET")
+      return route.fulfill({ json: [] });
+    if (path.endsWith("/documents") && method === "POST")
+      return route.fulfill({ status: 201, json: doc });
+    if (path.endsWith(`/documents/${doc.id}/generate`))
+      return route.fulfill({
+        status: 202,
+        json: generationRun(runId, "queued"),
+      });
+    if (path.endsWith(`/generation-runs/${runId}`))
+      return route.fulfill({ json: generationRun(runId, "completed") });
+    if (path.endsWith(`/documents/${doc.id}`) && method === "GET")
+      return route.fulfill({ status: 503, json: { detail: "retry later" } });
+    return route.fallback();
+  });
+
+  await page.goto("/app/writing");
+  await expect(page.getByText("No writing documents yet")).toBeVisible();
+  await page.getByRole("link", { name: "New document" }).click();
+  await page.getByLabel("Title").fill(doc.title);
+  await page.getByRole("button", { name: "Create document" }).click();
+  await expect(page.getByRole("heading", { name: doc.title })).toBeVisible();
+
+  await page
+    .locator(".writing-editor > header")
+    .getByRole("link", { name: "Writing Studio" })
+    .click();
+  await expect(page.getByText(doc.title)).toBeVisible();
+  await expect(page.getByText("No writing documents yet")).toHaveCount(0);
+
+  await page.getByText(doc.title).click();
+  await page.getByLabel("Instruction").fill("Create a concise outline");
+  await page.getByRole("button", { name: "Generate suggestion" }).click();
+  await expect(
+    page.getByText("The latest version could not be loaded."),
+  ).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("heading", { name: doc.title })).toBeVisible();
+  await expect(page.getByText("Document unavailable")).toHaveCount(0);
+});
+
+function generationRun(id: string, status: string) {
+  return {
+    id,
+    document_id: doc.id,
+    retry_of_id: null,
+    mutation_id: "00000000-0000-4000-8000-000000000098",
+    generation_id: "00000000-0000-4000-8000-000000000097",
+    operation: "generate_outline",
+    status,
+    prompt_version: "v1",
+    model_version: "test",
+    input_hash: "test",
+    usage_reservation_id: "00000000-0000-4000-8000-000000000096",
+    failure_reason: null,
+    created_at: "2026-07-15T00:00:00Z",
+    completed_at: status === "completed" ? "2026-07-15T00:00:01Z" : null,
+  };
+}
+
 test("public referee code stays out of the URL", async ({ page }) => {
   let header = "";
   await page.route("**/api/v1/referee/**", async (route) => {
