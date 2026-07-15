@@ -9,7 +9,7 @@ import {
   MarketingNotFoundPage,
   MarketingRoute,
 } from "./features/marketing/MarketingPages";
-import { getPageSeo, PRERENDER_ROUTES } from "./seo/site";
+import { getPageSeo, LAST_MODIFIED, PRERENDER_ROUTES } from "./seo/site";
 
 const loading = (node: React.ReactNode) => (
   <Suspense
@@ -44,4 +44,4 @@ export function render(pathname: string, notFound = false) {
   );
 }
 
-export { getPageSeo, PRERENDER_ROUTES };
+export { getPageSeo, LAST_MODIFIED, PRERENDER_ROUTES };

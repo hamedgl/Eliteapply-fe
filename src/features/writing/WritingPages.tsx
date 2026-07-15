@@ -18,6 +18,7 @@ import { downloadResponse } from "../../lib/api/download";
 import { billingApi } from "../../lib/api/billing";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { previewDocument } from "../../lib/safeHtml";
+import { usePromptDialog } from "../../components/PromptDialog";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
 const types = [
@@ -251,6 +252,7 @@ export function NewWriting() {
   );
 }
 export function WritingEditor() {
+  const requestText = usePromptDialog();
   const { id = "" } = useParams(),
     qc = useQueryClient(),
     nav = useNavigate();
@@ -548,8 +550,13 @@ export function WritingEditor() {
           ) : (
             <button
               onClick={async () => {
-                const applicationId = prompt(
-                  "Application ID to attach",
+                const applicationId = (
+                  await requestText({
+                    title: "Attach application",
+                    label: "Application ID",
+                    required: true,
+                    submitLabel: "Attach",
+                  })
                 )?.trim();
                 if (applicationId) {
                   const next = await writingApi.attach(id, applicationId);
@@ -744,6 +751,7 @@ function WritingReview({
   documentId: string;
   revisions: S["WritingRevisionResponse"][];
 }) {
+  const requestText = usePromptDialog();
   const qc = useQueryClient(),
     comments = useQuery({
       queryKey: queryKeys.comments(documentId),
@@ -843,7 +851,15 @@ function WritingReview({
                 </button>
                 <button
                   onClick={async () => {
-                    const body = prompt("Edit comment", item.body)?.trim();
+                    const body = (
+                      await requestText({
+                        title: "Edit comment",
+                        label: "Comment",
+                        initialValue: item.body,
+                        multiline: true,
+                        required: true,
+                      })
+                    )?.trim();
                     if (body) {
                       await writingApi.updateComment(item.id, { body });
                       void refreshComments();

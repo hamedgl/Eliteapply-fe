@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ import { queryKeys } from "../../lib/api/queryKeys";
 import { newMutationId } from "../../lib/api/mutations";
 import { ApiError } from "../../lib/api/errors";
 import { ConflictNotice } from "../../components/ConflictNotice";
+import { usePromptDialog } from "../../components/PromptDialog";
 import { formatDate, label } from "./model";
 import {
   invalidateApplicationResource,
@@ -637,6 +638,7 @@ function Requirements({
   refreshing: boolean;
 }) {
   const qc = useQueryClient();
+  const requestText = usePromptDialog();
   const [bulkText, setBulkText] = useState("");
   const sync = () =>
     invalidateApplicationResource(qc, applicationId, "requirements");
@@ -882,8 +884,15 @@ function Requirements({
                 <button
                   type="button"
                   disabled={update.isPending}
-                  onClick={() => {
-                    const title = prompt("Requirement title", x.title)?.trim();
+                  onClick={async () => {
+                    const title = (
+                      await requestText({
+                        title: "Edit requirement",
+                        label: "Requirement title",
+                        initialValue: x.title,
+                        required: true,
+                      })
+                    )?.trim();
                     if (title && title !== x.title)
                       update.mutate({ requirement: x, patch: { title } });
                   }}
@@ -951,6 +960,9 @@ function Tasks({
 }) {
   const qc = useQueryClient();
   const [bulkText, setBulkText] = useState("");
+  const [editingTask, setEditingTask] = useState<S["TaskResponse"] | null>(
+    null,
+  );
   const sync = () => invalidateApplicationResource(qc, applicationId, "tasks");
   const add = useMutation({
     mutationFn: (body: S["TaskCreate"]) =>
@@ -989,7 +1001,10 @@ function Tasks({
         ...patch,
         expected_version: task.version,
       }),
-    onSuccess: sync,
+    onSuccess: async () => {
+      setEditingTask(null);
+      await sync();
+    },
   });
   const remove = useMutation({
     mutationFn: (taskId: string) =>
@@ -1139,11 +1154,7 @@ function Tasks({
                 <button
                   type="button"
                   disabled={update.isPending}
-                  onClick={() => {
-                    const title = prompt("Task title", x.title)?.trim();
-                    if (title && title !== x.title)
-                      update.mutate({ task: x, patch: { title } });
-                  }}
+                  onClick={() => setEditingTask(x)}
                 >
                   Edit
                 </button>
@@ -1177,7 +1188,92 @@ function Tasks({
           The task change could not be saved. Refresh and try again.
         </p>
       ) : null}
+      {editingTask ? (
+        <TaskEditDialog
+          task={editingTask}
+          pending={update.isPending}
+          onClose={() => setEditingTask(null)}
+          onSave={(patch) => update.mutate({ task: editingTask, patch })}
+        />
+      ) : null}
     </section>
+  );
+}
+
+function TaskEditDialog({
+  task,
+  pending,
+  onClose,
+  onSave,
+}: {
+  task: S["TaskResponse"];
+  pending: boolean;
+  onClose: () => void;
+  onSave: (patch: S["TaskUpdate"]) => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialogRef.current?.showModal();
+    return () => dialogRef.current?.close();
+  }, []);
+  return (
+    <dialog
+      ref={dialogRef}
+      className="dialog task-edit-dialog"
+      aria-labelledby="task-edit-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <header>
+        <div>
+          <h2 id="task-edit-title">Edit task</h2>
+          <p>Update the task name and deadline.</p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close dialog">
+          ×
+        </button>
+      </header>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          const date = String(data.get("due_at") ?? "");
+          onSave({
+            title: String(data.get("title") ?? "").trim(),
+            due_at: date ? new Date(`${date}T12:00:00Z`).toISOString() : null,
+          });
+        }}
+      >
+        <label>
+          Task title
+          <input
+            name="title"
+            defaultValue={task.title}
+            required
+            minLength={2}
+            autoFocus
+          />
+        </label>
+        <label>
+          Deadline
+          <input
+            name="due_at"
+            type="date"
+            defaultValue={task.due_at?.slice(0, 10) ?? ""}
+          />
+        </label>
+        <div className="dialog-actions">
+          <button type="button" onClick={onClose} disabled={pending}>
+            Cancel
+          </button>
+          <button className="primary" type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </form>
+    </dialog>
   );
 }
 

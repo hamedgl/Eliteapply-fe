@@ -103,6 +103,7 @@ assert.match(notFound, /<h1[ >]/, "404 must have a useful H1");
 assert.match(notFound, /noindex,nofollow,noarchive/, "404 must be noindex");
 assert.match(robots, /^User-agent: \*/m, "invalid robots.txt");
 assert.match(robots, /Sitemap: https:\/\/eliteapply\.net\/sitemap\.xml/);
+assert.match(robots, /Disallow: \/app\//, "private app routes must be blocked");
 assert.match(sitemap, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
 assert.equal(
   count(sitemap, /<url>/g),
@@ -134,5 +135,10 @@ assert.ok(vercel.rewrites?.length > 0, "vercel private-route rewrites missing");
 assert.equal(webManifest.name, "EliteApply");
 assert.equal(webManifest.icons?.length, 2);
 assert.ok((await stat(path.join(dist, "og-eliteapply.jpg"))).size > 10_000);
+assert.match(
+  await readFile(path.join(dist, "llms.txt"), "utf8"),
+  /^# EliteApply/m,
+  "llms.txt is missing or invalid",
+);
 
 console.log(`SEO checks passed for ${manifest.length} prerendered routes.`);

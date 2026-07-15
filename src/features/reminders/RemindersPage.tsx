@@ -9,11 +9,13 @@ import { calendarFeedUrls } from "../../lib/calendarFeed";
 import { remindersApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
+import { usePromptDialog } from "../../components/PromptDialog";
 
 type S = components["schemas"];
 type Feed = ReturnType<typeof calendarFeedUrls>;
 
 export function RemindersPage() {
+  const requestText = usePromptDialog();
   const timezone = useSession((state) => state.user?.timezone) || "UTC";
   const qc = useQueryClient();
   const [status, setStatus] = useState("");
@@ -82,9 +84,7 @@ export function RemindersPage() {
       notes: String(data.get("notes")) || null,
       scheduled_at: new Date(String(data.get("scheduled_at"))).toISOString(),
       timezone,
-      recurrence: data.get(
-        "recurrence",
-      ) as S["ReminderCreate"]["recurrence"],
+      recurrence: data.get("recurrence") as S["ReminderCreate"]["recurrence"],
       channel: data.get("channel") as S["ReminderCreate"]["channel"],
     });
     event.currentTarget.reset();
@@ -92,7 +92,12 @@ export function RemindersPage() {
   }
 
   async function edit(item: (typeof items)[number]) {
-    const title = prompt("Reminder title", item.title);
+    const title = await requestText({
+      title: "Edit reminder",
+      label: "Reminder title",
+      initialValue: item.title,
+      required: true,
+    });
     if (title === null) return;
     await remindersApi.update(item.id, {
       expected_version: item.version,
@@ -107,7 +112,9 @@ export function RemindersPage() {
       await navigator.clipboard.writeText(feed.https);
       setCalendarStatus("Calendar subscription link copied.");
     } catch {
-      setCalendarStatus("Copy failed. Open the .ics link and copy its address.");
+      setCalendarStatus(
+        "Copy failed. Open the .ics link and copy its address.",
+      );
     }
   }
 
@@ -136,7 +143,8 @@ export function RemindersPage() {
         <h2>New reminder</h2>
         <form className="reminder-form" onSubmit={create}>
           <label>
-            Title<input name="title" required />
+            Title
+            <input name="title" required />
           </label>
           <label>
             Context
@@ -158,7 +166,8 @@ export function RemindersPage() {
             <input name="aggregate_id" />
           </label>
           <label>
-            When<input name="scheduled_at" type="datetime-local" required />
+            When
+            <input name="scheduled_at" type="datetime-local" required />
           </label>
           <label>
             Repeat
@@ -177,7 +186,8 @@ export function RemindersPage() {
             </select>
           </label>
           <label className="wide">
-            Notes<textarea name="notes" />
+            Notes
+            <textarea name="notes" />
           </label>
           <button className="primary">Create reminder</button>
         </form>
@@ -186,7 +196,10 @@ export function RemindersPage() {
       <div className="phase3-filters">
         <label>
           Status
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
             <option value="">All</option>
             <option value="scheduled">Scheduled</option>
             <option value="cancelled">Cancelled</option>
@@ -216,7 +229,9 @@ export function RemindersPage() {
       <div className="phase3-card-list">
         {items.map((item) => (
           <article className="phase3-card" key={item.id}>
-            <span className="status-pill">{item.status.replaceAll("_", " ")}</span>
+            <span className="status-pill">
+              {item.status.replaceAll("_", " ")}
+            </span>
             <h2>{item.title}</h2>
             <p>{item.notes || `${item.aggregate_type} reminder`}</p>
             <time dateTime={item.scheduled_at}>
@@ -227,10 +242,14 @@ export function RemindersPage() {
             <div className="phase3-actions">
               <button onClick={() => edit(item)}>Edit</button>
               <button
-                onClick={() => {
-                  const input = prompt(
-                    "Snooze until (for example 2026-07-20 09:00)",
-                  );
+                onClick={async () => {
+                  const input = await requestText({
+                    title: "Snooze reminder",
+                    label: "Snooze until",
+                    type: "datetime-local",
+                    required: true,
+                    submitLabel: "Snooze",
+                  });
                   if (input)
                     snooze.mutate({
                       id: item.id,
@@ -263,8 +282,8 @@ export function RemindersPage() {
           <div>
             <h2>Calendar sync</h2>
             <p>
-              Subscribe once to keep application deadlines and reminders in
-              your calendar.
+              Subscribe once to keep application deadlines and reminders in your
+              calendar.
             </p>
           </div>
           <span className="status-pill">Private link</span>
@@ -315,8 +334,8 @@ export function RemindersPage() {
         ) : (
           <div className="calendar-sync-empty">
             <p>
-              Create a private URL when you are ready to connect a calendar.
-              The link stays only in this browser session.
+              Create a private URL when you are ready to connect a calendar. The
+              link stays only in this browser session.
             </p>
             <button
               className="primary"
@@ -333,15 +352,23 @@ export function RemindersPage() {
           <ol>
             <li>
               <strong>Google Calendar</strong>
-              <span>Open Other calendars, choose From URL, then paste the HTTPS link.</span>
+              <span>
+                Open Other calendars, choose From URL, then paste the HTTPS
+                link.
+              </span>
             </li>
             <li>
               <strong>Apple Calendar</strong>
-              <span>Choose New Calendar Subscription, then paste the HTTPS link.</span>
+              <span>
+                Choose New Calendar Subscription, then paste the HTTPS link.
+              </span>
             </li>
             <li>
               <strong>Outlook</strong>
-              <span>Choose Add calendar, Subscribe from web, then paste the HTTPS link.</span>
+              <span>
+                Choose Add calendar, Subscribe from web, then paste the HTTPS
+                link.
+              </span>
             </li>
           </ol>
         </details>

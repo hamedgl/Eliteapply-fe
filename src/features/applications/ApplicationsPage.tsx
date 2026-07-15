@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -58,6 +58,7 @@ export function ApplicationsPage() {
   const [collapsedStages, setCollapsedStages] = useState<Set<string>>(
     new Set(),
   );
+  const initializedCollapsedStages = useRef(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const draggedIdRef = useRef<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -126,6 +127,18 @@ export function ApplicationsPage() {
     for (const app of boardApps) grouped.get(app.stage)?.push(app);
     return grouped;
   }, [boardApps]);
+  useEffect(() => {
+    if (
+      view !== "board" ||
+      boardQuery.isPending ||
+      initializedCollapsedStages.current
+    )
+      return;
+    initializedCollapsedStages.current = true;
+    setCollapsedStages(
+      new Set(stages.filter((stage) => !(appsByStage.get(stage)?.length ?? 0))),
+    );
+  }, [appsByStage, boardQuery.isPending, view]);
   const visibleApps = view === "board" ? boardApps : listApps;
   const update = useMutation({
     mutationFn: ({ app, next }: { app: Application; next: string }) =>
@@ -885,11 +898,13 @@ function ApplicationList({
                 {formatDate(app.primary_deadline_at)}
               </td>
               <td data-label="Priority">{label(app.priority)}</td>
-              <td className="application-list-action">
-                <ApplicationActions app={app} pending={pending} run={run} />
-                <Link to={`/app/applications/${app.id}`}>
-                  Open <ArrowRight aria-hidden="true" />
-                </Link>
+              <td className="application-list-action" data-label="Actions">
+                <div className="application-list-action-inner">
+                  <ApplicationActions app={app} pending={pending} run={run} />
+                  <Link to={`/app/applications/${app.id}`}>
+                    Open <ArrowRight aria-hidden="true" />
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}

@@ -1,0 +1,43 @@
+# EliteApply
+
+> EliteApply is a student-controlled scholarship application workspace for organising applications, deadlines, requirements, documents, writing, references and submission readiness.
+
+EliteApply helps applicants keep each opportunity connected to the evidence and actions required to complete it. It does not find scholarships automatically, predict admissions decisions, guarantee funding or submit applications without the student’s review.
+
+## Product
+
+- [Homepage](https://eliteapply.net/): Product overview and core value proposition.
+- [Product preview](https://eliteapply.net/product-preview): Interactive preview of the application workspace.
+- [Features](https://eliteapply.net/features): Application tracking, writing, documents, references and readiness.
+- [How it works](https://eliteapply.net/how-it-works): The four-stage application workflow.
+- [For students](https://eliteapply.net/for-students): Applicant use cases and supported workflows.
+- [Pricing](https://eliteapply.net/pricing): Current access and plan information.
+- [Security](https://eliteapply.net/security): Account, session, data export and deletion controls.
+
+## Feature documentation
+
+- [Scholarship application tracker](https://eliteapply.net/features/scholarship-application-tracker)
+- [Personal statement workspace](https://eliteapply.net/features/personal-statement-workspace)
+- [Document organiser](https://eliteapply.net/features/document-organiser)
+- [Reference tracking](https://eliteapply.net/features/reference-tracking)
+- [Submission readiness](https://eliteapply.net/features/submission-readiness)
+
+## Guides
+
+- [Scholarship application resources](https://eliteapply.net/resources)
+- [Organise multiple scholarship applications](https://eliteapply.net/resources/organise-multiple-scholarship-applications)
+- [Scholarship application checklist](https://eliteapply.net/resources/scholarship-application-checklist)
+- [Scholarship deadline planning](https://eliteapply.net/resources/scholarship-deadline-planning)
+- [Plan a scholarship personal statement](https://eliteapply.net/resources/plan-scholarship-personal-statement)
+- [Connect claims to evidence](https://eliteapply.net/resources/connect-claims-to-evidence)
+- [Use AI assistance while preserving authentic voice](https://eliteapply.net/resources/authentic-voice-ai-assistance)
+- [Request a scholarship reference](https://eliteapply.net/resources/request-scholarship-reference)
+- [International scholarship document checklist](https://eliteapply.net/resources/international-scholarship-document-checklist)
+
+## Policies and contact
+
+- [Accessibility](https://eliteapply.net/accessibility)
+- [Contact](https://eliteapply.net/contact)
+- Support: support@eliteapply.net
+
+Authenticated workspace routes under `/app/` contain private user data and must not be indexed or treated as public documentation.

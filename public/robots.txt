@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /login
+Disallow: /register
+Disallow: /confirm-email
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /share/
+Disallow: /collaborator-invitations/
+Disallow: /referee/
+Disallow: /verify/
+
+Sitemap: https://eliteapply.net/sitemap.xml
+

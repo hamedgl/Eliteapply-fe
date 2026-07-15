@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ChevronRight,
   Download,
   FileCheck2,
   ShieldAlert,
@@ -86,7 +87,12 @@ export function DocumentsPage() {
       {upload.isPending ? (
         <progress className="upload-progress" aria-label="Uploading document" />
       ) : null}
-      <p role="status">{message}</p>
+      {message ? (
+        <p className="document-feedback" role="status">
+          <ShieldCheck aria-hidden="true" />
+          {message}
+        </p>
+      ) : null}
       {query.isPending ? (
         <p role="status">Loading documents…</p>
       ) : query.isError ? (
@@ -108,7 +114,9 @@ export function DocumentsPage() {
                   </Link>
                 </h2>
                 <p>
-                  {label(document.category)} · {(document.size_bytes / 1048576).toFixed(1)} MB · Added {formatDate(document.created_at)}
+                  {label(document.category)} ·{" "}
+                  {(document.size_bytes / 1048576).toFixed(1)} MB · Added{" "}
+                  {formatDate(document.created_at)}
                 </p>
                 <span className={`malware malware-${document.malware_status}`}>
                   Security scan: {label(document.malware_status)}
@@ -121,7 +129,7 @@ export function DocumentsPage() {
                 className="document-detail-link"
                 to={`/app/documents/${document.id}`}
               >
-                View details
+                View details <ChevronRight aria-hidden="true" />
               </Link>
               <button
                 type="button"
@@ -137,7 +145,9 @@ export function DocumentsPage() {
         <div className="vault-empty">
           <Upload aria-hidden="true" />
           <h2>Your document vault is empty</h2>
-          <p>Upload a transcript, certificate, test score or supporting document.</p>
+          <p>
+            Upload a transcript, certificate, test score or supporting document.
+          </p>
         </div>
       )}
     </div>
@@ -173,9 +183,18 @@ export function DocumentDetailPage() {
     openSignedDownload((await documentsApi.download(id)).download_url);
   }
   if (query.isPending)
-    return <div className="page" role="status">Loading document details…</div>;
+    return (
+      <div className="page" role="status">
+        Loading document details…
+      </div>
+    );
   if (query.isError || !query.data)
-    return <div className="page error-state"><h1>Document unavailable</h1><Link to="/app/documents">Return to documents</Link></div>;
+    return (
+      <div className="page error-state">
+        <h1>Document unavailable</h1>
+        <Link to="/app/documents">Return to documents</Link>
+      </div>
+    );
   const document = query.data;
   const usable = Boolean(scan.data?.usable_for_protected_workflows);
   const failed = ["rejected", "failed"].includes(
@@ -189,13 +208,28 @@ export function DocumentDetailPage() {
       <header className="page-heading">
         <div>
           <h1>{document.display_name}</h1>
-          <p>{label(document.category)} · {(document.size_bytes / 1048576).toFixed(1)} MB</p>
+          <p>
+            {label(document.category)} ·{" "}
+            {(document.size_bytes / 1048576).toFixed(1)} MB
+          </p>
         </div>
       </header>
-      <section className={`scan-panel ${usable ? "ready" : failed ? "failed" : "pending"}`}>
-        {usable ? <ShieldCheck aria-hidden="true" /> : <ShieldAlert aria-hidden="true" />}
+      <section
+        className={`scan-panel ${usable ? "ready" : failed ? "failed" : "pending"}`}
+      >
+        {usable ? (
+          <ShieldCheck aria-hidden="true" />
+        ) : (
+          <ShieldAlert aria-hidden="true" />
+        )}
         <div>
-          <h2>{usable ? "Ready to use" : failed ? "Document blocked" : "Security scan in progress"}</h2>
+          <h2>
+            {usable
+              ? "Ready to use"
+              : failed
+                ? "Document blocked"
+                : "Security scan in progress"}
+          </h2>
           <p>
             {usable
               ? "This document can be downloaded and linked to protected application workflows."
@@ -203,16 +237,37 @@ export function DocumentDetailPage() {
                 ? "This document cannot be downloaded or linked. Delete it and upload a safe replacement."
                 : "Download and application linking stay disabled until the scan completes successfully."}
           </p>
-          <span role="status">Status: {label(scan.data?.malware_status ?? document.malware_status)}</span>
+          <span role="status">
+            Status:{" "}
+            {label(scan.data?.malware_status ?? document.malware_status)}
+          </span>
         </div>
       </section>
       <dl className="document-metadata">
-        <div><dt>Added</dt><dd>{formatDate(document.created_at)}</dd></div>
-        <div><dt>File type</dt><dd>{document.content_type}</dd></div>
-        <div><dt>Expires</dt><dd>{document.expires_at ? formatDate(document.expires_at) : "No expiry recorded"}</dd></div>
+        <div>
+          <dt>Added</dt>
+          <dd>{formatDate(document.created_at)}</dd>
+        </div>
+        <div>
+          <dt>File type</dt>
+          <dd>{document.content_type}</dd>
+        </div>
+        <div>
+          <dt>Expires</dt>
+          <dd>
+            {document.expires_at
+              ? formatDate(document.expires_at)
+              : "No expiry recorded"}
+          </dd>
+        </div>
       </dl>
       <div className="document-actions">
-        <button className="primary" type="button" onClick={download} disabled={!usable}>
+        <button
+          className="primary"
+          type="button"
+          onClick={download}
+          disabled={!usable}
+        >
           <Download aria-hidden="true" /> Download document
         </button>
         <button
@@ -220,13 +275,24 @@ export function DocumentDetailPage() {
           type="button"
           disabled={remove.isPending}
           onClick={() => {
-            if (confirm(`Delete ${document.display_name} permanently? Existing application links may be affected.`)) remove.mutate();
+            if (
+              confirm(
+                `Delete ${document.display_name} permanently? Existing application links may be affected.`,
+              )
+            )
+              remove.mutate();
           }}
         >
-          <Trash2 aria-hidden="true" /> {remove.isPending ? "Deleting…" : "Delete document"}
+          <Trash2 aria-hidden="true" />{" "}
+          {remove.isPending ? "Deleting…" : "Delete document"}
         </button>
       </div>
-      {remove.isError ? <p className="form-error" role="alert">The document could not be deleted. It may still be linked to an application.</p> : null}
+      {remove.isError ? (
+        <p className="form-error" role="alert">
+          The document could not be deleted. It may still be linked to an
+          application.
+        </p>
+      ) : null}
     </div>
   );
 }

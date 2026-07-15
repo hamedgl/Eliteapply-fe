@@ -5,12 +5,14 @@ import { Link } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
 import { discoveryApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
+import { usePromptDialog } from "../../components/PromptDialog";
 
 type Match = components["schemas"]["OpportunityMatchResult"];
 const label = (value: string) =>
   value.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase());
 
 export function DiscoveryPage() {
+  const requestText = usePromptDialog();
   const qc = useQueryClient(),
     saved = useQuery({
       queryKey: queryKeys.savedSearches,
@@ -97,10 +99,14 @@ export function DiscoveryPage() {
                       Run
                     </button>
                     <button
-                      onClick={() => {
-                        const name = prompt(
-                          "Rename saved search",
-                          item.name,
+                      onClick={async () => {
+                        const name = (
+                          await requestText({
+                            title: "Rename saved search",
+                            label: "Search name",
+                            initialValue: item.name,
+                            required: true,
+                          })
                         )?.trim();
                         if (name && name !== item.name)
                           updateSaved.mutate({ id: item.id, body: { name } });
@@ -109,17 +115,24 @@ export function DiscoveryPage() {
                       Rename
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         const filters = item.filters as Record<string, unknown>;
-                        const search = prompt(
-                          "Search terms (leave blank for none)",
-                          String(filters.search ?? ""),
-                        );
+                        const search = await requestText({
+                          title: "Edit search terms",
+                          label: "Search terms",
+                          description:
+                            "Leave this blank to match any search term.",
+                          initialValue: String(filters.search ?? ""),
+                          submitLabel: "Continue",
+                        });
                         if (search === null) return;
-                        const country = prompt(
-                          "Country code (leave blank for none)",
-                          String(filters.country ?? ""),
-                        );
+                        const country = await requestText({
+                          title: "Edit country filter",
+                          label: "Country code",
+                          description:
+                            "Leave this blank to include every country.",
+                          initialValue: String(filters.country ?? ""),
+                        });
                         if (country === null) return;
                         updateSaved.mutate({
                           id: item.id,

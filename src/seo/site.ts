@@ -6,7 +6,7 @@ import {
 
 export const SITE_URL = "https://eliteapply.net";
 export const SOCIAL_IMAGE = `${SITE_URL}/og-eliteapply.jpg`;
-export const LAST_MODIFIED = "2026-07-14";
+export const LAST_MODIFIED = "2026-07-15";
 
 type PageKind = "home" | "page" | "feature" | "article" | "utility";
 

@@ -9,6 +9,8 @@ import {
   LogOut,
   Menu,
   Mic2,
+  PanelLeftClose,
+  PanelLeftOpen,
   Bell,
   CalendarClock,
   Search,
@@ -23,6 +25,7 @@ import { authApi } from "../lib/api/auth";
 import { useSession } from "../lib/auth/session";
 import { notificationsApi } from "../lib/api/phase3";
 import { queryKeys } from "../lib/api/queryKeys";
+import { PromptDialogProvider } from "./PromptDialog";
 
 const navigationGroups = [
   {
@@ -54,18 +57,31 @@ const navigationGroups = [
 
 export function AppShell() {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("eliteapply-sidebar-collapsed") === "true",
+  );
   const [loggingOut, setLoggingOut] = useState(false);
   const user = useSession((state) => state.user);
   const clear = useSession((state) => state.clear);
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const unread = useQuery({ queryKey: queryKeys.unreadNotifications, queryFn: notificationsApi.unreadCount, refetchInterval: document.hidden ? false : 60_000 });
+  const unread = useQuery({
+    queryKey: queryKeys.unreadNotifications,
+    queryFn: notificationsApi.unreadCount,
+    refetchInterval: document.hidden ? false : 60_000,
+  });
 
   useEffect(() => {
-    const meta = document.querySelector<HTMLMetaElement>('meta[name="robots"]') ?? document.head.appendChild(document.createElement("meta"));
-    const previous = meta.content; meta.name = "robots"; meta.content = "noindex,nofollow";
-    return () => { meta.content = previous; };
+    const meta =
+      document.querySelector<HTMLMetaElement>('meta[name="robots"]') ??
+      document.head.appendChild(document.createElement("meta"));
+    const previous = meta.content;
+    meta.name = "robots";
+    meta.content = "noindex,nofollow";
+    return () => {
+      meta.content = previous;
+    };
   }, []);
 
   useEffect(() => {
@@ -100,13 +116,20 @@ export function AppShell() {
     }
   }
 
+  function toggleSidebar() {
+    setCollapsed((current) => {
+      localStorage.setItem("eliteapply-sidebar-collapsed", String(!current));
+      return !current;
+    });
+  }
+
   const displayName = user?.full_name?.trim() || "Your account";
   const avatarLabel = (user?.full_name || user?.email || "EA")
     .slice(0, 1)
     .toUpperCase();
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
       <a className="app-skip-link" href="#app-content">
         Skip to workspace
       </a>
@@ -116,7 +139,18 @@ export function AppShell() {
           <span aria-hidden="true">E</span>
           EliteApply
         </NavLink>
-        <NavLink className="mobile-notifications" to="/app/notifications" aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}><Bell aria-hidden="true" />{unread.data?.unread_count ? <span>{unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}</span> : null}</NavLink>
+        <NavLink
+          className="mobile-notifications"
+          to="/app/notifications"
+          aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
+        >
+          <Bell aria-hidden="true" />
+          {unread.data?.unread_count ? (
+            <span>
+              {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
+            </span>
+          ) : null}
+        </NavLink>
         <button
           ref={menuButtonRef}
           className="mobile-menu"
@@ -148,8 +182,22 @@ export function AppShell() {
         <div className="sidebar-head">
           <NavLink to="/app/dashboard" className="app-brand">
             <span aria-hidden="true">E</span>
-            EliteApply
+            <span className="app-brand-name">EliteApply</span>
           </NavLink>
+          <button
+            className="sidebar-rail-toggle"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Expand navigation" : "Collapse navigation"}
+          >
+            {collapsed ? (
+              <PanelLeftOpen aria-hidden="true" />
+            ) : (
+              <PanelLeftClose aria-hidden="true" />
+            )}
+          </button>
           <button
             className="sidebar-close"
             type="button"
@@ -161,7 +209,22 @@ export function AppShell() {
         </div>
 
         <nav aria-label="Primary navigation">
-          <NavLink className="notification-shortcut" to="/app/notifications" onClick={() => setOpen(false)}><Bell aria-hidden="true" /><span>Notifications</span>{unread.data?.unread_count ? <strong>{unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}</strong> : null}</NavLink>
+          <NavLink
+            className="notification-shortcut"
+            to="/app/notifications"
+            title="Notifications"
+            onClick={() => setOpen(false)}
+          >
+            <Bell aria-hidden="true" />
+            <span>Notifications</span>
+            {unread.data?.unread_count ? (
+              <strong>
+                {unread.data.unread_count > 99
+                  ? "99+"
+                  : unread.data.unread_count}
+              </strong>
+            ) : null}
+          </NavLink>
           {navigationGroups.map((group) => (
             <div className="nav-group" key={group.label}>
               <p>{group.label}</p>
@@ -170,6 +233,7 @@ export function AppShell() {
                   key={href}
                   to={href}
                   end={href === "/app/dashboard"}
+                  title={label}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) => (isActive ? "active" : "")}
                 >
@@ -191,13 +255,15 @@ export function AppShell() {
           </div>
           <button type="button" onClick={logout} disabled={loggingOut}>
             <LogOut aria-hidden="true" />
-            {loggingOut ? "Signing out…" : "Log out"}
+            <span>{loggingOut ? "Signing out…" : "Log out"}</span>
           </button>
         </footer>
       </aside>
 
       <main className="workspace" id="app-content" tabIndex={-1}>
-        <Outlet />
+        <PromptDialogProvider>
+          <Outlet />
+        </PromptDialogProvider>
       </main>
     </div>
   );

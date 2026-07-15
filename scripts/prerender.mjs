@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const serverEntry = path.join(root, ".prerender", "entry-server.js");
-const { getPageSeo, PRERENDER_ROUTES, render } = await import(
+const { getPageSeo, LAST_MODIFIED, PRERENDER_ROUTES, render } = await import(
   `${pathToFileURL(serverEntry).href}?t=${Date.now()}`
 );
 const template = await readFile(path.join(dist, "index.html"), "utf8");
@@ -111,17 +111,12 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 ${indexable
   .map(
     (page) =>
-      `  <url><loc>${page.canonical}</loc><lastmod>2026-07-14</lastmod></url>`,
+      `  <url><loc>${page.canonical}</loc><lastmod>${LAST_MODIFIED}</lastmod></url>`,
   )
   .join("\n")}
 </urlset>
 `;
 await writeFile(path.join(dist, "sitemap.xml"), sitemap, "utf8");
-await writeFile(
-  path.join(dist, "robots.txt"),
-  "User-agent: *\nAllow: /\n\nSitemap: https://eliteapply.net/sitemap.xml\n",
-  "utf8",
-);
 await writeFile(
   path.join(dist, ".seo-manifest.json"),
   JSON.stringify(manifest, null, 2),
