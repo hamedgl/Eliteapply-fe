@@ -1,31 +1,39 @@
-# Design QA — homepage comparison section
+# Design QA — homepage workflow section
 
 final result: passed
 
 ## Evidence
 
-- Source visual: `/home/hamed/Eliteapply-fe/ChatGPT Image Jul 14, 2026, 09_50_46 PM.png`
-- Desktop implementation: `/tmp/eliteapply-comparison-pass1.png`
-- Mobile implementation: `/tmp/eliteapply-comparison-mobile-pass1.png`
-- Mobile outcome card: `/tmp/eliteapply-comparison-mobile-right.png`
-- Full same-frame comparison: `/tmp/eliteapply-comparison-full.png`
-- Focused same-frame comparison: `/tmp/eliteapply-comparison-focused.png`
-- Desktop viewport: 1672×941, homepage scrolled to the comparison section beneath the sticky header
-- Mobile viewport: 390×844, cards stacked in source order
+- Source visual truth: `/tmp/codex-clipboard-aoba2A.png`
+- Gauge correction reference: `/tmp/codex-clipboard-FJHPob.png`
+- Desktop implementation: `/tmp/eliteapply-workflow-desktop.png`
+- Mobile implementation: `/tmp/eliteapply-workflow-mobile.png`
+- Full same-frame comparison: `/tmp/eliteapply-workflow-comparison.png`
+- Focused gauge comparison: `/tmp/eliteapply-workflow-gauge-comparison.png`
+- Desktop viewport: 1600×1100; stage 1 selected and tour paused for stable capture.
+- Mobile viewport: 390×844; stage 1 selected and tour paused for stable capture.
 
-## Comparison passes
+## Findings and comparison history
 
 ### Pass 1
 
-- P1 — Layout: headline wrapped to two lines and pushed the cards too far below the reference. Fixed by matching the 48px Source Serif display scale, widening the title measure and tightening section spacing.
-- P1 — Imagery: both supplied visuals were clipped vertically in the desktop media slots. Fixed by fitting each complete 1052×712 frame inside its card without cropping.
-- P2 — Density: card rows and media were too tall. Fixed by matching the reference's 310px desktop media slot and compact proof-row rhythm.
-- P2 — Transformation cue: the arrow was vertically centered against the full card instead of the image transition. Fixed by aligning it to the media midpoint on desktop and rotating it for stacked layouts.
+- P2 — Progress gauge alignment: the percentage sat too high against the arc and the label felt detached. Fixed by increasing the arc weight, rounding the active stroke and centring the value/label as one block in the open area.
 
 ### Final pass
 
-- Fidelity: headline hierarchy, semantic colors, card surfaces, 92px headers, 309px media slots, 36px proof rows, icons and card alignment match the selected direction.
-- Assets: both supplied 1052×712 images load as optimized WebP files; transparency is preserved for the structured product collage.
-- Responsiveness: cards stack cleanly at tablet/mobile widths, the arrow changes direction, and the 390px check reports zero horizontal overflow.
-- Accessibility: semantic articles and headings are retained, both images have descriptive alt text, decorative icons are hidden, and the mobile navigation remains keyboard/ARIA operable.
-- Runtime: production build passes, the responsive interaction check passes, and browser console/page errors are empty.
+- No actionable P0, P1 or P2 findings remain.
+- Typography: Source Serif remains limited to the marketing heading; the dense workflow UI uses DM Sans with readable weights and sizes.
+- Layout: the four-stage rail, application header, stage navigation, checklist and progress panel match the reference hierarchy without clipping. The mobile layout becomes one column and has no page overflow.
+- Colour: semantic cobalt, green and cool-slate tokens match the existing EliteApply system. The reference's one-off purple final stage was intentionally kept cobalt for brand consistency.
+- Assets and icons: the source is a code-native product UI with no raster imagery to reproduce. Existing Lucide icons are used consistently; no placeholder or handcrafted icon assets were introduced.
+- Copy: realistic application-stage content preserves the reference's meaning while matching EliteApply terminology and responsible-clarity principles.
+- Interaction: automatic stage progression, manual stage selection, pause/play and the full-application link work. Selecting stage 2 updated the central checklist and progress state at both viewports.
+- Runtime: browser console/page errors were empty; desktop and mobile overflow checks passed; all 12 landing-page Playwright tests passed.
+
+## Focused comparison
+
+The gauge received a dedicated same-frame comparison because its text alignment and arc treatment were the final fidelity-sensitive detail. No other focused crop was needed: the full comparison uses dedicated section captures at legible native density.
+
+## Previous completed QA
+
+The homepage comparison section previously passed responsive, image-fit, transformation-cue, semantic and browser checks. Its supplied WebP assets and stacked mobile layout were not changed by this workflow-section update.

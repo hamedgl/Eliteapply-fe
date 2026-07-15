@@ -9375,6 +9375,562 @@ th {
 .workflow-heading > p:last-child {
   margin: 1.5rem auto 0;
 }
+.guided-workflow {
+  width: min(100%, var(--m-section-width));
+  margin: auto;
+}
+.workflow-tour-meta {
+  min-height: 44px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--m-meta);
+  font-size: 0.8rem;
+}
+.workflow-tour-progress {
+  display: block;
+  height: 2px;
+  overflow: hidden;
+  background: var(--m-line-soft);
+}
+.workflow-tour-progress i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--m-blue);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.workflow-tour-progress.running i {
+  animation: tourProgress 4.8s linear forwards;
+}
+.workflow-stage-rail-scroll {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+.workflow-stage-rail {
+  min-width: 760px;
+  margin: 0;
+  padding: 1.25rem 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  list-style: none;
+}
+.workflow-stage-rail li {
+  position: relative;
+  min-width: 0;
+}
+.workflow-stage-rail li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 36px;
+  left: calc(50% + 38px);
+  width: calc(100% - 76px);
+  border-top: 2px dashed var(--m-line-strong);
+}
+.workflow-stage-rail li.complete:not(:last-child)::after,
+.workflow-stage-rail li.active:not(:last-child)::after {
+  border-color: var(--m-blue);
+}
+.workflow-stage-rail button {
+  width: 100%;
+  padding: 0 1rem;
+  display: grid;
+  justify-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--m-ink);
+  text-align: center;
+  cursor: pointer;
+}
+.workflow-stage-icon {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  color: var(--m-ink);
+  background: var(--m-white);
+  border: 1px solid var(--m-line-strong);
+  border-radius: 50%;
+  transition:
+    color var(--m-duration) var(--m-ease-out),
+    border-color var(--m-duration) var(--m-ease-out),
+    box-shadow var(--m-duration) var(--m-ease-out);
+}
+.workflow-stage-icon > svg {
+  width: 28px;
+  height: 28px;
+}
+.workflow-stage-icon > b {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  color: var(--m-ink);
+  background: var(--m-white);
+  border: 1px solid var(--m-line);
+  border-radius: 50%;
+  font-size: 0.72rem;
+}
+.workflow-stage-rail li.active .workflow-stage-icon,
+.workflow-stage-rail li.complete .workflow-stage-icon {
+  color: var(--m-blue);
+  border-color: var(--m-blue);
+}
+.workflow-stage-rail li.active .workflow-stage-icon {
+  box-shadow: 0 0 0 6px var(--m-selected-ring);
+}
+.workflow-stage-rail li.active .workflow-stage-icon > b,
+.workflow-stage-rail li.complete .workflow-stage-icon > b {
+  color: var(--m-white);
+  background: var(--m-blue);
+  border-color: var(--m-blue);
+}
+.workflow-stage-rail button > strong {
+  margin-top: 0.9rem;
+  color: inherit;
+  font-size: 0.94rem;
+}
+.workflow-stage-rail li.active button > strong {
+  color: var(--m-blue);
+}
+.workflow-stage-rail button > small {
+  max-width: 220px;
+  margin-top: 0.35rem;
+  color: var(--m-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.workflow-application {
+  overflow: hidden;
+  color: var(--m-ink);
+  background: var(--m-white);
+  border: 1px solid var(--m-line-strong);
+  border-radius: var(--m-radius-preview);
+  box-shadow: 0 8px 8px var(--m-shadow-preview-soft);
+}
+.workflow-application-header {
+  min-height: 78px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--m-line);
+}
+.workflow-opportunity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.workflow-opportunity > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--m-blue);
+  background: var(--m-selected);
+  border-radius: 10px;
+}
+.workflow-opportunity svg,
+.workflow-deadline > svg {
+  width: 20px;
+  height: 20px;
+}
+.workflow-opportunity small,
+.workflow-opportunity strong,
+.workflow-deadline small,
+.workflow-deadline strong {
+  display: block;
+}
+.workflow-opportunity small,
+.workflow-deadline small {
+  color: var(--m-meta);
+  font-size: 0.72rem;
+}
+.workflow-opportunity strong {
+  margin-top: 0.15rem;
+  font-size: 1.05rem;
+}
+.workflow-opportunity em {
+  padding: 0.35rem 0.65rem;
+  color: var(--m-success);
+  background: #eaf7f2;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.workflow-deadline {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.workflow-deadline > svg {
+  color: var(--m-icon);
+}
+.workflow-deadline strong {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+}
+.workflow-open-application {
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--m-white);
+  background: var(--m-blue);
+  border-radius: var(--m-radius-control);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.workflow-open-application:hover {
+  background: var(--m-blue-hover);
+}
+.workflow-open-application svg {
+  width: 16px;
+  height: 16px;
+}
+.workflow-application-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(480px, 1.8fr) minmax(
+      250px,
+      0.75fr
+    );
+}
+.workflow-stage-navigation,
+.workflow-stage-main,
+.workflow-progress-panel {
+  min-width: 0;
+  min-height: 530px;
+}
+.workflow-stage-navigation {
+  padding: 1rem;
+  border-right: 1px solid var(--m-line);
+  background: var(--m-surface-subtle);
+}
+.workflow-stage-navigation > span {
+  display: block;
+  padding: 0 0.55rem 0.7rem;
+  color: var(--m-meta);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.workflow-stage-navigation ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workflow-stage-navigation li + li {
+  margin-top: 0.35rem;
+}
+.workflow-stage-navigation button {
+  width: 100%;
+  min-height: 88px;
+  padding: 0.9rem;
+  display: grid;
+  grid-template-columns: 30px 1fr 18px;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--m-text-strong);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.workflow-stage-navigation li.active button {
+  color: var(--m-blue);
+  background: var(--m-white);
+  border-color: var(--m-focus-halo);
+}
+.workflow-stage-navigation button > span:first-child {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--m-blue);
+  background: var(--m-white);
+  border: 1px solid var(--m-line-strong);
+  border-radius: 50%;
+  font-weight: 700;
+}
+.workflow-stage-navigation li.active button > span:first-child,
+.workflow-stage-navigation li.complete button > span:first-child {
+  color: var(--m-white);
+  background: var(--m-blue);
+  border-color: var(--m-blue);
+}
+.workflow-stage-navigation button strong,
+.workflow-stage-navigation button small {
+  display: block;
+}
+.workflow-stage-navigation button strong {
+  color: inherit;
+  font-size: 0.82rem;
+}
+.workflow-stage-navigation button small {
+  margin-top: 0.3rem;
+  color: var(--m-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.workflow-stage-navigation button > svg {
+  width: 15px;
+  height: 15px;
+  color: var(--m-icon);
+}
+.workflow-stage-navigation li.active button > svg,
+.workflow-stage-navigation li.complete button > svg {
+  color: var(--m-blue);
+}
+.workflow-stage-main {
+  padding: 1.5rem;
+}
+.workflow-stage-main > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.workflow-current-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--m-blue);
+  background: var(--m-selected);
+  border-radius: 50%;
+}
+.workflow-current-icon svg {
+  width: 21px;
+  height: 21px;
+}
+.workflow-stage-main h3,
+.workflow-progress-panel h3 {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.98rem;
+}
+.workflow-stage-main header p {
+  margin: 0.35rem 0 0;
+  color: var(--m-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.workflow-stage-meter {
+  position: relative;
+  height: 4px;
+  margin: 1.25rem 0 1.4rem;
+  background: var(--m-line-soft);
+}
+.workflow-stage-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--m-blue);
+  transition: width 240ms var(--m-ease-out);
+}
+.workflow-stage-meter > small {
+  position: absolute;
+  top: -0.55rem;
+  right: 0;
+  padding-left: 0.65rem;
+  color: var(--m-meta);
+  background: var(--m-white);
+  font-size: 0.72rem;
+}
+.workflow-stage-checklist {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--m-line);
+  border-radius: 10px;
+  list-style: none;
+}
+.workflow-stage-checklist li {
+  min-height: 76px;
+  padding: 0.85rem 1rem;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  background: var(--m-white);
+  border-bottom: 1px solid var(--m-line);
+}
+.workflow-stage-checklist li:last-child {
+  border-bottom: 0;
+}
+.workflow-animated .workflow-stage-checklist li {
+  animation: demoPanel 240ms var(--m-ease-out) both;
+}
+.workflow-animated .workflow-stage-checklist li:nth-child(2) {
+  animation-delay: 30ms;
+}
+.workflow-animated .workflow-stage-checklist li:nth-child(3) {
+  animation-delay: 60ms;
+}
+.workflow-animated .workflow-stage-checklist li:nth-child(4) {
+  animation-delay: 90ms;
+}
+.workflow-animated .workflow-stage-checklist li:nth-child(5) {
+  animation-delay: 120ms;
+}
+.workflow-task-state {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--m-white);
+  border: 2px solid var(--m-blue);
+  border-radius: 50%;
+}
+.workflow-task-state svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 3;
+}
+.workflow-stage-checklist li.complete .workflow-task-state {
+  background: var(--m-success);
+  border-color: var(--m-success);
+}
+.workflow-stage-checklist li > span:nth-child(2) strong,
+.workflow-stage-checklist li > span:nth-child(2) small {
+  display: block;
+}
+.workflow-stage-checklist li > span:nth-child(2) strong {
+  color: var(--m-text-strong);
+  font-size: 0.8rem;
+}
+.workflow-stage-checklist li > span:nth-child(2) small {
+  margin-top: 0.25rem;
+  color: var(--m-meta);
+  font-size: 0.7rem;
+}
+.workflow-stage-checklist em {
+  min-height: 36px;
+  padding: 0.55rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--m-blue);
+  border: 1px solid var(--m-line-strong);
+  border-radius: 7px;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.workflow-progress-panel {
+  padding: 1.5rem;
+  border-left: 1px solid var(--m-line);
+  background: var(--m-white);
+}
+.workflow-progress-panel .percentage-gauge {
+  width: 188px;
+  height: 128px;
+  aspect-ratio: auto;
+  margin: 1.4rem auto 0.9rem;
+}
+.workflow-progress-panel .percentage-gauge path {
+  stroke-width: 8;
+}
+.workflow-progress-panel .percentage-gauge .gauge-value {
+  stroke-linecap: round;
+}
+.workflow-progress-panel .gauge-needle,
+.workflow-progress-panel .gauge-hub,
+.workflow-progress-panel .gauge-range {
+  display: none;
+}
+.workflow-progress-panel .gauge-copy {
+  top: 43px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.workflow-progress-panel .gauge-copy strong {
+  font: 700 1.45rem/1 "DM Sans", sans-serif;
+  letter-spacing: -0.02em;
+}
+.workflow-progress-panel .gauge-copy small {
+  margin-top: 0.4rem;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+.workflow-progress-panel > ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workflow-progress-panel > ul li {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--m-text-strong);
+  font-size: 0.72rem;
+}
+.workflow-progress-panel > ul li > span {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.workflow-progress-panel > ul svg {
+  width: 18px;
+  height: 18px;
+  color: var(--m-icon);
+}
+.workflow-progress-panel > ul li.active svg,
+.workflow-progress-panel > ul li.active strong,
+.workflow-progress-panel > ul li:first-child svg {
+  color: var(--m-blue);
+}
+.workflow-progress-panel > ul strong {
+  color: var(--m-meta);
+}
+.workflow-guidance {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--m-blue);
+  background: var(--m-selected);
+  border: 1px solid var(--m-focus-halo);
+  border-radius: 8px;
+}
+.workflow-guidance > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+.workflow-guidance strong,
+.workflow-guidance small {
+  display: block;
+}
+.workflow-guidance strong {
+  font-size: 0.76rem;
+}
+.workflow-guidance small {
+  margin-top: 0.35rem;
+  color: var(--m-muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
 .workflow-layout {
   width: min(100%, var(--m-section-width));
   margin: auto;
@@ -10017,6 +10573,13 @@ th {
   .workflow-layout {
     grid-template-columns: 330px minmax(520px, 1fr);
   }
+  .workflow-application-grid {
+    grid-template-columns: 230px minmax(430px, 1fr) 230px;
+  }
+  .workflow-stage-main,
+  .workflow-progress-panel {
+    padding: 1.25rem;
+  }
   .trust-comparison {
     grid-template-columns: minmax(340px, 0.65fr) minmax(620px, 1.35fr);
   }
@@ -10137,6 +10700,29 @@ th {
   }
   .workflow-layout {
     grid-template-columns: 1fr;
+  }
+  .workflow-application-grid {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .workflow-progress-panel {
+    min-height: 0;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    align-items: center;
+    gap: 0 2rem;
+    border-top: 1px solid var(--m-line);
+    border-left: 0;
+  }
+  .workflow-progress-panel > h3,
+  .workflow-guidance {
+    grid-column: 1 / -1;
+  }
+  .workflow-progress-panel .percentage-gauge {
+    margin-block: 1rem;
+  }
+  .workflow-guidance {
+    margin-top: 0.75rem;
   }
   .workflow-controller .guide-steps {
     display: grid;
@@ -10399,6 +10985,54 @@ th {
   .workflow-heading > p:last-child {
     margin-left: 0;
   }
+  .workflow-stage-rail {
+    min-width: 680px;
+  }
+  .workflow-stage-rail button {
+    padding-inline: 0.65rem;
+  }
+  .workflow-stage-icon {
+    width: 64px;
+    height: 64px;
+  }
+  .workflow-stage-rail li:not(:last-child)::after {
+    top: 32px;
+    left: calc(50% + 34px);
+    width: calc(100% - 68px);
+  }
+  .workflow-application-header {
+    flex-wrap: wrap;
+  }
+  .workflow-opportunity {
+    flex: 1 1 100%;
+  }
+  .workflow-deadline {
+    margin-left: 0;
+  }
+  .workflow-open-application {
+    margin-left: auto;
+  }
+  .workflow-application-grid {
+    grid-template-columns: 1fr;
+  }
+  .workflow-stage-navigation {
+    display: none;
+  }
+  .workflow-stage-main,
+  .workflow-progress-panel {
+    min-height: 0;
+  }
+  .workflow-progress-panel {
+    grid-column: auto;
+    display: block;
+  }
+  .workflow-stage-checklist li {
+    grid-template-columns: 28px 1fr;
+  }
+  .workflow-stage-checklist em {
+    grid-column: 2;
+    justify-self: start;
+  }
   .workflow-controller .guide-steps {
     grid-template-columns: repeat(4, minmax(240px, 1fr));
   }
@@ -10510,14 +11144,22 @@ th {
 @media (prefers-reduced-motion: reduce) {
   .product-menu summary svg,
   .faq-list summary svg,
-  .phase-one-marketing .landing-button {
+  .phase-one-marketing .landing-button,
+  .workflow-stage-icon,
+  .workflow-stage-meter > span {
     transition: none;
+  }
+  .workflow-tour-progress.running i,
+  .workflow-animated .workflow-stage-checklist li {
+    animation: none;
   }
 }
 
 @media (forced-colors: active) {
   .tracker-row.selected,
   .workflow-controller .guide-steps li.active .guide-step-button,
+  .workflow-stage-rail li.active .workflow-stage-icon,
+  .workflow-stage-navigation li.active button,
   .map-root,
   .trust-panel,
   .phase-one-closing,

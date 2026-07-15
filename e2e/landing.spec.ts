@@ -160,10 +160,9 @@ test("phase one includes product, trust, comparison and FAQ content", async ({
   await expect(
     page.getByRole("table", { name: /Comparison of EliteApply/i }),
   ).toContainText("Task manager");
-  const guarantee = page.getByText(
-    "Does EliteApply guarantee a scholarship?",
-    { exact: true },
-  );
+  const guarantee = page.getByText("Does EliteApply guarantee a scholarship?", {
+    exact: true,
+  });
   await guarantee.click();
   await expect(
     page.getByText(/Scholarship decisions remain entirely with the provider/i),
@@ -182,7 +181,7 @@ test("landing page exposes descriptive search and sharing metadata", async ({
   );
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /scholarship applications, deadlines, evidence, documents, and references/i,
+    /scholarship applications, deadlines, evidence, documents,? and references/i,
   );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
@@ -191,7 +190,7 @@ test("landing page exposes descriptive search and sharing metadata", async ({
   const structuredData = await page
     .locator('script[type="application/ld+json"]')
     .textContent();
-  expect(structuredData).toContain("WebApplication");
+  expect(structuredData).toContain("SoftwareApplication");
 });
 
 test("landing page renders without browser console or runtime errors", async ({
@@ -205,7 +204,9 @@ test("landing page renders without browser console or runtime errors", async ({
 
   await page.goto("/");
   await page.locator("#faq").scrollIntoViewIfNeeded();
-  await page.getByText("Can I track multiple applications?", { exact: true }).click();
+  await page
+    .getByText("Can I track multiple applications?", { exact: true })
+    .click();
   await expect(
     page.getByText(/Each application can keep its own deadline/i),
   ).toBeVisible();
@@ -218,15 +219,17 @@ test("guided tour auto-advances and every stage remains selectable", async ({
   await page.goto("/");
   await page.locator("#how-it-works").scrollIntoViewIfNeeded();
 
-  const firstStep = page.getByRole("button", { name: /Add the opportunity/i });
+  const firstStep = page.getByRole("button", {
+    name: "Show stage 1: Add & capture",
+  });
   const secondStep = page.getByRole("button", {
-    name: /Break down the requirements/i,
+    name: "Show stage 2: Break down",
   });
   const thirdStep = page.getByRole("button", {
-    name: /Prepare the application/i,
+    name: "Show stage 3: Prepare",
   });
   const fourthStep = page.getByRole("button", {
-    name: /Review and submit/i,
+    name: "Show stage 4: Review & submit",
   });
   await expect(firstStep).toHaveAttribute("aria-pressed", "true");
   await expect(secondStep).toHaveAttribute("aria-pressed", "true", {
@@ -236,25 +239,27 @@ test("guided tour auto-advances and every stage remains selectable", async ({
   await firstStep.click();
   await expect(firstStep).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("img", {
-      name: /Add the opportunity: Opportunity details/i,
+    page.getByRole("region", {
+      name: /Add & capture application workflow demonstration/i,
     }),
   ).toBeVisible();
-  await expect(page.locator(".discovery-demo")).toContainText(
-    "Rhodes Scholarship",
+  await expect(page.locator(".workflow-stage-checklist")).toContainText(
+    "Opportunity details",
   );
 
   await secondStep.click();
-  await expect(page.locator(".evidence-demo")).toContainText(
-    "Community research partnership",
+  await expect(page.locator(".workflow-stage-checklist")).toContainText(
+    "Eligibility criteria",
   );
 
   await thirdStep.click();
-  await expect(page.locator(".writing-demo")).toContainText("Add one outcome");
+  await expect(page.locator(".workflow-stage-checklist")).toContainText(
+    "Personal statement",
+  );
 
   await fourthStep.click();
-  await expect(page.locator(".submission-demo")).toContainText(
-    "Open final review",
+  await expect(page.locator(".workflow-stage-checklist")).toContainText(
+    "Final declarations",
   );
   await expect(
     page.getByRole("button", { name: "Pause product tour" }),
@@ -263,7 +268,7 @@ test("guided tour auto-advances and every stage remains selectable", async ({
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.getByText("Manual tour", { exact: true })).toBeVisible();
   await expect(page.locator("#workflow-preview")).not.toHaveClass(
-    /demo-animated/,
+    /workflow-animated/,
   );
 });
 
@@ -358,12 +363,21 @@ test("primary CTA crosses into the authenticated runtime", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("product preview demonstrates the workflow before signup", async ({ page }) => {
+test("product preview demonstrates the workflow before signup", async ({
+  page,
+}) => {
   await page.goto("/product-preview");
-  await expect(page.getByRole("heading", { level: 1, name: "See how every application comes together." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "See how every application comes together.",
+    }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Applications" }).click();
   await expect(page.getByText("Selected application")).toBeVisible();
   await page.getByRole("button", { name: /Prepare the application/ }).click();
   await expect(page.getByText("Personal Statement Draft")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Start free/ }).first()).toHaveAttribute("href", "/register");
+  await expect(
+    page.getByRole("link", { name: /Start free/ }).first(),
+  ).toHaveAttribute("href", "/register");
 });

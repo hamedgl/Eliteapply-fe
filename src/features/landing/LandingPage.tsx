@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Bell,
   BookOpen,
+  BriefcaseBusiness,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -17,6 +18,7 @@ import {
   Link2,
   ListChecks,
   LayoutDashboard,
+  Lightbulb,
   LockKeyhole,
   MapPin,
   Menu,
@@ -43,7 +45,7 @@ import { MarketingShell } from "../marketing/MarketingShell";
 const guideSteps = [
   {
     number: "01",
-    label: "Add the opportunity",
+    label: "Add & capture",
     description:
       "Add a scholarship, programme or application. Capture its deadline, source link and core details.",
     demo: {
@@ -83,6 +85,178 @@ const guideSteps = [
   },
 ] as const;
 type GuideStep = (typeof guideSteps)[number];
+
+const workflowStageDetails = [
+  {
+    title: "Add & capture",
+    summary: "Opportunity details & initial setup",
+    description:
+      "Add the opportunity and capture the details that shape the application plan.",
+    completion: 40,
+    completedLabel: "2 / 5 completed",
+    tasks: [
+      [
+        "Opportunity details",
+        "Title, organisation, deadline and location",
+        true,
+        "Edit",
+      ],
+      [
+        "Programme information",
+        "Field of study, level, duration and mode",
+        true,
+        "Edit",
+      ],
+      [
+        "Requirements capture",
+        "Documents, eligibility and written materials",
+        false,
+        "Add requirements",
+      ],
+      [
+        "Funding & benefits",
+        "Stipend, tuition and other support",
+        false,
+        "Add details",
+      ],
+      [
+        "Notes & links",
+        "Official sources and personal notes",
+        false,
+        "Add notes",
+      ],
+    ],
+  },
+  {
+    title: "Break down",
+    summary: "Requirements & tasks breakdown",
+    description:
+      "Turn every requirement into a visible task with a clear owner and state.",
+    completion: 60,
+    completedLabel: "3 / 5 completed",
+    tasks: [
+      [
+        "Eligibility criteria",
+        "Academic, residency and experience rules",
+        true,
+        "Review",
+      ],
+      [
+        "Required documents",
+        "Transcripts, certificates and identification",
+        true,
+        "Review",
+      ],
+      [
+        "Written responses",
+        "Prompts, word limits and evidence needs",
+        true,
+        "Open plan",
+      ],
+      [
+        "Reference requirements",
+        "Referees, due dates and supporting context",
+        false,
+        "Add referees",
+      ],
+      [
+        "Submission instructions",
+        "Provider process and final deadline checks",
+        false,
+        "Add details",
+      ],
+    ],
+  },
+  {
+    title: "Prepare",
+    summary: "Documents, drafts & materials",
+    description:
+      "Prepare the writing, documents and evidence required for a complete application.",
+    completion: 80,
+    completedLabel: "4 / 5 completed",
+    tasks: [
+      [
+        "Personal statement",
+        "Draft connected to the application prompt",
+        true,
+        "Open draft",
+      ],
+      [
+        "Academic CV",
+        "Current education, research and experience",
+        true,
+        "Review",
+      ],
+      [
+        "Transcripts & certificates",
+        "Verified files connected to requirements",
+        true,
+        "View files",
+      ],
+      [
+        "Evidence connections",
+        "Examples supporting each written claim",
+        true,
+        "Review",
+      ],
+      [
+        "Referee brief",
+        "Relevant context for the outstanding request",
+        false,
+        "Prepare brief",
+      ],
+    ],
+  },
+  {
+    title: "Review & submit",
+    summary: "Final check & submission",
+    description:
+      "Resolve the remaining gaps, complete final checks and record the submission.",
+    completion: 80,
+    completedLabel: "4 / 5 completed",
+    tasks: [
+      [
+        "Requirements covered",
+        "Every requirement has a recorded state",
+        true,
+        "Review",
+      ],
+      [
+        "Documents verified",
+        "Current versions are linked and readable",
+        true,
+        "Review",
+      ],
+      [
+        "References confirmed",
+        "Requests and provider instructions checked",
+        true,
+        "Review",
+      ],
+      [
+        "Final declarations",
+        "Accuracy, consent and submission details",
+        true,
+        "Open checks",
+      ],
+      [
+        "Submission record",
+        "Record the provider confirmation and outcome",
+        false,
+        "Record submission",
+      ],
+    ],
+  },
+] as const;
+
+const workflowProgress = [
+  [100, 15, 0, 0],
+  [100, 68, 12, 0],
+  [100, 100, 72, 15],
+  [100, 100, 100, 84],
+] as const;
+
+const workflowOverallProgress = [34, 47, 72, 96] as const;
 
 const heroApplications = [
   {
@@ -628,71 +802,15 @@ export function LandingPage() {
             understand, review and own.
           </p>
         </header>
-        <div className="workflow-layout">
-          <div className="workflow-controller">
-            <div className="tour-meta">
-              <span aria-live="polite">
-                Stage {activeGuide + 1} of {guideSteps.length}
-              </span>
-              {reduceMotion ? (
-                <span>Manual tour</span>
-              ) : (
-                <button
-                  type="button"
-                  className="tour-toggle"
-                  onClick={() => setTourPaused((paused) => !paused)}
-                  aria-label={
-                    tourPaused ? "Play product tour" : "Pause product tour"
-                  }
-                >
-                  {tourPaused ? (
-                    <Play aria-hidden="true" />
-                  ) : (
-                    <Pause aria-hidden="true" />
-                  )}
-                  {tourPaused ? "Play" : "Pause"}
-                </button>
-              )}
-            </div>
-            <span
-              className={`tour-progress ${!tourPaused && tourVisible && !reduceMotion ? "running" : ""}`}
-              aria-hidden="true"
-              key={`${activeGuide}-${tourPaused}-${tourVisible}`}
-            >
-              <i />
-            </span>
-            <ol
-              className="guide-steps"
-              aria-label="EliteApply application workflow"
-            >
-              {guideSteps.map((step, index) => (
-                <li
-                  className={index === activeGuide ? "active" : ""}
-                  key={step.number}
-                >
-                  <button
-                    type="button"
-                    className="guide-step-button"
-                    aria-pressed={index === activeGuide}
-                    aria-controls="workflow-preview"
-                    onClick={() => selectGuide(index)}
-                  >
-                    <span className="guide-step-number">{index + 1}</span>
-                    <span>
-                      <strong>{step.label}</strong>
-                      <small>{step.description}</small>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <WorkflowPreview
-            key={guideSteps[activeGuide].number}
-            step={guideSteps[activeGuide]}
-            animated={!reduceMotion}
-          />
-        </div>
+        <GuidedWorkflowBoard
+          activeGuide={activeGuide}
+          animated={!reduceMotion}
+          isRunning={!tourPaused && tourVisible && !reduceMotion}
+          manual={reduceMotion}
+          paused={tourPaused}
+          onSelect={selectGuide}
+          onToggle={() => setTourPaused((paused) => !paused)}
+        />
       </section>
 
       <StudentUseCases />
@@ -2192,6 +2310,243 @@ function HeroDocuments({
             </span>
           </div>
         )}
+      </section>
+    </div>
+  );
+}
+
+function WorkflowStageIcon({ index }: { index: number }) {
+  return index === 0 ? (
+    <Search aria-hidden="true" />
+  ) : index === 1 ? (
+    <ClipboardCheck aria-hidden="true" />
+  ) : index === 2 ? (
+    <FileText aria-hidden="true" />
+  ) : (
+    <CheckCircle2 aria-hidden="true" />
+  );
+}
+
+function GuidedWorkflowBoard({
+  activeGuide,
+  animated,
+  isRunning,
+  manual,
+  paused,
+  onSelect,
+  onToggle,
+}: {
+  activeGuide: number;
+  animated: boolean;
+  isRunning: boolean;
+  manual: boolean;
+  paused: boolean;
+  onSelect: (index: number) => void;
+  onToggle: () => void;
+}) {
+  const stage = workflowStageDetails[activeGuide];
+  const progress = workflowProgress[activeGuide];
+
+  return (
+    <div className="guided-workflow">
+      <div className="workflow-tour-meta">
+        <span aria-live="polite">
+          Stage {activeGuide + 1} of {guideSteps.length}
+        </span>
+        {manual ? (
+          <span>Manual tour</span>
+        ) : (
+          <button
+            type="button"
+            className="tour-toggle"
+            onClick={onToggle}
+            aria-label={paused ? "Play product tour" : "Pause product tour"}
+          >
+            {paused ? (
+              <Play aria-hidden="true" />
+            ) : (
+              <Pause aria-hidden="true" />
+            )}
+            {paused ? "Play" : "Pause"}
+          </button>
+        )}
+      </div>
+      <span
+        className={`workflow-tour-progress${isRunning ? " running" : ""}`}
+        aria-hidden="true"
+        key={`${activeGuide}-${isRunning}`}
+      >
+        <i />
+      </span>
+      <div className="workflow-stage-rail-scroll">
+        <ol className="workflow-stage-rail" aria-label="Application stages">
+          {workflowStageDetails.map((item, index) => (
+            <li
+              className={
+                index === activeGuide
+                  ? "active"
+                  : index < activeGuide
+                    ? "complete"
+                    : ""
+              }
+              key={item.title}
+            >
+              <button
+                type="button"
+                aria-label={`Show stage ${index + 1}: ${item.title}`}
+                aria-pressed={index === activeGuide}
+                aria-controls="workflow-preview"
+                onClick={() => onSelect(index)}
+              >
+                <span className="workflow-stage-icon">
+                  <WorkflowStageIcon index={index} />
+                  <b>{index + 1}</b>
+                </span>
+                <strong>{item.title}</strong>
+                <small>{item.summary}</small>
+              </button>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <section
+        id="workflow-preview"
+        className={`workflow-application${animated ? " workflow-animated" : ""}`}
+        aria-label={`${stage.title} application workflow demonstration`}
+      >
+        <header className="workflow-application-header">
+          <div className="workflow-opportunity">
+            <span aria-hidden="true">
+              <BriefcaseBusiness />
+            </span>
+            <div>
+              <small>Opportunity</small>
+              <strong>Research Fellowship</strong>
+            </div>
+            <em>In progress</em>
+          </div>
+          <div className="workflow-deadline">
+            <CalendarDays aria-hidden="true" />
+            <span>
+              <small>Application deadline</small>
+              <strong>15 Dec 2026</strong>
+            </span>
+          </div>
+          <Link className="workflow-open-application" to="/product-preview">
+            View full application <ChevronRight aria-hidden="true" />
+          </Link>
+        </header>
+
+        <div className="workflow-application-grid">
+          <aside className="workflow-stage-navigation">
+            <span>Application stages</span>
+            <ol>
+              {workflowStageDetails.map((item, index) => (
+                <li
+                  className={
+                    index === activeGuide
+                      ? "active"
+                      : index < activeGuide
+                        ? "complete"
+                        : ""
+                  }
+                  key={item.title}
+                >
+                  <button
+                    type="button"
+                    aria-label={`Open ${item.title} stage`}
+                    aria-pressed={index === activeGuide}
+                    onClick={() => onSelect(index)}
+                  >
+                    <span>{index + 1}</span>
+                    <span>
+                      <strong>{item.title}</strong>
+                      <small>{item.summary}</small>
+                    </span>
+                    {index < activeGuide ? (
+                      <Check aria-hidden="true" />
+                    ) : index > activeGuide ? (
+                      <LockKeyhole aria-hidden="true" />
+                    ) : (
+                      <ChevronRight aria-hidden="true" />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </aside>
+
+          <section className="workflow-stage-main">
+            <header>
+              <span className="workflow-current-icon">
+                <WorkflowStageIcon index={activeGuide} />
+              </span>
+              <div aria-live="polite">
+                <h3>
+                  Stage {activeGuide + 1}: {stage.title}
+                </h3>
+                <p>{stage.description}</p>
+              </div>
+            </header>
+            <div className="workflow-stage-meter">
+              <span style={{ width: `${stage.completion}%` }} />
+              <small>{stage.completedLabel}</small>
+            </div>
+            <ul className="workflow-stage-checklist" key={stage.title}>
+              {stage.tasks.map(([title, copy, done, action]) => (
+                <li className={done ? "complete" : ""} key={title}>
+                  <span className="workflow-task-state">
+                    {done ? <Check aria-hidden="true" /> : null}
+                  </span>
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{copy}</small>
+                  </span>
+                  <em>{action}</em>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <aside
+            className="workflow-progress-panel"
+            aria-label="Application progress"
+          >
+            <h3>Application progress</h3>
+            <PercentageGauge
+              value={workflowOverallProgress[activeGuide]}
+              label="Overall progress"
+            />
+            <ul>
+              {workflowStageDetails.map((item, index) => (
+                <li
+                  className={index === activeGuide ? "active" : ""}
+                  key={item.title}
+                >
+                  <span>
+                    {progress[index] === 100 ? (
+                      <CheckCircle2 aria-hidden="true" />
+                    ) : (
+                      <WorkflowStageIcon index={index} />
+                    )}
+                    {item.title}
+                  </span>
+                  <strong>{progress[index]}%</strong>
+                </li>
+              ))}
+            </ul>
+            <div className="workflow-guidance">
+              <Lightbulb aria-hidden="true" />
+              <span>
+                <strong>Stay on track</strong>
+                <small>
+                  Complete the current tasks to unlock the next stage.
+                </small>
+              </span>
+            </div>
+          </aside>
+        </div>
       </section>
     </div>
   );
