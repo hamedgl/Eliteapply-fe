@@ -301,6 +301,7 @@ test("application modal opens a usable private programme form", async ({
   expect(submitted?.name).toBe("MSc Public Policy");
 });
 test("board is keyboard operable and responsive", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/app/applications");
   await expect(
     page.getByRole("heading", { name: "Applications", level: 1 }),
@@ -323,15 +324,43 @@ test("board is keyboard operable and responsive", async ({ page }) => {
   );
   await expect(page.getByRole("table")).toBeVisible();
   await expect(page.getByText("MSc Computer Science")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  const card = await page
+    .locator(".application-list-table tr")
+    .last()
+    .boundingBox();
+  const open = await page.getByRole("link", { name: "Open" }).boundingBox();
+  expect(card).not.toBeNull();
+  expect(open).not.toBeNull();
+  expect(open!.height).toBeGreaterThanOrEqual(44);
+  expect(open!.y + open!.height).toBeLessThanOrEqual(card!.y + card!.height);
+  const selectTarget = await page
+    .locator(".application-row-select")
+    .first()
+    .boundingBox();
+  expect(selectTarget).not.toBeNull();
+  expect(selectTarget!.width).toBeGreaterThanOrEqual(44);
+  expect(selectTarget!.height).toBeGreaterThanOrEqual(44);
   await page.screenshot({
     path: "/tmp/eliteapply-phase2-mobile.png",
     fullPage: true,
   });
+  await page.setViewportSize({ width: 320, height: 720 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
 });
 
 test("board cards drag between stages and columns collapse", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   const consoleErrors: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
@@ -407,7 +436,7 @@ test("board cards drag between stages and columns collapse", async ({
     page.getByRole("button", { name: "Expand Shortlisted" }),
   ).toHaveAttribute("aria-expanded", "false");
   await expect(shortlisted.locator(".board-column-content")).toBeHidden();
-  await expect(shortlisted).toHaveCSS("flex-basis", "160px");
+  await expect(shortlisted).toHaveCSS("flex-basis", "54px");
   await page.screenshot({
     path: "/tmp/eliteapply-kanban-collapsed.png",
     fullPage: false,

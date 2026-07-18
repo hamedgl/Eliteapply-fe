@@ -521,9 +521,6 @@ export function WritingEditor() {
           ))}
         </aside>
         <main>
-          <div className="editor-toolbar">
-            Paragraph · <strong>B</strong> <em>I</em> · Link · List
-          </div>
           <textarea
             aria-label="Document content"
             value={text}

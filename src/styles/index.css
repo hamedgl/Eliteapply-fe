@@ -3837,7 +3837,8 @@ th {
 .recommendation-disclaimer,
 .permission-notice {
   padding: 1rem 1.15rem;
-  border-left: 3px solid #87a8f5;
+  border: 1px solid #b8caf4;
+  border-radius: 10px;
   background: #f2f6ff;
   color: #3e4d6d;
   line-height: 1.55;
@@ -5301,7 +5302,6 @@ th {
   grid-template-columns: 252px minmax(0, 1fr);
   color: var(--app-ink);
   background: var(--app-canvas);
-  transition: grid-template-columns 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .app-shell.sidebar-collapsed {
@@ -5335,7 +5335,6 @@ th {
   flex-direction: column;
   border-inline-end: 1px solid var(--app-line);
   background: #fbfcff;
-  transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sidebar-head {
@@ -6668,6 +6667,9 @@ th {
   .mobile-appbar {
     min-height: 64px;
     padding: 0.65rem 1rem;
+    padding-top: max(0.65rem, env(safe-area-inset-top));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-left: max(1rem, env(safe-area-inset-left));
     position: sticky;
     inset-block-start: 0;
     z-index: 10;
@@ -6721,8 +6723,11 @@ th {
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 24;
+    visibility: hidden;
     transform: translateX(-105%);
-    transition: transform 180ms ease-out;
+    transition:
+      transform 180ms ease-out,
+      visibility 0s linear 180ms;
   }
 
   .app-shell.sidebar-collapsed .sidebar {
@@ -6767,7 +6772,9 @@ th {
 
   .app-shell .sidebar.open {
     left: 0;
+    visibility: visible;
     transform: translateX(0);
+    transition-delay: 0s;
   }
 
   .sidebar-close {
@@ -6797,7 +6804,8 @@ th {
 
 @media (max-width: 700px) {
   .mobile-appbar {
-    padding-inline: 0.75rem;
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
   }
 
   .mobile-appbar .app-brand {
@@ -6886,6 +6894,7 @@ th {
   }
 
   .application-list-table td {
+    height: auto;
     min-width: 0;
     padding: 0;
     border: 0;
@@ -6932,7 +6941,21 @@ th {
   }
 
   .application-list-action-inner a {
+    min-height: 44px;
+    align-items: center;
     justify-content: space-between;
+  }
+
+  .application-row-select {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+  }
+
+  .application-row-select input {
+    width: 20px;
+    height: 20px;
   }
 
   .documents-page .document-list article {
@@ -7014,6 +7037,29 @@ th {
 
   .skeleton-focus {
     height: 248px;
+  }
+
+  .writing-editor > header {
+    min-width: 0;
+    padding-inline: 1rem;
+  }
+
+  .writing-editor > header > div {
+    min-width: 0;
+  }
+
+  .writing-editor > header h1 {
+    overflow-wrap: anywhere;
+  }
+
+  .writing-editor > header > div:last-child {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .writing-editor > header > div:last-child > :is(button, select) {
+    min-height: 44px;
+    max-width: 100%;
   }
 }
 
@@ -11641,7 +11687,8 @@ th {
 .phase3-notice,
 .phase3-consent {
   padding: 1rem 1.1rem;
-  border-left: 3px solid #2458dc;
+  border: 1px solid #b8caf4;
+  border-radius: 10px;
   background: #eef3ff;
   color: #263b63;
 }
@@ -11816,7 +11863,7 @@ th {
   padding: 1.1rem 1.25rem;
 }
 .notification-item.unread {
-  border-left: 4px solid #2458dc;
+  border-color: #9db4ef;
   background: #fbfcff;
 }
 .notification-item > div {
@@ -11992,8 +12039,12 @@ th {
   font-size: 0.72rem;
 }
 .mobile-notifications {
+  width: 44px;
+  height: 44px;
   display: none;
   position: relative;
+  align-items: center;
+  justify-content: center;
   color: inherit;
 }
 .mobile-notifications span {

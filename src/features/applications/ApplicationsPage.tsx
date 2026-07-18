@@ -293,6 +293,12 @@ export function ApplicationsPage() {
   };
   const moveApplication = (app: Application, next: string) => {
     if (app.stage === next || update.isPending) return;
+    setCollapsedStages((current) => {
+      if (!current.has(next)) return current;
+      const expanded = new Set(current);
+      expanded.delete(next);
+      return expanded;
+    });
     update.mutate({ app, next });
   };
   const toggleStage = (stage: string) => {
@@ -877,17 +883,19 @@ function ApplicationList({
           {apps.map((app) => (
             <tr key={app.id}>
               <td data-label="Select">
-                <input
-                  type="checkbox"
-                  aria-label={`Select ${app.title}`}
-                  checked={selected.has(app.id)}
-                  onChange={(event) => {
-                    const next = new Set(selected);
-                    if (event.target.checked) next.add(app.id);
-                    else next.delete(app.id);
-                    setSelected(next);
-                  }}
-                />
+                <label className="application-row-select">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${app.title}`}
+                    checked={selected.has(app.id)}
+                    onChange={(event) => {
+                      const next = new Set(selected);
+                      if (event.target.checked) next.add(app.id);
+                      else next.delete(app.id);
+                      setSelected(next);
+                    }}
+                  />
+                </label>
               </td>
               <td data-label="Application">
                 <strong>{app.title}</strong>

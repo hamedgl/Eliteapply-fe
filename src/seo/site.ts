@@ -297,7 +297,7 @@ export function getPageSeo(pathname: string): PageSeo {
       page.kind === "home"
         ? page.title
         : page.kind === "article"
-          ? `${page.title} | EliteApply resources`
+          ? `${page.title} | Resources | EliteApply`
           : `${page.title} | EliteApply`,
     robots: page.indexable
       ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"

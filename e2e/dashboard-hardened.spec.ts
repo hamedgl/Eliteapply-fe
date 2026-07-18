@@ -83,11 +83,18 @@ test("mobile app navigation is touch-safe and closes with Escape", async ({
   await expect(menu).toBeVisible();
   await menu.click();
   await expect(
-    page.getByRole("complementary", { name: "Application navigation" }),
+    page.getByRole("dialog", { name: "Application navigation" }),
   ).toHaveClass(/open/);
   await expect(
     page.getByRole("button", { name: "Close navigation" }).last(),
   ).toBeFocused();
+  await page.getByRole("button", { name: "Log out" }).focus();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "EliteApply" }).last(),
+  ).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Log out" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(menu).toBeFocused();
   await expect(menu).toHaveAttribute("aria-expanded", "false");
@@ -98,6 +105,14 @@ test("mobile app navigation is touch-safe and closes with Escape", async ({
   });
   expect(controlSize.width).toBeGreaterThanOrEqual(44);
   expect(controlSize.height).toBeGreaterThanOrEqual(44);
+  const notificationSize = await page
+    .getByRole("link", { name: /unread notifications/ })
+    .evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    });
+  expect(notificationSize.width).toBeGreaterThanOrEqual(44);
+  expect(notificationSize.height).toBeGreaterThanOrEqual(44);
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,

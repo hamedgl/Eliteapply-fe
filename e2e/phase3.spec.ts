@@ -124,10 +124,21 @@ test("writing library and editor are responsive and save-state aware", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await expect(page.getByLabel("Document content")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
   await page.screenshot({
     path: "/tmp/eliteapply-phase3-mobile.png",
     fullPage: true,
   });
+  await page.setViewportSize({ width: 320, height: 720 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
 });
 
 test("new writing survives an empty library cache and a failed completion refresh", async ({

@@ -72,6 +72,11 @@ export function AppShell() {
     refetchInterval: document.hidden ? false : 60_000,
   });
 
+  function closeSidebar() {
+    setOpen(false);
+    requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }
+
   useEffect(() => {
     const meta =
       document.querySelector<HTMLMetaElement>('meta[name="robots"]') ??
@@ -93,9 +98,21 @@ export function AppShell() {
       ?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      requestAnimationFrame(() => menuButtonRef.current?.focus());
+      if (event.key === "Escape") return closeSidebar();
+      if (event.key !== "Tab") return;
+      const controls = sidebarRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!controls?.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
 
     document.addEventListener("keydown", handleKeyDown);
@@ -168,8 +185,9 @@ export function AppShell() {
         <button
           className="scrim"
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={closeSidebar}
           aria-label="Close navigation"
+          tabIndex={-1}
         />
       ) : null}
 
@@ -177,6 +195,8 @@ export function AppShell() {
         ref={sidebarRef}
         id="app-sidebar"
         className={open ? "sidebar open" : "sidebar"}
+        role={open ? "dialog" : undefined}
+        aria-modal={open ? true : undefined}
         aria-label="Application navigation"
       >
         <div className="sidebar-head">
@@ -201,7 +221,7 @@ export function AppShell() {
           <button
             className="sidebar-close"
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={closeSidebar}
             aria-label="Close navigation"
           >
             <X aria-hidden="true" />
@@ -213,7 +233,7 @@ export function AppShell() {
             className="notification-shortcut"
             to="/app/notifications"
             title="Notifications"
-            onClick={() => setOpen(false)}
+            onClick={closeSidebar}
           >
             <Bell aria-hidden="true" />
             <span>Notifications</span>
@@ -234,7 +254,7 @@ export function AppShell() {
                   to={href}
                   end={href === "/app/dashboard"}
                   title={label}
-                  onClick={() => setOpen(false)}
+                  onClick={closeSidebar}
                   className={({ isActive }) => (isActive ? "active" : "")}
                 >
                   <Icon aria-hidden="true" />
