@@ -24,15 +24,43 @@ export function ProfileSettings() {
   }
   async function avatar(file?: File) {
     if (!file) return;
-    if (
-      !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-      file.size > 5 * 1024 * 1024
-    ) {
-      setMessage("Use a JPG, PNG or WebP under 5 MB.");
+    // Browsers often report no MIME type for .webp (unregistered OS mapping),
+    // so fall back to the extension before rejecting — the API validates the
+    // real bytes with a signature check.
+    const imageTypes: Record<string, string> = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      webp: "image/webp",
+    };
+    const declared = file.type.toLowerCase();
+    const type = Object.values(imageTypes).includes(declared)
+      ? declared
+      : declared === "" || declared === "application/octet-stream"
+        ? imageTypes[file.name.split(".").pop()?.toLowerCase() ?? ""]
+        : undefined;
+    if (!type || file.size > 2 * 1024 * 1024) {
+      setMessage("Use a JPG, PNG or WebP under 2 MB.");
       return;
     }
-    setUser(await usersApi.avatar(file));
-    setMessage("Photo updated.");
+    const upload =
+      type === file.type ? file : new File([file], file.name, { type });
+    setMessage("Uploading photo…");
+    try {
+      const profile = await usersApi.avatar(upload);
+      setUser(profile);
+      setMessage(
+        profile.avatar_url
+          ? "Photo updated."
+          : "The photo was uploaded but the server did not return an image URL.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? `Photo upload failed: ${error.message}`
+          : "Photo upload failed.",
+      );
+    }
   }
   return (
     <Settings title="Profile">

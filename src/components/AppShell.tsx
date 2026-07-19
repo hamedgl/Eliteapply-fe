@@ -268,6 +268,14 @@ export function AppShell() {
         <footer className="sidebar-account">
           <span className="account-avatar" aria-hidden="true">
             {avatarLabel}
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt=""
+                referrerPolicy="no-referrer"
+                onError={(event) => event.currentTarget.remove()}
+              />
+            ) : null}
           </span>
           <div>
             <strong title={displayName}>{displayName}</strong>

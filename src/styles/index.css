@@ -5685,12 +5685,22 @@ th {
   width: 36px;
   height: 36px;
   display: grid;
+  position: relative;
+  overflow: hidden;
   place-items: center;
   color: var(--app-blue);
   border-radius: 50%;
   background: var(--app-blue-soft);
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
 }
 
 .sidebar-account > div {
