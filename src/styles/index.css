@@ -6623,6 +6623,293 @@ th {
   background: var(--app-surface);
 }
 
+/* Account settings — Profile / Security / Privacy */
+.app-shell .settings-heading h1 {
+  margin: 0;
+}
+
+.app-shell .settings-heading > p {
+  max-width: 58ch;
+  margin: 0.55rem 0 0;
+  color: var(--app-muted);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.app-shell .settings header nav {
+  margin-top: 1.4rem;
+  padding: 0;
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.app-shell .settings header nav a {
+  position: relative;
+  padding: 0.55rem 0.75rem 0.8rem;
+  color: var(--app-muted);
+  border-radius: 8px 8px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-shell .settings header nav a:hover {
+  color: var(--app-ink);
+  background: var(--app-surface-subtle);
+}
+
+.app-shell .settings header nav a.active,
+.app-shell .settings header nav a[aria-current="page"] {
+  color: var(--app-blue);
+}
+
+.app-shell .settings header nav a.active::after,
+.app-shell .settings header nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.75rem;
+  inset-block-end: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--app-blue);
+}
+
+.settings-sections {
+  width: min(100%, 720px);
+  margin-top: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.settings-card {
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+
+.settings-card > header {
+  padding: 1.25rem 1.5rem 1.15rem;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.settings-card > header h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--app-ink);
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+
+.settings-card > header h2 svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.settings-card > header p {
+  max-width: 60ch;
+  margin: 0.35rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.settings-card .settings-fields,
+.settings-card .settings-photo,
+.settings-card .settings-inline-action {
+  padding: 1.4rem 1.5rem 1.5rem;
+}
+
+.settings-fields {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.settings-fields label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--app-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.settings-fields label small {
+  color: var(--app-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.settings-field-row {
+  display: grid;
+  gap: 1.15rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.settings-card-footer {
+  margin-top: 0.35rem;
+  padding-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid var(--app-line);
+}
+
+.settings-card-footer .form-status {
+  margin-inline-end: auto;
+}
+
+.form-status {
+  min-height: 1.3em;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.form-status.is-success {
+  color: var(--app-green);
+}
+
+.form-status.is-error {
+  color: var(--danger);
+}
+
+.settings-photo {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.settings-photo-preview {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  position: relative;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  color: var(--app-blue);
+  border: 1px solid var(--app-line);
+  border-radius: 50%;
+  background: var(--app-blue-soft);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.settings-photo-preview img {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+}
+
+.settings-photo-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.settings-photo-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.settings-photo-actions > p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+
+.settings-inline-action {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.settings-inline-action .check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--app-text);
+  font-size: 0.92rem;
+}
+
+.settings-inline-action .check input {
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  accent-color: var(--app-blue);
+}
+
+.settings-fields > .settings-card-footer:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-danger {
+  border-color: #ecc8c3;
+}
+
+.settings-danger > header {
+  border-bottom-color: #ecc8c3;
+  background: #fdf6f5;
+}
+
+.settings-danger > header h2 {
+  color: var(--danger);
+}
+
+.app-shell .settings-danger button.danger {
+  color: var(--danger);
+  border-color: #dfa8a1;
+}
+
+.app-shell .settings-danger button.danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: #fdf1ef;
+}
+
+@media (max-width: 640px) {
+  .app-shell .settings header nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .settings-card .settings-fields,
+  .settings-card .settings-photo,
+  .settings-card .settings-inline-action {
+    padding: 1.15rem 1.1rem 1.25rem;
+  }
+
+  .settings-card > header {
+    padding: 1.1rem 1.1rem 1rem;
+  }
+
+  .settings-photo {
+    flex-direction: column;
+  }
+
+  .settings-card-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .settings-card-footer .form-status {
+    margin-inline-end: 0;
+  }
+}
+
 .app-shell .vault-empty {
   margin-top: 1.5rem;
   padding: clamp(3rem, 8vh, 6rem) 1.5rem;
