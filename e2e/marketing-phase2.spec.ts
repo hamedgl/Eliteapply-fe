@@ -7,6 +7,7 @@ test.beforeEach(async ({ page }) => {
       return route.fulfill({ json: [] });
     }
     if (path.endsWith("/billing/plans")) return route.fulfill({ json: [] });
+    if (path.endsWith("/auth/refresh")) return route.fulfill({ status: 204 });
     return route.fulfill({ status: 401, json: { detail: "Signed out" } });
   });
 });
@@ -39,16 +40,16 @@ const requiredRoutes = [
   ],
   ["/for-students", "Built for serious applications at every stage."],
   ["/pricing", "Start organising your applications for free."],
-  ["/security", "Clear account controls for personal application work."],
+  ["/security", "Security at EliteApply"],
   ["/about", "Scholarship applications deserve a calmer working system."],
-  ["/contact", "Contact EliteApply."],
+  ["/contact", "Contact EliteApply"],
   [
     "/resources",
     "Practical guidance for stronger, better-organised applications.",
   ],
-  ["/privacy", "Privacy information"],
-  ["/terms", "Terms information"],
-  ["/accessibility", "Accessibility"],
+  ["/privacy", "Privacy Policy"],
+  ["/terms", "Terms of Service"],
+  ["/accessibility", "Accessibility Statement"],
   [
     "/scholarship-application-tracker",
     "Track scholarship applications from first shortlist to final decision.",
@@ -208,7 +209,7 @@ test("resource hub contains four useful clusters and provider-first guidance", a
   ).toBeVisible();
 });
 
-test("pricing and transparency routes avoid unsupported production claims", async ({
+test("pricing and legal routes publish specific controls without unsupported claims", async ({
   page,
 }) => {
   await page.goto("/pricing");
@@ -225,7 +226,7 @@ test("pricing and transparency routes avoid unsupported production claims", asyn
   await page.goto("/security");
   await expect(
     page.getByRole("heading", {
-      name: "What still needs launch documentation",
+      name: "Assurance scope",
     }),
   ).toBeVisible();
   await expect(
@@ -234,10 +235,35 @@ test("pricing and transparency routes avoid unsupported production claims", asyn
 
   await page.goto("/privacy");
   await expect(
-    page.getByText(
-      "Approved jurisdiction-specific privacy policy copy is still required before production launch.",
-    ),
+    page.getByRole("heading", { name: "Information we handle" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Your choices and privacy rights" }),
+  ).toBeVisible();
+  await expect(page.getByText("Launch status")).toHaveCount(0);
+
+  await page.goto("/terms");
+  await expect(
+    page.getByRole("heading", { name: "Acceptable use" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Limits of liability" }),
+  ).toBeVisible();
+});
+
+test("client-side route changes reset the page to the top", async ({
+  page,
+}) => {
+  await page.goto("/privacy");
+  await page.locator("#changes-contact").scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+
+  await page
+    .getByRole("link", { name: "Security", exact: true })
+    .last()
+    .click();
+  await expect(page).toHaveURL(/\/security$/);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test("mobile public navigation traps focus, closes on Escape and preserves the visible CTA", async ({

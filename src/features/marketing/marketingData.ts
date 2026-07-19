@@ -485,12 +485,12 @@ export const findPageName = (path: string) =>
     "/how-it-works": "How EliteApply works",
     "/for-students": "EliteApply for students",
     "/pricing": "Early-access pricing",
-    "/security": "Security and account controls",
+    "/security": "Security at EliteApply",
     "/about": "About EliteApply",
     "/contact": "Contact EliteApply",
     "/resources": "Scholarship application resources",
-    "/privacy": "Privacy information",
-    "/terms": "Terms information",
-    "/accessibility": "Accessibility",
+    "/privacy": "Privacy Policy",
+    "/terms": "Terms of Service",
+    "/accessibility": "Accessibility Statement",
   } as Record<string, string>)[path] ??
   "EliteApply";

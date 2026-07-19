@@ -105,23 +105,25 @@ export function MarketingHeader() {
         className={menuOpen ? "marketing-nav open" : "marketing-nav"}
         aria-label="Main navigation"
       >
-        <details className="product-menu">
-          <summary>
-            Product <ChevronDown aria-hidden="true" />
-          </summary>
-          <div className="product-menu-panel">
-            <Link to="/features">All features</Link>
-            {productLinks.map(([label, to]) => (
-              <Link key={to} to={to}>
-                {label}
-              </Link>
-            ))}
-          </div>
-        </details>
-        <NavLink to="/how-it-works">How it works</NavLink>
-        <NavLink to="/for-students">For students</NavLink>
-        <NavLink to="/resources">Resources</NavLink>
-        <NavLink to="/pricing">Pricing</NavLink>
+        <div className="marketing-nav-links">
+          <details className="product-menu">
+            <summary>
+              Product <ChevronDown aria-hidden="true" />
+            </summary>
+            <div className="product-menu-panel">
+              <Link to="/features">All features</Link>
+              {productLinks.map(([label, to]) => (
+                <Link key={to} to={to}>
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </details>
+          <NavLink to="/how-it-works">How it works</NavLink>
+          <NavLink to="/for-students">For students</NavLink>
+          <NavLink to="/resources">Resources</NavLink>
+          <NavLink to="/pricing">Pricing</NavLink>
+        </div>
         <MarketingAccountMenu />
       </nav>
       {showPublicCta ? (

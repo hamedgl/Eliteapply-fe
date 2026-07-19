@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import {
   Navigate,
   RouterProvider,
@@ -368,5 +368,11 @@ const router = createBrowserRouter([
   { path: "*", element: load(<MarketingNotFoundPage />) },
 ]);
 export function App() {
+  const previousPath = useRef(router.state.location.pathname);
+  useEffect(() => router.subscribe(({location}) => {
+    if (location.pathname === previousPath.current) return;
+    previousPath.current = location.pathname;
+    window.scrollTo(0, 0);
+  }), []);
   return <RouterProvider router={router} />;
 }

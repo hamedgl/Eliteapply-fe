@@ -6,7 +6,7 @@ import {
 
 export const SITE_URL = "https://eliteapply.net";
 export const SOCIAL_IMAGE = `${SITE_URL}/og-eliteapply.jpg`;
-export const LAST_MODIFIED = "2026-07-15";
+export const LAST_MODIFIED = "2026-07-19";
 
 type PageKind = "home" | "page" | "feature" | "article" | "utility";
 
@@ -76,9 +76,9 @@ const corePages: readonly PageDefinition[] = [
   },
   {
     path: "/security",
-    title: "Security and account controls",
+    title: "Security at EliteApply",
     description:
-      "Understand the account, session, export, deletion and transparency controls currently implemented in EliteApply.",
+      "Review EliteApply's account, session, document, private-link, export and account-deletion security controls.",
     indexable: true,
     kind: "page",
   },
@@ -108,25 +108,25 @@ const corePages: readonly PageDefinition[] = [
   },
   {
     path: "/privacy",
-    title: "Privacy information",
+    title: "Privacy Policy",
     description:
-      "A plain-language summary of current EliteApply account and data controls, pending approved legal policy copy.",
-    indexable: false,
-    kind: "utility",
+      "Learn what personal information EliteApply handles, why it is used, when it may be shared and the controls available to users.",
+    indexable: true,
+    kind: "page",
   },
   {
     path: "/terms",
-    title: "Terms information",
+    title: "Terms of Service",
     description:
-      "A plain-language product-use summary for EliteApply, pending approved terms of service.",
-    indexable: false,
-    kind: "utility",
+      "Read the terms governing EliteApply accounts, application content, acceptable use, AI-assisted features and service limitations.",
+    indexable: true,
+    kind: "page",
   },
   {
     path: "/accessibility",
     title: "Accessibility statement",
     description:
-      "EliteApply's accessibility approach, supported interaction principles and contact route for reporting barriers.",
+      "Read EliteApply's WCAG 2.2 AA accessibility target, interface measures, known limitations and barrier-reporting process.",
     indexable: true,
     kind: "page",
   },

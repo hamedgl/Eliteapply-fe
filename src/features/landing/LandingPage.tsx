@@ -21,7 +21,6 @@ import {
   Lightbulb,
   LockKeyhole,
   MapPin,
-  Menu,
   Pause,
   PenLine,
   Play,
@@ -39,12 +38,8 @@ import closingPathIllustration from "../../assets/illustrations/application-path
 import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.png";
 import comparisonWith from "../../assets/comparison-with.webp";
 import comparisonWithout from "../../assets/comparison-without.webp";
-import { useSession } from "../../lib/auth/session";
 import { usePageSeo } from "../../seo/usePageSeo";
-import {
-  MarketingAccountMenu,
-  MarketingShell,
-} from "../marketing/MarketingShell";
+import { MarketingHeader, MarketingShell } from "../marketing/MarketingShell";
 
 const guideSteps = [
   {
@@ -489,55 +484,11 @@ function createInitialHeroTaskState() {
 
 export function LandingPage() {
   usePageSeo("/");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeGuide, setActiveGuide] = useState(0);
   const [tourPaused, setTourPaused] = useState(false);
   const [tourVisible, setTourVisible] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const guidedRef = useRef<HTMLElement>(null);
-  const menuRef = useRef<HTMLElement>(null);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const showPublicCta = useSession(
-    (state) => !state.initializing && !state.accessToken,
-  );
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    menuRef.current?.querySelector<HTMLElement>("summary, a")?.focus();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const handleMenuKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        requestAnimationFrame(() => menuButtonRef.current?.focus());
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const navItems = Array.from(
-        menuRef.current?.querySelectorAll<HTMLElement>(
-          'a, button, summary, [tabindex]:not([tabindex="-1"])',
-        ) ?? [],
-      );
-      const focusable = menuButtonRef.current
-        ? [...navItems, menuButtonRef.current]
-        : navItems;
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", handleMenuKey);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleMenuKey);
-    };
-  }, [menuOpen]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -580,93 +531,7 @@ export function LandingPage() {
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      <header className="marketing-header phase-one-header">
-        <Link className="marketing-brand" to="/" aria-label="EliteApply home">
-          <span className="brand-mark" aria-hidden="true">
-            E
-          </span>
-          EliteApply
-        </Link>
-        <nav
-          id="marketing-navigation"
-          ref={menuRef}
-          className={menuOpen ? "marketing-nav open" : "marketing-nav"}
-          aria-label="Main navigation"
-        >
-          <details className="product-menu">
-            <summary>
-              Product <ChevronDown aria-hidden="true" />
-            </summary>
-            <div className="product-menu-panel">
-              <Link to="/product-preview" onClick={() => setMenuOpen(false)}>
-                Interactive product preview
-              </Link>
-              <Link
-                to="/features/scholarship-application-tracker"
-                onClick={() => setMenuOpen(false)}
-              >
-                Application tracker
-              </Link>
-              <Link
-                to="/features/personal-statement-workspace"
-                onClick={() => setMenuOpen(false)}
-              >
-                Writing workspace
-              </Link>
-              <Link
-                to="/features/document-organiser"
-                onClick={() => setMenuOpen(false)}
-              >
-                Documents and evidence
-              </Link>
-              <Link
-                to="/features/reference-tracking"
-                onClick={() => setMenuOpen(false)}
-              >
-                Reference tracking
-              </Link>
-              <Link
-                to="/features/submission-readiness"
-                onClick={() => setMenuOpen(false)}
-              >
-                Readiness review
-              </Link>
-            </div>
-          </details>
-          <Link to="/how-it-works" onClick={() => setMenuOpen(false)}>
-            How it works
-          </Link>
-          <Link to="/for-students" onClick={() => setMenuOpen(false)}>
-            For students
-          </Link>
-          <Link to="/resources" onClick={() => setMenuOpen(false)}>
-            Resources
-          </Link>
-          <Link to="/pricing" onClick={() => setMenuOpen(false)}>
-            Pricing
-          </Link>
-          <MarketingAccountMenu />
-        </nav>
-        {showPublicCta ? (
-          <Link
-            className="landing-button small header-mobile-cta"
-            to="/register"
-            reloadDocument
-          >
-            Start free
-          </Link>
-        ) : null}
-        <button
-          ref={menuButtonRef}
-          className="nav-toggle"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-controls="marketing-navigation"
-          aria-expanded={menuOpen}
-          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-        >
-          {menuOpen ? <X /> : <Menu />}
-        </button>
-      </header>
+      <MarketingHeader />
 
       <section className="phase-one-hero" id="main-content" tabIndex={-1}>
         <div className="phase-one-hero-copy">

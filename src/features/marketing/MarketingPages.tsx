@@ -8,19 +8,13 @@ import {
   Circle,
   ClipboardCheck,
   Clock3,
-  Download,
-  FileCheck2,
   FileText,
   Folder,
   GraduationCap,
   Link2,
   ListChecks,
-  LockKeyhole,
-  Mail,
   Map,
   PenLine,
-  ShieldCheck,
-  Trash2,
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -28,6 +22,7 @@ import { Link, useLocation } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
 import { billingApi } from "../../lib/api/billing";
 import { usePageSeo } from "../../seo/usePageSeo";
+import { LegalPage } from "./LegalPage";
 import { MarketingShell } from "./MarketingShell";
 import {
   featurePages,
@@ -62,13 +57,13 @@ export function MarketingRoute() {
         "/how-it-works": <HowItWorksPage />,
         "/for-students": <ForStudentsPage />,
         "/pricing": <PricingPage />,
-        "/security": <SecurityPage />,
+        "/security": <LegalPage kind="security" />,
         "/about": <AboutPage />,
-        "/contact": <ContactPage />,
+        "/contact": <LegalPage kind="contact" />,
         "/resources": <ResourcesHubPage />,
-        "/privacy": <TransparencyPage kind="privacy" />,
-        "/terms": <TransparencyPage kind="terms" />,
-        "/accessibility": <TransparencyPage kind="accessibility" />,
+        "/privacy": <LegalPage kind="privacy" />,
+        "/terms": <LegalPage kind="terms" />,
+        "/accessibility": <LegalPage kind="accessibility" />,
       } as Record<string, React.ReactNode>)[pathname] ?? <MarketingNotFound />;
   }
 
@@ -273,17 +268,8 @@ function PricingPage() {
   return <><section className="mkt2-pricing-hero"><Breadcrumbs current="Pricing" /><h1>Start organising your applications for free.</h1><p>Free access remains available. When paid plans are enabled, availability comes directly from EliteApply's server-owned catalogue and checkout shows the current price before payment.</p><MarketingActions secondaryTo="/features" secondaryLabel="See what is included" /></section><section className="mkt2-pricing-body"><article><header><span>Current access</span><h2>Everything currently available in EliteApply.</h2><p>Start without entering payment details.</p></header><ul>{included.map((item) => <li key={item}><CheckCircle2 aria-hidden="true" />{item}</li>)}</ul><Link className="landing-button" to="/register" reloadDocument>Start free <ArrowRight aria-hidden="true" /></Link></article><aside><h2>Paid plan availability</h2>{plansUnavailable?<p role="alert">The plan catalogue is temporarily unavailable. Free access is unaffected.</p>:plans===null?<p role="status">Checking available plans…</p>:plans.length?<><p>{plans.length} paid {plans.length===1?"option is":"options are"} currently available. Sign in to review secure checkout.</p><dl>{plans.map((plan)=><div key={plan.key}><dt>{plan.plan === "pro" ? "Pro" : "Teams"} · {plan.interval}</dt><dd>{new Intl.NumberFormat().format(plan.token_limit)} AI tokens per period</dd></div>)}</dl><Link to="/login">Sign in to billing & usage</Link></>:<p>No paid plan is currently enabled in this environment. Free access remains available.</p>}<p>Plan prices are intentionally not shown here because the current catalogue does not provide price or currency metadata.</p><Link to="/security">Review current account and data controls</Link></aside></section><FaqBlock items={[["Will I be charged when I register?", "No. Registration starts with free access and does not require payment details."], ["Where will I see a paid price?", "If a paid plan is available, secure checkout shows the current price and currency before payment."], ["How is plan availability decided?", "The backend returns only plans configured for the current environment; the frontend does not unlock plans from local state."], ["Can I export or delete my data?", "The authenticated account settings include export and account-deletion controls."]]} /><ClosingCta title="Start with one application—no credit card required." /></>;
 }
 
-function SecurityPage() {
-  const controls = [[LockKeyhole, "Account session", "Application workspaces require an authenticated account session."], [ShieldCheck, "Memory-only access token", "The frontend keeps the active access token in browser memory rather than persistent browser storage."], [Download, "Data export", "Authenticated account settings include a control to request a data export."], [Trash2, "Account deletion", "Authenticated settings include a confirmation flow for requesting account deletion."], [FileCheck2, "Document controls", "The current product includes document download and deletion actions."], [PenLine, "Transparent assistance", "Writing support is framed as editable guidance, never as a guaranteed outcome."]];
-  return <><section className="mkt2-page-hero"><div><Breadcrumbs current="Security" /><h1>Clear account controls for personal application work.</h1><p>This page describes behaviour implemented in the current EliteApply frontend. It avoids broad certification or infrastructure claims that have not been documented for launch.</p><MarketingActions secondaryTo="/privacy" secondaryLabel="Read privacy information" /></div><div className="mkt2-security-summary"><LockKeyhole aria-hidden="true" /><h2>Current product controls</h2><p>Session access, export, deletion and transparent assistance are visible parts of the product.</p></div></section><section className="mkt2-control-list">{controls.map(([Icon, title, copy]) => <article key={title as string}><Icon aria-hidden="true" /><div><h2>{title as string}</h2><p>{copy as string}</p></div></article>)}</section><section className="mkt2-disclosure"><h2>What still needs launch documentation</h2><p>Approved security architecture, incident-response, retention and infrastructure claims must be published from verified production evidence. This marketing route does not infer them from frontend code.</p><Link to="/contact">Ask a security or privacy question <ArrowRight aria-hidden="true" /></Link></section><RelatedLinks title="Related transparency pages" paths={["/privacy", "/terms", "/accessibility", "/contact"]} /><ClosingCta title="Keep application work inside one accountable workspace." /></>;
-}
-
 function AboutPage() {
   return <><section className="mkt2-page-hero centered"><Breadcrumbs current="About" /><h1>Scholarship applications deserve a calmer working system.</h1><p>EliteApply is built around a simple principle: make the next responsible application step clear without taking ownership away from the student.</p><MarketingActions secondaryTo="/how-it-works" secondaryLabel="See the product approach" /></section><section className="mkt2-about-story"><div><h2>Why this product exists</h2><p>Application work rarely lives in one place. Deadlines sit in calendars, requirements in browser tabs, drafts in documents, evidence in folders and reference follow-up in email. EliteApply connects those parts so a student can resume the work with context.</p></div><blockquote>Evidence over spectacle. Student control over automated certainty. A clear next action over manufactured urgency.</blockquote></section><section className="mkt2-about-principles">{[["Responsible clarity", "Prioritise one meaningful next action and explain the state behind it."], ["Evidence over spectacle", "Earn trust with useful examples, transparent state and honest limitations."], ["Student control", "Keep assistance editable, recoverable and subject to the student's review."], ["Academic warmth", "Use calm, readable structure without becoming cold or institutional."]].map(([title, copy]) => <article key={title}><h2>{title}</h2><p>{copy}</p></article>)}</section><RelatedLinks title="Explore the system" paths={["/features", "/for-students", "/security", "/resources"]} /><ClosingCta title="Build a calmer home for the next application." /></>;
-}
-
-function ContactPage() {
-  return <><section className="mkt2-page-hero"><div><Breadcrumbs current="Contact" /><h1>Contact EliteApply.</h1><p>Use the support address for product questions, accessibility barriers, privacy enquiries or general feedback. Please do not email confidential reference content or account credentials.</p></div><a className="mkt2-contact-card" href="mailto:support@eliteapply.net"><Mail aria-hidden="true" /><span><small>Email</small><strong>support@eliteapply.net</strong><em>Open your email client</em></span><ArrowRight aria-hidden="true" /></a></section><section className="mkt2-contact-reasons">{[["Product support", "Describe the page, the action you were taking and what happened."], ["Accessibility feedback", "Include the page and assistive technology when that information is comfortable to share."], ["Privacy or account controls", "Ask about export, deletion or current product behaviour without sending passwords or access codes."], ["General enquiry", "Share a concise question and the best context for understanding it."]].map(([title, copy]) => <article key={title}><h2>{title}</h2><p>{copy}</p></article>)}</section><RelatedLinks title="You may find the answer here" paths={["/resources", "/security", "/privacy", "/accessibility"]} /></>;
 }
 
 function ResourcesHubPage() {
@@ -294,15 +280,6 @@ function ResourcesHubPage() {
 
 function ResourceGuidePage({ guide }: { guide: ResourceGuide }) {
   return <><article className="mkt2-guide"><header><Breadcrumbs current={guide.title} /><Link className="mkt2-cluster-link" to={`/resources#${guide.cluster.toLowerCase().replaceAll(" ", "-")}`}>{guide.cluster}</Link><h1>{guide.title}</h1><p>{guide.description}</p></header><div className="mkt2-guide-layout"><aside><strong>Before you use this guide</strong><p>Follow the scholarship provider's current instructions when they differ from general preparation guidance.</p><Link to={guide.relatedFeature}>Open the related EliteApply capability</Link></aside><div className="mkt2-guide-body"><p className="lead">{guide.introduction}</p>{guide.sections.map((section) => <section key={section.heading}><h2>{section.heading}</h2><p>{section.body}</p><ul>{section.bullets.map((bullet) => <li key={bullet}><Check aria-hidden="true" />{bullet}</li>)}</ul></section>)}</div></div></article><RelatedLinks title="Continue reading" paths={[...guide.relatedGuides, guide.relatedFeature, "/pricing"]} /><ClosingCta title="Put the guidance beside the application itself." /></>;
-}
-
-function TransparencyPage({ kind }: { kind: "privacy" | "terms" | "accessibility" }) {
-  const content = {
-    privacy: { title: "Privacy information", intro: "A plain-language summary of product controls visible in the current release.", note: "Approved jurisdiction-specific privacy policy copy is still required before production launch.", sections: [["Account access", "Application content is available through an authenticated account session."], ["Session storage", "The current frontend keeps access tokens in browser memory rather than persistent browser storage."], ["Your controls", "Authenticated settings include data export and account-deletion flows. Document areas include download and deletion controls."], ["Questions", "Contact support before relying on a privacy interpretation that is not stated in approved legal copy."]] },
-    terms: { title: "Terms information", intro: "A product-use summary while approved terms of service are being completed.", note: "This page is not final legal terms and must not be presented as an approved contract.", sections: [["Student responsibility", "You remain responsible for the accuracy, authorship and submission of application work."], ["Provider authority", "Scholarship providers control their requirements, deadlines and decisions."], ["No guaranteed outcome", "EliteApply organises work and does not promise scholarships, admission or provider acceptance."], ["Account use", "Do not share passwords, access codes or confidential referee content through unauthorised channels."]] },
-    accessibility: { title: "Accessibility", intro: "EliteApply targets WCAG 2.2 AA and treats keyboard, focus, readable contrast and responsive operation as product requirements.", note: "If a barrier prevents an application task, contact support with the page and assistive technology when comfortable sharing it.", sections: [["Keyboard operation", "Public navigation and core product controls are designed to work without a pointing device."], ["Visible focus", "Interactive controls use a visible focus outline and logical focus order."], ["Non-colour cues", "Status is expressed with text and icons as well as colour."], ["Motion and layout", "The interface respects reduced-motion preferences and reflows for narrow screens without requiring a miniature desktop workspace."]] },
-  }[kind];
-  return <><article className="mkt2-transparency"><header><Breadcrumbs current={content.title} /><h1>{content.title}</h1><p>{content.intro}</p></header><aside><strong>Launch status</strong><p>{content.note}</p></aside><div>{content.sections.map(([title, copy]) => <section key={title}><h2>{title}</h2><p>{copy}</p></section>)}</div><footer><a className="landing-button secondary" href="mailto:support@eliteapply.net">support@eliteapply.net</a><Link to="/security">Review current security controls</Link></footer></article></>;
 }
 
 function RelatedLinks({ title, paths }: { title: string; paths: readonly string[] }) {
