@@ -11,3 +11,9 @@ vite.config.js
 vite.config.d.ts
 vitest.config.js
 vitest.config.d.ts
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
