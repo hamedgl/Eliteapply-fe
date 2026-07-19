@@ -66,11 +66,28 @@ for (const page of manifest) {
     !page.indexable,
     `${page.path}: robots policy mismatch`,
   );
+  assert.match(
+    html,
+    /hreflang="x-default"/,
+    `${page.path}: missing x-default hreflang`,
+  );
+  assert.ok(
+    !/fonts\.(googleapis|gstatic)\.com/.test(html),
+    `${page.path}: references external Google Fonts`,
+  );
   if (page.indexable) {
     const title = html.match(/<title>(.*?)<\/title>/)?.[1];
     const description = html.match(/name="description" content="(.*?)"/)?.[1];
     assert.ok(title, `${page.path}: empty title`);
     assert.ok(description, `${page.path}: empty description`);
+    assert.ok(
+      title.length <= 60,
+      `${page.path}: title exceeds 60 chars (${title.length}): ${title}`,
+    );
+    assert.ok(
+      description.length >= 50 && description.length <= 160,
+      `${page.path}: description length out of 50-160 range (${description.length})`,
+    );
     assert.ok(!titles.has(title), `${page.path}: duplicate title`);
     assert.ok(
       !descriptions.has(description),
@@ -104,6 +121,7 @@ assert.match(notFound, /noindex,nofollow,noarchive/, "404 must be noindex");
 assert.match(robots, /^User-agent: \*/m, "invalid robots.txt");
 assert.match(robots, /Sitemap: https:\/\/eliteapply\.net\/sitemap\.xml/);
 assert.match(robots, /Disallow: \/app\//, "private app routes must be blocked");
+assert.match(robots, /Disallow: \/admin\//, "admin routes must be blocked");
 assert.match(sitemap, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
 assert.equal(
   count(sitemap, /<url>/g),
@@ -121,6 +139,37 @@ for (const header of [
 ])
   assert.ok(headers.includes(header), `missing deployment header: ${header}`);
 assert.match(redirects, /\/app\/\* \/app-shell\.html 200/);
+assert.match(redirects, /\/admin\/\* \/app-shell\.html 200/);
+assert.ok(
+  !headers.includes("fonts.googleapis.com") &&
+    !headers.includes("fonts.gstatic.com"),
+  "CSP must not reference external font origins",
+);
+assert.match(
+  headers,
+  /\/fonts\/\*\n {2}Cache-Control: public, max-age=31536000, immutable/,
+  "fonts must have immutable cache header",
+);
+const adminShell = await readFile(
+  path.join(dist, "admin", "index.html"),
+  "utf8",
+);
+assert.match(
+  adminShell,
+  /noindex,nofollow,noarchive/,
+  "admin shell must be noindex",
+);
+const fontsCss = await readFile(path.join(dist, "fonts", "fonts.css"), "utf8");
+for (const fontFile of fontsCss.matchAll(/url\(\/fonts\/([^)]+)\)/g)) {
+  assert.ok(
+    (await stat(path.join(dist, "fonts", fontFile[1]))).size > 1_000,
+    `font file missing or truncated: ${fontFile[1]}`,
+  );
+}
+assert.ok(
+  !fontsCss.includes("https://"),
+  "fonts.css must not reference external URLs",
+);
 for (const [index, line] of redirects.split(/\r?\n/).entries()) {
   const source = line.trim().split(/\s+/, 1)[0];
   if (source) {

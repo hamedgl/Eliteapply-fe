@@ -8,6 +8,7 @@ import {
 export const SITE_URL = "https://eliteapply.net";
 export const SOCIAL_IMAGE = `${SITE_URL}/og-eliteapply.jpg`;
 export const LAST_MODIFIED = "2026-07-19";
+export const FIRST_PUBLISHED = "2026-07-19";
 
 type PageKind = "home" | "page" | "feature" | "article" | "utility";
 
@@ -275,6 +276,7 @@ function structuredData(page: PageDefinition, canonical: string) {
       image: SOCIAL_IMAGE,
       author: { "@id": `${SITE_URL}/#organization` },
       publisher: { "@id": `${SITE_URL}/#organization` },
+      datePublished: FIRST_PUBLISHED,
       dateModified: LAST_MODIFIED,
       inLanguage: "en",
     });

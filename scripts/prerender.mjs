@@ -30,6 +30,7 @@ function seoHead(seo) {
     <meta name="description" content="${escapeAttribute(seo.description)}" />
     <link rel="canonical" href="${escapeAttribute(seo.canonical)}" />
     <link rel="alternate" hreflang="en" href="${escapeAttribute(seo.canonical)}" />
+    <link rel="alternate" hreflang="x-default" href="${escapeAttribute(seo.canonical)}" />
     <meta property="og:type" content="${type}" />
     <meta property="og:site_name" content="EliteApply" />
     <meta property="og:locale" content="en_GB" />
@@ -90,6 +91,7 @@ const shellRoutes = [
   "/forgot-password",
   "/reset-password",
   "/app",
+  "/admin",
 ];
 const shell = pageHtml(getPageSeo("/app"));
 await writeFile(path.join(dist, "app-shell.html"), shell, "utf8");

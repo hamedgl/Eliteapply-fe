@@ -1,4 +1,5 @@
 /app/* /app-shell.html 200
+/admin/* /app-shell.html 200
 /login /app-shell.html 200
 /register /app-shell.html 200
 /confirm-email /app-shell.html 200

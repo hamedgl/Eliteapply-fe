@@ -127,6 +127,12 @@ export function usePageSeo(pathname: string) {
         seo.canonical,
       );
       alternate.hreflang = "en";
+      const alternateDefault = setLink(
+        'link[rel="alternate"][hreflang="x-default"]',
+        "alternate",
+        seo.canonical,
+      );
+      alternateDefault.hreflang = "x-default";
 
       let script = document.head.querySelector<HTMLScriptElement>(
         "#seo-structured-data",
