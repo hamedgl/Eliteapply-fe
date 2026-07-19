@@ -25,6 +25,8 @@ const sessionPaths = new Set([
 
 const needsSessionBootstrap = (pathname: string) =>
   sessionPaths.has(pathname) ||
+  pathname === "/admin" ||
+  pathname.startsWith("/admin/") ||
   pathname === "/app" ||
   pathname.startsWith("/app/") ||
   pathname.startsWith("/share/") ||

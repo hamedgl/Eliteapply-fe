@@ -155,9 +155,9 @@ const AppShell = lazy(() =>
   Reminders = lazy(() =>
     import("../features/reminders/RemindersPage").then((x) => ({ default: x.RemindersPage })),
   ),
-  AdminLaunch = lazy(() =>
-    import("../features/admin/AdminLaunchPage").then((x) => ({
-      default: x.AdminLaunchPage,
+  AdminPanel = lazy(() =>
+    import("../features/admin/AdminPanel").then((x) => ({
+      default: x.AdminPanel,
     })),
   ),
   MarketingPage = lazy(() =>
@@ -317,6 +317,11 @@ const router = createBrowserRouter([
     path: "/collaborator-invitations/accept",
     element: load(<AcceptInvitation />),
   },
+  {
+    path: "/admin/*",
+    element: load(<AdminPanel />),
+    errorElement: <AppRouteError />,
+  },
   { path: "/referee/academic-reference/:token", element: load(<Referee />) },
   {
     path: "/verify/academic-reference/:publicId",
@@ -352,7 +357,6 @@ const router = createBrowserRouter([
       { path: "interviews/:id", element: load(<Interview />) },
       { path: "notifications", element: load(<Notifications />) },
       { path: "reminders", element: load(<Reminders />) },
-      { path: "admin/launch", element: load(<AdminLaunch />) },
       { path: "settings/profile", element: load(<ProfileSettings />) },
       { path: "settings/security", element: load(<SecuritySettings />) },
       { path: "settings/privacy", element: load(<PrivacySettings />) },
