@@ -326,6 +326,8 @@ export type ResourceGuide = {
   path: string;
   cluster: "Organisation" | "Writing" | "Evidence and references" | "International applicants";
   title: string;
+  /** Shorter title for <title>/meta only, used when `title` would exceed ~60 chars in search results. */
+  seoTitle?: string;
   description: string;
   introduction: string;
   sections: readonly GuideSection[];
@@ -338,6 +340,7 @@ export const resourceGuides: readonly ResourceGuide[] = [
     path: "/resources/organise-multiple-scholarship-applications",
     cluster: "Organisation",
     title: "How to organise multiple scholarship applications",
+    seoTitle: "Organise multiple scholarship applications",
     description: "Build one reliable system for opportunities, requirements, deadlines and next actions.",
     introduction: "The aim is not to create more administration. It is to make each application easy to resume after a busy day, a delayed document or a change in priorities.",
     sections: [
@@ -351,7 +354,7 @@ export const resourceGuides: readonly ResourceGuide[] = [
   {
     path: "/resources/scholarship-application-checklist",
     cluster: "Organisation",
-    title: "Scholarship application checklist",
+    title: "Scholarship application checklist guide",
     description: "A provider-led checklist for eligibility, writing, evidence, references and final review.",
     introduction: "No universal checklist can replace the scholarship's current instructions. Use this structure to capture those instructions completely and review them deliberately.",
     sections: [
@@ -408,6 +411,7 @@ export const resourceGuides: readonly ResourceGuide[] = [
     path: "/resources/authentic-voice-ai-assistance",
     cluster: "Writing",
     title: "How to preserve your authentic voice when using AI assistance",
+    seoTitle: "Preserve your authentic voice with AI",
     description: "Use assistance for structure and review while keeping facts, judgement and final language under your control.",
     introduction: "Before using any assistance, check the scholarship provider's current rules. Some programmes restrict or require disclosure of AI use.",
     sections: [
@@ -450,6 +454,7 @@ export const resourceGuides: readonly ResourceGuide[] = [
     path: "/resources/international-scholarship-document-checklist",
     cluster: "International applicants",
     title: "Document checklist for international scholarship applications",
+    seoTitle: "International scholarship document checklist",
     description: "Plan identity, academic and supporting documents across countries without assuming every provider asks for the same proof.",
     introduction: "Document requirements vary by scholarship and destination. Build your checklist from the current provider instructions and note whether copies, translations or certifications are required.",
     sections: [
@@ -464,6 +469,7 @@ export const resourceGuides: readonly ResourceGuide[] = [
     path: "/resources/translations-certified-documents",
     cluster: "International applicants",
     title: "How to manage translations and certified documents",
+    seoTitle: "Manage translations and certified documents",
     description: "Track source documents, translated versions and provider-specific certification requirements without mixing them up.",
     introduction: "Translation and certification rules vary. Follow the scholarship provider and receiving institution's current instructions rather than assuming one process works everywhere.",
     sections: [
@@ -474,6 +480,13 @@ export const resourceGuides: readonly ResourceGuide[] = [
     relatedFeature: "/features/document-organiser",
     relatedGuides: ["/resources/international-scholarship-document-checklist", "/resources/scholarship-deadline-planning"],
   },
+] as const;
+
+export const pricingFaqs: readonly (readonly [string, string])[] = [
+  ["Will I be charged when I register?", "No. Registration starts with free access and does not require payment details."],
+  ["Where will I see a paid price?", "If a paid plan is available, secure checkout shows the current price and currency before payment."],
+  ["How is plan availability decided?", "The backend returns only plans configured for the current environment; the frontend does not unlock plans from local state."],
+  ["Can I export or delete my data?", "The authenticated account settings include export and account-deletion controls."],
 ] as const;
 
 export const findPageName = (path: string) =>

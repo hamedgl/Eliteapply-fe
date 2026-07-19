@@ -1,6 +1,7 @@
 import {
   featurePages,
   intentPages,
+  pricingFaqs,
   resourceGuides,
 } from "../features/marketing/marketingData";
 
@@ -13,6 +14,8 @@ type PageKind = "home" | "page" | "feature" | "article" | "utility";
 type PageDefinition = {
   path: string;
   title: string;
+  /** Shorter title for the <title> tag only, when `title` would exceed ~60 chars in search results. */
+  metaTitle?: string;
   description: string;
   indexable: boolean;
   kind: PageKind;
@@ -150,6 +153,7 @@ const contentPages: readonly PageDefinition[] = [
   ...resourceGuides.map((page) => ({
     path: page.path,
     title: page.title,
+    metaTitle: page.seoTitle,
     description: page.description,
     indexable: true,
     kind: "article" as const,
@@ -276,6 +280,17 @@ function structuredData(page: PageDefinition, canonical: string) {
     });
   }
 
+  if (page.path === "/pricing") {
+    graph.push({
+      "@type": "FAQPage",
+      mainEntity: pricingFaqs.map(([question, answer]) => ({
+        "@type": "Question",
+        name: question,
+        acceptedAnswer: { "@type": "Answer", text: answer },
+      })),
+    });
+  }
+
   return { "@context": "https://schema.org", "@graph": graph };
 }
 
@@ -296,9 +311,7 @@ export function getPageSeo(pathname: string): PageSeo {
     fullTitle:
       page.kind === "home"
         ? page.title
-        : page.kind === "article"
-          ? `${page.title} | Resources | EliteApply`
-          : `${page.title} | EliteApply`,
+        : `${page.metaTitle ?? page.title} | EliteApply`,
     robots: page.indexable
       ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
       : "noindex,nofollow,noarchive",
