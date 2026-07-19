@@ -1619,6 +1619,139 @@ th {
 .marketing-nav .nav-signin {
   margin-left: clamp(1rem, 5vw, 6rem);
 }
+.marketing-public-actions {
+  margin-left: clamp(0.5rem, 2vw, 2rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+}
+.marketing-public-actions .nav-signin {
+  margin-left: 0;
+}
+.marketing-account {
+  margin-left: clamp(0.5rem, 2vw, 2rem);
+  position: relative;
+}
+.marketing-account-loading {
+  width: 168px;
+  height: 44px;
+  margin-left: clamp(0.5rem, 2vw, 2rem);
+  display: block;
+  border-radius: var(--m-radius-control);
+  background: var(--m-pale);
+}
+.marketing-account-trigger {
+  min-height: 44px;
+  max-width: 230px;
+  padding: 4px 9px 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--m-ink);
+  border: 1px solid var(--m-line);
+  border-radius: var(--m-radius-control);
+  background: var(--m-white);
+  font-weight: 600;
+}
+.marketing-account-trigger:hover,
+.marketing-account-trigger[aria-expanded="true"] {
+  background: var(--m-pale);
+}
+.marketing-account-trigger > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: transform var(--m-duration) var(--m-ease-out);
+}
+.marketing-account-trigger[aria-expanded="true"] > svg {
+  transform: rotate(180deg);
+}
+.marketing-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  position: relative;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  color: var(--m-blue);
+  border-radius: 50%;
+  background: var(--m-blue-soft, #eef3ff);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.marketing-avatar img {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+}
+.marketing-avatar svg {
+  width: 18px;
+}
+.marketing-account-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.marketing-account-panel {
+  width: 260px;
+  padding: 0.45rem;
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  z-index: 30;
+  color: var(--m-ink);
+  border: 1px solid var(--m-line);
+  border-radius: 10px;
+  background: var(--m-white);
+  box-shadow: 0 6px 8px rgb(16 27 59 / 14%);
+}
+.marketing-account-panel header {
+  padding: 0.65rem 0.7rem 0.75rem;
+  display: grid;
+  border-bottom: 1px solid var(--m-line);
+}
+.marketing-account-panel header strong,
+.marketing-account-panel header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.marketing-account-panel header span {
+  margin-top: 0.15rem;
+  color: var(--m-muted);
+  font-size: 0.75rem;
+}
+.marketing-account-panel :where(a, button) {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--m-ink);
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-weight: 600;
+  text-align: left;
+}
+.marketing-account-panel :where(a, button):hover {
+  background: var(--m-pale);
+}
+.marketing-account-panel button {
+  color: var(--danger);
+  border-top: 1px solid var(--m-line);
+  border-radius: 0 0 7px 7px;
+}
+.marketing-account-panel :where(a, button) svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
 .landing-button {
   display: inline-flex !important;
   align-items: center;
@@ -12867,6 +13000,43 @@ body:has(.admin-shell) {
   .phase-one-header .marketing-nav > .landing-button {
     margin-top: 0.75rem;
     justify-content: center;
+  }
+  .marketing-public-actions {
+    width: 100%;
+    margin: 0;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .marketing-public-actions .nav-signin {
+    min-height: 52px;
+    margin: 0;
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    align-items: center;
+  }
+  .marketing-public-actions .landing-button {
+    margin-top: 0.75rem;
+  }
+  .marketing-account,
+  .marketing-account-loading {
+    width: 100%;
+    margin: 0;
+  }
+  .marketing-account-trigger {
+    width: 100%;
+    max-width: none;
+    min-height: 52px;
+    padding: 0.45rem;
+  }
+  .marketing-account-trigger > svg {
+    margin-left: auto;
+  }
+  .marketing-account-panel {
+    width: 100%;
+    margin-top: 0.4rem;
+    position: static;
+    box-shadow: none;
   }
   .product-menu summary svg {
     margin-left: auto;

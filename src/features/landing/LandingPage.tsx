@@ -39,8 +39,12 @@ import closingPathIllustration from "../../assets/illustrations/application-path
 import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.png";
 import comparisonWith from "../../assets/comparison-with.webp";
 import comparisonWithout from "../../assets/comparison-without.webp";
+import { useSession } from "../../lib/auth/session";
 import { usePageSeo } from "../../seo/usePageSeo";
-import { MarketingShell } from "../marketing/MarketingShell";
+import {
+  MarketingAccountMenu,
+  MarketingShell,
+} from "../marketing/MarketingShell";
 
 const guideSteps = [
   {
@@ -493,6 +497,9 @@ export function LandingPage() {
   const guidedRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const showPublicCta = useSession(
+    (state) => !state.initializing && !state.accessToken,
+  );
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -638,20 +645,17 @@ export function LandingPage() {
           <Link to="/pricing" onClick={() => setMenuOpen(false)}>
             Pricing
           </Link>
-          <Link className="nav-signin" to="/login" reloadDocument>
-            Sign in
-          </Link>
-          <Link className="landing-button small" to="/register" reloadDocument>
+          <MarketingAccountMenu />
+        </nav>
+        {showPublicCta ? (
+          <Link
+            className="landing-button small header-mobile-cta"
+            to="/register"
+            reloadDocument
+          >
             Start free
           </Link>
-        </nav>
-        <Link
-          className="landing-button small header-mobile-cta"
-          to="/register"
-          reloadDocument
-        >
-          Start free
-        </Link>
+        ) : null}
         <button
           ref={menuButtonRef}
           className="nav-toggle"
