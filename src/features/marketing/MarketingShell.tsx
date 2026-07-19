@@ -313,7 +313,7 @@ export function MarketingFooter() {
         <Link to="/contact">Contact</Link>
       </nav>
       <div className="footer-bottom">
-        <span>© 2026 EliteApply</span>
+        <span>© 2026 Executive Precision Era · EliteApply</span>
         <Link to="/login" reloadDocument>
           Sign in
         </Link>

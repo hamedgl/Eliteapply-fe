@@ -187,7 +187,9 @@ function structuredData(page: PageDefinition, canonical: string) {
     "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
     name: "EliteApply",
+    legalName: "Executive Precision Era",
     url: `${SITE_URL}/`,
+    sameAs: ["https://eliteresume.net"],
     logo: {
       "@type": "ImageObject",
       url: `${SITE_URL}/logo.png`,

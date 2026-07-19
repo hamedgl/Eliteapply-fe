@@ -34,6 +34,10 @@ EliteApply helps applicants keep each opportunity connected to the evidence and 
 - [Request a scholarship reference](https://eliteapply.net/resources/request-scholarship-reference)
 - [International scholarship document checklist](https://eliteapply.net/resources/international-scholarship-document-checklist)
 
+## Company
+
+EliteApply is built by Executive Precision Era, which also makes [EliteResume](https://eliteresume.net), a companion CV and résumé product.
+
 ## Policies and contact
 
 - [Accessibility](https://eliteapply.net/accessibility)
