@@ -29,7 +29,10 @@ export function DocumentsPage() {
     mutationFn: (file: File) => uploadAcademicDocument(file, category),
     onSuccess: () => {
       setMessage("Upload registered. Security scanning is now in progress.");
-      void qc.invalidateQueries({ queryKey: queryKeys.documents });
+      void Promise.all([
+        qc.invalidateQueries({ queryKey: queryKeys.documents }),
+        qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
+      ]);
     },
     onError: (error) => setMessage(error.message),
   });
@@ -41,7 +44,10 @@ export function DocumentsPage() {
     )
       return;
     await documentsApi.remove(id);
-    void qc.invalidateQueries({ queryKey: queryKeys.documents });
+    void Promise.all([
+      qc.invalidateQueries({ queryKey: queryKeys.documents }),
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
+    ]);
   }
   return (
     <div className="page documents-page">

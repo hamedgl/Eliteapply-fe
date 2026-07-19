@@ -37,10 +37,10 @@ export function AcademicProfilePage() {
   };
   const save = useMutation({
     mutationFn: profileApi.save,
-    onSuccess: (profile) => {
+    onSuccess: async (profile) => {
       qc.setQueryData(queryKeys.profile, profile);
       setMessage("Academic profile saved.");
-      void qc.invalidateQueries({ queryKey: queryKeys.profileVersions });
+      await refreshRelated();
     },
   });
   const restore = useMutation({

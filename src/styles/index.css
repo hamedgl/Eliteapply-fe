@@ -5712,8 +5712,7 @@ th {
   background: #fff;
 }
 
-.app-shell
-  :where(button.danger, button.danger-link):hover:not(:disabled) {
+.app-shell :where(button.danger, button.danger-link):hover:not(:disabled) {
   color: #7f1812;
   border-color: #cf746c;
   background: #fff3f2;
@@ -5990,6 +5989,32 @@ th {
   color: var(--app-muted);
   font-size: 0.72rem;
   font-weight: 600;
+}
+
+.setup-page-intro {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.setup-page-intro > span {
+  color: var(--app-blue);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.setup-page-intro h3 {
+  margin: 0.2rem 0 0;
+  color: var(--app-ink);
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.88rem;
+}
+
+.setup-page-intro p {
+  margin: 0.25rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .dashboard-empty {
@@ -6273,15 +6298,110 @@ th {
   background: var(--app-green);
 }
 
+.setup-checklist > a.checking > span,
+.setup-checklist > a.unavailable > span {
+  color: var(--app-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--app-surface-subtle);
+}
+
 .setup-checklist > a svg {
   width: 14px;
   height: 14px;
 }
 
-.setup-checklist > a > strong {
+.setup-checklist > a > div {
   min-width: 0;
+}
+
+.setup-checklist > a > div strong {
+  display: block;
   font-size: 0.78rem;
   overflow-wrap: anywhere;
+}
+
+.setup-checklist > a > div small {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--app-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.setup-sync-error {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.setup-sync-error p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.75rem;
+}
+
+.setup-sync-error button,
+.setup-pagination button {
+  min-height: 44px;
+  padding: 0.5rem 0.7rem;
+  color: var(--app-blue);
+  border: 1px solid var(--app-line-strong);
+  border-radius: 8px;
+  background: var(--app-surface);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.setup-sync-error button {
+  margin-top: 0.5rem;
+}
+
+.setup-sync-error button:hover:not(:disabled),
+.setup-pagination button:hover:not(:disabled) {
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+
+.setup-sync-error button:disabled,
+.setup-pagination button:disabled {
+  color: var(--app-muted);
+  border-color: var(--app-line);
+  background: var(--app-surface-subtle);
+  cursor: not-allowed;
+}
+
+.setup-pagination {
+  min-width: 0;
+  padding: 0.7rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  border-top: 1px solid var(--app-line);
+}
+
+.setup-pagination button:last-child {
+  justify-self: end;
+}
+
+.setup-pagination > span {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.setup-pagination i {
+  width: 6px;
+  height: 6px;
+  display: block;
+  border-radius: 50%;
+  background: var(--app-line-strong);
+}
+
+.setup-pagination i.active {
+  background: var(--app-blue);
 }
 
 .dashboard-state {
@@ -10222,9 +10342,11 @@ th {
 }
 .workflow-stage-meter > span {
   display: block;
+  width: 100%;
   height: 100%;
+  transform-origin: left;
   background: var(--m-blue);
-  transition: width 240ms var(--m-ease-out);
+  transition: transform 240ms var(--m-ease-out);
 }
 .workflow-stage-meter > small {
   position: absolute;
@@ -10345,7 +10467,9 @@ th {
   text-align: center;
 }
 .workflow-progress-panel .gauge-copy strong {
-  font: 700 1.45rem/1 "DM Sans", sans-serif;
+  font:
+    700 1.45rem/1 "DM Sans",
+    sans-serif;
   letter-spacing: -0.02em;
 }
 .workflow-progress-panel .gauge-copy small {

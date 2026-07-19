@@ -1,0 +1,1288 @@
+
+  Build a production-grade EliteApply Admin Panel against the existing backend contract below.
+
+  Do not create mock endpoints, fake statistics, speculative controls, or a second authentication/API framework. Inspect the existing frontend first and reuse its routing, authentication, API client, query/cache library,
+  forms, validation, UI primitives, toast system, testing stack, and design tokens.
+
+  Complete the implementation, including responsive UI, loading/error/empty states, accessibility, tests, lint, type checking, and production build verification.
+
+  ==================================================
+  1. OBJECTIVE
+  ==================================================
+
+  Create a secure operational console that lets authorized administrators:
+
+  - Manage user activation and administrator access.
+  - Inspect and override user entitlements.
+  - Inspect AI usage.
+  - Reset a user’s current usage window.
+  - Monitor, cancel, and retry asynchronous operations.
+  - Manage feature flags and emergency kill switches.
+  - Moderate and merge catalogue records.
+  - Inspect redacted reference event history.
+  - Redrive allowlisted dead-letter queues.
+  - Trigger due-reminder dispatch.
+  - Manage launch gates and inspect launch readiness.
+  - Review the immutable administrative audit trail.
+
+  This is an operations console, not a private-content browser.
+
+  Never expose or invent access to:
+
+  - Essays, prompts, raw opportunity import text, transcripts, confidential references, or private document content.
+  - Raw SQS/DLQ message bodies.
+  - Authentication tokens, storage keys, signed URLs, or provider secrets.
+  - Arbitrary database CRUD.
+  - User hard deletion; no admin hard-delete API exists.
+  - Bulk destructive operations; no bulk API exists.
+
+  ==================================================
+  2. AUTHENTICATION AND ACCESS CONTROL
+  ==================================================
+
+  API base path:
+
+    /api/v1
+
+  All admin endpoints require:
+
+    Authorization: Bearer <access_token>
+
+  Reuse the existing frontend authentication/session implementation. Do not store a second token or create an admin-specific login flow.
+
+  On admin entry:
+
+  1. Fetch GET /api/v1/users/me using the existing authenticated-user query.
+  2. Require `is_admin === true`.
+  3. If not authenticated, use the existing login/refresh flow.
+  4. If authenticated but not an admin, render a proper 403 page and remove admin navigation.
+  5. Client-side guards are UX only. The backend remains authoritative.
+  6. Handle a backend 403 even when the cached user says they are an admin; permissions may have changed.
+  7. Clear all admin query caches on logout or identity change.
+  8. Never persist user, usage, entitlement, audit, or operational data to localStorage.
+
+  Every request should send a generated UUID in:
+
+    X-Correlation-ID: <uuid>
+
+  Capture the response `X-Correlation-ID`. Show it as a copyable support reference on error screens and mutation failures.
+
+  Retry policy:
+
+  - GET requests: up to two retries for network errors and transient 5xx responses, with backoff.
+  - Never automatically retry POST, PUT, or PATCH admin mutations.
+  - Never retry 401 or 403 automatically beyond the existing single token-refresh attempt.
+  - Disable mutation controls while a request is in flight to prevent double submission.
+
+  ==================================================
+  3. INFORMATION ARCHITECTURE
+  ==================================================
+
+  Implement these routes, adapted to the existing router conventions:
+
+  - /admin
+  - /admin/users
+  - /admin/users/:userId
+  - /admin/operations
+  - /admin/operations/:operationId
+  - /admin/feature-flags
+  - /admin/catalogue
+  - /admin/references
+  - /admin/launch
+  - /admin/queues
+  - /admin/audit-log
+
+  Use an `AdminShell` with:
+
+  - Collapsible navigation.
+  - Page title, short purpose text, breadcrumbs, and contextual actions.
+  - Global exact-user lookup accepting either email or UUID.
+  - Current administrator identity in the header.
+  - A clear “Production” environment indicator when applicable.
+  - Keyboard-accessible navigation and dialogs.
+  - Responsive behavior: desktop operations console, usable tablet layout, and stacked mobile detail views.
+
+  Navigation groups:
+
+  Operations
+  - Overview
+  - Operations
+  - Queues and reminders
+
+  Access
+  - Users
+  - Audit log
+
+  Configuration
+  - Feature flags
+  - Catalogue moderation
+  - Launch readiness
+
+  References
+  - Reference event lookup
+
+  ==================================================
+  4. VISUAL AND INTERACTION DIRECTION
+  ==================================================
+
+  Design a calm, serious operations console:
+
+  - Dense enough for operational work, but not cramped.
+  - Neutral surfaces with restrained borders.
+  - Red only for dangerous or failed states.
+  - Amber for warnings, rollout risk, and waived gates.
+  - Green for confirmed success and passed gates.
+  - Use text plus icons for status; never rely on color alone.
+  - Use tabular numerals for tokens, costs, percentages, and timestamps.
+  - Show timestamps in the administrator’s locale and timezone, with exact UTC on hover.
+  - Use proper skeletons rather than layout-shifting spinners.
+  - Never render JSON or metadata with `dangerouslySetInnerHTML`.
+  - Render unknown metadata using a safe JSON tree or escaped monospace block.
+  - Provide clear focus states, labels, descriptions, and screen-reader announcements.
+  - All dialogs must trap focus and restore it when closed.
+  - Respect reduced-motion settings.
+
+  Do not turn the interface into a collection of decorative cards. Prefer tables, split panes, compact summaries, timelines, and focused action panels.
+
+  ==================================================
+  5. CORE TYPES
+  ==================================================
+
+  Use generated OpenAPI types if the frontend already has OpenAPI generation. Otherwise define equivalent strict TypeScript types.
+
+  type CursorPage<T> = {
+    items: T[];
+    next_cursor: string | null;
+    has_more: boolean;
+    total: number | null;
+  };
+
+  type UserSearchResult = {
+    id: string;
+    email: string;
+    full_name: string | null;
+    is_active: boolean;
+    is_admin: boolean;
+    created_at: string;
+    last_login_at: string | null;
+  };
+
+  type FeatureFlagSummary = {
+    key: string;
+    enabled: boolean;
+    rollout_percentage: number;
+    cohorts: string[];
+    kill_switch: boolean;
+    updated_at: string;
+  };
+
+  type OperationType =
+    | "writing_generation"
+    | "opportunity_import"
+    | "interview";
+
+  type OperationSummary = {
+    id: string;
+    type: OperationType;
+    status: string;
+    user_id: string;
+    created_at: string;
+  };
+
+  type OperationDetail = OperationSummary & {
+    completed_at: string | null;
+    failure_reason: string | null;
+  };
+
+  type EntitlementResponse = {
+    plan_key: string;
+    plan_name: "free" | "pro" | "teams";
+    plan_label: string;
+    subscription_status: string;
+    is_active: boolean;
+    cancel_at_period_end: boolean;
+    current_period_end: string | null;
+    trial_end: string | null;
+    ai_tokens_used: number;
+    ai_tokens_limit: number;
+    ai_tokens_reset_at: string;
+    purchased_tokens_remaining: number;
+  };
+
+  type UsageSummary = {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    metered_tokens: number;
+    cost_usd: number;
+    request_count: number;
+  };
+
+  type UsageLog = {
+    id: string;
+    task_type: string;
+    model_id: string;
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    metered_tokens: number;
+    cost_usd: number;
+    created_at: string;
+  };
+
+  type UsageResponse = {
+    period: string;
+    summary: UsageSummary;
+    logs: CursorPage<UsageLog>;
+  };
+
+  type AdminAction = {
+    id: string;
+    admin_user_id: string;
+    action: string;
+    target_type: string;
+    target_id: string;
+    reason: string;
+    metadata_safe: Record<string, unknown>;
+    created_at: string;
+  };
+
+  type CatalogueKind =
+    | "institution"
+    | "programme"
+    | "scholarship";
+
+  type CatalogueModerationItem = {
+    id: string;
+    kind: CatalogueKind;
+    name: string;
+    created_by_user_id: string | null;
+    source_url: string | null;
+    last_verified_at: string | null;
+    created_at: string | null;
+  };
+
+  type ReferenceEvent = {
+    id: string;
+    event_type: string;
+    event_metadata: Record<string, unknown>;
+    created_at: string;
+  };
+
+  type LaunchGate = {
+    key: string;
+    status: "pending" | "passed" | "failed" | "waived";
+    evidence_reference: string | null;
+    verified_by: string | null;
+    verified_at: string | null;
+    notes: string | null;
+  };
+
+  type LaunchReadiness = {
+    ready: boolean;
+    passed: number;
+    total: number;
+    blocking_gates: string[];
+  };
+
+  ==================================================
+  6. CURSOR PAGINATION
+  ==================================================
+
+  All cursor-paginated responses use:
+
+  {
+    "items": [],
+    "next_cursor": "opaque-value-or-null",
+    "has_more": false,
+    "total": null
+  }
+
+  Rules:
+
+  - Treat cursors as opaque.
+  - Never construct, decode, or modify cursors.
+  - Do not display fake page counts when `total` is null.
+  - “Next” uses `next_cursor`.
+  - Support “Previous” by keeping a client-side stack of previously used cursors.
+  - Reset the cursor stack when filters change.
+  - Keep filters and the active cursor in URL search parameters where practical.
+  - Page sizes must stay within API limits.
+  - Do not fetch every page to calculate a total.
+  - Use `has_more`, not the item count, to determine whether “Next” is enabled.
+
+  ==================================================
+  7. ADMIN OVERVIEW
+  ==================================================
+
+  The backend does not expose a platform-statistics endpoint. Do not invent user counts, revenue, queue depth, pending moderation totals, or cost charts.
+
+  Build the overview from real available data:
+
+  Run concurrently with independent error boundaries:
+
+  - GET /admin/launch-readiness
+  - GET /admin/operations?limit=10
+  - GET /admin/feature-flags
+  - GET /admin/audit-log?limit=10
+
+  Show:
+
+  - Launch readiness: ready/not ready, passed/total, blocking gates.
+  - Recent operations and their current states.
+  - Active kill switches and partially rolled-out flags.
+  - Recent admin actions.
+  - Links to the relevant workspaces.
+
+  Use `Promise.allSettled` behavior so one failed panel does not blank the entire overview.
+
+  Do not derive unsupported global metrics from partial pages.
+
+  ==================================================
+  8. USER MANAGEMENT WORKFLOW
+  ==================================================
+
+  User list:
+
+  GET /api/v1/admin/users
+
+  Query parameters:
+
+  - is_active?: boolean
+  - is_admin?: boolean
+  - cursor?: string
+  - limit?: integer, 1–100, default 50
+
+  Response:
+
+    CursorPage<UserSearchResult>
+
+  Provide filters:
+
+  - Account: All / Active / Deactivated
+  - Role: All / Administrator / Standard user
+  - Page size: 25 / 50 / 100
+
+  Columns:
+
+  - Name and email
+  - Active status
+  - Role
+  - Created date
+  - Last login
+  - Open detail action
+
+  Exact user search:
+
+  GET /api/v1/admin/users/search?email=<exact-email>
+
+  or:
+
+  GET /api/v1/admin/users/search?user_id=<uuid>
+
+  Rules:
+
+  - Require exactly one search mode in the UI.
+  - Do not send both values.
+  - Email is exact-match support lookup, not fuzzy search.
+  - Validate UUID syntax before requesting.
+  - On success, navigate to `/admin/users/:id`.
+  - A missing user returns 404.
+
+  User detail:
+
+  GET /api/v1/admin/users/{user_id}
+
+  Response example:
+
+  {
+    "id": "uuid",
+    "email": "student@example.com",
+    "full_name": "Student Name",
+    "is_active": true,
+    "is_admin": false,
+    "created_at": "2026-07-18T12:00:00Z",
+    "last_login_at": "2026-07-18T11:00:00Z"
+  }
+
+  Build tabs:
+
+  1. Account
+  2. Entitlement
+  3. AI usage
+  4. Audit history
+
+  Account actions:
+
+  PATCH /api/v1/admin/users/{user_id}
+
+  Request:
+
+  {
+    "is_active": false,
+    "reason": "Support-requested account suspension"
+  }
+
+  or:
+
+  {
+    "is_admin": true,
+    "reason": "Approved administrator access"
+  }
+
+  or both fields together.
+
+  Rules:
+
+  - `reason` is required, 3–1000 characters.
+  - Send only changed boolean fields.
+  - Never send `is_active: null` or `is_admin: null`.
+  - At least one of the two state fields must be present.
+  - Use the server response as authoritative.
+  - Deactivation revokes the account’s usable session state.
+  - The backend blocks an administrator from deactivating or demoting their own account.
+  - Compare the target ID with GET `/api/v1/users/me` and disable self-demotion/self-deactivation before submission.
+  - Still handle server 422 because the backend is authoritative.
+
+  Confirmation levels:
+
+  - Activate: confirmation dialog with reason.
+  - Deactivate: danger dialog; show email and impact; require typed email confirmation.
+  - Grant admin: high-risk dialog; require typed email and reason.
+  - Revoke admin: high-risk dialog; require typed email and reason.
+  - Never use a one-click toggle for role or active-state changes.
+  - Do not optimistically update account or role state.
+
+  After success:
+
+  - Replace cached user detail with the response.
+  - Invalidate user-list queries.
+  - Invalidate audit queries.
+  - Announce success accessibly.
+
+  ==================================================
+  9. ENTITLEMENT AND AI USAGE WORKFLOW
+  ==================================================
+
+  Inspect entitlement:
+
+  GET /api/v1/admin/users/{user_id}/entitlement
+
+  Response example:
+
+  {
+    "plan_key": "pro_annual",
+    "plan_name": "pro",
+    "plan_label": "Pro Annual",
+    "subscription_status": "active",
+    "is_active": true,
+    "cancel_at_period_end": false,
+    "current_period_end": "2026-08-18T00:00:00Z",
+    "trial_end": null,
+    "ai_tokens_used": 12000,
+    "ai_tokens_limit": 300000,
+    "ai_tokens_reset_at": "2026-08-01T00:00:00Z",
+    "purchased_tokens_remaining": 5000
+  }
+
+  Show:
+
+  - Resolved plan and label.
+  - Provider subscription status.
+  - Active/cancel-at-period-end state.
+  - Period/trial dates.
+  - Used versus limit progress.
+  - Purchased tokens remaining.
+  - Reset date.
+
+  Important contract limitation:
+
+  The GET response exposes resolved entitlement values, not the raw
+  `forced_plan_key` or raw `ai_tokens_limit_override`. Do not infer whether the
+  resolved value came from Stripe, a default plan, or an override.
+
+  Present explicit actions:
+
+  - “Set plan override”
+  - “Set token-limit override”
+  - “Clear plan override”
+  - “Clear token-limit override”
+
+  Update entitlement:
+
+  PATCH /api/v1/admin/users/{user_id}/entitlement
+
+  Allowed plan values:
+
+  - free
+  - pro_trial
+  - pro_monthly
+  - pro_annual
+  - teams_monthly
+  - teams_annual
+
+  Set overrides:
+
+  {
+    "forced_plan_key": "pro_annual",
+    "ai_tokens_limit_override": 500000,
+    "reason": "Approved support entitlement adjustment"
+  }
+
+  Clear overrides:
+
+  {
+    "forced_plan_key": null,
+    "ai_tokens_limit_override": null,
+    "reason": "Remove temporary support override"
+  }
+
+  Rules:
+
+  - Token limit must be an integer >= 0.
+  - A value of 0 intentionally disables the included AI allowance.
+  - Null is meaningful here: it clears an override.
+  - Omit an entitlement field when it is not being changed.
+  - Require reason text.
+  - Do not expose controls to edit Stripe customer IDs, subscription IDs, raw subscription status, purchased-token balance, invoices, or payment facts.
+  - Stripe/provider facts are read-only.
+  - Do not optimistically update entitlement state.
+  - Refetch the entitlement after success.
+
+  Reset current token usage:
+
+  POST /api/v1/admin/users/{user_id}/reset-token-usage
+
+  Request:
+
+  {
+    "reason": "Approved support usage reset"
+  }
+
+  Response:
+
+    204 No Content
+
+  Rules:
+
+  - This advances the effective usage-window start.
+  - It does not delete historical logs.
+  - Require a danger confirmation showing current usage and user email.
+  - Do not parse JSON from a 204 response.
+  - On success invalidate entitlement, usage, and audit queries.
+
+  Usage ledger:
+
+  GET /api/v1/admin/users/{user_id}/usage-ledger?limit=50&cursor=<opaque>
+
+  Response:
+
+  {
+    "period": "2026-07",
+    "summary": {
+      "prompt_tokens": 100,
+      "completion_tokens": 200,
+      "total_tokens": 300,
+      "metered_tokens": 300,
+      "cost_usd": 0.012345,
+      "request_count": 4
+    },
+    "logs": {
+      "items": [
+        {
+          "id": "uuid",
+          "task_type": "rewrite",
+          "model_id": "model-name",
+          "prompt_tokens": 100,
+          "completion_tokens": 200,
+          "total_tokens": 300,
+          "metered_tokens": 300,
+          "cost_usd": 0.012345,
+          "created_at": "2026-07-18T12:00:00Z"
+        }
+      ],
+      "next_cursor": null,
+      "has_more": false,
+      "total": null
+    }
+  }
+
+  Display summary cards above a paginated table. Format USD precisely enough for
+  small AI costs; do not round every value to two decimal places.
+
+  ==================================================
+  10. OPERATIONS WORKFLOW
+  ==================================================
+
+  List operations:
+
+  GET /api/v1/admin/operations
+
+  Query:
+
+  - type?: writing_generation | opportunity_import | interview
+  - status?: string
+  - cursor?: string
+  - limit?: 1–100, default 25
+
+  Response:
+
+    CursorPage<OperationSummary>
+
+  Columns:
+
+  - Operation type
+  - Status
+  - User ID, linked to user detail
+  - Created time
+  - Operation ID
+  - Open detail
+
+  Detail:
+
+  GET /api/v1/admin/operations/{operation_id}
+
+  Response example:
+
+  {
+    "id": "uuid",
+    "type": "writing_generation",
+    "status": "failed",
+    "user_id": "uuid",
+    "created_at": "2026-07-18T12:00:00Z",
+    "completed_at": "2026-07-18T12:01:00Z",
+    "failure_reason": "Safe failure explanation"
+  }
+
+  Never expect or display request payloads, prompts, raw source text, essays, or transcripts.
+
+  Polling:
+
+  - Poll visible active operations only.
+  - Suggested active states include queued, processing, ready, and in_progress.
+  - Poll every 5 seconds while the tab is visible.
+  - Back off to 15–30 seconds after repeated unchanged results.
+  - Stop polling terminal operations.
+  - Pause polling when the browser tab is hidden.
+  - Do not create a WebSocket dependency; no admin realtime API exists.
+
+  Retry:
+
+  POST /api/v1/admin/operations/{operation_id}/retry
+
+  No request body.
+
+  Rules:
+
+  - Retry is valid only for failed `writing_generation` and failed `opportunity_import`.
+  - Interview operations never support retry.
+  - The response is authoritative.
+  - A writing-generation retry can return a new operation ID.
+  - Navigate to or render the returned operation, not the old ID.
+  - Invalid state may return 409 or 422.
+  - Require confirmation, but the API does not accept a custom reason for this action.
+
+  Cancel:
+
+  POST /api/v1/admin/operations/{operation_id}/cancel
+
+  No request body.
+
+  Rules:
+
+  - Cancellation is best effort.
+  - Hide or disable cancellation for clearly terminal states.
+  - Still handle a terminal no-op response from the backend.
+  - Require confirmation.
+  - Do not optimistically mark an operation cancelled.
+  - Invalidate operation list, detail, and audit queries on success.
+
+  ==================================================
+  11. FEATURE FLAGS WORKFLOW
+  ==================================================
+
+  List flags:
+
+  GET /api/v1/admin/feature-flags
+
+  Response:
+
+    FeatureFlagSummary[]
+
+  Get one flag:
+
+  GET /api/v1/admin/feature-flags/{key}
+
+  Response example:
+
+  {
+    "key": "saved_searches",
+    "enabled": true,
+    "rollout_percentage": 50,
+    "cohorts": ["beta"],
+    "kill_switch": false,
+    "updated_at": "2026-07-18T12:00:00Z"
+  }
+
+  Update or create a flag:
+
+  PUT /api/v1/admin/feature-flags/{key}
+
+  Request:
+
+  {
+    "enabled": true,
+    "rollout_percentage": 50,
+    "cohorts": ["beta"],
+    "kill_switch": false,
+    "reason": "Increase rollout after successful monitoring"
+  }
+
+  Validation:
+
+  - enabled: required boolean
+  - rollout_percentage: integer 0–100
+  - cohorts: maximum 100 strings
+  - kill_switch: boolean
+  - reason: required, 3–1000 characters
+
+  PUT semantics require sending the complete desired flag configuration, not only changed fields.
+
+  The PUT response is:
+
+  {
+    "key": "saved_searches",
+    "enabled": true,
+    "rollout_percentage": 50,
+    "cohorts": ["beta"],
+    "kill_switch": false
+  }
+
+  It does not include `updated_at`; refetch detail or list after success.
+
+  UX:
+
+  - Show enabled, rollout, cohort, kill-switch, and last-updated state.
+  - Explain that the kill switch takes precedence over enabled/rollout state.
+  - Treat enabling a kill switch as a high-risk action.
+  - Require typed flag-key confirmation for kill-switch changes.
+  - Require a reason for every update.
+  - Show a before/after preview in the confirmation dialog.
+  - Do not use an instant toggle that mutates on click.
+  - Allow new flag creation only if product requirements need it.
+  - If creation is exposed, validate a conservative key format such as lowercase letters, numbers, `.`, `_`, and `-`, maximum 100 characters.
+  - Invalidate flag detail, flag list, overview, and audit queries after updates.
+
+  ==================================================
+  12. CATALOGUE MODERATION WORKFLOW
+  ==================================================
+
+  Allowed kinds:
+
+  - institution
+  - programme
+  - scholarship
+
+  Pending list:
+
+  GET /api/v1/admin/catalogue/{kind}/pending?limit=25&cursor=<opaque>
+
+  Response:
+
+    CursorPage<CatalogueModerationItem>
+
+  Create one moderation workspace with kind tabs and URL-persisted cursors.
+
+  Display:
+
+  - Name
+  - Kind
+  - Submitted-by user
+  - Source URL
+  - Created date
+  - Verification date
+  - Actions
+
+  Open source URLs safely:
+
+  - Use `target="_blank"` and `rel="noopener noreferrer"`.
+  - Display the hostname.
+  - Treat URLs as untrusted.
+  - Never embed arbitrary source pages in an iframe.
+
+  Approve:
+
+  POST /api/v1/admin/catalogue/{kind}/{item_id}/approve
+
+  No request body.
+
+  Response:
+
+    CatalogueModerationItem
+
+  Approval promotes the record to canonical state. Require confirmation and show the record ID/name.
+
+  Reject:
+
+  POST /api/v1/admin/catalogue/{kind}/{item_id}/reject
+
+  Request:
+
+  {
+    "reason": "Duplicate or unsupported submission"
+  }
+
+  Response:
+
+    204 No Content
+
+  Require a reason and typed record-name confirmation. Remove the item from the pending cache only after server success.
+
+  Merge:
+
+  POST /api/v1/admin/catalogue/{kind}/{item_id}/merge
+
+  Request:
+
+  {
+    "target_id": "canonical-record-uuid",
+    "reason": "Duplicate of the canonical record"
+  }
+
+  Response:
+
+    CatalogueModerationItem
+
+  Rules:
+
+  - Source and target IDs must differ.
+  - Target must be canonical.
+  - Backend returns 409 when the target is not canonical.
+  - Merge reassigns dependent records and archives the source.
+  - This is a high-risk operation.
+  - Require source-name typed confirmation, reason, and a before/after summary.
+  - Never optimistically remove or merge rows.
+
+  Canonical-target lookup may reuse existing catalogue reads:
+
+  Institutions:
+    GET /api/v1/catalogue/institutions?search=<text>&verified=true&limit=25
+
+  Programmes:
+    GET /api/v1/catalogue/programmes?search=<text>&limit=25
+
+  Scholarships:
+    GET /api/v1/catalogue/scholarships?search=<text>&verified=true&limit=25
+
+  Only offer candidates whose returned `visibility === "canonical"` and
+  `created_by_user_id === null`. Do not offer pending/private records as targets.
+
+  ==================================================
+   13. REFERENCE EVENT INSPECTION
+  ==================================================
+
+  There is no admin reference-list endpoint. Build an exact request-ID lookup.
+
+  GET /api/v1/admin/references/{request_id}/events?limit=50&cursor=<opaque>
+
+  Response:
+
+    CursorPage<ReferenceEvent>
+
+  Render:
+
+  - Event type
+  - Timestamp
+  - Event ID
+  - Safe metadata
+
+  Use a timeline on detail views and a table fallback on smaller screens.
+
+  Security:
+
+  - Metadata is designed to be redacted, but still treat it as untrusted.
+  - Never render HTML from metadata.
+  - Do not add fields or attempt to fetch referee email, tokens, access codes, student drafts, final confidential content, or certificates from unrelated APIs.
+  - A 404 or empty result should not imply that a person or email exists.
+
+  ==================================================
+  14. AUDIT LOG WORKFLOW
+  ==================================================
+
+  GET /api/v1/admin/audit-log
+
+  Filters:
+
+  - admin_user_id?: UUID
+  - action?: exact string
+  - target_type?: exact string
+  - target_id?: exact string
+  - cursor?: string
+  - limit?: 1–100, default 50
+
+  Response:
+
+    CursorPage<AdminAction>
+
+  Columns:
+
+  - Timestamp
+  - Administrator ID
+  - Action
+  - Target type
+  - Target ID
+  - Reason
+  - Metadata details
+
+  Features:
+
+  - URL-persisted filters.
+  - Expandable safe metadata viewer.
+  - Copy buttons for IDs and correlation/support workflows.
+  - Link known user targets to `/admin/users/:id`.
+  - Do not offer edit or delete controls; the audit trail is read-only.
+  - Do not use fuzzy client filtering as a substitute for backend filters.
+  - Do not display a fake total.
+  - Allow export of the currently loaded page only if the existing frontend already has a safe JSON/CSV export utility.
+  - If CSV is implemented, protect against spreadsheet-formula injection for values beginning with `=`, `+`, `-`, or `@`.
+
+  ==================================================
+  15. QUEUES AND REMINDER OPERATIONS
+  ==================================================
+
+  The backend does not expose queue depth, queue health, DLQ message browsing, or raw messages. Do not fake those features.
+
+  Allowlisted queue names:
+
+  - eliteapply-document-scan
+  - eliteapply-notifications
+  - eliteapply-writing-generation
+  - eliteapply-opportunity-import
+  - eliteapply-interview-audio
+  - eliteapply-notification-center
+
+  Redrive:
+
+  POST /api/v1/admin/queues/{queue_name}/redrive
+
+  Request:
+
+  {
+    "max_messages": 10,
+    "reason": "Replay after dependency recovery"
+  }
+
+  Validation:
+
+  - max_messages: integer 1–100, default 10
+  - reason: required, 3–1000 characters
+
+  Response:
+
+  {
+    "queue": "eliteapply-writing-generation",
+    "redriven_count": 4
+  }
+
+  UX:
+
+  - Render the fixed allowlist, not a free-form queue input.
+  - Explain that redrive moves messages from the queue’s DLQ to its source queue.
+  - Never show message bodies.
+  - Require queue-name typed confirmation and reason.
+  - Default to 10 messages.
+  - Make 100 visibly high risk.
+  - Never automatically repeat the request.
+  - Show the exact returned redriven count.
+  - Invalidate audit log after success.
+
+  Reminder dispatch:
+
+  POST /api/v1/admin/reminders/run-due
+
+  No request body.
+
+  Response:
+
+  {
+    "dispatched": 12
+  }
+
+  Rules:
+
+  - Require confirmation.
+  - Explain that only due, unsent reminders are dispatched.
+  - The action is idempotent with respect to already-sent reminders.
+  - Do not automatically schedule this endpoint from the browser.
+  - Show the server-returned count.
+  - Invalidate audit log after success.
+
+  ==================================================
+  16. LAUNCH READINESS WORKFLOW
+  ==================================================
+
+  Launch gates:
+
+  GET /api/v1/admin/launch-gates
+
+  Response:
+
+    LaunchGate[]
+
+  Required gates currently include:
+
+  - critical_security_findings_closed
+  - backup_restore_demonstrated
+  - queue_replay_demonstrated
+  - billing_reconciliation_passed
+  - ai_quality_thresholds_passed
+  - cost_limits_enforced
+  - monitoring_alerts_active
+  - support_runbooks_complete
+  - accessibility_core_flows_passed
+  - legal_documents_published
+  - launch_rollback_tested
+
+  Do not hardcode the list as the rendering source. Render the server-returned list; the names above are useful for labels and descriptions.
+
+  Update gate:
+
+  PUT /api/v1/admin/launch-gates/{key}
+
+  Request:
+
+  {
+    "status": "passed",
+    "evidence_reference": "runbook/drill/2026-07-18",
+    "notes": "Restore drill completed successfully"
+  }
+
+  Allowed statuses:
+
+  - pending
+  - passed
+  - failed
+  - waived
+
+  Rules:
+
+  - `passed` requires a non-empty evidence reference.
+  - Evidence reference maximum 1000 characters.
+  - Notes maximum 5000 characters.
+  - For a production-quality UI, require notes when status is failed or waived, even though the backend does not currently require them.
+  - Show verified_by and verified_at after update.
+  - Require confirmation when moving to passed or waived.
+  - Refetch gate list, readiness, overview, and audit log after success.
+
+  Readiness:
+
+  GET /api/v1/admin/launch-readiness
+
+  Response example:
+
+  {
+    "ready": false,
+    "passed": 8,
+    "total": 11,
+    "blocking_gates": [
+      "backup_restore_demonstrated",
+      "ai_quality_thresholds_passed",
+      "launch_rollback_tested"
+    ]
+  }
+
+  Render an explicit production-readiness banner. Never label the product ready unless the API returns `ready: true`.
+
+  ==================================================
+  17. API ERROR HANDLING
+  ==================================================
+
+  Application errors generally use:
+
+  {
+    "error": "Conflict",
+    "detail": "Human-readable explanation",
+    "correlation_id": "uuid",
+    "code": "optional_machine_code",
+    "details": {}
+  }
+
+  FastAPI request-validation failures may instead use:
+
+  {
+    "detail": [
+      {
+        "loc": ["body", "field"],
+        "msg": "Validation message",
+        "type": "validation_type"
+      }
+    ]
+  }
+
+  The API client must normalize both formats into one frontend error model.
+
+  Handle:
+
+  - 400: malformed request
+  - 401: session invalid or expired
+  - 403: authenticated but no longer authorized
+  - 404: target not found
+  - 409: state conflict, such as retrying a non-failed operation or merging into a non-canonical target
+  - 422: invalid fields, missing reason, invalid cursor, invalid UUID, self-demotion, or unsupported action
+  - 500: unexpected server failure
+  - 502/503: dependency unavailable
+
+  Behavior:
+
+  - Show actionable server `detail`.
+  - Do not expose stack traces or raw response bodies.
+  - Display and allow copying `correlation_id`.
+  - Map field-level 422 errors to the relevant form controls.
+  - Keep dialogs open after validation errors.
+  - For 409, retain user input and offer refetch/review.
+  - For 403, clear admin query data and move to the forbidden page.
+  - For 404 on a detail route, show a proper not-found view.
+  - For network failures, distinguish “request may not have reached the server” from a confirmed server rejection.
+  - Never tell the user a mutation succeeded until the server confirms it.
+
+  ==================================================
+  18. DATA FETCHING AND CACHE DESIGN
+  ==================================================
+
+  Reuse the frontend’s existing query library. If it already uses TanStack Query, use query keys similar to:
+
+  - ["admin", "overview"]
+  - ["admin", "users", filters, cursor]
+  - ["admin", "user", userId]
+  - ["admin", "user", userId, "entitlement"]
+  - ["admin", "user", userId, "usage", cursor]
+  - ["admin", "operations", filters, cursor]
+  - ["admin", "operation", operationId]
+  - ["admin", "feature-flags"]
+  - ["admin", "feature-flag", key]
+  - ["admin", "catalogue", kind, cursor]
+  - ["admin", "reference-events", requestId, cursor]
+  - ["admin", "audit", filters, cursor]
+  - ["admin", "launch-gates"]
+  - ["admin", "launch-readiness"]
+
+  Guidelines:
+
+  - Avoid persistent caching for admin data.
+  - Use short stale times for operational data.
+  - Keep previous list data visible during forward cursor navigation.
+  - Cancel obsolete requests when filters change.
+  - Do not prefetch sensitive user details for every table row.
+  - Invalidate only relevant query families after mutations.
+  - Do not use optimistic updates for access, entitlement, queue, catalogue, launch-gate, or operation mutations.
+  - Guard against duplicate mutation submission.
+  - Keep independent overview queries isolated.
+
+  ==================================================
+  19. COMPONENTS
+  ==================================================
+
+  Prefer a small set of reusable components:
+
+  - AdminShell
+  - AdminRouteGuard
+  - AdminPageHeader
+  - StatusBadge
+  - CopyableId
+  - CursorPagination
+  - FilterBar
+  - DataTable
+  - DetailDrawer or DetailPanel
+  - ReasonField
+  - ConfirmationDialog
+  - TypedConfirmationDialog
+  - SafeJsonViewer
+  - EmptyState
+  - InlineError
+  - CorrelationIdError
+  - Timestamp
+  - TokenUsageBar
+  - AuditTimeline
+
+  Do not create speculative abstraction layers, generic CRUD engines, schema-driven form factories, or a universal “admin resource” component.
+
+  ==================================================
+  20. TESTING REQUIREMENTS
+  ==================================================
+
+  Add tests using the existing frontend test stack.
+
+  Unit/component coverage:
+
+  - Admin route guard accepts admins and rejects non-admins.
+  - Cursor pagination uses server cursors and resets on filter changes.
+  - Previous-page cursor stack works.
+  - User patch omits unchanged fields and never sends null booleans.
+  - Self-demotion and self-deactivation controls are disabled.
+  - Entitlement null values correctly clear overrides.
+  - 204 responses are handled without JSON parsing.
+  - Feature-flag PUT sends the full configuration.
+  - Kill-switch confirmation requires the exact key.
+  - Merge refuses equal source/target IDs client-side.
+  - Canonical target selector excludes private/pending records.
+  - Launch gate requires evidence when passed.
+  - Both application-error and FastAPI-validation formats normalize correctly.
+  - Audit metadata is escaped and never rendered as HTML.
+  - Non-idempotent requests are not automatically retried.
+
+  Integration/API-mock coverage:
+
+  - User list, detail, account update, entitlement update, usage reset, and usage pagination.
+  - Operation retry returning a new operation ID.
+  - Operation cancel.
+  - Feature-flag update and refetch.
+  - Catalogue approve/reject/merge.
+  - Reference event pagination.
+  - Queue redrive.
+  - Reminder dispatch.
+  - Launch-gate update and readiness refresh.
+  - Audit filtering and pagination.
+  - 401, 403, 404, 409, 422, and 5xx states.
+
+  End-to-end coverage:
+
+  - Non-admin cannot access admin routes.
+  - Admin can find a user and deactivate/reactivate them.
+  - Admin can grant and revoke admin access on another account.
+  - Admin can set and clear entitlement overrides.
+  - Admin can reset usage and see refreshed usage.
+  - Admin can retry a failed operation and follow the returned operation.
+  - Admin can update a flag with a reason.
+  - Admin can moderate a catalogue item.
+  - Admin can update a launch gate and see readiness change.
+  - Audit log shows completed mutations.
+  - No sensitive content or raw queue message appears anywhere.
+
+  Accessibility:
+
+  - Run the project’s accessibility tooling.
+  - Test keyboard-only dialog and table interactions.
+  - Verify focus management after mutations and route changes.
+  - Verify status is not conveyed using color alone.
+
+  ==================================================
+  21. ACCEPTANCE CRITERIA
+  ==================================================
+
+  The implementation is complete only when:
+
+  - Every admin route is protected in the frontend while still relying on backend authorization.
+  - Every backend admin endpoint listed above has a usable workflow.
+  - All cursor-paginated screens work without fake page totals.
+  - High-risk actions require clear confirmation and reasons where supported.
+  - Self-lockout controls are prevented.
+  - Mutations use server responses as authoritative state.
+  - Errors preserve correlation IDs.
+  - Sensitive data is neither requested nor rendered.
+  - No unsupported admin controls or fake statistics exist.
+  - Loading, partial failure, empty, forbidden, and not-found states are finished.
+  - The panel works across desktop, tablet, and mobile.
+  - Lint, type checking, tests, accessibility checks, and production build pass.
+  - The final handoff lists changed files, tests run, and any genuine backend contract limitation encountered.
+
+  Implement this fully. Do not stop after scaffolding or static mockups.

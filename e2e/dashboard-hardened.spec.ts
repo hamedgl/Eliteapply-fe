@@ -41,6 +41,12 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith("/dashboard")) {
       return route.fulfill({ json: dashboard });
     }
+    if (url.endsWith("/academic-profile")) {
+      return route.fulfill({ json: null });
+    }
+    if (url.endsWith("/academic-documents")) {
+      return route.fulfill({ json: [] });
+    }
     return route.fulfill({ json: {} });
   });
 });
@@ -66,6 +72,123 @@ test("dashboard turns empty backend state into clear next actions", async ({
   await expect(
     page.getByRole("progressbar", { name: "Academic profile completion" }),
   ).toHaveAttribute("aria-valuenow", "0");
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test("workspace guide uses real saved data and keeps three actions per page", async ({
+  page,
+}, testInfo) => {
+  await page.route("**/api/v1/dashboard", (route) =>
+    route.fulfill({
+      json: {
+        ...dashboard,
+        applications_by_stage: { draft: 1 },
+        missing_documents: 2,
+      },
+    }),
+  );
+  await page.route("**/api/v1/academic-profile", (route) =>
+    route.fulfill({
+      json: {
+        id: "00000000-0000-4000-8000-000000000020",
+        version: 1,
+        created_at: "2026-07-19T12:00:00Z",
+        updated_at: "2026-07-19T12:00:00Z",
+        applicant_type: "International student",
+        intended_study_level: "Postgraduate",
+        target_countries: ["Portugal"],
+        sections: {
+          education: {
+            summary: "BSc Computer Science, completed with distinction.",
+          },
+        },
+        completion: {},
+      },
+    }),
+  );
+  await page.route("**/api/v1/academic-documents", (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: "00000000-0000-4000-8000-000000000030",
+          category: "transcript",
+          display_name: "Transcript.pdf",
+          storage_key: "test/transcript.pdf",
+          content_type: "application/pdf",
+          size_bytes: 2048,
+          malware_status: "clean",
+          created_at: "2026-07-19T12:00:00Z",
+        },
+      ],
+    }),
+  );
+
+  await page.goto("/app/dashboard");
+
+  const guide = page.getByRole("region", { name: "Workspace guide" });
+  await expect(guide.getByText("4/9 complete")).toBeVisible();
+  await expect(
+    guide.getByRole("link", {
+      name: "Add academic background, Complete",
+    }),
+  ).toHaveAttribute("href", "/app/academic-profile");
+  await expect(
+    page.getByRole("progressbar", { name: "Academic profile completion" }),
+  ).toHaveAttribute("aria-valuenow", "0");
+  await expect(guide.getByRole("link")).toHaveCount(3);
+  await page.screenshot({
+    path: `/tmp/eliteapply-workspace-guide-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+
+  await guide.getByRole("button", { name: "Next" }).click();
+  await expect(
+    guide.getByRole("heading", { name: "Strengthen your evidence" }),
+  ).toBeVisible();
+  await expect(guide.getByRole("link")).toHaveCount(3);
+  await expect(
+    guide.getByRole("link", {
+      name: "Upload a supporting document, Complete",
+    }),
+  ).toHaveAttribute("href", "/app/documents");
+
+  await guide.getByRole("button", { name: "Next" }).click();
+  await expect(
+    guide.getByRole("heading", { name: "Prepare to apply" }),
+  ).toBeVisible();
+  await expect(guide.getByRole("link")).toHaveCount(3);
+  await expect(
+    guide.getByRole("link", { name: "Resolve document gaps, To do" }),
+  ).toHaveAttribute("href", "/app/documents");
+  await expect(guide.getByRole("button", { name: "Next" })).toBeDisabled();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test("workspace guide stays touch-safe at 320px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/app/dashboard");
+
+  const guide = page.getByRole("region", { name: "Workspace guide" });
+  await expect(guide.getByText("0/9 complete")).toBeVisible();
+  await expect(guide.getByRole("link")).toHaveCount(3);
+
+  const next = guide.getByRole("button", { name: "Next" });
+  const nextSize = await next.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+  expect(nextSize.width).toBeGreaterThanOrEqual(44);
+  expect(nextSize.height).toBeGreaterThanOrEqual(44);
+  await next.click();
+  await expect(guide.getByRole("link")).toHaveCount(3);
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
@@ -113,6 +236,15 @@ test("mobile app navigation is touch-safe and closes with Escape", async ({
     });
   expect(notificationSize.width).toBeGreaterThanOrEqual(44);
   expect(notificationSize.height).toBeGreaterThanOrEqual(44);
+  const guideNextSize = await page
+    .getByRole("region", { name: "Workspace guide" })
+    .getByRole("button", { name: "Next" })
+    .evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    });
+  expect(guideNextSize.width).toBeGreaterThanOrEqual(44);
+  expect(guideNextSize.height).toBeGreaterThanOrEqual(44);
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,

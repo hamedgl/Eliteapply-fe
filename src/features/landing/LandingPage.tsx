@@ -2490,7 +2490,9 @@ function GuidedWorkflowBoard({
               </div>
             </header>
             <div className="workflow-stage-meter">
-              <span style={{ width: `${stage.completion}%` }} />
+              <span
+                style={{ transform: `scaleX(${stage.completion / 100})` }}
+              />
               <small>{stage.completedLabel}</small>
             </div>
             <ul className="workflow-stage-checklist" key={stage.title}>

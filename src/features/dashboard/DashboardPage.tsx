@@ -10,13 +10,20 @@ import {
   GraduationCap,
   Plus,
 } from "lucide-react";
-import type { ComponentType, ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { platformApi, safeDashboard } from "../../lib/api/platform";
+import { documentsApi, profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
 
 type Deadline = Record<string, unknown>;
+type SetupStatus = "done" | "todo" | "checking" | "unavailable";
+type SetupItem = {
+  href: string;
+  label: string;
+  status: SetupStatus;
+};
 
 const recommendationRoutes: Record<
   string,
@@ -47,9 +54,18 @@ const recommendationRoutes: Record<
 
 export function DashboardPage() {
   const user = useSession((state) => state.user);
+  const [guidePage, setGuidePage] = useState(0);
   const query = useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: async () => safeDashboard(await platformApi.dashboard()),
+  });
+  const profileQuery = useQuery({
+    queryKey: queryKeys.profile,
+    queryFn: profileApi.get,
+  });
+  const documentsQuery = useQuery({
+    queryKey: queryKeys.documents,
+    queryFn: documentsApi.list,
   });
 
   if (query.isPending) return <DashboardSkeleton />;
@@ -84,6 +100,107 @@ export function DashboardPage() {
   ).reduce((total, count) => total + Math.max(0, count), 0);
   const recommendation = getRecommendation(dashboard.recommended_next_action);
   const profileComplete = dashboard.profile_completion_percent >= 100;
+  const profile = profileQuery.data;
+  const profileStatus = (done: boolean) =>
+    getSetupStatus(profileQuery.isPending, profileQuery.isError, done);
+  const documentStatus = getSetupStatus(
+    documentsQuery.isPending,
+    documentsQuery.isError,
+    Boolean(documentsQuery.data?.length),
+  );
+  const setupPages: Array<{
+    title: string;
+    detail: string;
+    items: SetupItem[];
+  }> = [
+    {
+      title: "Build your foundation",
+      detail: "Set the reusable information every application needs.",
+      items: [
+        {
+          label: "Add academic background",
+          href: "/app/academic-profile",
+          status: profileStatus(hasContent(profile?.sections?.education)),
+        },
+        {
+          label: "Set your study direction",
+          href: "/app/academic-profile",
+          status: profileStatus(
+            Boolean(
+              profile?.applicant_type?.trim() &&
+                profile.intended_study_level?.trim() &&
+                profile.target_countries?.some((country) => country.trim()),
+            ),
+          ),
+        },
+        {
+          label: "Add an application",
+          href: "/app/applications",
+          status: applicationCount > 0 ? "done" : "todo",
+        },
+      ],
+    },
+    {
+      title: "Strengthen your evidence",
+      detail: "Gather the material that supports your academic story.",
+      items: [
+        {
+          label: "Upload a supporting document",
+          href: "/app/documents",
+          status: documentStatus,
+        },
+        {
+          label: "Add academic interests",
+          href: "/app/academic-profile",
+          status: profileStatus(
+            hasContent(profile?.sections?.academic_interests),
+          ),
+        },
+        {
+          label: "Add achievements or research",
+          href: "/app/academic-profile",
+          status: profileStatus(
+            [
+              "honors_and_activities",
+              "standardized_tests",
+              "research_experience",
+            ].some((key) => hasContent(profile?.sections?.[key])),
+          ),
+        },
+      ],
+    },
+    {
+      title: "Prepare to apply",
+      detail: "Turn each opportunity into a complete, trackable plan.",
+      items: [
+        {
+          label: "Record an upcoming deadline",
+          href: "/app/applications",
+          status: dashboard.upcoming_deadlines.length > 0 ? "done" : "todo",
+        },
+        {
+          label: "Plan your next application task",
+          href: "/app/applications",
+          status: dashboard.open_tasks > 0 ? "done" : "todo",
+        },
+        {
+          label: "Resolve document gaps",
+          href: "/app/documents",
+          status:
+            applicationCount > 0 && dashboard.missing_documents === 0
+              ? "done"
+              : "todo",
+        },
+      ],
+    },
+  ];
+  const setupPage = setupPages[guidePage];
+  const completedSetupItems = setupPages
+    .flatMap((page) => page.items)
+    .filter((item) => item.status === "done").length;
+  const setupProgressPending =
+    profileQuery.isPending || documentsQuery.isPending;
+  const setupProgressError = profileQuery.isError || documentsQuery.isError;
 
   return (
     <div className="page dashboard">
@@ -235,35 +352,74 @@ export function DashboardPage() {
             </Link>
           </section>
 
-          <section className="setup-checklist">
+          <section
+            className="setup-checklist"
+            aria-labelledby="workspace-guide-title"
+          >
             <header>
-              <h2>Workspace setup</h2>
-              <span>
-                {
-                  [
-                    dashboard.profile_completion_percent > 0,
-                    applicationCount > 0,
-                    dashboard.missing_documents > 0,
-                  ].filter(Boolean).length
-                }
-                /3 started
+              <h2 id="workspace-guide-title">Workspace guide</h2>
+              <span aria-live="polite">
+                {setupProgressPending
+                  ? "Checking progress…"
+                  : `${completedSetupItems}/9 complete`}
               </span>
             </header>
-            <SetupRow
-              done={dashboard.profile_completion_percent > 0}
-              href="/app/academic-profile"
-              label="Add academic background"
-            />
-            <SetupRow
-              done={applicationCount > 0}
-              href="/app/applications"
-              label="Add an application"
-            />
-            <SetupRow
-              done={dashboard.missing_documents > 0}
-              href="/app/documents"
-              label="Organise supporting documents"
-            />
+            <div className="setup-page-intro" aria-live="polite">
+              <span>
+                Page {guidePage + 1} of {setupPages.length}
+              </span>
+              <h3>{setupPage.title}</h3>
+              <p>{setupPage.detail}</p>
+            </div>
+            {setupPage.items.map((item) => (
+              <SetupRow {...item} key={item.label} />
+            ))}
+            {setupProgressError ? (
+              <div className="setup-sync-error" role="alert">
+                <p>Some progress could not be checked.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (profileQuery.isError) void profileQuery.refetch();
+                    if (documentsQuery.isError) void documentsQuery.refetch();
+                  }}
+                  disabled={
+                    profileQuery.isFetching || documentsQuery.isFetching
+                  }
+                >
+                  {profileQuery.isFetching || documentsQuery.isFetching
+                    ? "Checking…"
+                    : "Retry progress check"}
+                </button>
+              </div>
+            ) : null}
+            <nav
+              className="setup-pagination"
+              aria-label="Workspace guide pages"
+            >
+              <button
+                type="button"
+                onClick={() => setGuidePage((page) => page - 1)}
+                disabled={guidePage === 0}
+              >
+                Previous
+              </button>
+              <span aria-hidden="true">
+                {setupPages.map((page, index) => (
+                  <i
+                    className={index === guidePage ? "active" : ""}
+                    key={page.title}
+                  />
+                ))}
+              </span>
+              <button
+                type="button"
+                onClick={() => setGuidePage((page) => page + 1)}
+                disabled={guidePage === setupPages.length - 1}
+              >
+                Next
+              </button>
+            </nav>
           </section>
         </aside>
       </div>
@@ -410,19 +566,29 @@ function StatRow({
   );
 }
 
-function SetupRow({
-  done,
-  href,
-  label,
-}: {
-  done: boolean;
-  href: string;
-  label: string;
-}) {
+function SetupRow({ href, label, status }: SetupItem) {
+  const statusLabel = {
+    done: "Complete",
+    todo: "To do",
+    checking: "Checking progress",
+    unavailable: "Progress unavailable",
+  }[status];
+
   return (
-    <Link className={done ? "done" : ""} to={href}>
-      <span aria-hidden="true">{done ? <Check /> : null}</span>
-      <strong>{label}</strong>
+    <Link aria-label={`${label}, ${statusLabel}`} className={status} to={href}>
+      <span aria-hidden="true">
+        {status === "done" ? (
+          <Check />
+        ) : status === "checking" ? (
+          "…"
+        ) : status === "unavailable" ? (
+          "!"
+        ) : null}
+      </span>
+      <div>
+        <strong>{label}</strong>
+        <small>{statusLabel}</small>
+      </div>
       <ArrowRight aria-hidden="true" />
     </Link>
   );
@@ -475,4 +641,22 @@ function readString(record: Deadline, keys: string[]) {
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
+}
+
+function getSetupStatus(
+  isPending: boolean,
+  isError: boolean,
+  done: boolean,
+): SetupStatus {
+  if (isPending) return "checking";
+  if (isError) return "unavailable";
+  return done ? "done" : "todo";
+}
+
+function hasContent(value: unknown): boolean {
+  if (typeof value === "string") return Boolean(value.trim());
+  if (Array.isArray(value)) return value.some(hasContent);
+  if (value && typeof value === "object")
+    return Object.values(value).some(hasContent);
+  return typeof value === "number" || value === true;
 }
