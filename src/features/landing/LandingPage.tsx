@@ -1275,11 +1275,11 @@ function TrackerPreview() {
         aria-label="Sample scholarship applications"
       >
         <div className="tracker-row tracker-head" role="row">
-          <span>Application</span>
-          <span>Status</span>
-          <span>Deadline</span>
-          <span>Progress</span>
-          <span>Next action</span>
+          <span role="columnheader">Application</span>
+          <span role="columnheader">Status</span>
+          <span role="columnheader">Deadline</span>
+          <span role="columnheader">Progress</span>
+          <span role="columnheader">Next action</span>
         </div>
         {rows.map((row, index) => (
           <div
