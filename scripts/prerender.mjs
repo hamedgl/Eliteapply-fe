@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const serverEntry = path.join(root, ".prerender", "entry-server.js");
-const { getPageSeo, LAST_MODIFIED, PRERENDER_ROUTES, render } = await import(
+const { getPageSeo, PRERENDER_ROUTES, render } = await import(
   `${pathToFileURL(serverEntry).href}?t=${Date.now()}`
 );
 const template = await readFile(path.join(dist, "index.html"), "utf8");
@@ -105,18 +105,6 @@ await writeFile(
   "utf8",
 );
 
-const indexable = manifest.filter((page) => page.indexable);
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${indexable
-  .map(
-    (page) =>
-      `  <url><loc>${page.canonical}</loc><lastmod>${LAST_MODIFIED}</lastmod></url>`,
-  )
-  .join("\n")}
-</urlset>
-`;
-await writeFile(path.join(dist, "sitemap.xml"), sitemap, "utf8");
 await writeFile(
   path.join(dist, ".seo-manifest.json"),
   JSON.stringify(manifest, null, 2),
@@ -130,5 +118,5 @@ await writeFile(
 await rm(path.join(root, ".prerender"), { recursive: true, force: true });
 
 console.log(
-  `Prerendered ${manifest.length} public routes (${indexable.length} indexable).`,
+  `Prerendered ${manifest.length} public routes (${manifest.filter((page) => page.indexable).length} indexable).`,
 );
