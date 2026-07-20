@@ -18,6 +18,11 @@ const AppShell = lazy(() =>
   AuthPage = lazy(() =>
     import("../features/auth/AuthPage").then((x) => ({ default: x.AuthPage })),
   ),
+  ResetPasswordPage = lazy(() =>
+    import("../features/auth/ResetPasswordPage").then((x) => ({
+      default: x.ResetPasswordPage,
+    })),
+  ),
   DashboardPage = lazy(() =>
     import("../features/dashboard/DashboardPage").then((x) => ({
       default: x.DashboardPage,
@@ -304,7 +309,7 @@ const router = createBrowserRouter([
   },
   { path: "/confirm-email", element: <AuthPage mode="confirm" /> },
   { path: "/forgot-password", element: <AuthPage mode="forgot" /> },
-  { path: "/reset-password", element: <AuthPage mode="reset" /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   { path: "/terms", element: load(<MarketingPage />) },
   { path: "/privacy", element: load(<MarketingPage />) },
   { path: "/accessibility", element: load(<MarketingPage />) },
