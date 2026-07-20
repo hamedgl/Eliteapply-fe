@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
@@ -66,6 +66,14 @@ export function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+
+  useEffect(() => {
+    document.title = success
+      ? "Password updated | EliteApply"
+      : errorKind === "fatal"
+        ? "Something went wrong | EliteApply"
+        : "Choose a new password | EliteApply";
+  }, [success, errorKind]);
 
   const rulesPassed = PASSWORD_RULES.every((rule) => rule.test(password));
   const passwordsMatch = password.length > 0 && password === confirm;
