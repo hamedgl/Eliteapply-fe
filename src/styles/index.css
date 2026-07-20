@@ -13032,7 +13032,7 @@ body:has(.admin-shell) {
   stroke-width: 8;
 }
 .workflow-progress-panel .percentage-gauge .gauge-value {
-  stroke-linecap: round;
+  stroke-linecap: butt;
 }
 .workflow-progress-panel .gauge-needle,
 .workflow-progress-panel .gauge-hub,
