@@ -366,6 +366,34 @@ type HeroWorkspaceTask = {
   done: boolean;
 };
 
+const heroAiActions = [
+  {
+    id: "write",
+    label: "Write with AI",
+    Icon: PenLine,
+    status: "AI draft ready — opening paragraph rewritten",
+  },
+  {
+    id: "match",
+    label: "Match evidence",
+    Icon: Link2,
+    status: "Evidence matched to your strongest examples",
+  },
+  {
+    id: "extract",
+    label: "Extract requirements",
+    Icon: ListChecks,
+    status: "6 requirements extracted from the prompt",
+  },
+  {
+    id: "review",
+    label: "Run AI review",
+    Icon: ShieldCheck,
+    status: "AI review complete — 3 improvements suggested",
+  },
+] as const;
+type HeroAiActionId = (typeof heroAiActions)[number]["id"];
+
 const heroWorkspaceApplications = [
   {
     id: "rhodes",
@@ -549,25 +577,34 @@ export function LandingPage() {
 
       <section className="phase-one-hero" id="main-content" tabIndex={-1}>
         <div className="phase-one-hero-copy">
-          <p className="hero-category">Scholarship application workspace</p>
-          <h1>Plan, write and submit stronger scholarship applications.</h1>
+          <p className="hero-category">
+            AI-Powered Scholarship Application Platform
+          </p>
+          <h1>
+            Plan, write and submit stronger scholarship applications with AI.
+          </h1>
           <p>
-            Track deadlines, organise requirements, shape personal statements,
-            manage evidence and references, and always know the next step—from
-            one private workspace.
+            Turn every opportunity into a clear application plan with an{" "}
+            <strong className="hero-ai-term">
+              AI-powered scholarship writing assistant
+            </strong>
+            , intelligent evidence matching, and{" "}
+            <strong className="hero-ai-term">
+              AI feedback before submission
+            </strong>
+            —all while keeping your experience and voice authentic.
           </p>
           <div className="phase-one-actions">
             <Link className="landing-button" to="/register" reloadDocument>
-              Start free <ArrowRight aria-hidden="true" />
+              Start with AI — Free <ArrowRight aria-hidden="true" />
             </Link>
-            <a className="landing-button secondary" href="#sample-workspace">
-              Explore a sample workspace
+            <a className="landing-button secondary" href="#how-it-works">
+              See how it works
             </a>
           </div>
           <p className="phase-one-assurance">
-            <span>Free to start</span>
+            <span>AI-guided, evidence-based and always under your control</span>
             <span>No credit card required</span>
-            <span>Your work stays yours</span>
           </p>
         </div>
         <HeroFocusPreview />
@@ -901,6 +938,15 @@ function HeroFocusPreview() {
   );
   const [taskState, setTaskState] = useState(createInitialHeroTaskState);
   const [actionPanelOpen, setActionPanelOpen] = useState(false);
+  const [aiActionId, setAiActionId] = useState<HeroAiActionId>("review");
+  const [aiPending, setAiPending] = useState(false);
+  const aiTimeoutRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(aiTimeoutRef.current), []);
+
+  const activeAiAction =
+    heroAiActions.find((action) => action.id === aiActionId) ??
+    heroAiActions[heroAiActions.length - 1];
 
   const currentApplication =
     heroWorkspaceApplications.find(
@@ -941,6 +987,18 @@ function HeroFocusPreview() {
   const resetSample = () => {
     setTaskState(createInitialHeroTaskState());
     setActionPanelOpen(false);
+    window.clearTimeout(aiTimeoutRef.current);
+    setAiPending(false);
+    setAiActionId("review");
+  };
+
+  const handleAiAction = (id: HeroAiActionId) => {
+    window.clearTimeout(aiTimeoutRef.current);
+    setAiPending(true);
+    aiTimeoutRef.current = window.setTimeout(() => {
+      setAiActionId(id);
+      setAiPending(false);
+    }, 650);
   };
 
   return (
@@ -979,6 +1037,36 @@ function HeroFocusPreview() {
         <button type="button" onClick={resetSample}>
           <RotateCcw aria-hidden="true" /> Reset
         </button>
+      </div>
+      <div className="hero-ai-panel">
+        <div className="hero-ai-panel-heading">
+          <span>AI assistant</span>
+          <span
+            className={`hero-ai-status${aiPending ? " pending" : ""}`}
+            role="status"
+          >
+            {aiPending ? (
+              <Loader2 className="spin-icon" aria-hidden="true" />
+            ) : (
+              <CheckCircle2 aria-hidden="true" />
+            )}
+            {aiPending ? "Working…" : activeAiAction.status}
+          </span>
+        </div>
+        <div className="hero-ai-actions">
+          {heroAiActions.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              className={action.id === aiActionId ? "active" : ""}
+              aria-pressed={action.id === aiActionId}
+              onClick={() => handleAiAction(action.id)}
+            >
+              <action.Icon aria-hidden="true" />
+              {action.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="hero-moments">
         <button
@@ -1100,29 +1188,35 @@ const withoutItems = [
   "Drafts with unclear versions",
   "Evidence and documents stored in different places",
   "Reference requests followed up manually",
+  "Duplicate effort retyping details for every application",
   "Final checks performed under pressure",
 ] as const;
 const withItems = [
-  "Every application has a clear plan",
-  "Requirements become actionable tasks",
-  "Drafts stay connected to evidence",
-  "References and documents remain visible",
-  "Readiness is shown before submission",
-  "The next responsible action is always clear",
+  "AI turns scholarship requirements into actionable tasks",
+  "AI-powered writing assistant strengthens every statement",
+  "AI matches your evidence to each application requirement",
+  "Drafts, documents and references stay intelligently connected",
+  "AI flags missing information and unsupported claims",
+  "AI feedback improves your application before submission",
+] as const;
+const withMediaTags = [
+  "Write with AI",
+  "Match evidence",
+  "Run AI review",
 ] as const;
 
 function ProblemOutcome() {
   return (
     <section className="problem-outcome" aria-labelledby="problem-title">
       <header className="problem-heading">
-        <p className="section-context">From scattered to structured</p>
+        <p className="section-context">From scattered to AI-structured</p>
         <h2 id="problem-title">
-          Turn scholarship application <span>chaos</span> into a{" "}
-          <strong>clear</strong> submission plan.
+          Turn scholarship application <span>chaos</span> into an{" "}
+          <strong>AI-guided</strong> submission plan.
         </h2>
         <p>
-          EliteApply brings every detail together—so you always know what to do
-          next.
+          EliteApply combines intelligent planning, AI writing support and
+          pre-submission feedback—so you always know what to do next.
         </p>
       </header>
       <div className="comparison-flow">
@@ -1165,8 +1259,8 @@ function ProblemOutcome() {
               <Check />
             </span>
             <div>
-              <h3>With EliteApply</h3>
-              <p>Structured. Visible. Confident.</p>
+              <h3>With EliteApply AI</h3>
+              <p>Guided. Connected. Submission-ready.</p>
             </div>
           </header>
           <img
@@ -1178,6 +1272,11 @@ function ProblemOutcome() {
             loading="lazy"
             decoding="async"
           />
+          <div className="comparison-media-tags" aria-hidden="true">
+            {withMediaTags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </div>
           <ul>
             {withItems.map((item) => (
               <li key={item}>
@@ -1826,25 +1925,56 @@ function StudentUseCases() {
 }
 
 const comparisonRows = [
-  ["Requirement structure", "Built for", "Partial", "Partial", "Partial"],
-  ["Deadline tracking", "Built for", "Partial", "Built for", "Partial"],
   [
+    ListChecks,
+    "Requirement structure",
+    "Built for",
+    "Partial",
+    "Partial",
+    "Partial",
+  ],
+  [
+    CalendarDays,
+    "Deadline tracking",
+    "Built for",
+    "Partial",
+    "Built for",
+    "Partial",
+  ],
+  [
+    PenLine,
     "Draft and evidence connection",
     "Built for",
     "Partial",
     "Partial",
     "Partial",
   ],
-  ["Reference tracking", "Built for", "Partial", "Partial", "Partial"],
   [
+    Link2,
+    "Reference tracking",
+    "Built for",
+    "Partial",
+    "Partial",
+    "Partial",
+  ],
+  [
+    ShieldCheck,
     "Readiness review",
     "Built for",
     "Not purpose-built",
     "Partial",
     "Not purpose-built",
   ],
-  ["Reusable documents", "Built for", "Partial", "Partial", "Built for"],
   [
+    Folder,
+    "Reusable documents",
+    "Built for",
+    "Partial",
+    "Partial",
+    "Built for",
+  ],
+  [
+    Sparkles,
     "Guided next action",
     "Built for",
     "Not purpose-built",
@@ -1879,6 +2009,12 @@ function TrustAndComparison() {
   return (
     <section className="trust-comparison" id="privacy">
       <div className="trust-panel">
+        <Link
+          className="marketing-brand inverse-brand trust-panel-brand"
+          to="/"
+        >
+          EliteApply
+        </Link>
         <p className="section-context">Privacy and control</p>
         <h2>
           Your applications contain personal work. Treating them carefully is
@@ -1887,7 +2023,9 @@ function TrustAndComparison() {
         <div className="trust-list">
           {trust.map(([Icon, title, copy]) => (
             <article key={title}>
-              <Icon aria-hidden="true" />
+              <span className="trust-icon" aria-hidden="true">
+                <Icon aria-hidden="true" />
+              </span>
               <div>
                 <h3>{title}</h3>
                 <p>{copy}</p>
@@ -1904,14 +2042,39 @@ function TrustAndComparison() {
         </nav>
       </div>
       <div className="tool-comparison">
-        <header>
-          <p className="section-context">Purpose-built structure</p>
-          <h2>Why not use a spreadsheet or a general notes app?</h2>
-          <p>
-            General tools can help with parts of the process. EliteApply
-            connects the parts around a scholarship application.
-          </p>
-        </header>
+        <div className="tool-comparison-top">
+          <header>
+            <p className="section-context">Purpose-built structure</p>
+            <h2>
+              Why use a purpose-built application workspace instead of a
+              spreadsheet?
+            </h2>
+            <p>
+              EliteApply gives you structure, AI guidance, deadlines, and
+              review tools—so nothing important falls through the cracks.
+            </p>
+          </header>
+          <aside className="tool-comparison-card">
+            <span className="marketing-brand tool-comparison-card-brand">
+              EliteApply
+            </span>
+            <p>
+              A purpose-built workspace for scholarship applications—designed
+              to help you submit your strongest work.
+            </p>
+            <ul className="tool-comparison-card-pills">
+              <li>
+                <Sparkles aria-hidden="true" /> AI guidance
+              </li>
+              <li>
+                <CalendarDays aria-hidden="true" /> Deadline tracking
+              </li>
+              <li>
+                <Users aria-hidden="true" /> Readiness review
+              </li>
+            </ul>
+          </aside>
+        </div>
         <div
           className="comparison-table-wrap"
           tabIndex={0}
@@ -1931,24 +2094,36 @@ function TrustAndComparison() {
               </tr>
             </thead>
             <tbody>
-              {comparisonRows.map((row) => (
-                <tr key={row[0]}>
-                  {row.map((cell, index) =>
-                    index === 0 ? (
-                      <th scope="row" key={cell}>
+              {comparisonRows.map(([RowIcon, label, ...fits]) => (
+                <tr key={label}>
+                  <th scope="row">
+                    <span className="tool-comparison-row-label">
+                      <span
+                        className="tool-comparison-row-icon"
+                        aria-hidden="true"
+                      >
+                        <RowIcon aria-hidden="true" />
+                      </span>
+                      {label}
+                    </span>
+                  </th>
+                  {fits.map((cell, index) => (
+                    <td key={`${label}-${cell}-${index}`}>
+                      <span data-fit={cell}>
+                        {cell === "Built for" && <Check aria-hidden="true" />}
                         {cell}
-                      </th>
-                    ) : (
-                      <td key={`${row[0]}-${cell}-${index}`}>
-                        <span data-fit={cell}>{cell}</span>
-                      </td>
-                    ),
-                  )}
+                      </span>
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="comparison-table-footnote">
+          <ShieldCheck aria-hidden="true" />
+          Your data is private and never used to train models.
+        </p>
       </div>
     </section>
   );
