@@ -19,15 +19,18 @@ import {
   ListChecks,
   LayoutDashboard,
   Lightbulb,
+  Loader2,
   LockKeyhole,
   MapPin,
   Pause,
   PenLine,
   Play,
+  Plus,
   RotateCcw,
   Search,
   Send,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Users,
   X,
@@ -91,39 +94,42 @@ const workflowStageDetails = [
     summary: "Opportunity details & initial setup",
     description:
       "Add the opportunity and capture the details that shape the application plan.",
-    completion: 40,
-    completedLabel: "2 / 5 completed",
     tasks: [
-      [
-        "Opportunity details",
-        "Title, organisation, deadline and location",
-        true,
-        "Edit",
-      ],
-      [
-        "Programme information",
-        "Field of study, level, duration and mode",
-        true,
-        "Edit",
-      ],
-      [
-        "Requirements capture",
-        "Documents, eligibility and written materials",
-        false,
-        "Add requirements",
-      ],
-      [
-        "Funding & benefits",
-        "Stipend, tuition and other support",
-        false,
-        "Add details",
-      ],
-      [
-        "Notes & links",
-        "Official sources and personal notes",
-        false,
-        "Add notes",
-      ],
+      {
+        title: "Opportunity details",
+        copy: "Title, organisation, deadline and location",
+        done: true,
+        doneAction: "Edit details",
+        pendingAction: "Add details",
+      },
+      {
+        title: "Programme information",
+        copy: "Field of study, level, duration and mode",
+        done: true,
+        doneAction: "Edit",
+        pendingAction: "Add programme info",
+      },
+      {
+        title: "Requirements capture",
+        copy: "Documents, eligibility and written materials",
+        done: false,
+        doneAction: "Review requirements",
+        pendingAction: "Add requirements",
+      },
+      {
+        title: "Funding & benefits",
+        copy: "Stipend, tuition and other support",
+        done: false,
+        doneAction: "Review funding",
+        pendingAction: "Add details",
+      },
+      {
+        title: "Notes & links",
+        copy: "Official sources and personal notes",
+        done: false,
+        doneAction: "Edit notes",
+        pendingAction: "Add notes",
+      },
     ],
   },
   {
@@ -131,39 +137,42 @@ const workflowStageDetails = [
     summary: "Requirements & tasks breakdown",
     description:
       "Turn every requirement into a visible task with a clear owner and state.",
-    completion: 60,
-    completedLabel: "3 / 5 completed",
     tasks: [
-      [
-        "Eligibility criteria",
-        "Academic, residency and experience rules",
-        true,
-        "Review",
-      ],
-      [
-        "Required documents",
-        "Transcripts, certificates and identification",
-        true,
-        "Review",
-      ],
-      [
-        "Written responses",
-        "Prompts, word limits and evidence needs",
-        true,
-        "Open plan",
-      ],
-      [
-        "Reference requirements",
-        "Referees, due dates and supporting context",
-        false,
-        "Add referees",
-      ],
-      [
-        "Submission instructions",
-        "Provider process and final deadline checks",
-        false,
-        "Add details",
-      ],
+      {
+        title: "Eligibility criteria",
+        copy: "Academic, residency and experience rules",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Check eligibility",
+      },
+      {
+        title: "Required documents",
+        copy: "Transcripts, certificates and identification",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Add documents",
+      },
+      {
+        title: "Written responses",
+        copy: "Prompts, word limits and evidence needs",
+        done: true,
+        doneAction: "Open plan",
+        pendingAction: "Plan responses",
+      },
+      {
+        title: "Reference requirements",
+        copy: "Referees, due dates and supporting context",
+        done: false,
+        doneAction: "Review referees",
+        pendingAction: "Add referees",
+      },
+      {
+        title: "Submission instructions",
+        copy: "Provider process and final deadline checks",
+        done: false,
+        doneAction: "Review instructions",
+        pendingAction: "Add details",
+      },
     ],
   },
   {
@@ -171,39 +180,42 @@ const workflowStageDetails = [
     summary: "Documents, drafts & materials",
     description:
       "Prepare the writing, documents and evidence required for a complete application.",
-    completion: 80,
-    completedLabel: "4 / 5 completed",
     tasks: [
-      [
-        "Personal statement",
-        "Draft connected to the application prompt",
-        true,
-        "Open draft",
-      ],
-      [
-        "Academic CV",
-        "Current education, research and experience",
-        true,
-        "Review",
-      ],
-      [
-        "Transcripts & certificates",
-        "Verified files connected to requirements",
-        true,
-        "View files",
-      ],
-      [
-        "Evidence connections",
-        "Examples supporting each written claim",
-        true,
-        "Review",
-      ],
-      [
-        "Referee brief",
-        "Relevant context for the outstanding request",
-        false,
-        "Prepare brief",
-      ],
+      {
+        title: "Personal statement",
+        copy: "Draft connected to the application prompt",
+        done: true,
+        doneAction: "Open draft",
+        pendingAction: "Start draft",
+      },
+      {
+        title: "Academic CV",
+        copy: "Current education, research and experience",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Add CV",
+      },
+      {
+        title: "Transcripts & certificates",
+        copy: "Verified files connected to requirements",
+        done: true,
+        doneAction: "View files",
+        pendingAction: "Upload files",
+      },
+      {
+        title: "Evidence connections",
+        copy: "Examples supporting each written claim",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Connect evidence",
+      },
+      {
+        title: "Referee brief",
+        copy: "Relevant context for the outstanding request",
+        done: false,
+        doneAction: "Edit brief",
+        pendingAction: "Prepare brief",
+      },
     ],
   },
   {
@@ -211,39 +223,42 @@ const workflowStageDetails = [
     summary: "Final check & submission",
     description:
       "Resolve the remaining gaps, complete final checks and record the submission.",
-    completion: 80,
-    completedLabel: "4 / 5 completed",
     tasks: [
-      [
-        "Requirements covered",
-        "Every requirement has a recorded state",
-        true,
-        "Review",
-      ],
-      [
-        "Documents verified",
-        "Current versions are linked and readable",
-        true,
-        "Review",
-      ],
-      [
-        "References confirmed",
-        "Requests and provider instructions checked",
-        true,
-        "Review",
-      ],
-      [
-        "Final declarations",
-        "Accuracy, consent and submission details",
-        true,
-        "Open checks",
-      ],
-      [
-        "Submission record",
-        "Record the provider confirmation and outcome",
-        false,
-        "Record submission",
-      ],
+      {
+        title: "Requirements covered",
+        copy: "Every requirement has a recorded state",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Check coverage",
+      },
+      {
+        title: "Documents verified",
+        copy: "Current versions are linked and readable",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Verify documents",
+      },
+      {
+        title: "References confirmed",
+        copy: "Requests and provider instructions checked",
+        done: true,
+        doneAction: "Review",
+        pendingAction: "Confirm references",
+      },
+      {
+        title: "Final declarations",
+        copy: "Accuracy, consent and submission details",
+        done: true,
+        doneAction: "Open checks",
+        pendingAction: "Complete checks",
+      },
+      {
+        title: "Submission record",
+        copy: "Record the provider confirmation and outcome",
+        done: false,
+        doneAction: "Edit record",
+        pendingAction: "Record submission",
+      },
     ],
   },
 ] as const;
@@ -254,8 +269,6 @@ const workflowProgress = [
   [100, 100, 72, 15],
   [100, 100, 100, 84],
 ] as const;
-
-const workflowOverallProgress = [34, 47, 72, 96] as const;
 
 const heroApplications = [
   {
@@ -486,6 +499,7 @@ export function LandingPage() {
   usePageSeo("/");
   const [activeGuide, setActiveGuide] = useState(0);
   const [tourPaused, setTourPaused] = useState(false);
+  const [tourHovered, setTourHovered] = useState(false);
   const [tourVisible, setTourVisible] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const guidedRef = useRef<HTMLElement>(null);
@@ -514,13 +528,13 @@ export function LandingPage() {
   }, []);
 
   useEffect(() => {
-    if (tourPaused || !tourVisible || reduceMotion) return;
+    if (tourPaused || tourHovered || !tourVisible || reduceMotion) return;
     const timer = window.setTimeout(
       () => setActiveGuide((current) => (current + 1) % guideSteps.length),
       4800,
     );
     return () => window.clearTimeout(timer);
-  }, [activeGuide, reduceMotion, tourPaused, tourVisible]);
+  }, [activeGuide, reduceMotion, tourHovered, tourPaused, tourVisible]);
 
   const selectGuide = (index: number) => {
     setActiveGuide(index);
@@ -674,11 +688,13 @@ export function LandingPage() {
         <GuidedWorkflowBoard
           activeGuide={activeGuide}
           animated={!reduceMotion}
-          isRunning={!tourPaused && tourVisible && !reduceMotion}
+          isRunning={!tourPaused && !tourHovered && tourVisible && !reduceMotion}
           manual={reduceMotion}
           paused={tourPaused}
           onSelect={selectGuide}
           onToggle={() => setTourPaused((paused) => !paused)}
+          onHoverStart={() => setTourHovered(true)}
+          onHoverEnd={() => setTourHovered(false)}
         />
       </section>
 
@@ -1308,35 +1324,266 @@ function TrackerPreview() {
   );
 }
 
+type WritingEvidenceItem = {
+  id: string;
+  label: string;
+  connected: boolean;
+};
+
+type WritingScenario = {
+  id: string;
+  tabLabel: string;
+  prompt: string;
+  wordLimit: number;
+  draft: string;
+  polished: string;
+  clarityNote: string;
+  evidence: WritingEvidenceItem[];
+};
+
+const WRITING_SCENARIOS: WritingScenario[] = [
+  {
+    id: "change",
+    tabLabel: "Positive change",
+    prompt: "Describe a time you created positive change.",
+    wordLimit: 750,
+    draft:
+      "I noticed that students in my community needed clearer access to academic opportunities, so I organised a weekly peer-support session where we mapped scholarships, wrote sample essays together and tracked outcomes as a group.",
+    polished:
+      "When I noticed students in my community struggling to find a clear path to academic opportunities, I started a weekly peer-support session — mapping scholarships, workshopping essays together and tracking outcomes as a group. Nine months later, four peers had submitted stronger, evidence-backed applications.",
+    clarityNote: "Add one specific outcome to support this point.",
+    evidence: [
+      { id: "research", label: "Community research project", connected: true },
+      { id: "workshop", label: "Workshop outcomes", connected: true },
+      { id: "survey", label: "Peer survey data", connected: false },
+      { id: "mentor", label: "Faculty mentor notes", connected: false },
+    ],
+  },
+  {
+    id: "challenge",
+    tabLabel: "Academic challenge",
+    prompt: "Describe an academic challenge you overcame.",
+    wordLimit: 650,
+    draft:
+      "In my second year I struggled to balance an intensive lab schedule with coursework. I built a structured revision plan, met with my professor weekly and adjusted my study methods until my grades recovered.",
+    polished:
+      "In my second year, an intensive lab schedule collided with three core courses and my grades slipped. I rebuilt my study system around weekly professor check-ins and spaced revision — by the following term, my average had recovered by fourteen points.",
+    clarityNote: "Name the specific method that turned things around.",
+    evidence: [
+      { id: "transcript", label: "Term grade comparison", connected: true },
+      { id: "plan", label: "Revision plan document", connected: true },
+      { id: "email", label: "Professor correspondence", connected: false },
+      { id: "lab", label: "Lab performance notes", connected: false },
+    ],
+  },
+  {
+    id: "field",
+    tabLabel: "Field of study",
+    prompt: "What draws you to this field of study?",
+    wordLimit: 500,
+    draft:
+      "My interest in environmental engineering began during a summer internship where I helped monitor water quality in a local river system.",
+    polished:
+      "My interest in environmental engineering took root the summer I spent monitoring water quality in a local river system — and traced a single pollution spike back to an upstream storm drain.",
+    clarityNote: "Anchor the interest to one concrete moment, not a general summary.",
+    evidence: [
+      { id: "internship", label: "Internship summary report", connected: true },
+      { id: "data", label: "Water quality dataset", connected: true },
+      { id: "photos", label: "Fieldwork photo log", connected: false },
+      { id: "reference", label: "Site supervisor reference", connected: false },
+    ],
+  },
+];
+
 function WritingCapabilityPreview() {
+  const [scenarioId, setScenarioId] = useState(WRITING_SCENARIOS[0].id);
+  const [draftsById, setDraftsById] = useState<Record<string, string>>(() =>
+    Object.fromEntries(WRITING_SCENARIOS.map((s) => [s.id, s.draft])),
+  );
+  const [evidenceById, setEvidenceById] = useState<
+    Record<string, WritingEvidenceItem[]>
+  >(() =>
+    Object.fromEntries(WRITING_SCENARIOS.map((s) => [s.id, s.evidence])),
+  );
+  const [historyById, setHistoryById] = useState<Record<string, string | null>>(
+    {},
+  );
+  const [polishState, setPolishState] = useState<
+    "idle" | "polishing" | "done"
+  >("idle");
+  const polishTimeout = useRef<number | undefined>(undefined);
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => () => window.clearTimeout(polishTimeout.current), []);
+
+  const scenario = WRITING_SCENARIOS.find((s) => s.id === scenarioId)!;
+  const draft = draftsById[scenario.id];
+  const evidence = evidenceById[scenario.id];
+  const connectedCount = evidence.filter((item) => item.connected).length;
+  const wordCount = draft.trim() ? draft.trim().split(/\s+/).length : 0;
+  const canUndo = historyById[scenario.id] != null;
+
+  function switchScenario(id: string) {
+    window.clearTimeout(polishTimeout.current);
+    setScenarioId(id);
+    setPolishState("idle");
+  }
+
+  function handleTabKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    const index = WRITING_SCENARIOS.findIndex((s) => s.id === scenario.id);
+    const delta = event.key === "ArrowRight" ? 1 : -1;
+    const next =
+      WRITING_SCENARIOS[
+        (index + delta + WRITING_SCENARIOS.length) % WRITING_SCENARIOS.length
+      ];
+    switchScenario(next.id);
+    tabsRef.current
+      ?.querySelector<HTMLButtonElement>(`#writing-tab-${next.id}`)
+      ?.focus();
+  }
+
+  function handleDraftChange(value: string) {
+    setDraftsById((prev) => ({ ...prev, [scenario.id]: value }));
+    if (polishState === "done") setPolishState("idle");
+  }
+
+  function toggleEvidence(id: string) {
+    setEvidenceById((prev) => ({
+      ...prev,
+      [scenario.id]: prev[scenario.id].map((item) =>
+        item.id === id ? { ...item, connected: !item.connected } : item,
+      ),
+    }));
+  }
+
+  function handlePolish() {
+    if (polishState === "polishing") return;
+    setPolishState("polishing");
+    window.clearTimeout(polishTimeout.current);
+    polishTimeout.current = window.setTimeout(() => {
+      setHistoryById((prev) => ({ ...prev, [scenario.id]: draft }));
+      setDraftsById((prev) => ({ ...prev, [scenario.id]: scenario.polished }));
+      setPolishState("done");
+    }, 900);
+  }
+
+  function handleUndo() {
+    const previous = historyById[scenario.id];
+    if (previous == null) return;
+    setDraftsById((prev) => ({ ...prev, [scenario.id]: previous }));
+    setHistoryById((prev) => ({ ...prev, [scenario.id]: null }));
+    setPolishState("idle");
+  }
+
   return (
     <PreviewFrame title="Personal statement">
-      <div className="writing-preview-grid">
+      <div
+        className="writing-scenario-tabs"
+        role="tablist"
+        aria-label="Sample statement prompts"
+        ref={tabsRef}
+        onKeyDown={handleTabKeyDown}
+      >
+        {WRITING_SCENARIOS.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            role="tab"
+            id={`writing-tab-${s.id}`}
+            aria-selected={s.id === scenario.id}
+            aria-controls={`writing-panel-${s.id}`}
+            tabIndex={s.id === scenario.id ? 0 : -1}
+            className={s.id === scenario.id ? "active" : ""}
+            onClick={() => switchScenario(s.id)}
+          >
+            {s.tabLabel}
+          </button>
+        ))}
+      </div>
+      <div
+        className="writing-preview-grid"
+        role="tabpanel"
+        id={`writing-panel-${scenario.id}`}
+        aria-labelledby={`writing-tab-${scenario.id}`}
+      >
         <div className="writing-main">
           <small>Prompt</small>
-          <strong>Describe a time you created positive change.</strong>
+          <strong>{scenario.prompt}</strong>
           <div className="draft-block">
             <span>Your draft</span>
-            <small>432 / 750 words</small>
-            <p>
-              I noticed that students in my community needed clearer access to
-              academic opportunities…
-            </p>
+            <small className={wordCount > scenario.wordLimit ? "over-limit" : ""}>
+              {wordCount} / {scenario.wordLimit} words
+            </small>
+            <textarea
+              className="draft-textarea"
+              value={draft}
+              onChange={(event) => handleDraftChange(event.target.value)}
+              aria-label={`Draft response to: ${scenario.prompt}`}
+              spellCheck
+            />
+            <div className="draft-actions">
+              <button
+                type="button"
+                className="ai-rewrite-btn"
+                onClick={handlePolish}
+                disabled={polishState === "polishing"}
+              >
+                {polishState === "polishing" ? (
+                  <Loader2 className="spin-icon" aria-hidden="true" />
+                ) : (
+                  <Sparkles aria-hidden="true" />
+                )}
+                {polishState === "polishing" ? "Polishing…" : "Polish with AI"}
+              </button>
+              {canUndo && (
+                <button type="button" className="undo-btn" onClick={handleUndo}>
+                  <RotateCcw aria-hidden="true" /> Undo
+                </button>
+              )}
+            </div>
+            {polishState === "done" && (
+              <p className="ai-rewrite-note" role="status">
+                <Sparkles aria-hidden="true" />
+                Tightened phrasing and sharpened the opening line. Your voice
+                stays in control — edit freely or undo.
+              </p>
+            )}
           </div>
         </div>
         <aside>
-          <strong>Connected evidence</strong>
-          <span>
-            <FileText aria-hidden="true" /> Community research project
-          </span>
-          <span>
-            <FileText aria-hidden="true" /> Workshop outcomes
-          </span>
+          <strong>
+            Connected evidence <span className="evidence-count">{connectedCount}</span>
+          </strong>
+          <div className="evidence-list">
+            {evidence.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`evidence-chip ${item.connected ? "connected" : ""}`}
+                aria-pressed={item.connected}
+                onClick={() => toggleEvidence(item.id)}
+              >
+                {item.connected ? (
+                  <CheckCircle2 aria-hidden="true" />
+                ) : (
+                  <FileText aria-hidden="true" />
+                )}
+                <span>{item.label}</span>
+                {!item.connected && (
+                  <em>
+                    <Plus aria-hidden="true" /> Connect
+                  </em>
+                )}
+              </button>
+            ))}
+          </div>
           <div className="clarity-note">
             <PenLine aria-hidden="true" />
             <span>
-              <strong>Clarity review</strong>Add one specific outcome to support
-              this point.
+              <strong>Clarity review</strong>
+              {scenario.clarityNote}
             </span>
           </div>
         </aside>
@@ -2204,6 +2451,8 @@ function GuidedWorkflowBoard({
   paused,
   onSelect,
   onToggle,
+  onHoverStart,
+  onHoverEnd,
 }: {
   activeGuide: number;
   animated: boolean;
@@ -2212,43 +2461,119 @@ function GuidedWorkflowBoard({
   paused: boolean;
   onSelect: (index: number) => void;
   onToggle: () => void;
+  onHoverStart: () => void;
+  onHoverEnd: () => void;
 }) {
   const stage = workflowStageDetails[activeGuide];
-  const progress = workflowProgress[activeGuide];
+  const baselineProgress = workflowProgress[activeGuide];
+  const railRef = useRef<HTMLOListElement>(null);
+  const [taskOverrides, setTaskOverrides] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  const stageTasks = stage.tasks.map((task) => {
+    const key = `${activeGuide}:${task.title}`;
+    const done = key in taskOverrides ? taskOverrides[key] : task.done;
+    return { ...task, done, key };
+  });
+  const completedCount = stageTasks.filter((task) => task.done).length;
+  const totalCount = stageTasks.length;
+  const completionPct = Math.round((completedCount / totalCount) * 100);
+  const progress = baselineProgress.map((value, index) =>
+    index === activeGuide ? completionPct : value,
+  );
+  const overallProgress = Math.round(
+    progress.reduce((sum, value) => sum + value, 0) / progress.length,
+  );
+
+  function toggleTask(taskKey: string, currentDone: boolean) {
+    setTaskOverrides((prev) => ({ ...prev, [taskKey]: !currentDone }));
+  }
+
+  function resetDemo() {
+    setTaskOverrides({});
+    onSelect(0);
+  }
+
+  function handleRailKeyDown(event: React.KeyboardEvent<HTMLOListElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    const delta = event.key === "ArrowRight" ? 1 : -1;
+    const next = (activeGuide + delta + guideSteps.length) % guideSteps.length;
+    onSelect(next);
+    railRef.current
+      ?.querySelector<HTMLButtonElement>(`#workflow-stage-tab-${next}`)
+      ?.focus();
+  }
 
   return (
-    <div className="guided-workflow">
+    <div
+      className="guided-workflow"
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
+      onFocus={onHoverStart}
+      onBlur={onHoverEnd}
+    >
       <div className="workflow-tour-meta">
         <span aria-live="polite">
           Stage {activeGuide + 1} of {guideSteps.length}
         </span>
-        {manual ? (
-          <span>Manual tour</span>
-        ) : (
+        <div className="workflow-tour-controls">
+          {manual ? (
+            <span>Manual tour</span>
+          ) : (
+            <button
+              type="button"
+              className="tour-toggle"
+              onClick={onToggle}
+              aria-label={paused ? "Play product tour" : "Pause product tour"}
+            >
+              {paused ? (
+                <Play aria-hidden="true" />
+              ) : (
+                <Pause aria-hidden="true" />
+              )}
+              {paused ? "Play" : "Pause"}
+            </button>
+          )}
           <button
             type="button"
-            className="tour-toggle"
-            onClick={onToggle}
-            aria-label={paused ? "Play product tour" : "Pause product tour"}
+            className="tour-restart"
+            onClick={resetDemo}
+            aria-label="Restart the demo from stage one"
           >
-            {paused ? (
-              <Play aria-hidden="true" />
-            ) : (
-              <Pause aria-hidden="true" />
-            )}
-            {paused ? "Play" : "Pause"}
+            <RotateCcw aria-hidden="true" />
+            Restart
           </button>
-        )}
+        </div>
       </div>
-      <span
-        className={`workflow-tour-progress${isRunning ? " running" : ""}`}
+      <div
+        className={`workflow-tour-segments${isRunning ? " running" : ""}`}
         aria-hidden="true"
-        key={`${activeGuide}-${isRunning}`}
       >
-        <i />
-      </span>
+        {guideSteps.map((step, index) => (
+          <span
+            key={step.number}
+            className={
+              index < activeGuide
+                ? "complete"
+                : index === activeGuide
+                  ? "active"
+                  : ""
+            }
+          >
+            {index === activeGuide ? <i key={activeGuide} /> : null}
+          </span>
+        ))}
+      </div>
       <div className="workflow-stage-rail-scroll">
-        <ol className="workflow-stage-rail" aria-label="Application stages">
+        <ol
+          className="workflow-stage-rail"
+          role="tablist"
+          aria-label="Application stages"
+          ref={railRef}
+          onKeyDown={handleRailKeyDown}
+        >
           {workflowStageDetails.map((item, index) => (
             <li
               className={
@@ -2262,9 +2587,11 @@ function GuidedWorkflowBoard({
             >
               <button
                 type="button"
-                aria-label={`Show stage ${index + 1}: ${item.title}`}
-                aria-pressed={index === activeGuide}
+                id={`workflow-stage-tab-${index}`}
+                role="tab"
+                aria-selected={index === activeGuide}
                 aria-controls="workflow-preview"
+                tabIndex={index === activeGuide ? 0 : -1}
                 onClick={() => onSelect(index)}
               >
                 <span className="workflow-stage-icon">
@@ -2281,6 +2608,8 @@ function GuidedWorkflowBoard({
 
       <section
         id="workflow-preview"
+        role="tabpanel"
+        aria-labelledby={`workflow-stage-tab-${activeGuide}`}
         className={`workflow-application${animated ? " workflow-animated" : ""}`}
         aria-label={`${stage.title} application workflow demonstration`}
       >
@@ -2359,22 +2688,30 @@ function GuidedWorkflowBoard({
               </div>
             </header>
             <div className="workflow-stage-meter">
-              <span
-                style={{ transform: `scaleX(${stage.completion / 100})` }}
-              />
-              <small>{stage.completedLabel}</small>
+              <span style={{ transform: `scaleX(${completionPct / 100})` }} />
+              <small>
+                {completedCount} / {totalCount} completed
+              </small>
             </div>
             <ul className="workflow-stage-checklist" key={stage.title}>
-              {stage.tasks.map(([title, copy, done, action]) => (
-                <li className={done ? "complete" : ""} key={title}>
-                  <span className="workflow-task-state">
-                    {done ? <Check aria-hidden="true" /> : null}
-                  </span>
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{copy}</small>
-                  </span>
-                  <em>{action}</em>
+              {stageTasks.map((task) => (
+                <li className={task.done ? "complete" : ""} key={task.title}>
+                  <button
+                    type="button"
+                    className="workflow-task-row"
+                    aria-pressed={task.done}
+                    aria-label={`${task.done ? "Mark pending:" : "Mark complete:"} ${task.title}`}
+                    onClick={() => toggleTask(task.key, task.done)}
+                  >
+                    <span className="workflow-task-state">
+                      {task.done ? <Check aria-hidden="true" /> : null}
+                    </span>
+                    <span>
+                      <strong>{task.title}</strong>
+                      <small>{task.copy}</small>
+                    </span>
+                    <em>{task.done ? task.doneAction : task.pendingAction}</em>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -2385,10 +2722,7 @@ function GuidedWorkflowBoard({
             aria-label="Application progress"
           >
             <h3>Application progress</h3>
-            <PercentageGauge
-              value={workflowOverallProgress[activeGuide]}
-              label="Overall progress"
-            />
+            <PercentageGauge value={overallProgress} label="Overall progress" />
             <ul>
               {workflowStageDetails.map((item, index) => (
                 <li
