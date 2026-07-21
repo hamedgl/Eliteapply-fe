@@ -132,13 +132,14 @@ Rules:
 
 Use the shared 4px-based spacing scale. Do not introduce arbitrary decimal values.
 
-- Controls: 8px radius.
+- Action Buttons: Pill shape (`rounded-full`, 9999px radius).
+- Icon & Close Controls: 10px-12px rounded squircles.
 - Compact cards: 10px radius.
 - Panels: 12px radius.
 - Dialogs: 14px radius.
-- Pills: status and count elements only.
+- Pills: action buttons, status and count elements.
 
-Primary controls are 44px high. Compact 36px controls are permitted only in dense desktop UI and must become touch-safe on small devices.
+Primary controls are 44px high. Medium controls are 40px high, small controls are 32px high, and large CTAs are 48px high. Compact 36px controls are permitted only in dense desktop UI and must become touch-safe on small devices.
 
 ### 4.4 Elevation
 
@@ -198,7 +199,27 @@ On mobile, use a filterable list grouped by stage. Do not force applicants to na
 
 ### Buttons
 
-Variants: primary, secondary, ghost and danger.
+Variants: `primary`, `secondary`, `ghost`, `outline`, and `danger`.
+
+Component source: `@/components/ui/be-ui-button` (`src/components/ui/be-ui-button.tsx`).
+
+Geometry & Shapes:
+- Action buttons across all sizes (`sm`, `md`, `lg`) use full pill geometry (`rounded-full`, 9999px radius).
+- Icon buttons (`size="icon"`) use rounded squircle geometry (`rounded-xl`, 10px-12px radius).
+
+Motion Physics & Interactive Feedback:
+- Built with Motion (`motion/react`) spring physics (`SPRING_PRESS`: stiffness 500, damping 30, mass 0.6).
+- Hover feedback: `whileHover` spring scale 1.02 on desktop pointers.
+- Tap/press feedback: `whileTap` spring scale 0.93-0.95 across touch & pointer devices.
+- Optional interactive pointer ripple animation (`ripple={true}`).
+- Automatically respects `prefers-reduced-motion` via `useReducedMotion()`.
+
+Color Conservation:
+- Preserves EliteApply's serene academic color system:
+  - Primary: Cobalt (`var(--app-blue)`, `#174bd6`).
+  - Secondary / Outline: Surface slate (`var(--app-surface)`, `#ffffff`) with structural line (`var(--app-line)`, `#dfe4ed`).
+  - Ghost: Muted ink text (`var(--app-muted)`, `#63708a`) hovering to subtle blue soft tint.
+  - Danger: Academic crimson (`var(--app-danger)`, `#b42318`).
 
 Every button supports rest, hover, active, focus-visible, loading and disabled states.
 

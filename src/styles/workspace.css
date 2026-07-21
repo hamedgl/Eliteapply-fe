@@ -862,23 +862,6 @@
   background: var(--app-surface);
   box-shadow: 0 20px 48px rgb(16 27 59 / 22%);
 }
-.apps-dialog > header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-.apps-dialog > header h2 {
-  margin: 0;
-}
-.apps-dialog > header button {
-  width: 32px;
-  height: 32px;
-  color: var(--app-muted);
-  border-radius: 7px;
-  font-size: 1.3rem;
-}
 .apps-dialog-header {
   display: flex;
   align-items: flex-start;
@@ -886,15 +869,37 @@
   gap: 1rem;
   margin-bottom: 1rem;
 }
-.apps-dialog-header h2 {
+.apps-dialog-header h2,
+.apps-dialog > header h2 {
   margin: 0;
 }
+.apps-dialog > header button,
 .apps-dialog-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
+  padding: 0;
   color: var(--app-muted);
-  border-radius: 7px;
-  font-size: 1.3rem;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface);
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+.apps-dialog > header button:hover,
+.apps-dialog-header button:hover {
+  color: var(--app-ink);
+  border-color: var(--app-line-strong);
+  background: var(--app-surface-subtle);
+}
+.apps-dialog > header button svg,
+.apps-dialog-header button svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2px;
+  flex-shrink: 0;
 }
 .apps-dialog-body {
   display: grid;
@@ -1020,12 +1025,18 @@
 .apps-danger-button {
   color: #fff;
   border: 1px solid var(--app-red);
-  border-radius: 7px;
+  border-radius: 9999px;
   background: var(--app-red);
   font-weight: 700;
+  padding: 0.6rem 1.25rem;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 160ms ease;
 }
-.apps-danger-button:hover {
+.apps-danger-button:hover:not(:disabled) {
   background: #96190f;
+  transform: scale(1.02);
+}
+.apps-danger-button:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 /* ── Skeleton ── */
