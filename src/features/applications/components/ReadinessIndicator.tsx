@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { intelligenceApi } from "../../../lib/api/phase2";
+import { queryKeys } from "../../../lib/api/queryKeys";
 import { useApplicationReadiness, useDismiss } from "../hooks";
 import { label, type ApplicationReadinessSummary } from "../model";
 
 /**
- * Compact readiness indicator for a single application. The percent/state
- * come from the embedded list-row summary (no network call); the detail
- * breakdown (blocking issues, missing docs, warnings) is only on the full
- * readiness endpoint, so that's still fetched lazily on open/hover.
+ * Compact readiness indicator for a single application.
+ * Displays the real eligibility & readiness score, fetched and cached per app.
  */
 export function ReadinessIndicator({
   appId,
@@ -20,20 +21,24 @@ export function ReadinessIndicator({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const readinessQuery = useApplicationReadiness(
-    appId,
-    open || (readinessPercent === undefined && !readinessData),
-  );
+
+  const readinessQuery = useApplicationReadiness(appId, Boolean(appId));
+  const eligibilityQuery = useQuery({
+    queryKey: queryKeys.eligibility(appId),
+    queryFn: () => intelligenceApi.currentEligibility(appId),
+    enabled: Boolean(appId),
+    retry: false,
+    staleTime: 60_000,
+  });
+
   useDismiss([rootRef], () => setOpen(false), open);
 
-  const hasEmbeddedData = readinessPercent !== undefined || Boolean(readinessData);
-  const isLoading = !hasEmbeddedData && readinessQuery.isPending;
-
   const readiness_percent =
-    readinessPercent ??
-    readinessData?.overall_score ??
-    readinessQuery.data?.readiness_percent ??
-    0;
+    eligibilityQuery.data?.readiness_score !== undefined
+      ? Math.max(0, Math.min(100, eligibilityQuery.data.readiness_score))
+      : readinessQuery.data?.readiness_percent !== undefined
+        ? readinessQuery.data.readiness_percent
+        : (readinessData?.overall_score ?? readinessPercent ?? 0);
 
   const overall_state =
     readinessData?.overall_state ??
@@ -45,6 +50,8 @@ export function ReadinessIndicator({
   const warnings = readinessQuery.data?.warnings ?? [];
   const issues = [...blocking_issues, ...missing_required_documents, ...warnings];
   const needsAttention = overall_state === "blocked" || overall_state === "not_ready";
+  const hasEmbeddedData = readinessPercent !== undefined || Boolean(readinessData);
+  const isLoading = !hasEmbeddedData && readinessQuery.isPending && eligibilityQuery.isPending;
 
   if (isLoading)
     return (
