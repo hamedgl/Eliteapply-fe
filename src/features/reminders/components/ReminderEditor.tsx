@@ -128,9 +128,13 @@ export function ReminderEditor({
                     ? "On the deadline"
                     : preset === "1d"
                       ? "1 day before"
-            Reminder title
-            <input value={title} onChange={(event) => setTitle(event.target.value)} required autoFocus placeholder="Submit reference letter" />
-          </label>
+                      : preset === "3d"
+                        ? "3 days before"
+                        : "1 week before"}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <label>
             Date &amp; time
