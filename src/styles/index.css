@@ -728,6 +728,7 @@ textarea {
 .board-column.is-collapsed .board-column-toggle svg {
   margin-bottom: 0.2rem;
   flex-shrink: 0;
+  order: 1;
 }
 .board-column.is-collapsed .board-column-toggle span {
   writing-mode: vertical-rl;
@@ -737,6 +738,7 @@ textarea {
   font-size: 0.78rem;
   letter-spacing: 0.01em;
   margin: 0.3rem 0;
+  order: 2;
 }
 .board-column.is-collapsed .board-column-toggle strong {
   margin-top: 0.2rem;
@@ -744,6 +746,7 @@ textarea {
   height: 22px;
   font-size: 0.68rem;
   flex-shrink: 0;
+  order: 3;
 }
 .board-column-content {
   min-height: 490px;
