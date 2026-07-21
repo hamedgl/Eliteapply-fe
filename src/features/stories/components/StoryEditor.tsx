@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { writingApi } from "../../../lib/api/phase3";
 import { categories, label, readEvidence, sensitivityMeta, sensitivities, type Story } from "../model";
 
@@ -76,13 +77,14 @@ export function StoryEditor({
         >
           <label>
             Category
-            <select value={category} onChange={(event) => setCategory(event.target.value as Story["category"])}>
-              {categories.map((item) => (
-                <option value={item} key={item}>
-                  {label(item)}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={category}
+              onChange={(val) => setCategory((typeof val === "string" ? val : val?.target?.value) as Story["category"])}
+              options={categories.map((item) => ({
+                value: item,
+                label: label(item),
+              }))}
+            />
           </label>
           <label>
             Title
@@ -108,14 +110,15 @@ export function StoryEditor({
 
           <label>
             Privacy
-            <select value={sensitivity} onChange={(event) => setSensitivity(event.target.value as Story["sensitivity"])}>
-              {sensitivities.map((item) => (
-                <option value={item} key={item}>
-                  {sensitivityMeta[item].label}
-                </option>
-              ))}
-            </select>
-            <small>{sensitivityMeta[sensitivity].description}</small>
+            <Select
+              value={sensitivity}
+              onChange={(val) => setSensitivity((typeof val === "string" ? val : val?.target?.value) as Story["sensitivity"])}
+              options={sensitivities.map((item) => ({
+                value: item,
+                label: sensitivityMeta[item].label,
+                description: sensitivityMeta[item].description,
+              }))}
+            />
           </label>
           <label>
             Skills or values demonstrated

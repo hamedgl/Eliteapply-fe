@@ -128,13 +128,9 @@ export function ReminderEditor({
                     ? "On the deadline"
                     : preset === "1d"
                       ? "1 day before"
-                      : preset === "3d"
-                        ? "3 days before"
-                        : "1 week before"}
-                </button>
-              ))}
-            </div>
-          ) : null}
+            Reminder title
+            <input value={title} onChange={(event) => setTitle(event.target.value)} required autoFocus placeholder="Submit reference letter" />
+          </label>
 
           <label>
             Date &amp; time
@@ -147,19 +143,27 @@ export function ReminderEditor({
           </label>
           <label>
             Repeat
-            <select value={recurrence ?? "none"} onChange={(event) => setRecurrence(event.target.value)}>
-              <option value="none">Does not repeat</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
+            <Select
+              value={recurrence ?? "none"}
+              onChange={(val) => setRecurrence(typeof val === "string" ? val : val?.target?.value)}
+              options={[
+                { value: "none", label: "Does not repeat" },
+                { value: "daily", label: "Daily" },
+                { value: "weekly", label: "Weekly" },
+                { value: "monthly", label: "Monthly" },
+              ]}
+            />
           </label>
           <label>
             Notify by
-            <select value={channel} onChange={(event) => setChannel(event.target.value)}>
-              <option value="in_app">In-app</option>
-              <option value="email">Email</option>
-            </select>
+            <Select
+              value={channel}
+              onChange={(val) => setChannel(typeof val === "string" ? val : val?.target?.value)}
+              options={[
+                { value: "in_app", label: "In-app" },
+                { value: "email", label: "Email" },
+              ]}
+            />
           </label>
           <p className="wide reminders-timezone-note">Times are shown in {timezone}.</p>
 

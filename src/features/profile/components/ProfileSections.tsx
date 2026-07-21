@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { CountryCombobox } from "../../../components/filters/CountryCombobox";
 import { countryName } from "../../../lib/countries";
 import {
@@ -35,25 +36,21 @@ export function GoalsFields({
     <div className="form-grid">
       <label>
         Applicant type
-        <select value={applicantType} onChange={(event) => onApplicantType(event.target.value)}>
-          <option value="">Select…</option>
-          {applicantTypes.map((item) => (
-            <option value={item} key={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+        <Select
+          value={applicantType}
+          onChange={(val) => onApplicantType(typeof val === "string" ? val : val?.target?.value)}
+          placeholder="Select…"
+          options={applicantTypes.map((item) => ({ value: item, label: item }))}
+        />
       </label>
       <label>
         Intended study level
-        <select value={studyLevel} onChange={(event) => onStudyLevel(event.target.value)}>
-          <option value="">Select…</option>
-          {studyLevels.map((item) => (
-            <option value={item} key={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+        <Select
+          value={studyLevel}
+          onChange={(val) => onStudyLevel(typeof val === "string" ? val : val?.target?.value)}
+          placeholder="Select…"
+          options={studyLevels.map((item) => ({ value: item, label: item }))}
+        />
       </label>
       <div className="wide">
         <span className="profile-field-label">Target countries</span>
@@ -91,14 +88,12 @@ export function GoalsFields({
       </label>
       <label>
         Study mode
-        <select value={goals.study_mode} onChange={(event) => onGoals({ study_mode: event.target.value })}>
-          <option value="">Select…</option>
-          {studyModes.map((item) => (
-            <option value={item} key={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+        <Select
+          value={goals.study_mode}
+          onChange={(val) => onGoals({ study_mode: typeof val === "string" ? val : val?.target?.value })}
+          placeholder="Select…"
+          options={studyModes.map((item) => ({ value: item, label: item }))}
+        />
       </label>
       <label className="wide">
         Fields of study

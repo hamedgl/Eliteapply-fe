@@ -12,6 +12,7 @@ import { aggregateLabel, aggregateTypes, type Reminder } from "./model";
 import { ReminderCard } from "./components/ReminderCard";
 import { ReminderEditor } from "./components/ReminderEditor";
 import { CalendarIntegrationCard } from "./components/CalendarIntegrationCard";
+import { Select } from "../../components/ui/select";
 import "../../styles/workspace.css";
 import "./reminders.css";
 
@@ -151,14 +152,17 @@ export function RemindersPage() {
         </div>
         <label className="apps-quick-filter">
           Related to
-          <select value={contextFilter} onChange={(event) => setParam("context", event.target.value)}>
-            <option value="">Everything</option>
-            {aggregateTypes.map((type) => (
-              <option value={type} key={type}>
-                {aggregateLabel[type]}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={contextFilter}
+            onChange={(val) => setParam("context", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+            options={[
+              { value: "", label: "Everything" },
+              ...aggregateTypes.map((type) => ({
+                value: type,
+                label: aggregateLabel[type],
+              })),
+            ]}
+          />
         </label>
       </div>
 

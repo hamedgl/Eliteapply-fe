@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
+import { Select } from "../../../components/ui/select";
 import { catalogueApi } from "../../../lib/api/phase2";
 
 export function ReportIssueDialog({
@@ -100,17 +101,18 @@ function ReportForm({
               </p>
               <label>
                 Issue type
-                <select
+                <Select
                   value={issueType}
-                  onChange={(e) => setIssueType(e.target.value)}
-                >
-                  <option value="outdated_deadline">Outdated Deadline</option>
-                  <option value="incorrect_requirements">Incorrect Admission Requirements</option>
-                  <option value="broken_link">Broken / Invalid Link</option>
-                  <option value="wrong_tuition_fee">Wrong Tuition / Fee Information</option>
-                  <option value="duplicate_listing">Duplicate Entry</option>
-                  <option value="other">Other Information Inaccuracy</option>
-                </select>
+                  onChange={(val) => setIssueType(typeof val === "string" ? val : (val?.target?.value ?? "outdated_deadline"))}
+                  options={[
+                    { value: "outdated_deadline", label: "Outdated Deadline" },
+                    { value: "incorrect_requirements", label: "Incorrect Admission Requirements" },
+                    { value: "broken_link", label: "Broken / Invalid Link" },
+                    { value: "wrong_tuition_fee", label: "Wrong Tuition / Fee Information" },
+                    { value: "duplicate_listing", label: "Duplicate Entry" },
+                    { value: "other", label: "Other Information Inaccuracy" },
+                  ]}
+                />
               </label>
               <label>
                 Description / Correct details

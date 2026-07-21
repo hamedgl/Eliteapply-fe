@@ -6071,14 +6071,40 @@ th {
   min-width: 0;
   min-height: 44px;
   color: var(--app-ink);
-  border-color: var(--app-line-strong);
+  border: 1px solid var(--app-line-strong);
   border-radius: 9999px;
   background-color: var(--app-surface);
-  padding: 0.65rem 2.4rem 0.65rem 1.1rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px 16px;
+  padding: 0.65rem 2.5rem 0.65rem 1.1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition:
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.app-shell select:hover:not(:disabled) {
+  border-color: #7c8aa3;
+  transform: scale(1.01);
+}
+
+.app-shell select:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+select option {
+  background-color: var(--app-surface, #ffffff);
+  color: var(--app-ink, #1e293b);
+  padding: 8px 12px;
 }
 
 .app-shell input:hover,
-.app-shell select:hover,
 .app-shell textarea:hover {
   border-color: #7c8aa3;
 }

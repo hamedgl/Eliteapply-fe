@@ -11,6 +11,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
+import { Select } from "../../components/ui/select";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   applicationsApi,
@@ -485,32 +486,30 @@ function ApplicationDocuments({
       >
         <label>
           Document
-          <select
+          <Select
             value={documentId}
-            onChange={(event) => setDocumentId(event.target.value)}
-            required
-          >
-            <option value="">Choose a scanned document</option>
-            {available.map((document) => (
-              <option key={document.id} value={document.id}>
-                {document.display_name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setDocumentId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+            placeholder="Choose a scanned document"
+            options={available.map((document) => ({
+              value: document.id,
+              label: document.display_name,
+            }))}
+          />
         </label>
         <label>
           Requirement (optional)
-          <select
+          <Select
             value={requirementId}
-            onChange={(event) => setRequirementId(event.target.value)}
-          >
-            <option value="">Whole application</option>
-            {requirements.map((requirement) => (
-              <option key={requirement.id} value={requirement.id}>
-                {requirement.title}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setRequirementId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+            placeholder="Whole application"
+            options={[
+              { value: "", label: "Whole application" },
+              ...requirements.map((requirement) => ({
+                value: requirement.id,
+                label: requirement.title,
+              })),
+            ]}
+          />
         </label>
         <button
           className="primary"

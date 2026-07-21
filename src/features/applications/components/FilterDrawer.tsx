@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { useFocusTrap } from "../hooks";
 import { catalogueApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
@@ -118,19 +119,19 @@ export function FilterDrawer({
             />
             <label>
               Application type
-              <select
+              <Select
                 value={filters.applicationType}
-                onChange={(event) =>
-                  setFilter("applicationType", event.target.value)
+                onChange={(val) =>
+                  setFilter("applicationType", typeof val === "string" ? val : (val?.target?.value ?? ""))
                 }
-              >
-                <option value="">All types</option>
-                {types.map((item) => (
-                  <option value={item} key={item}>
-                    {label(item)}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "All types" },
+                  ...types.map((item) => ({
+                    value: item,
+                    label: label(item),
+                  })),
+                ]}
+              />
             </label>
           </section>
 
@@ -160,31 +161,31 @@ export function FilterDrawer({
             <h3>Organisation</h3>
             <label>
               Tag
-              <select
+              <Select
                 value={filters.tag}
-                onChange={(event) => setFilter("tag", event.target.value)}
-              >
-                <option value="">All tags</option>
-                {knownTags.map((tag) => (
-                  <option value={tag} key={tag}>
-                    {tag}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFilter("tag", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                options={[
+                  { value: "", label: "All tags" },
+                  ...knownTags.map((tag) => ({
+                    value: tag,
+                    label: tag,
+                  })),
+                ]}
+              />
             </label>
             <label>
               Priority
-              <select
+              <Select
                 value={filters.priority}
-                onChange={(event) => setFilter("priority", event.target.value)}
-              >
-                <option value="">All priorities</option>
-                {priorities.map((item) => (
-                  <option value={item} key={item}>
-                    {label(item)}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFilter("priority", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                options={[
+                  { value: "", label: "All priorities" },
+                  ...priorities.map((item) => ({
+                    value: item,
+                    label: label(item),
+                  })),
+                ]}
+              />
             </label>
             <label className="check-field">
               <input

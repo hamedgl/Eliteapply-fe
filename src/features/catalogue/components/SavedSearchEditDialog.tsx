@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { discoveryApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { CountryCombobox } from "../../../components/filters/CountryCombobox";
@@ -72,7 +73,7 @@ export function SavedSearchEditDialog({ search, onClose }: { search: SavedSearch
           </label>
           <label className="wide">
             Field of study
-            <input value={fieldOfStudy} onChange={(event) => setFieldOfStudy(event.target.value)} />
+            <input value={fieldOfStudy} onChange={(event) => setSearchTerm(event.target.value)} />
           </label>
           <label className="check-field wide">
             <input type="checkbox" checked={verifiedOnly} onChange={(event) => setVerifiedOnly(event.target.checked)} />
@@ -89,11 +90,15 @@ export function SavedSearchEditDialog({ search, onClose }: { search: SavedSearch
           {notifyOnMatches ? (
             <label>
               Notification frequency
-              <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
-                <option value="instant">Instant</option>
-                <option value="daily">Daily digest</option>
-                <option value="weekly">Weekly digest</option>
-              </select>
+              <Select
+                value={frequency}
+                onChange={(val) => setFrequency(typeof val === "string" ? val : (val?.target?.value ?? "instant"))}
+                options={[
+                  { value: "instant", label: "Instant" },
+                  { value: "daily", label: "Daily digest" },
+                  { value: "weekly", label: "Weekly digest" },
+                ]}
+              />
             </label>
           ) : null}
           <div className="dialog-actions wide">
