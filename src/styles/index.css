@@ -6045,7 +6045,7 @@ th {
   color: var(--app-ink);
   border-color: var(--app-line-strong);
   border-radius: 8px;
-  background: var(--app-surface);
+  background-color: var(--app-surface);
 }
 
 .app-shell input:hover,

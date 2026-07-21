@@ -143,7 +143,6 @@
   margin-top: 1.5rem;
   padding: 0.75rem 0.85rem;
   flex-wrap: nowrap;
-  overflow-x: auto;
 }
 .apps-toolbar > *:not(.apps-toolbar-search) {
   flex: none;
