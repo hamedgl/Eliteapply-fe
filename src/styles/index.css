@@ -57,7 +57,7 @@ a {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 3px solid #8eafff;
+  outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
 h1,
@@ -717,16 +717,17 @@ textarea {
 }
 /* ── Collapsed state: arrow on top → vertical text → count at bottom ── */
 .board-column.is-collapsed .board-column-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   min-height: 200px;
   padding: 0.5rem 0.15rem;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
-  align-items: start;
-  gap: 0;
+  gap: 0.4rem;
 }
 .board-column.is-collapsed .board-column-toggle svg {
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
+  flex-shrink: 0;
 }
 .board-column.is-collapsed .board-column-toggle span {
   writing-mode: vertical-rl;
@@ -735,12 +736,14 @@ textarea {
   line-height: 1.15;
   font-size: 0.78rem;
   letter-spacing: 0.01em;
+  margin: 0.3rem 0;
 }
 .board-column.is-collapsed .board-column-toggle strong {
-  margin-top: 0.4rem;
+  margin-top: 0.2rem;
   width: 22px;
   height: 22px;
   font-size: 0.68rem;
+  flex-shrink: 0;
 }
 .board-column-content {
   min-height: 490px;
@@ -13709,7 +13712,6 @@ body:has(.admin-shell) {
   flex: 0 0 auto;
   padding: 1.5rem;
   border: 1px solid var(--m-line);
-  border-bottom: 3px solid var(--m-blue);
   border-radius: var(--m-radius-preview);
   background: var(--m-white);
   box-shadow: 0 8px 8px var(--m-shadow-preview-soft);
@@ -13814,8 +13816,7 @@ body:has(.admin-shell) {
 .tool-comparison td:nth-child(2) {
   position: relative;
   z-index: 1;
-  border-left: 3px solid var(--m-blue);
-  border-right: 3px solid var(--m-blue);
+  border-inline: 1px solid var(--m-blue);
 }
 .tool-comparison thead th:nth-child(2) {
   color: var(--m-white);
