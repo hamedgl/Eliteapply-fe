@@ -103,6 +103,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
     const handleSelect = useCallback(
       (val: string) => {
+        setIsOpen(false);
         if (!isControlled) {
           setInternalValue(val);
         }
@@ -121,7 +122,6 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             (onChange as any)(syntheticEvent);
           }
         }
-        setIsOpen(false);
       },
       [isControlled, name, onChange]
     );
@@ -237,7 +237,16 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     id={`${id}-opt-${option.value}`}
                     role="option"
                     aria-selected={isSelected}
-                    onClick={() => {
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!option.disabled) {
+                        handleSelect(String(option.value));
+                      }
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       if (!option.disabled) {
                         handleSelect(String(option.value));
                       }

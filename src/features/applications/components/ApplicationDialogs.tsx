@@ -31,7 +31,7 @@ export function DuplicateApplication({
         aria-modal="true"
         aria-labelledby="duplicate-title"
       >
-        <header>
+        <header className="apps-dialog-header">
           <div>
             <h2 id="duplicate-title">Duplicate application</h2>
             <p>Create a new copy of {app.title}.</p>
@@ -155,7 +155,7 @@ export function CreateApplication({
         aria-modal="true"
         aria-labelledby="create-title"
       >
-        <header>
+        <header className="apps-dialog-header">
           <h2 id="create-title">Add application</h2>
           <button type="button" onClick={onClose} aria-label="Close">
             <X aria-hidden="true" />

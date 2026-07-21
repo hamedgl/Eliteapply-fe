@@ -879,12 +879,14 @@
   background: var(--app-surface);
   box-shadow: 0 20px 48px rgb(16 27 59 / 22%);
 }
-.apps-dialog-header {
+.apps-dialog-header,
+.apps-dialog > header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+  width: 100%;
 }
 .apps-dialog-header h2,
 .apps-dialog > header h2 {

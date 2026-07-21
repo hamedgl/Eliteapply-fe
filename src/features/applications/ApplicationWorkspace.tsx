@@ -76,6 +76,12 @@ export function ApplicationWorkspace() {
     queryFn: () => applicationsApi.readiness(id),
     enabled: Boolean(id) && !directResource,
   });
+  const eligibility = useQuery({
+    queryKey: queryKeys.eligibility(id),
+    queryFn: () => intelligenceApi.currentEligibility(id),
+    enabled: Boolean(id) && !directResource,
+    retry: false,
+  });
   const submit = useMutation({
     mutationFn: async (version: number) => {
       const latest = await applicationsApi.readiness(id);
@@ -204,8 +210,12 @@ export function ApplicationWorkspace() {
         <Overview
           workspace={w}
           readiness={readiness.data}
-          pending={readiness.isPending}
-          refresh={() => void readiness.refetch()}
+          pending={readiness.isPending || eligibility.isPending}
+          refresh={() => {
+            void readiness.refetch();
+            void eligibility.refetch();
+          }}
+          eligibility={eligibility.data}
         />
       ) : null}
       {activeTab === "requirements" ? (
@@ -540,15 +550,23 @@ function Overview({
   readiness,
   pending,
   refresh,
+  eligibility,
 }: {
   workspace: S["ApplicationWorkspaceResponse"];
   readiness?: S["ApplicationReadinessResponse"];
   pending: boolean;
   refresh: () => void;
+  eligibility?: S["EligibilityResponse"];
 }) {
   const ready = w.requirements.filter((x) =>
     ["ready", "submitted", "waived"].includes(x.status),
   ).length;
+
+  const score =
+    eligibility?.readiness_score !== undefined
+      ? Math.max(0, Math.min(100, eligibility.readiness_score))
+      : (readiness?.readiness_percent ?? 0);
+
   return (
     <div className="workspace-overview">
       <section>
@@ -583,15 +601,13 @@ function Overview({
           <p role="status">Checking readiness…</p>
         ) : readiness ? (
           <>
-            <strong className="large-stat">
-              {readiness.readiness_percent}%
-            </strong>
+            <strong className="large-stat">{score}%</strong>
             <p>
               {label(readiness.overall_state)} · Deadline{" "}
               {label(readiness.deadline_state)}
             </p>
-            <progress max="100" value={readiness.readiness_percent}>
-              {readiness.readiness_percent}%
+            <progress max="100" value={score}>
+              {score}%
             </progress>
             {readiness.blocking_issues.length ? (
               <div className="readiness-issues">

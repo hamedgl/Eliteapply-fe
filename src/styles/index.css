@@ -4376,8 +4376,25 @@ th {
 .eligibility-panel > header,
 .collaborators-panel > header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.eligibility-panel > header button,
+.collaborators-panel > header button {
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 1.25rem !important;
+  border-radius: 9999px !important;
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 .eligibility-history {
   display: grid;
