@@ -1,284 +1,262 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, GraduationCap } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
 import { profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
-const known = [
-  "education",
-  "academic_interests",
-  "honors_and_activities",
-  "standardized_tests",
-  "research_experience",
-];
+import { PageHeader } from "../../components/page/PageHeader";
+import { OverflowMenu } from "../../components/actions/OverflowMenu";
+import {
+  CORE_SECTIONS,
+  computeCompletion,
+  draftToUpsert,
+  readDraft,
+  sectionLabels,
+  sectionOrder,
+  type ProfileDraft,
+  type SectionKey,
+} from "./model";
+import { ProfileCompletionCard } from "./components/ProfileCompletionCard";
+import { VersionHistoryDrawer } from "./components/VersionHistoryDrawer";
+import { DeleteProfileDialog } from "./components/DeleteProfileDialog";
+import { ImportProfileDialog } from "./components/ImportProfileDialog";
+import { GoalsFields, InterestsFields } from "./components/ProfileSections";
+import {
+  EducationSection,
+  HonorsSection,
+  LanguagesSection,
+  ResearchSection,
+  TestsSection,
+} from "./components/ProfileRepeatableSections";
+import "../../styles/workspace.css";
+import "./profile.css";
+
+const AUTOSAVE_DELAY = 1200;
+
 export function AcademicProfilePage() {
-  const qc = useQueryClient(),
-    [message, setMessage] = useState(""),
-    [selectedVersion, setSelectedVersion] = useState("");
-  const importDialog = useRef<HTMLDialogElement>(null);
-  const q = useQuery({ queryKey: queryKeys.profile, queryFn: profileApi.get });
-  const versions = useQuery({
-    queryKey: queryKeys.profileVersions,
-    queryFn: profileApi.versions,
-    enabled: q.data != null,
-  });
-  const version = useQuery({
-    queryKey: [...queryKeys.profileVersions, selectedVersion],
-    queryFn: () => profileApi.version(selectedVersion),
-    enabled: Boolean(selectedVersion),
-  });
+  const qc = useQueryClient();
+  const [activeSection, setActiveSection] = useState<SectionKey>("goals");
+  const [showHistory, setShowHistory] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [draft, setDraft] = useState<ProfileDraft | null>(null);
+  const dirtyRef = useRef(false);
+
+  const query = useQuery({ queryKey: queryKeys.profile, queryFn: profileApi.get });
+
   const refreshRelated = async () => {
     await Promise.all([
       qc.invalidateQueries({ queryKey: queryKeys.profile }),
       qc.invalidateQueries({ queryKey: queryKeys.profileVersions }),
       qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
       qc.invalidateQueries({ queryKey: queryKeys.onboarding }),
-      qc.invalidateQueries({ queryKey: ["application-intelligence"] }),
     ]);
   };
+
   const save = useMutation({
-    mutationFn: profileApi.save,
+    mutationFn: (nextDraft: ProfileDraft) =>
+      profileApi.save(draftToUpsert(nextDraft, (query.data?.sections ?? {}) as Record<string, unknown>)),
+    onMutate: () => setSaveStatus("saving"),
     onSuccess: async (profile) => {
       qc.setQueryData(queryKeys.profile, profile);
-      setMessage("Academic profile saved.");
+      dirtyRef.current = false;
+      setSaveStatus("saved");
       await refreshRelated();
     },
+    onError: () => setSaveStatus("error"),
   });
-  const restore = useMutation({
-    mutationFn: (id: string) =>
-      profileApi.restore(id, { expected_version: q.data?.version ?? null }),
-    onSuccess: async () => {
-      setMessage("The selected academic profile version was restored.");
-      await refreshRelated();
-    },
-  });
-  const importProfile = useMutation({
-    mutationFn: profileApi.import,
-    onSuccess: async () => {
-      importDialog.current?.close();
-      setMessage("Academic profile imported.");
-      await refreshRelated();
-    },
-  });
+
   const remove = useMutation({
     mutationFn: profileApi.remove,
     onSuccess: async () => {
-      setSelectedVersion("");
-      setMessage("Academic profile deleted. Your account remains active.");
+      setConfirmingDelete(false);
       qc.setQueryData(queryKeys.profile, null);
+      setDraft(null);
       await refreshRelated();
     },
   });
-  if (q.isPending) return <div className="page">Loading academic profile…</div>;
-  if (q.isError)
+
+  // Load the draft once profile data arrives; local edits after that don't get clobbered by refetches.
+  useEffect(() => {
+    if (draft === null && query.data !== undefined) setDraft(readDraft(query.data));
+  }, [query.data, draft]);
+
+  // Debounced autosave.
+  useEffect(() => {
+    if (!draft || !dirtyRef.current) return;
+    const timer = setTimeout(() => save.mutate(draft), AUTOSAVE_DELAY);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
+
+  // Warn before leaving with unsaved changes.
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (dirtyRef.current) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
+  const updateDraft = (patch: Partial<ProfileDraft>) => {
+    dirtyRef.current = true;
+    setSaveStatus("idle");
+    setDraft((current) => (current ? { ...current, ...patch } : current));
+  };
+
+  const completion = useMemo(() => (draft ? computeCompletion(draft) : {}), [draft]);
+
+  if (query.isPending || !draft)
     return (
-      <div className="page error-state">
-        <h1>Academic profile unavailable</h1>
-        <button className="primary" onClick={() => q.refetch()}>
+      <div className="apps-skeleton" aria-busy="true" aria-label="Loading academic profile">
+        <div className="skeleton apps-skeleton-toolbar" />
+        <div className="apps-skeleton-table">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div className="skeleton apps-skeleton-row" key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  if (query.isError)
+    return (
+      <div className="apps-page-error" role="alert">
+        <h1>We couldn’t load your academic profile.</h1>
+        <button className="primary" onClick={() => query.refetch()}>
           Try again
         </button>
       </div>
     );
-  const p = q.data ?? null;
-  const completionEntries = Object.entries(p?.completion ?? {});
-  function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setMessage("");
-    save.reset();
-    const d = new FormData(e.currentTarget);
-    const sections = { ...(p?.sections ?? {}) };
-    for (const key of known) {
-      const value = String(d.get(key) ?? "").trim();
-      if (value)
-        sections[key] = {
-          ...(typeof sections[key] === "object"
-            ? (sections[key] as object)
-            : {}),
-          summary: value,
-        };
-      else delete sections[key];
-    }
-    save.mutate({
-      applicant_type: String(d.get("applicant_type")) || null,
-      intended_study_level: String(d.get("intended_study_level")) || null,
-      target_countries: String(d.get("target_countries"))
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean),
-      sections,
-      provenance: p?.provenance,
-      completion: p?.completion,
-    });
-  }
-  return (
-    <div className="page profile-page">
-      <header className="page-heading">
-        <div>
-          <h1>Academic Profile</h1>
-          <p>Your reusable source of truth for every application.</p>
-        </div>
-        <div className="page-heading-actions profile-heading-actions">
-          <span className="muted">{p ? `Version ${p.version}` : "Not saved yet"}</span>
-          <button className="secondary-action" type="button" onClick={() => importDialog.current?.showModal()}>
-            Import profile
-          </button>
-          {p ? <button className="secondary-action danger" type="button" disabled={remove.isPending} onClick={() => {
-            if (confirm("Delete your academic profile and its reusable application context? This cannot be undone.")) remove.mutate();
-          }}>{remove.isPending ? "Deleting…" : "Delete profile"}</button> : null}
-        </div>
-      </header>
-      <dialog ref={importDialog} className="dialog profile-import-dialog">
-        <form method="dialog" className="settings-form" onSubmit={(event) => {
-          event.preventDefault();
-          const data = new FormData(event.currentTarget);
-          importProfile.mutate({
-            expected_version: p?.version ?? null,
-            applicant_type: String(data.get("applicant_type")) || null,
-            intended_study_level: String(data.get("intended_study_level")) || null,
-            target_countries: String(data.get("target_countries")).split(",").map((item) => item.trim()).filter(Boolean),
-            sections: { education: { summary: String(data.get("education_summary")) } },
-            overwrite_existing: data.get("overwrite_existing") === "on",
-          });
-        }}>
-          <h2>Import academic profile</h2>
-          <p>Review the structured information before importing. Existing sections are preserved unless overwrite is selected.</p>
-          <label>Applicant category to import<input name="applicant_type" /></label>
-          <label>Study level to import<input name="intended_study_level" /></label>
-          <label>Country list to import<input name="target_countries" placeholder="Portugal, United Kingdom" /></label>
-          <label>Academic background to import<textarea name="education_summary" rows={5} /></label>
-          <label className="check"><input name="overwrite_existing" type="checkbox" />Overwrite matching existing fields</label>
-          {importProfile.isError ? <p className="form-error" role="alert">The profile could not be imported. Review the fields and try again.</p> : null}
-          <div className="dialog-actions"><button type="button" onClick={() => importDialog.current?.close()}>Cancel</button><button className="primary" disabled={importProfile.isPending}>{importProfile.isPending ? "Importing…" : "Import profile"}</button></div>
-        </form>
-      </dialog>
-      <form className="profile-layout" onSubmit={submit}>
-        <main>
-          <section>
-            <h2>Direction</h2>
-            <div className="form-grid">
-              <label>
-                Applicant type
-                <input
-                  name="applicant_type"
-                  defaultValue={p?.applicant_type ?? ""}
-                  placeholder="International student"
-                />
-              </label>
-              <label>
-                Intended study level
-                <input
-                  name="intended_study_level"
-                  defaultValue={p?.intended_study_level ?? ""}
-                  placeholder="Postgraduate"
-                />
-              </label>
-              <label className="wide">
-                Target countries
-                <input
-                  name="target_countries"
-                  defaultValue={(p?.target_countries ?? []).join(", ")}
-                  placeholder="Portugal, United Kingdom"
-                />
-              </label>
-            </div>
-          </section>
-          <section>
-            <h2>Academic evidence</h2>
-            {known.map((key) => (
-              <label key={key}>
-                {key.replaceAll("_", " ")}
-                <textarea
-                  name={key}
-                  rows={3}
-                  defaultValue={sectionSummary((p?.sections ?? {})[key])}
-                  placeholder="Add a concise factual summary. Structured editors will evolve with the contract."
-                />
-              </label>
-            ))}
-          </section>
-          {save.isError ? (
-            <p className="form-error" role="alert">
-              {save.error instanceof Error
-                ? save.error.message
-                : "We couldn’t save your academic profile. Your entries are still here; try again."}
-            </p>
-          ) : null}
-          <button className="primary" type="submit" disabled={save.isPending}>
-            {save.isPending ? "Saving…" : "Save academic profile"}
-          </button>
-          <p role="status">{message}</p>
-        </main>
-        <aside>
-          <GraduationCap />
-          <h2>Completion</h2>
-          <ul>
-            {completionEntries.length ? (
-              completionEntries.map(([key, value]) => (
-                <li key={key}>
-                  <span>{key.replaceAll("_", " ")}</span>
-                  <strong>{value ? "Complete" : "Needs attention"}</strong>
-                </li>
-              ))
-            ) : (
-              <li>
-                <span>Academic profile</span>
-                <strong>Not started</strong>
-              </li>
-            )}
-          </ul>
-          <h2>
-            <Clock3 /> Version history
-          </h2>
-          {p ? (
-            versions.isError ? (
-              <p className="muted">Version history could not be loaded.</p>
-            ) : versions.isPending ? (
-              <p className="muted" role="status">
-                Loading version history…
-              </p>
-            ) : versions.data?.length ? (
-              versions.data.map((x) => (
-                <button className="version-row" type="button" key={x.id} onClick={() => setSelectedVersion(x.id)} aria-pressed={selectedVersion === x.id}>
-                  <strong>Version {x.version_number}</strong>
-                  <span>{formatVersionDate(x.created_at)}</span>
-                  <small>{x.reason}</small>
-                </button>
-              ))
-            ) : (
-              <p className="muted">No earlier versions yet.</p>
-            )
-          ) : (
-            <p className="muted">
-              Your first version will appear here after you save.
-            </p>
-          )}
-          {version.data ? <section className="version-detail"><h3>Version {version.data.version_number}</h3><p>{version.data.reason}</p><dl>{Object.entries(version.data.snapshot).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key.replaceAll("_", " ")}</dt><dd>{summary(value)}</dd></div>)}</dl><button type="button" disabled={restore.isPending} onClick={() => {
-            if (confirm(`Restore version ${version.data.version_number}? Your current profile remains in version history.`)) restore.mutate(version.data.id);
-          }}>{restore.isPending ? "Restoring…" : "Restore this version"}</button></section> : null}
-        </aside>
-      </form>
-    </div>
-  );
-}
-function summary(value: unknown) {
-  if (typeof value === "string" || typeof value === "number") return String(value);
-  if (Array.isArray(value)) return value.join(", ");
-  return value && typeof value === "object" ? "Structured information saved" : "Not provided";
-}
-function sectionSummary(value: unknown) {
-  if (typeof value === "string") return value;
-  if (
-    value &&
-    typeof value === "object" &&
-    typeof (value as Record<string, unknown>).summary === "string"
-  )
-    return String((value as Record<string, unknown>).summary);
-  return "";
-}
 
-function formatVersionDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-    date,
+  const profile = query.data;
+
+  return (
+    <div className="page apps-page profile-page">
+      <PageHeader
+        title="Academic profile"
+        description="Keep your academic background, goals and achievements in one reusable profile."
+        meta={
+          profile
+            ? `Version ${profile.version} · ${
+                saveStatus === "saving"
+                  ? "Saving…"
+                  : saveStatus === "error"
+                    ? "Save failed"
+                    : saveStatus === "saved"
+                      ? "Saved"
+                      : "Up to date"
+              }`
+            : "Not saved yet"
+        }
+        actions={
+          <>
+            <button type="button" onClick={() => setShowImport(true)}>
+              Import profile
+            </button>
+            <OverflowMenu
+              label="Profile actions"
+              items={[
+                { key: "history", label: "View version history", icon: History, onClick: () => setShowHistory(true) },
+                ...(profile
+                  ? [
+                      {
+                        key: "delete",
+                        label: "Delete profile",
+                        icon: Trash2,
+                        danger: true,
+                        onClick: () => setConfirmingDelete(true),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </>
+        }
+      />
+
+      {save.isError ? (
+        <p className="form-error" role="alert">
+          We couldn’t save your academic profile. Your entries are still here; retrying automatically.
+        </p>
+      ) : null}
+
+      <div className="profile-layout">
+        <nav className="profile-section-nav" aria-label="Profile sections">
+          {sectionOrder.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={activeSection === key ? "selected" : ""}
+              aria-current={activeSection === key}
+              onClick={() => setActiveSection(key)}
+            >
+              {sectionLabels[key]}
+              <span className={`profile-nav-dot${completion[key] ? " is-done" : ""}${!completion[key] && !CORE_SECTIONS.includes(key) ? " is-optional" : ""}`}>
+                {completion[key] ? "Complete" : CORE_SECTIONS.includes(key) ? "Incomplete" : "Optional"}
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        <main className="apps-card profile-section-panel">
+          <h2>{sectionLabels[activeSection]}</h2>
+          {activeSection === "goals" ? (
+            <GoalsFields
+              applicantType={draft.applicant_type}
+              studyLevel={draft.intended_study_level}
+              countries={draft.target_countries}
+              goals={draft.goals}
+              onApplicantType={(value) => updateDraft({ applicant_type: value })}
+              onStudyLevel={(value) => updateDraft({ intended_study_level: value })}
+              onCountries={(value) => updateDraft({ target_countries: value })}
+              onGoals={(patch) => updateDraft({ goals: { ...draft.goals, ...patch } })}
+            />
+          ) : null}
+          {activeSection === "education" ? (
+            <EducationSection entries={draft.education} onChange={(value) => updateDraft({ education: value })} />
+          ) : null}
+          {activeSection === "academic_interests" ? (
+            <InterestsFields
+              interests={draft.interests}
+              onChange={(patch) => updateDraft({ interests: { ...draft.interests, ...patch } })}
+            />
+          ) : null}
+          {activeSection === "research_experience" ? (
+            <ResearchSection entries={draft.research} onChange={(value) => updateDraft({ research: value })} />
+          ) : null}
+          {activeSection === "honors_and_activities" ? (
+            <HonorsSection entries={draft.honors} onChange={(value) => updateDraft({ honors: value })} />
+          ) : null}
+          {activeSection === "standardized_tests" ? (
+            <TestsSection entries={draft.tests} onChange={(value) => updateDraft({ tests: value })} />
+          ) : null}
+          {activeSection === "languages" ? (
+            <LanguagesSection entries={draft.languages} onChange={(value) => updateDraft({ languages: value })} />
+          ) : null}
+        </main>
+
+        <ProfileCompletionCard
+          completion={completion}
+          updatedAt={profile?.updated_at ?? null}
+          onViewHistory={() => setShowHistory(true)}
+        />
+      </div>
+
+      {showHistory ? (
+        <VersionHistoryDrawer currentVersion={profile?.version ?? null} onClose={() => setShowHistory(false)} />
+      ) : null}
+      {showImport ? (
+        <ImportProfileDialog currentVersion={profile?.version ?? null} onClose={() => setShowImport(false)} />
+      ) : null}
+      {confirmingDelete ? (
+        <DeleteProfileDialog
+          pending={remove.isPending}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => remove.mutate()}
+        />
+      ) : null}
+    </div>
   );
 }

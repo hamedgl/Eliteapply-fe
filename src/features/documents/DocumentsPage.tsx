@@ -1,161 +1,371 @@
-import { useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  FileStack,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
   ArrowLeft,
-  ChevronRight,
   Download,
-  FileCheck2,
   ShieldAlert,
   ShieldCheck,
   Trash2,
-  Upload,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { documentsApi, uploadAcademicDocument } from "../../lib/api/phase2";
+import { documentsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { openSignedDownload } from "../../lib/api/signedTransport";
 import { formatDate, label } from "../applications/model";
+import { PageHeader } from "../../components/page/PageHeader";
+import { SummaryStrip } from "../../components/page/SummaryStrip";
+import { StatusBadge } from "../../components/data-display/StatusBadge";
+import { documentCategories, expiryInfo, formatBytes, scanStatus, type AcademicDocument } from "./model";
+import { DocumentsTable } from "./components/DocumentsTable";
+import { UploadDialog } from "./components/UploadDialog";
+import { AttachToApplicationDialog } from "./components/AttachToApplicationDialog";
+import { DeleteDocumentDialog } from "./components/DeleteDocumentDialog";
+import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
+import { OnboardingEmptyState } from "./components/EmptyStates";
+import "../../styles/workspace.css";
+import "./documents.css";
+
+import { EditMetadataDialog } from "./components/EditMetadataDialog";
+import { ReplaceVersionDialog } from "./components/ReplaceVersionDialog";
+import { DocumentVersionsDrawer } from "./components/DocumentVersionsDrawer";
+import { DocumentActivityDrawer } from "./components/DocumentActivityDrawer";
+
+function invalidateDocuments(qc: ReturnType<typeof useQueryClient>) {
+  void Promise.all([
+    qc.invalidateQueries({ queryKey: queryKeys.documents }),
+    qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
+  ]);
+}
 
 export function DocumentsPage() {
   const qc = useQueryClient();
-  const input = useRef<HTMLInputElement>(null);
-  const [category, setCategory] = useState("transcript");
-  const [message, setMessage] = useState("");
+  const [params, setParams] = useSearchParams();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [uploading, setUploading] = useState(false);
+  const [attaching, setAttaching] = useState<AcademicDocument | null>(null);
+  const [deleting, setDeleting] = useState<AcademicDocument | null>(null);
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<AcademicDocument | null>(null);
+  const [replacingDoc, setReplacingDoc] = useState<AcademicDocument | null>(null);
+  const [versionsDoc, setVersionsDoc] = useState<AcademicDocument | null>(null);
+  const [activityDoc, setActivityDoc] = useState<AcademicDocument | null>(null);
+  const [notice, setNotice] = useState("");
+
+  const search = params.get("search") ?? "";
+  const typeFilter = params.get("type") ?? "";
+  const statusFilter = params.get("status") ?? "";
+  const sort = params.get("sort") ?? "recent";
+  const setParam = (key: string, value: string) => {
+    const copy = new URLSearchParams(params);
+    if (value) copy.set(key, value);
+    else copy.delete(key);
+    setParams(copy, { replace: true });
+  };
+
   const query = useQuery({
     queryKey: queryKeys.documents,
     queryFn: documentsApi.list,
   });
-  const upload = useMutation({
-    mutationFn: (file: File) => uploadAcademicDocument(file, category),
-    onSuccess: () => {
-      setMessage("Upload registered. Security scanning is now in progress.");
-      void Promise.all([
-        qc.invalidateQueries({ queryKey: queryKeys.documents }),
-        qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
-      ]);
+
+  const remove = useMutation({
+    mutationFn: (id: string) => documentsApi.remove(id),
+    onSuccess: (_data, id) => {
+      invalidateDocuments(qc);
+      setSelected((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
     },
-    onError: (error) => setMessage(error.message),
   });
-  async function remove(id: string, name: string) {
-    if (
-      !confirm(
-        `Delete ${name} permanently? Any application links to this document may also be affected.`,
-      )
-    )
-      return;
-    await documentsApi.remove(id);
-    void Promise.all([
-      qc.invalidateQueries({ queryKey: queryKeys.documents }),
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
-    ]);
+
+  const documents = query.data ?? [];
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase();
+    let list = documents.filter((doc) => {
+      if (term && !doc.display_name.toLocaleLowerCase().includes(term)) return false;
+      if (typeFilter && doc.category !== typeFilter) return false;
+      if (statusFilter) {
+        const scan = scanStatus(doc.malware_status);
+        const expiry = expiryInfo(doc.expires_at);
+        if (statusFilter === "ready" && scan.tone !== "green") return false;
+        if (statusFilter === "processing" && scan.tone !== "amber") return false;
+        if (statusFilter === "blocked" && scan.tone !== "red") return false;
+        if (
+          statusFilter === "expiring" &&
+          !(expiry.urgency === "warn" || expiry.urgency === "critical")
+        )
+          return false;
+      }
+      return true;
+    });
+    list = [...list].sort((a, b) => {
+      if (sort === "name") return a.display_name.localeCompare(b.display_name);
+      if (sort === "expiring") {
+        if (!a.expires_at) return 1;
+        if (!b.expires_at) return -1;
+        return a.expires_at.localeCompare(b.expires_at);
+      }
+      return b.created_at.localeCompare(a.created_at);
+    });
+    return list;
+  }, [documents, search, typeFilter, statusFilter, sort]);
+
+  const stats = useMemo(() => {
+    const expiringSoon = documents.filter((doc) => {
+      const urgency = expiryInfo(doc.expires_at).urgency;
+      return urgency === "warn" || urgency === "critical";
+    });
+    const needsAttention = documents.filter(
+      (doc) => scanStatus(doc.malware_status).tone === "red",
+    );
+    const ready = documents.filter((doc) => scanStatus(doc.malware_status).tone === "green");
+    return {
+      total: documents.length,
+      ready: ready.length,
+      expiringSoon: expiringSoon.length,
+      needsAttention: needsAttention.length,
+    };
+  }, [documents]);
+
+  const clearFilters = () => {
+    setParams(new URLSearchParams(), { replace: true });
+  };
+
+  async function download(doc: AcademicDocument) {
+    const scan = scanStatus(doc.malware_status);
+    if (scan.tone !== "green") return;
+    openSignedDownload((await documentsApi.download(doc.id)).download_url);
   }
-  return (
-    <div className="page documents-page">
-      <header className="page-heading">
-        <div>
-          <h1>Documents</h1>
-          <p>Keep reusable academic evidence secure and ready to attach.</p>
-        </div>
-        <div className="upload-actions">
-          <select
-            aria-label="Document category"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-          >
-            <option value="transcript">Transcript</option>
-            <option value="degree_certificate">Degree certificate</option>
-            <option value="test_score">Test score</option>
-            <option value="identity">Identity document</option>
-            <option value="portfolio">Portfolio</option>
-            <option value="other">Other</option>
-          </select>
-          <input
-            ref={input}
-            hidden
-            type="file"
-            accept=".pdf,.docx,.jpg,.jpeg,.png"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) upload.mutate(file);
-            }}
-          />
-          <button
-            className="primary"
-            type="button"
-            onClick={() => input.current?.click()}
-            disabled={upload.isPending}
-          >
-            <Upload aria-hidden="true" />
-            {upload.isPending ? "Uploading…" : "Upload document"}
-          </button>
-        </div>
-      </header>
-      {upload.isPending ? (
-        <progress className="upload-progress" aria-label="Uploading document" />
-      ) : null}
-      {message ? (
-        <p className="document-feedback" role="status">
-          <ShieldCheck aria-hidden="true" />
-          {message}
-        </p>
-      ) : null}
-      {query.isPending ? (
-        <p role="status">Loading documents…</p>
-      ) : query.isError ? (
-        <div className="error-state">
-          <h2>Documents could not be loaded</h2>
-          <button type="button" onClick={() => query.refetch()}>
-            Try again
-          </button>
-        </div>
-      ) : query.data?.length ? (
-        <div className="document-list">
-          {query.data.map((document) => (
-            <article key={document.id}>
-              <FileCheck2 aria-hidden="true" />
-              <div>
-                <h2>
-                  <Link to={`/app/documents/${document.id}`}>
-                    {document.display_name}
-                  </Link>
-                </h2>
-                <p>
-                  {label(document.category)} ·{" "}
-                  {(document.size_bytes / 1048576).toFixed(1)} MB · Added{" "}
-                  {formatDate(document.created_at)}
-                </p>
-                <span className={`malware malware-${document.malware_status}`}>
-                  Security scan: {label(document.malware_status)}
-                </span>
-                {document.expires_at ? (
-                  <span>Expires {formatDate(document.expires_at)}</span>
-                ) : null}
-              </div>
-              <Link
-                className="document-detail-link"
-                to={`/app/documents/${document.id}`}
-              >
-                View details <ChevronRight aria-hidden="true" />
-              </Link>
-              <button
-                type="button"
-                onClick={() => remove(document.id, document.display_name)}
-                aria-label={`Delete ${document.display_name}`}
-              >
-                <Trash2 aria-hidden="true" />
-              </button>
-            </article>
+
+  if (query.isPending)
+    return (
+      <div className="apps-skeleton" aria-busy="true" aria-label="Loading documents">
+        <div className="apps-skeleton-summary">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div className="skeleton apps-skeleton-summary-item" key={i} />
           ))}
         </div>
-      ) : (
-        <div className="vault-empty">
-          <Upload aria-hidden="true" />
-          <h2>Your document vault is empty</h2>
-          <p>
-            Upload a transcript, certificate, test score or supporting document.
-          </p>
+        <div className="skeleton apps-skeleton-toolbar" />
+        <div className="apps-skeleton-table">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div className="skeleton apps-skeleton-row" key={i} />
+          ))}
         </div>
+      </div>
+    );
+  if (query.isError)
+    return (
+      <div className="apps-page-error" role="alert">
+        <h1>We couldn’t load your documents.</h1>
+        <button className="primary" onClick={() => query.refetch()}>
+          Try again
+        </button>
+      </div>
+    );
+
+  return (
+    <div className="page">
+      <PageHeader
+        title="Academic Documents"
+        description="Manage transcripts, certificates, recommendation letters, and test scores"
+        actions={
+          <button className="primary" type="button" onClick={() => setUploading(true)}>
+            <Plus aria-hidden="true" /> Upload document
+          </button>
+        }
+      />
+
+      <SummaryStrip
+        metrics={[
+          {
+            key: "total",
+            label: "Total documents",
+            value: stats.total,
+            icon: FileStack,
+          },
+          {
+            key: "ready",
+            label: "Ready to use",
+            value: stats.ready,
+            icon: CheckCircle2,
+          },
+          {
+            key: "expiring",
+            label: "Expiring soon",
+            value: stats.expiringSoon,
+            attention: stats.expiringSoon > 0,
+            icon: CalendarClock,
+          },
+          {
+            key: "attention",
+            label: "Needs attention",
+            value: stats.needsAttention,
+            attention: stats.needsAttention > 0,
+            icon: AlertTriangle,
+          },
+        ]}
+      />
+
+      {notice ? (
+        <p className="inline-success" role="status">
+          {notice}
+        </p>
+      ) : null}
+
+      {documents.length ? (
+        <>
+          <div className="apps-card apps-toolbar">
+            <div className="apps-toolbar-search">
+              <Search aria-hidden="true" />
+              <input
+                type="search"
+                placeholder="Search documents…"
+                aria-label="Search documents"
+                value={search}
+                onChange={(event) => setParam("search", event.target.value)}
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setParam("search", "")}
+                >
+                  <X aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+
+            <label className="apps-quick-filter">
+              Category
+              <select
+                value={typeFilter}
+                onChange={(event) => setParam("type", event.target.value)}
+              >
+                <option value="">All categories</option>
+                {documentCategories.map((item) => (
+                  <option key={item} value={item}>
+                    {item.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="apps-quick-filter">
+              Status
+              <select
+                value={statusFilter}
+                onChange={(event) => setParam("status", event.target.value)}
+              >
+                <option value="">All statuses</option>
+                <option value="ready">Ready to use</option>
+                <option value="processing">Scanning</option>
+                <option value="blocked">Flagged</option>
+                <option value="expiring">Expiring soon</option>
+              </select>
+            </label>
+
+            <label className="apps-sort">
+              Sort
+              <select
+                value={sort}
+                onChange={(event) => setParam("sort", event.target.value)}
+              >
+                <option value="recent">Recently added</option>
+                <option value="name">Name (A–Z)</option>
+                <option value="expiring">Expiration date</option>
+              </select>
+            </label>
+          </div>
+
+          {selected.size ? (
+            <div className="apps-notice is-info">
+              <span>{selected.size} document(s) selected</span>
+              <button type="button" onClick={() => setConfirmingBulkDelete(true)}>
+                Delete
+              </button>
+              <button type="button" onClick={() => setSelected(new Set())}>
+                Clear selection
+              </button>
+            </div>
+          ) : null}
+
+          <DocumentsTable
+            documents={filtered}
+            selected={selected}
+            setSelected={setSelected}
+            onDownload={download}
+            onAttach={setAttaching}
+            onEditMetadata={setEditingDoc}
+            onReplaceVersion={setReplacingDoc}
+            onViewVersions={setVersionsDoc}
+            onViewActivity={setActivityDoc}
+            onDelete={setDeleting}
+            onClearFilters={clearFilters}
+          />
+        </>
+      ) : (
+        <OnboardingEmptyState onUpload={() => setUploading(true)} />
       )}
+
+      {uploading ? <UploadDialog onClose={() => setUploading(false)} /> : null}
+      {attaching ? (
+        <AttachToApplicationDialog document={attaching} onClose={() => setAttaching(null)} />
+      ) : null}
+      {editingDoc ? (
+        <EditMetadataDialog doc={editingDoc} open={Boolean(editingDoc)} onClose={() => setEditingDoc(null)} />
+      ) : null}
+      {replacingDoc ? (
+        <ReplaceVersionDialog doc={replacingDoc} open={Boolean(replacingDoc)} onClose={() => setReplacingDoc(null)} />
+      ) : null}
+      {versionsDoc ? (
+        <DocumentVersionsDrawer doc={versionsDoc} open={Boolean(versionsDoc)} onClose={() => setVersionsDoc(null)} />
+      ) : null}
+      {activityDoc ? (
+        <DocumentActivityDrawer doc={activityDoc} open={Boolean(activityDoc)} onClose={() => setActivityDoc(null)} />
+      ) : null}
+      {deleting ? (
+        <DeleteDocumentDialog
+          document={deleting}
+          pending={remove.isPending}
+          onCancel={() => setDeleting(null)}
+          onConfirm={() =>
+            remove.mutate(deleting.id, {
+              onSuccess: () => {
+                setNotice(`“${deleting.display_name}” deleted.`);
+                setDeleting(null);
+              },
+            })
+          }
+        />
+      ) : null}
+      {confirmingBulkDelete ? (
+        <ConfirmationDialog
+          title={`Delete ${selected.size} document${selected.size === 1 ? "" : "s"}?`}
+          confirmLabel="Delete"
+          pendingLabel="Deleting…"
+          pending={remove.isPending}
+          onCancel={() => setConfirmingBulkDelete(false)}
+          onConfirm={async () => {
+            const ids = [...selected];
+            await Promise.all(ids.map((id) => remove.mutateAsync(id)));
+            setNotice(`${ids.length} document${ids.length === 1 ? "" : "s"} deleted.`);
+            setConfirmingBulkDelete(false);
+          }}
+        >
+          <p>This permanently removes the selected files. This cannot be undone.</p>
+        </ConfirmationDialog>
+      ) : null}
     </div>
   );
 }
@@ -206,20 +416,16 @@ export function DocumentDetailPage() {
   const failed = ["rejected", "failed"].includes(
     scan.data?.malware_status.toLowerCase() ?? "",
   );
+  const expiry = expiryInfo(document.expires_at);
   return (
     <div className="page document-detail-page">
       <Link className="back" to="/app/documents">
         <ArrowLeft aria-hidden="true" /> Documents
       </Link>
-      <header className="page-heading">
-        <div>
-          <h1>{document.display_name}</h1>
-          <p>
-            {label(document.category)} ·{" "}
-            {(document.size_bytes / 1048576).toFixed(1)} MB
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title={document.display_name}
+        description={`${label(document.category)} · ${formatBytes(document.size_bytes)}`}
+      />
       <section
         className={`scan-panel ${usable ? "ready" : failed ? "failed" : "pending"}`}
       >
@@ -259,13 +465,19 @@ export function DocumentDetailPage() {
           <dd>{document.content_type}</dd>
         </div>
         <div>
-          <dt>Expires</dt>
+          <dt>Expiration</dt>
           <dd>
-            {document.expires_at
-              ? formatDate(document.expires_at)
-              : "No expiry recorded"}
+            <StatusBadge tone={expiry.urgency === "none" ? "grey" : expiry.urgency === "critical" ? "red" : expiry.urgency === "warn" ? "amber" : "neutral"}>
+              {expiry.text}
+            </StatusBadge>
           </dd>
         </div>
+        {document.tags?.length ? (
+          <div>
+            <dt>Tags</dt>
+            <dd>{document.tags.join(", ")}</dd>
+          </div>
+        ) : null}
       </dl>
       <div className="document-actions">
         <button
@@ -277,7 +489,7 @@ export function DocumentDetailPage() {
           <Download aria-hidden="true" /> Download document
         </button>
         <button
-          className="danger"
+          className="apps-danger-button"
           type="button"
           disabled={remove.isPending}
           onClick={() => {

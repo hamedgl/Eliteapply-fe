@@ -1,0 +1,125 @@
+/* Catalogue page — additions on top of the shared workspace design system. */
+
+.catalogue-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+  padding: 3px;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+}
+.catalogue-tabs button {
+  padding: 0.55rem 1rem;
+  color: var(--app-muted);
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.catalogue-tabs button.selected {
+  color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+
+.catalogue-verified-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--app-text);
+}
+
+.catalogue-trust-note {
+  margin: 0.85rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+
+.catalogue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.catalogue-card {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.1rem 1.2rem;
+}
+.catalogue-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.catalogue-private-note {
+  color: var(--app-muted);
+  font-size: 0.74rem;
+}
+.catalogue-closed-note {
+  padding: 0.15rem 0.5rem;
+  color: var(--app-red);
+  border-radius: 999px;
+  background: var(--app-red-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.catalogue-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.catalogue-card h3 a {
+  color: var(--app-ink);
+}
+.catalogue-card h3 a:hover {
+  color: var(--app-blue);
+}
+.catalogue-card-subtitle {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+.catalogue-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--app-line);
+}
+.catalogue-card-verified {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.catalogue-card-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.catalogue-detail-note {
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+
+.catalogue-programme-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.catalogue-programme-count svg {
+  width: 12px;
+  height: 12px;
+}
+
+.catalogue-report-issue-button {
+  padding: 0.4rem 0.5rem;
+}
+.catalogue-report-issue-button svg {
+  width: 14px;
+  height: 14px;
+}

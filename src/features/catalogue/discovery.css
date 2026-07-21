@@ -1,0 +1,134 @@
+/* Saved Searches & Matches page — additions on top of the shared workspace design system. */
+
+.discovery-profile-callout {
+  margin-top: 0.85rem;
+}
+.discovery-profile-callout a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.discovery-tabs {
+  margin-top: 1.25rem;
+}
+
+.discovery-saved-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+.discovery-saved-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+}
+.discovery-saved-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.discovery-saved-summary {
+  margin: 0.2rem 0 0;
+  color: var(--app-text);
+  font-size: 0.82rem;
+}
+.discovery-saved-meta {
+  margin: 0.2rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.discovery-saved-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+}
+
+.discovery-run-result {
+  padding: 1rem 1.2rem;
+}
+.discovery-run-result h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+.discovery-run-result ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+}
+
+.discovery-recommended {
+  margin-top: 1.25rem;
+}
+.discovery-recommended-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+.discovery-results {
+  margin-bottom: 2rem;
+}
+.discovery-results h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+.discovery-disclaimer {
+  margin-top: 0.85rem;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+
+.match-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.85rem;
+}
+.match-card {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.1rem 1.2rem;
+}
+.match-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.match-card-type {
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.match-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.match-card-institution {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.84rem;
+}
+.match-card-reasons {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--app-text);
+  font-size: 0.82rem;
+}
+.match-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--app-line);
+}
+.match-card-score {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+  cursor: help;
+}

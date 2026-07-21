@@ -116,6 +116,7 @@ export const writingApi = {
       category?: string;
       sensitivity?: string;
       search?: string;
+      includeArchived?: boolean;
       cursor?: string | null;
     } = {},
   ) =>
@@ -138,6 +139,39 @@ export const writingApi = {
     apiRequest<void>(`/writing-studio/stories/${e(id)}`, {
       method: "DELETE",
     }),
+  archiveStory: (id: string) =>
+    apiRequest<S["StoryResponse"]>(`/writing-studio/stories/${e(id)}/archive`, {
+      method: "POST",
+    }),
+  unarchiveStory: (id: string) =>
+    apiRequest<S["StoryResponse"]>(`/writing-studio/stories/${e(id)}/unarchive`, {
+      method: "POST",
+    }),
+  linkApplication: (storyId: string, applicationId: string) =>
+    apiRequest<S["StoryResponse"]>(
+      `/writing-studio/stories/${e(storyId)}/applications/${e(applicationId)}`,
+      { method: "POST" },
+    ),
+  unlinkApplication: (storyId: string, applicationId: string) =>
+    apiRequest<S["StoryResponse"]>(
+      `/writing-studio/stories/${e(storyId)}/applications/${e(applicationId)}`,
+      { method: "DELETE" },
+    ),
+  linkDocument: (storyId: string, documentId: string) =>
+    apiRequest<S["StoryResponse"]>(
+      `/writing-studio/stories/${e(storyId)}/documents/${e(documentId)}`,
+      { method: "POST" },
+    ),
+  unlinkDocument: (storyId: string, documentId: string) =>
+    apiRequest<S["StoryResponse"]>(
+      `/writing-studio/stories/${e(storyId)}/documents/${e(documentId)}`,
+      { method: "DELETE" },
+    ),
+  aiAssist: (storyId: string, body: S["StoryAIAssistRequest"]) =>
+    apiRequest<S["StoryAIAssistResponse"]>(
+      `/writing-studio/stories/${e(storyId)}/ai-assist`,
+      { method: "POST", body },
+    ),
   comments: (documentId: string, cursor?: string | null) =>
     apiRequest<S["WritingCommentListResponse"]>(
       `/writing-studio/documents/${e(documentId)}/comments${qs({ cursor, limit: 50 })}`,
@@ -389,6 +423,8 @@ export const remindersApi = {
     }),
   revokeFeed: () =>
     apiRequest<void>("/calendar-feed/token", { method: "DELETE" }),
+  feedStatus: () =>
+    apiRequest<S["CalendarFeedStatusResponse"]>("/calendar-feed/status"),
 };
 export async function uploadInterviewAudio(
   interviewId: string,
@@ -431,3 +467,12 @@ export const mergeText = (
   content: Record<string, unknown> | undefined,
   text: string,
 ) => ({ ...content, text });
+export const usageApi = {
+  get: (entityType: string, entityId: string) =>
+    apiRequest<S["EntityUsageResponse"]>(
+      `/usage${qs({ entityType, entityId })}`,
+    ),
+};
+export const storiesApi = writingApi;
+export type StoryAIAssistResponse = S["StoryAIAssistResponse"];
+

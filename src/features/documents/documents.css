@@ -1,0 +1,151 @@
+/* Documents page — additions on top of the shared workspace design system. */
+
+.docs-file-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.docs-file-cell > svg {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+  flex: none;
+}
+
+.docs-dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--app-line-strong);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-subtle);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.docs-dropzone.is-drag-over {
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+.docs-dropzone svg {
+  width: 26px;
+  height: 26px;
+  color: var(--app-muted);
+}
+.docs-dropzone p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.88rem;
+}
+.docs-dropzone button {
+  color: var(--app-blue);
+  font-weight: 700;
+  text-decoration: underline;
+}
+.docs-dropzone small {
+  color: var(--app-muted);
+  font-size: 0.72rem;
+}
+
+.docs-upload-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-upload-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+.docs-upload-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.docs-upload-size {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.docs-upload-ok {
+  color: var(--app-green);
+}
+.docs-upload-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--app-red);
+  font-weight: 600;
+}
+.docs-upload-list li button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--app-muted);
+  border-radius: 6px;
+}
+.docs-upload-list li button:hover {
+  color: var(--app-ink);
+  background: var(--app-surface-subtle);
+}
+
+.docs-history-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+}
+.docs-history-badge {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.4rem;
+  color: var(--app-blue);
+  border-radius: 999px;
+  background: var(--app-blue-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex: none;
+}
+.docs-history-details {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+.docs-history-details strong {
+  color: var(--app-ink);
+}
+.docs-history-details span,
+.docs-history-details small {
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+.docs-event-meta {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: var(--app-surface-subtle);
+  color: var(--app-text);
+  font-size: 0.72rem;
+}

@@ -1,11 +1,13 @@
 import {
   BookOpen,
   Compass,
+  CreditCard,
   FileText,
   FolderKanban,
   GraduationCap,
   LayoutDashboard,
   Library,
+  LifeBuoy,
   LogOut,
   Menu,
   Mic2,
@@ -15,6 +17,7 @@ import {
   CalendarClock,
   Search,
   Settings,
+  UserRound,
   Users,
   X,
 } from "lucide-react";
@@ -25,6 +28,7 @@ import { authApi } from "../lib/api/auth";
 import { useSession } from "../lib/auth/session";
 import { notificationsApi } from "../lib/api/phase3";
 import { queryKeys } from "../lib/api/queryKeys";
+import { useDismiss } from "../lib/dom-hooks";
 import { PromptDialogProvider } from "./PromptDialog";
 
 const navigationGroups = [
@@ -61,11 +65,14 @@ export function AppShell() {
     () => localStorage.getItem("eliteapply-sidebar-collapsed") === "true",
   );
   const [loggingOut, setLoggingOut] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLElement>(null);
   const user = useSession((state) => state.user);
   const clear = useSession((state) => state.clear);
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  useDismiss([accountMenuRef], () => setAccountMenuOpen(false), accountMenuOpen);
   const unread = useQuery({
     queryKey: queryKeys.unreadNotifications,
     queryFn: notificationsApi.unreadCount,
@@ -265,26 +272,73 @@ export function AppShell() {
           ))}
         </nav>
 
-        <footer className="sidebar-account">
-          <span className="account-avatar" aria-hidden="true">
-            {avatarLabel}
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt=""
-                referrerPolicy="no-referrer"
-                onError={(event) => event.currentTarget.remove()}
-              />
-            ) : null}
-          </span>
-          <div>
-            <strong title={displayName}>{displayName}</strong>
-            <small title={user?.email ?? undefined}>{user?.email}</small>
-          </div>
-          <button type="button" onClick={logout} disabled={loggingOut}>
-            <LogOut aria-hidden="true" />
-            <span>{loggingOut ? "Signing out…" : "Log out"}</span>
+        <footer className="sidebar-account" ref={accountMenuRef}>
+          <button
+            type="button"
+            className="sidebar-account-trigger"
+            onClick={() => setAccountMenuOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={accountMenuOpen}
+          >
+            <span className="account-avatar" aria-hidden="true">
+              {avatarLabel}
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  onError={(event) => event.currentTarget.remove()}
+                />
+              ) : null}
+            </span>
+            <div>
+              <strong title={displayName}>{displayName}</strong>
+              <small title={user?.email ?? undefined}>{user?.email}</small>
+            </div>
           </button>
+          {accountMenuOpen ? (
+            <ul className="sidebar-account-menu" role="menu">
+              <li role="none">
+                <NavLink
+                  to="/app/settings/profile"
+                  role="menuitem"
+                  onClick={() => setAccountMenuOpen(false)}
+                >
+                  <UserRound aria-hidden="true" /> Account
+                </NavLink>
+              </li>
+              <li role="none">
+                <NavLink
+                  to="/app/settings/billing"
+                  role="menuitem"
+                  onClick={() => setAccountMenuOpen(false)}
+                >
+                  <CreditCard aria-hidden="true" /> Billing
+                </NavLink>
+              </li>
+              <li role="none">
+                <NavLink
+                  to="/contact"
+                  role="menuitem"
+                  onClick={() => setAccountMenuOpen(false)}
+                >
+                  <LifeBuoy aria-hidden="true" /> Help
+                </NavLink>
+              </li>
+              <li className="sidebar-account-menu-divider" role="separator" />
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={logout}
+                  disabled={loggingOut}
+                >
+                  <LogOut aria-hidden="true" />
+                  {loggingOut ? "Signing out…" : "Log out"}
+                </button>
+              </li>
+            </ul>
+          ) : null}
         </footer>
       </aside>
 

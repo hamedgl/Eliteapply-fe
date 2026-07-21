@@ -1,0 +1,237 @@
+/* Academic Profile page — additions on top of the shared workspace design system. */
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 280px;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+.profile-section-nav {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.2rem;
+}
+.profile-section-nav button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--app-text);
+  text-align: left;
+}
+.profile-section-nav button:hover {
+  background: var(--app-surface-subtle);
+}
+.profile-section-nav button.selected {
+  color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+.profile-nav-dot {
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--app-grey-soft);
+  color: var(--app-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.profile-nav-dot.is-done {
+  color: var(--app-green);
+  background: var(--app-green-soft);
+}
+.profile-nav-dot.is-optional {
+  color: var(--app-muted);
+  background: transparent;
+}
+
+.profile-section-panel {
+  padding: 1.5rem;
+}
+.profile-section-panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.profile-field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--app-text);
+}
+.profile-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.profile-repeatable {
+  display: grid;
+  gap: 0.75rem;
+}
+.profile-entry-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.profile-entry-card {
+  position: relative;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+}
+.profile-entry-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--app-ink);
+}
+.profile-entry-summary:hover {
+  background: var(--app-surface-subtle);
+}
+.profile-entry-fields {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--app-line);
+}
+.profile-entry-actions {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+.profile-entry-empty {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.85rem;
+}
+
+.profile-completion-card {
+  position: sticky;
+  top: 1rem;
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+.profile-completion-card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.profile-completion-summary {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+.profile-completion-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.profile-completion-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--app-text);
+}
+.profile-completion-list svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.profile-check-done {
+  color: var(--app-green);
+}
+.profile-check-todo {
+  color: var(--app-line-strong);
+}
+.profile-last-saved {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+
+.profile-version-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+.profile-version-row {
+  display: grid;
+  width: 100%;
+  gap: 0.1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  text-align: left;
+}
+.profile-version-row:hover {
+  border-color: var(--app-line-strong);
+}
+.profile-version-row.is-selected {
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+.profile-version-row span,
+.profile-version-row small {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.profile-version-detail {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--app-line);
+}
+.profile-version-detail h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+}
+.profile-version-detail dl {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+.profile-version-detail dt {
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.profile-version-detail dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1080px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+  .profile-section-nav {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .profile-section-nav button {
+    flex: 1 1 auto;
+  }
+  .profile-completion-card {
+    position: static;
+  }
+}

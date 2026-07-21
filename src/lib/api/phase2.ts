@@ -4,12 +4,24 @@ import { uploadToSignedUrl } from "./signedTransport";
 type S = components["schemas"];
 const enc = encodeURIComponent;
 const query = (
-  values: Record<string, string | number | boolean | null | undefined>,
+  values: Record<
+    string,
+    string | number | boolean | null | undefined | (string | number)[]
+  >,
 ) => {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(values))
-    if (value !== undefined && value !== null && value !== "")
+  for (const [key, value] of Object.entries(values)) {
+    if (value === undefined || value === null || value === "") continue;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item !== undefined && item !== null && item !== "") {
+          params.append(key, String(item));
+        }
+      }
+    } else {
       params.set(key, String(value));
+    }
+  }
   const result = params.toString();
   return result ? `?${result}` : "";
 };
@@ -24,6 +36,7 @@ export type ApplicationFilters = {
   deadlineFrom?: string;
   deadlineTo?: string;
   tag?: string;
+  tags?: string[] | string;
   archived?: boolean;
   sort?: string;
   cursor?: string | null;
@@ -135,6 +148,11 @@ export const applicationsApi = {
       `/applications/${enc(id)}/requirements`,
       { signal },
     ),
+  requirement: (requirementId: string, signal?: AbortSignal) =>
+    apiRequest<S["RequirementResponse"]>(
+      `/applications/requirements/${enc(requirementId)}`,
+      { signal },
+    ),
   addRequirements: (id: string, body: S["RequirementBulkCreate"]) =>
     apiRequest<S["RequirementResponse"][]>(
       `/applications/${enc(id)}/requirements/bulk`,
@@ -185,6 +203,8 @@ export const applicationsApi = {
     apiRequest<S["TaskResponse"][]>(`/applications/${enc(id)}/tasks`, {
       signal,
     }),
+  task: (taskId: string, signal?: AbortSignal) =>
+    apiRequest<S["TaskResponse"]>(`/applications/tasks/${enc(taskId)}`, { signal }),
   addTasks: (id: string, body: S["TaskBulkCreate"]) =>
     apiRequest<S["TaskResponse"][]>(`/applications/${enc(id)}/tasks/bulk`, {
       method: "POST",
@@ -223,6 +243,40 @@ export const documentsApi = {
   list: () => apiRequest<S["DocumentResponse"][]>("/academic-documents"),
   get: (id: string) =>
     apiRequest<S["DocumentResponse"]>(`/academic-documents/${enc(id)}`),
+  update: (id: string, body: S["DocumentUpdate"]) =>
+    apiRequest<S["DocumentResponse"]>(`/academic-documents/${enc(id)}`, {
+      method: "PATCH",
+      body,
+    }),
+  replace: (
+    id: string,
+    body: {
+      storage_key: string;
+      display_name: string;
+      content_type: string;
+      size_bytes: number;
+      checksum_sha256?: string | null;
+      reason?: string | null;
+    },
+  ) =>
+    apiRequest<S["DocumentResponse"]>(
+      `/academic-documents/${enc(id)}/replace`,
+      { method: "POST", body },
+    ),
+  links: (id: string) =>
+    apiRequest<{
+      document_id: string;
+      linked_application_ids: string[];
+      link_count: number;
+    }>(`/academic-documents/${enc(id)}/links`),
+  activity: (id: string) =>
+    apiRequest<S["DocumentAuditEventResponse"][]>(
+      `/academic-documents/${enc(id)}/activity`,
+    ),
+  versions: (id: string) =>
+    apiRequest<S["DocumentVersionResponse"][]>(
+      `/academic-documents/${enc(id)}/versions`,
+    ),
   scanStatus: (id: string) =>
     apiRequest<S["DocumentScanStatusResponse"]>(
       `/academic-documents/${enc(id)}/scan-status`,
@@ -255,6 +309,13 @@ export type CatalogueFilters = {
   limit?: number;
 };
 export const catalogueApi = {
+  reportIssue: (body: S["CatalogueReportIssueRequest"]) =>
+    apiRequest<{ status: string }>("/catalogue/report-issue", {
+      method: "POST",
+      body,
+    }),
+  countries: () =>
+    apiRequest<S["CatalogueCountryResponse"][]>("/catalogue/countries"),
   institutions: (filters: CatalogueFilters = {}, signal?: AbortSignal) =>
     apiRequest<S["InstitutionListResponse"]>(
       `/catalogue/institutions${query({ limit: 25, ...filters })}`,
@@ -412,6 +473,7 @@ export async function uploadAcademicDocument(
   file: File,
   category: string,
   signal?: AbortSignal,
+  options?: { displayName?: string; tags?: string[]; expiresAt?: string | null },
 ) {
   const allowed = [
     "application/pdf",
@@ -436,10 +498,11 @@ export async function uploadAcademicDocument(
   });
   return documentsApi.register({
     category,
-    display_name: file.name,
+    display_name: options?.displayName || file.name,
     storage_key: signed.storage_key,
     content_type: file.type,
     size_bytes: file.size,
-    tags: [],
+    tags: options?.tags ?? [],
+    expires_at: options?.expiresAt ?? null,
   });
 }

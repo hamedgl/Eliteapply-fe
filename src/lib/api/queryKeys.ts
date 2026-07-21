@@ -26,6 +26,11 @@ export const queryKeys = {
   documents: ["academic-documents"] as const,
   document: (id: string) => ["academic-documents", id] as const,
   documentScan: (id: string) => ["academic-documents", id, "scan"] as const,
+  documentVersions: (id: string) =>
+    ["academic-documents", id, "versions"] as const,
+  documentActivity: (id: string) =>
+    ["academic-documents", id, "activity"] as const,
+  documentLinks: (id: string) => ["academic-documents", id, "links"] as const,
   billing: ["billing"] as const,
   plans: ["billing", "plans"] as const,
   subscription: ["billing", "subscription"] as const,
@@ -37,6 +42,7 @@ export const queryKeys = {
     ["catalogue", kind, filters] as const,
   catalogueDetail: (kind: string, id: string) =>
     ["catalogue", kind, id] as const,
+  catalogueCountries: ["catalogue", "countries"] as const,
   savedSearches: ["saved-searches"] as const,
   recommendations: ["recommendations"] as const,
   imports: ["opportunity-imports"] as const,
@@ -47,6 +53,9 @@ export const queryKeys = {
   comments: (id: string) => ["writing", id, "comments"] as const,
   shareLinks: (id: string) => ["writing", id, "share-links"] as const,
   stories: (filters: object = {}) => ["stories", filters] as const,
+  storyUsage: (id: string) => ["stories", id, "usage"] as const,
+  entityUsage: (entityType: string, entityId: string) =>
+    ["usage", entityType, entityId] as const,
   references: (status = "") => ["references", { status }] as const,
   reference: (id: string) => ["references", id] as const,
   referenceEvents: (id: string) => ["references", id, "events"] as const,

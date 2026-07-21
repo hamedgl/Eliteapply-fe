@@ -1,315 +1,284 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bookmark, Compass, RefreshCw, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { AlertTriangle, Bookmark, Search, Sparkles, X } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
-import { discoveryApi } from "../../lib/api/phase2";
+import { discoveryApi, profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { usePromptDialog } from "../../components/PromptDialog";
+import { PageHeader } from "../../components/page/PageHeader";
+import { SummaryStrip } from "../../components/page/SummaryStrip";
+import { EmptyState } from "../../components/data-display/EmptyState";
+import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
+import { SavedSearchCard } from "./components/SavedSearchCard";
+import { SavedSearchEditDialog } from "./components/SavedSearchEditDialog";
+import { MatchCard } from "./components/MatchCard";
+import { MatchPreferencesDrawer, type MatchPreferences } from "./components/MatchPreferencesDrawer";
+import { fitLevel, type SavedSearch } from "./discoveryModel";
+import "../../styles/workspace.css";
+import "./discovery.css";
 
 type Match = components["schemas"]["OpportunityMatchResult"];
-const label = (value: string) =>
-  value.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase());
+type Tab = "saved" | "recommended";
 
 export function DiscoveryPage() {
   const requestText = usePromptDialog();
-  const qc = useQueryClient(),
-    saved = useQuery({
-      queryKey: queryKeys.savedSearches,
-      queryFn: discoveryApi.savedSearches,
-    }),
-    recommendations = useQuery({
-      queryKey: queryKeys.recommendations,
-      queryFn: discoveryApi.recommendations,
-    });
-  const [matches, setMatches] = useState<
-    components["schemas"]["OpportunityMatchResponse"] | null
-  >(null);
-  const runMatch = useMutation({
-    mutationFn: discoveryApi.matches,
-    onSuccess: setMatches,
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const tab = (params.get("tab") as Tab | null) ?? "recommended";
+  const [editingSearch, setEditingSearch] = useState<SavedSearch | null>(null);
+  const [deletingSearch, setDeletingSearch] = useState<SavedSearch | null>(null);
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [runningId, setRunningId] = useState<string | null>(null);
+  const [runResult, setRunResult] = useState<{ name: string; items: Record<string, unknown>[] } | null>(null);
+  const [matches, setMatches] = useState<Match[] | null>(null);
+
+  const setTab = (next: Tab) => setParams({ tab: next }, { replace: true });
+
+  const saved = useQuery({ queryKey: queryKeys.savedSearches, queryFn: discoveryApi.savedSearches });
+  const recommendations = useQuery({ queryKey: queryKeys.recommendations, queryFn: discoveryApi.recommendations });
+  const profile = useQuery({ queryKey: queryKeys.profile, queryFn: profileApi.get });
+
+  const runSaved = useMutation({
+    mutationFn: (id: string) => discoveryApi.runSavedSearch(id),
+    onMutate: (id) => setRunningId(id),
+    onSuccess: (result, id) => {
+      const search = saved.data?.find((item) => item.id === id);
+      setRunResult({ name: search?.name ?? "Saved search", items: result.items });
+      void qc.invalidateQueries({ queryKey: queryKeys.savedSearches });
+    },
+    onSettled: () => setRunningId(null),
   });
+
   const remove = useMutation({
-    mutationFn: discoveryApi.deleteSavedSearch,
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: queryKeys.savedSearches }),
+    mutationFn: (id: string) => discoveryApi.deleteSavedSearch(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.savedSearches });
+      setDeletingSearch(null);
+    },
   });
-  const updateSaved = useMutation({
-    mutationFn: ({
-      id,
-      body,
-    }: {
-      id: string;
-      body: components["schemas"]["SavedSearchUpdate"];
-    }) => discoveryApi.updateSavedSearch(id, body),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: queryKeys.savedSearches }),
+
+  const duplicate = useMutation({
+    mutationFn: (search: SavedSearch) =>
+      discoveryApi.createSavedSearch({
+        name: `${search.name} (copy)`,
+        entity_type: search.entity_type as "institution" | "programme" | "scholarship",
+        filters: search.filters as components["schemas"]["SavedSearchFilters"],
+        notification_frequency: search.notification_frequency as
+          | "instant"
+          | "daily"
+          | "weekly"
+          | "never",
+        notify_on_new_matches: search.notify_on_new_matches,
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.savedSearches }),
   });
-  const [runResult, setRunResult] = useState<{
-    name: string;
-    items: Record<string, unknown>[];
-  } | null>(null);
+
+  const findMatches = useMutation({
+    mutationFn: (prefs: MatchPreferences) =>
+      discoveryApi.matches({
+        degree_level: prefs.degreeLevel || null,
+        field_of_study: prefs.fieldOfStudy || null,
+        country_code: prefs.countryCode || null,
+        limit: prefs.limit,
+      }),
+    onSuccess: (result) => {
+      setMatches(result.items);
+      setShowPreferences(false);
+    },
+  });
+
+  async function renameSaved(search: SavedSearch) {
+    const name = (
+      await requestText({
+        title: "Rename saved search",
+        label: "Search name",
+        initialValue: search.name,
+        required: true,
+      })
+    )?.trim();
+    if (name && name !== search.name)
+      await discoveryApi.updateSavedSearch(search.id, { name });
+    void qc.invalidateQueries({ queryKey: queryKeys.savedSearches });
+  }
+
+  const stats = useMemo(() => {
+    const items = recommendations.data?.items ?? [];
+    const strong = items.filter((item) => fitLevel(item.score).level === "strong");
+    return {
+      savedCount: saved.data?.length ?? 0,
+      recommendedCount: items.length,
+      strongCount: strong.length,
+    };
+  }, [saved.data, recommendations.data]);
+
+  const profileIncomplete =
+    profile.data != null &&
+    (!profile.data.applicant_type || !profile.data.intended_study_level || !profile.data.target_countries?.length);
+  const noProfile = profile.data === null;
+
+  const defaultPreferences: MatchPreferences = {
+    degreeLevel: profile.data?.intended_study_level ?? "",
+    fieldOfStudy: "",
+    countryCode: profile.data?.target_countries?.[0] ?? "",
+    limit: 10,
+  };
+
   return (
-    <div className="page phase2-page discovery-page">
-      <header className="page-heading">
-        <div>
-          <span className="eyebrow">Opportunity intelligence</span>
-          <h1>Saved searches & matches</h1>
-          <p>
-            Return to useful searches and compare evidence-based matches. Scores
-            organize options; they do not predict admission.
-          </p>
-        </div>
-        <Link to="/app/catalogue">Browse catalogue</Link>
-      </header>
-      <div className="discovery-layout">
-        <section className="discovery-saved">
-          <header>
-            <Bookmark />
-            <div>
-              <h2>Saved searches</h2>
-              <p>Run a saved filter against the latest catalogue.</p>
-            </div>
-          </header>
+    <div className="page apps-page">
+      <PageHeader
+        eyebrow="Opportunity intelligence"
+        title="Saved searches & matches"
+        description="Track new opportunities and review recommendations based on your academic profile."
+        actions={
+          <Link className="apps-icon-button" to="/app/catalogue" aria-label="Browse catalogue" title="Browse catalogue">
+            <Search aria-hidden="true" />
+          </Link>
+        }
+      />
+
+      <SummaryStrip
+        metrics={[
+          { key: "saved", icon: Bookmark, value: stats.savedCount, label: "Saved searches" },
+          { key: "recommended", icon: Sparkles, value: stats.recommendedCount, label: "Recommended for you" },
+          { key: "strong", icon: Sparkles, value: stats.strongCount, label: "Strong matches" },
+        ]}
+      />
+
+      {noProfile || profileIncomplete ? (
+        <p className="apps-notice is-info discovery-profile-callout">
+          <AlertTriangle aria-hidden="true" />
+          Complete your academic profile to improve recommendations.{" "}
+          <Link to="/app/academic-profile">Go to profile</Link>
+        </p>
+      ) : null}
+
+      <div className="view-toggle discovery-tabs" aria-label="Discovery view">
+        <button type="button" className={tab === "saved" ? "selected" : ""} aria-pressed={tab === "saved"} onClick={() => setTab("saved")}>
+          Saved searches
+        </button>
+        <button
+          type="button"
+          className={tab === "recommended" ? "selected" : ""}
+          aria-pressed={tab === "recommended"}
+          onClick={() => setTab("recommended")}
+        >
+          Recommended for you
+        </button>
+      </div>
+
+      {tab === "saved" ? (
+        <div className="discovery-saved-list">
           {saved.isPending ? (
             <p role="status">Loading saved searches…</p>
           ) : saved.data?.length ? (
-            <ul className="saved-search-list">
-              {saved.data.map((item) => (
-                <li key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <small>
-                      {label(item.entity_type)} ·{" "}
-                      {item.last_run_at
-                        ? `Last run ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(item.last_run_at))}`
-                        : "Not run yet"}
-                    </small>
-                  </div>
-                  <div>
-                    <button
-                      onClick={async () => {
-                        const result = await discoveryApi.runSavedSearch(
-                          item.id,
-                        );
-                        setRunResult({ name: item.name, items: result.items });
-                      }}
-                    >
-                      <RefreshCw />
-                      Run
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const name = (
-                          await requestText({
-                            title: "Rename saved search",
-                            label: "Search name",
-                            initialValue: item.name,
-                            required: true,
-                          })
-                        )?.trim();
-                        if (name && name !== item.name)
-                          updateSaved.mutate({ id: item.id, body: { name } });
-                      }}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const filters = item.filters as Record<string, unknown>;
-                        const search = await requestText({
-                          title: "Edit search terms",
-                          label: "Search terms",
-                          description:
-                            "Leave this blank to match any search term.",
-                          initialValue: String(filters.search ?? ""),
-                          submitLabel: "Continue",
-                        });
-                        if (search === null) return;
-                        const country = await requestText({
-                          title: "Edit country filter",
-                          label: "Country code",
-                          description:
-                            "Leave this blank to include every country.",
-                          initialValue: String(filters.country ?? ""),
-                        });
-                        if (country === null) return;
-                        updateSaved.mutate({
-                          id: item.id,
-                          body: {
-                            filters: {
-                              search: search || null,
-                              country: country || null,
-                              institution_id:
-                                (filters.institution_id as string) || null,
-                              degree_level:
-                                (filters.degree_level as string) || null,
-                              field_of_study:
-                                (filters.field_of_study as string) || null,
-                              verified:
-                                typeof filters.verified === "boolean"
-                                  ? filters.verified
-                                  : null,
-                            },
-                          },
-                        });
-                      }}
-                    >
-                      Edit filters
-                    </button>
-                    <button
-                      className="danger-link"
-                      onClick={() =>
-                        confirm("Delete this saved search?") &&
-                        remove.mutate(item.id)
-                      }
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            saved.data.map((item) => (
+              <SavedSearchCard
+                key={item.id}
+                search={item}
+                running={runningId === item.id}
+                onRun={() => runSaved.mutate(item.id)}
+                onRename={() => renameSaved(item)}
+                onEditFilters={() => setEditingSearch(item)}
+                onDuplicate={() => duplicate.mutate(item)}
+                onDelete={() => setDeletingSearch(item)}
+              />
+            ))
           ) : (
-            <div className="vault-empty">
-              <h3>No saved searches</h3>
-              <p>Set filters in the catalogue, then save the search.</p>
-            </div>
+            <EmptyState
+              icon={Bookmark}
+              heading="Save searches you want to revisit"
+              description="Set filters in the catalogue, then save the search to check back for new matches."
+              primaryAction={{ label: "Browse catalogue", onClick: () => navigate("/app/catalogue") }}
+            />
           )}
           {runResult ? (
-            <div className="saved-run">
+            <div className="apps-card discovery-run-result">
               <h3>{runResult.name}</h3>
               {runResult.items.length ? (
-                runResult.items.map((item, index) => (
-                  <p key={String(item.id ?? index)}>
-                    {String(item.name ?? "Catalogue result")}
-                  </p>
-                ))
+                <ul>
+                  {runResult.items.map((item, index) => (
+                    <li key={String(item.id ?? index)}>{String(item.name ?? "Catalogue result")}</li>
+                  ))}
+                </ul>
               ) : (
-                <p>No new matches for this search.</p>
+                <p>No matches for this search right now.</p>
               )}
+              <button type="button" className="apps-inline-link" onClick={() => setRunResult(null)}>
+                <X aria-hidden="true" /> Dismiss
+              </button>
             </div>
           ) : null}
-        </section>
-        <section className="match-panel">
-          <header>
-            <Compass />
-            <div>
-              <h2>Find relevant opportunities</h2>
-              <p>Use academic context to rank programmes and scholarships.</p>
-            </div>
-          </header>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const d = new FormData(e.currentTarget);
-              runMatch.mutate({
-                degree_level: String(d.get("degree_level")) || null,
-                field_of_study: String(d.get("field_of_study")) || null,
-                country_code: String(d.get("country_code")) || null,
-                limit: Number(d.get("limit")),
-              });
-            }}
-          >
-            <label>
-              Degree level
-              <input name="degree_level" placeholder="Master's" />
-            </label>
-            <label>
-              Field of study
-              <input name="field_of_study" placeholder="Public policy" />
-            </label>
-            <label>
-              Country code
-              <input name="country_code" maxLength={2} placeholder="GB" />
-            </label>
-            <label>
-              Results
-              <select name="limit" defaultValue="10">
-                <option>5</option>
-                <option>10</option>
-                <option>20</option>
-              </select>
-            </label>
-            <button className="primary" disabled={runMatch.isPending}>
-              <Search />
-              {runMatch.isPending ? "Matching…" : "Find matches"}
+        </div>
+      ) : (
+        <div className="discovery-recommended">
+          <div className="discovery-recommended-toolbar">
+            <button type="button" className="apps-filters-trigger" onClick={() => setShowPreferences(true)}>
+              Match preferences
             </button>
-          </form>
-        </section>
-      </div>
-      {matches ? (
-        <Results
-          title="Your matches"
-          data={matches.items}
-          disclaimer={matches.disclaimer}
+          </div>
+
+          {matches ? (
+            <section className="discovery-results">
+              <h3>Your matches</h3>
+              <div className="match-grid">
+                {matches.map((item) => (
+                  <MatchCard key={`${item.type}-${item.id}`} match={item} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className="discovery-results">
+            <h3>Recommended for your profile</h3>
+            {recommendations.isPending ? (
+              <p role="status">Loading recommendations…</p>
+            ) : recommendations.data?.items.length ? (
+              <>
+                <div className="match-grid">
+                  {recommendations.data.items.map((item) => (
+                    <MatchCard key={`${item.type}-${item.id}`} match={item} />
+                  ))}
+                </div>
+                <p className="discovery-disclaimer">{recommendations.data.disclaimer}</p>
+              </>
+            ) : (
+              <EmptyState
+                variant="filtered"
+                icon={Sparkles}
+                heading="No recommendations yet"
+                description="Try expanding your target countries, fields of study or degree level in your academic profile, or browse the catalogue directly."
+                secondaryAction={<Link to="/app/catalogue">Browse catalogue</Link>}
+              />
+            )}
+          </section>
+        </div>
+      )}
+
+      {showPreferences ? (
+        <MatchPreferencesDrawer
+          initial={defaultPreferences}
+          pending={findMatches.isPending}
+          onClose={() => setShowPreferences(false)}
+          onSubmit={(prefs) => findMatches.mutate(prefs)}
         />
       ) : null}
-      <Results
-        title="Recommended for your profile"
-        data={recommendations.data?.items ?? []}
-        disclaimer={recommendations.data?.disclaimer}
-        pending={recommendations.isPending}
-      />
-    </div>
-  );
-}
-
-function Results({
-  title,
-  data,
-  disclaimer,
-  pending,
-}: {
-  title: string;
-  data: Match[];
-  disclaimer?: string;
-  pending?: boolean;
-}) {
-  return (
-    <section className="recommendation-section">
-      <header>
-        <div>
-          <h2>{title}</h2>
-          <p>
-            {pending
-              ? "Loading recommendations…"
-              : `${data.length} opportunities surfaced`}
-          </p>
-        </div>
-      </header>
-      <div className="recommendation-list">
-        {data.map((item) => (
-          <article key={`${item.type}-${item.id}`}>
-            <div>
-              <span>{label(item.type)}</span>
-              <h3>{item.name}</h3>
-              <p>
-                {item.institution_name ??
-                  "Institution details available in catalogue"}
-              </p>
-            </div>
-            <ul>
-              {item.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-            <div>
-              <small>Relevance score {item.score}</small>
-              <Link
-                to={`/app/applications?create=1&catalogueType=${item.type}&catalogueId=${item.id}&title=${encodeURIComponent(item.name)}`}
-              >
-                Create application
-              </Link>
-            </div>
-          </article>
-        ))}
-      </div>
-      {disclaimer ? (
-        <p className="recommendation-disclaimer">
-          <strong>How to read this:</strong> {disclaimer}
-        </p>
+      {editingSearch ? (
+        <SavedSearchEditDialog search={editingSearch} onClose={() => setEditingSearch(null)} />
       ) : null}
-    </section>
+      {deletingSearch ? (
+        <ConfirmationDialog
+          title={`Delete “${deletingSearch.name}”?`}
+          confirmLabel="Delete search"
+          pendingLabel="Deleting…"
+          pending={remove.isPending}
+          onCancel={() => setDeletingSearch(null)}
+          onConfirm={() => remove.mutate(deletingSearch.id)}
+        >
+          <p>This permanently removes the saved search. This cannot be undone.</p>
+        </ConfirmationDialog>
+      ) : null}
+    </div>
   );
 }

@@ -5,41 +5,42 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, Search } from "lucide-react";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
-import type { components } from "../../generated/api/schema";
+import { ArrowLeft, ExternalLink, Plus, Search, X } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   catalogueApi,
-  discoveryApi,
   type CatalogueFilters,
 } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
+import { PageHeader } from "../../components/page/PageHeader";
+import { EmptyState } from "../../components/data-display/EmptyState";
+import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
+import { CountryCombobox } from "../../components/filters/CountryCombobox";
+import { countryName } from "../../lib/countries";
+import { formatDate } from "../applications/model";
+import {
+  itemMeta,
+  kindLabel,
+  kindSingular,
+  title,
+  type CatalogueItem,
+  type Kind,
+} from "./model";
+import { CatalogueCard } from "./components/CatalogueCard";
+import { CatalogueSummary } from "./components/CatalogueSummary";
+import { SaveSearchButton } from "./components/SaveSearchButton";
+import { ReportIssueDialog } from "./components/ReportIssueDialog";
+import "../../styles/workspace.css";
+import "./catalogue.css";
 
-type S = components["schemas"];
-type Kind = "institutions" | "programmes" | "scholarships";
-type Item =
-  | S["InstitutionResponse"]
-  | S["ProgrammeResponse"]
-  | S["ScholarshipResponse"];
 type CataloguePageResult = {
-  items: Item[];
+  items: CatalogueItem[];
   next_cursor?: string | null;
   has_more: boolean;
   total?: number | null;
 };
-const singular = {
-  institutions: "institution",
-  programmes: "programme",
-  scholarships: "scholarship",
-} as const;
-const title = (value: string) =>
-  value.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase());
+const KINDS: Kind[] = ["institutions", "programmes", "scholarships"];
 
 function list(
   kind: Kind,
@@ -47,37 +48,30 @@ function list(
   signal?: AbortSignal,
 ): Promise<CataloguePageResult> {
   if (kind === "institutions")
-    return catalogueApi.institutions(
-      filters,
-      signal,
-    ) as Promise<CataloguePageResult>;
+    return catalogueApi.institutions(filters, signal) as Promise<CataloguePageResult>;
   if (kind === "programmes")
-    return catalogueApi.programmes(
-      filters,
-      signal,
-    ) as Promise<CataloguePageResult>;
-  return catalogueApi.scholarships(
-    filters,
-    signal,
-  ) as Promise<CataloguePageResult>;
+    return catalogueApi.programmes(filters, signal) as Promise<CataloguePageResult>;
+  return catalogueApi.scholarships(filters, signal) as Promise<CataloguePageResult>;
 }
-function detail(kind: Kind, id: string): Promise<Item> {
-  if (kind === "institutions")
-    return catalogueApi.institution(id) as Promise<Item>;
-  if (kind === "programmes") return catalogueApi.programme(id) as Promise<Item>;
-  return catalogueApi.scholarship(id) as Promise<Item>;
+function detail(kind: Kind, id: string): Promise<CatalogueItem> {
+  if (kind === "institutions") return catalogueApi.institution(id);
+  if (kind === "programmes") return catalogueApi.programme(id);
+  return catalogueApi.scholarship(id);
 }
 
 export function CataloguePage() {
-  const { kind: routeKind, id } = useParams(),
-    navigate = useNavigate(),
-    [params, setParams] = useSearchParams(),
-    [creating, setCreating] = useState(() => params.get("create") === "1"),
-    kind = (
-      ["institutions", "programmes", "scholarships"].includes(routeKind ?? "")
-        ? routeKind
-        : params.get("kind") || "institutions"
-    ) as Kind;
+  const { kind: routeKind, id } = useParams();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreating] = useState(() => params.get("create") === "1");
+  const [reportingTarget, setReportingTarget] = useState<{
+    entityType: "institution" | "programme" | "scholarship";
+    entityId: string;
+    entityTitle: string;
+  } | null>(null);
+  const kind = (
+    KINDS.includes(routeKind as Kind) ? routeKind : params.get("kind") || "institutions"
+  ) as Kind;
   const filters = useMemo<CatalogueFilters>(
     () => ({
       search: params.get("search") || undefined,
@@ -96,133 +90,169 @@ export function CataloguePage() {
     getNextPageParam: (page) => (page.has_more ? page.next_cursor : undefined),
   });
   const items = q.data?.pages.flatMap((page) => page.items) ?? [];
+
   function update(key: string, value: string) {
     const next = new URLSearchParams(params);
-    value ? next.set(key, value) : next.delete(key);
+    if (value) next.set(key, value);
+    else next.delete(key);
     next.set("kind", kind);
     setParams(next, { replace: true });
   }
+  function switchKind(next: Kind) {
+    navigate(`/app/catalogue?kind=${next}`);
+  }
+
   if (id) return <CatalogueDetail kind={kind} id={id} />;
+
+  const noFiltersActive = !filters.search && !filters.country && !filters.degreeLevel && !filters.fieldOfStudy && !filters.verified;
+
   return (
-    <div className="page catalogue-page phase2-page">
-      <header className="page-heading">
-        <div>
-          <span className="eyebrow">Discovery</span>
-          <h1>Academic catalogue</h1>
-          <p>
-            Compare trusted catalogue records with your private research,
-            without confusing the two.
-          </p>
-        </div>
-        <div className="page-heading-actions">
-          <button
-            className="secondary-action"
-            type="button"
-            onClick={() => setCreating(true)}
-          >
-            Add private record
-          </button>
-          <Link className="secondary-action" to="/app/discovery">
-            Saved searches & matches
-          </Link>
-        </div>
-      </header>
-      <nav className="tabs" aria-label="Catalogue type">
-        {(Object.keys(singular) as Kind[]).map((value) => (
+    <div className="page apps-page catalogue-page">
+      <PageHeader
+        eyebrow="Discovery"
+        title="Academic catalogue"
+        description="Discover verified institutions, programmes and scholarships, then add the most relevant opportunities to your workspace."
+        actions={
+          <>
+            <Link className="apps-icon-button" to="/app/discovery" aria-label="Saved searches & matches" title="Saved searches & matches">
+              <Search aria-hidden="true" />
+            </Link>
+            <button className="primary" type="button" onClick={() => setCreating(true)}>
+              <Plus aria-hidden="true" /> Add private record
+            </button>
+          </>
+        }
+      />
+
+      <CatalogueSummary onSelectKind={switchKind} />
+
+      <nav className="catalogue-tabs" aria-label="Catalogue type">
+        {KINDS.map((value) => (
           <button
             key={value}
-            className={kind === value ? "active" : ""}
-            onClick={() => navigate(`/app/catalogue?kind=${value}`)}
+            type="button"
+            className={kind === value ? "selected" : ""}
+            aria-pressed={kind === value}
+            onClick={() => switchKind(value)}
           >
-            {title(value)}
+            {kindLabel[value]}
           </button>
         ))}
       </nav>
-      <section className="catalogue-controls" aria-label="Catalogue filters">
-        <label className="search-field">
+
+      <div className="apps-card apps-toolbar">
+        <div className="apps-toolbar-search">
           <Search aria-hidden="true" />
-          Search
           <input
+            type="search"
+            aria-label={`Search ${kind}`}
             value={filters.search ?? ""}
-            onChange={(e) => update("search", e.target.value)}
+            onChange={(event) => update("search", event.target.value)}
             placeholder={`Search ${kind}`}
           />
-        </label>
-        <label>
-          Country code
-          <input
-            value={filters.country ?? ""}
-            onChange={(e) =>
-              update("country", e.target.value.toUpperCase().slice(0, 2))
-            }
-            maxLength={2}
-            placeholder="GB"
-          />
-        </label>
+          {filters.search ? (
+            <button type="button" aria-label="Clear search" onClick={() => update("search", "")}>
+              <X aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+        <CountryCombobox
+          label="Country"
+          value={filters.country ?? ""}
+          onChange={(code) => update("country", code)}
+        />
         {kind !== "institutions" ? (
-          <>
-            <label>
-              Field
-              <input
-                value={filters.fieldOfStudy ?? ""}
-                onChange={(e) => update("fieldOfStudy", e.target.value)}
-              />
-            </label>
-            <label>
-              Degree level
-              <input
-                value={filters.degreeLevel ?? ""}
-                onChange={(e) => update("degreeLevel", e.target.value)}
-                disabled={kind === "scholarships"}
-              />
-            </label>
-          </>
+          <label className="apps-quick-filter">
+            Field of study
+            <input
+              value={filters.fieldOfStudy ?? ""}
+              onChange={(event) => update("fieldOfStudy", event.target.value)}
+              placeholder="Any"
+            />
+          </label>
         ) : null}
-        <label className="check-field">
+        {kind === "programmes" ? (
+          <label className="apps-quick-filter">
+            Degree level
+            <input
+              value={filters.degreeLevel ?? ""}
+              onChange={(event) => update("degreeLevel", event.target.value)}
+              placeholder="Any"
+            />
+          </label>
+        ) : null}
+        <label className="check-field catalogue-verified-toggle">
           <input
             type="checkbox"
             checked={filters.verified === true}
-            onChange={(e) => update("verified", e.target.checked ? "true" : "")}
+            onChange={(event) => update("verified", event.target.checked ? "true" : "")}
           />
-          Verified sources only
+          Verified only
         </label>
-        <SaveSearch kind={kind} filters={filters} />
-      </section>
+        <SaveSearchButton kind={kind} filters={filters} />
+      </div>
+
+      <p className="catalogue-trust-note">
+        Verified records include source evidence and review information. Private
+        records are visible only to you and are kept separate from verified
+        catalogue data.
+      </p>
+
       {q.isPending ? (
-        <p role="status">Loading catalogue…</p>
+        <div className="apps-skeleton" aria-busy="true" aria-label={`Loading ${kind}`}>
+          <div className="apps-skeleton-table">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div className="skeleton apps-skeleton-row" key={i} />
+            ))}
+          </div>
+        </div>
       ) : q.isError ? (
-        <div className="inline-error" role="alert">
-          <strong>Catalogue unavailable</strong>
-          <button onClick={() => q.refetch()}>Try again</button>
+        <div className="apps-page-error" role="alert">
+          <h1>Catalogue unavailable</h1>
+          <button className="primary" onClick={() => q.refetch()}>
+            Try again
+          </button>
         </div>
       ) : items.length ? (
-        <div className="catalogue-table" role="list">
+        <div className="catalogue-grid">
           {items.map((item) => (
-            <CatalogueRow key={item.id} kind={kind} item={item} />
+            <CatalogueCard
+              key={item.id}
+              kind={kind}
+              item={item}
+              onReportIssue={(target) =>
+                setReportingTarget({
+                  entityType: kindSingular[kind] as "institution" | "programme" | "scholarship",
+                  entityId: target.id,
+                  entityTitle: target.name,
+                })
+              }
+            />
           ))}
         </div>
+      ) : noFiltersActive ? (
+        <EmptyState
+          icon={Search}
+          heading={`No ${kind} yet`}
+          description="Add a private research record to start building your own catalogue entries."
+          primaryAction={{ label: "Add private record", onClick: () => setCreating(true) }}
+        />
       ) : (
-        <div className="vault-empty">
-          <h2>No matching {kind}</h2>
-          <p>
-            Adjust a filter or save this search and return when new records are
-            added.
-          </p>
-        </div>
+        <EmptyState
+          variant="filtered"
+          icon={Search}
+          heading={`No ${kind} match these filters`}
+          description="Clear a filter, or add a private record if this opportunity isn't catalogued yet."
+          primaryAction={{ label: "Clear filters", onClick: () => setParams({ kind }, { replace: true }) }}
+        />
       )}
+
       {q.hasNextPage ? (
-        <button
-          className="load-more"
-          disabled={q.isFetchingNextPage}
-          onClick={() => q.fetchNextPage()}
-        >
+        <button className="load-more" type="button" disabled={q.isFetchingNextPage} onClick={() => q.fetchNextPage()}>
           {q.isFetchingNextPage ? "Loading…" : "Load more"}
         </button>
       ) : null}
-      <p className="catalogue-disclaimer">
-        Private entries are personal research records. Only canonical records
-        with source evidence should be treated as shared catalogue data.
-      </p>
+
       {creating ? (
         <CatalogueCreateDialog
           kind={kind}
@@ -233,97 +263,42 @@ export function CataloguePage() {
           }}
         />
       ) : null}
+
+      {reportingTarget ? (
+        <ReportIssueDialog
+          open={Boolean(reportingTarget)}
+          entityType={reportingTarget.entityType}
+          entityId={reportingTarget.entityId}
+          entityTitle={reportingTarget.entityTitle}
+          onClose={() => setReportingTarget(null)}
+        />
+      ) : null}
     </div>
   );
 }
 
-function CatalogueRow({ kind, item }: { kind: Kind; item: Item }) {
-  const meta = item as Item & {
-    country_code?: string;
-    degree_level?: string | null;
-    field_of_study?: string | null;
-    provider_name?: string | null;
-  };
-  return (
-    <article role="listitem" className="catalogue-row">
-      <div>
-        <span className={`visibility-badge ${item.visibility}`}>
-          {item.visibility === "canonical" ? "Canonical" : "Private"}
-        </span>
-        <h2>
-          <Link to={`/app/catalogue/${kind}/${item.id}`}>{item.name}</Link>
-        </h2>
-        <p>
-          {[
-            meta.country_code,
-            meta.provider_name,
-            meta.degree_level,
-            meta.field_of_study,
-          ]
-            .filter(Boolean)
-            .join(" · ") || "Details available in the record"}
-        </p>
-      </div>
-      <div className="catalogue-verified">
-        <span>
-          {item.last_verified_at
-            ? `Checked ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(item.last_verified_at))}`
-            : "Verification date unavailable"}
-        </span>
-        <Link to={`/app/catalogue/${kind}/${item.id}`}>View details</Link>
-      </div>
-    </article>
-  );
-}
-
-function SaveSearch({
-  kind,
-  filters,
-}: {
-  kind: Kind;
-  filters: CatalogueFilters;
-}) {
-  const qc = useQueryClient(),
-    [saved, setSaved] = useState(false);
-  const mutation = useMutation({
-    mutationFn: () =>
-      discoveryApi.createSavedSearch({
-        name: `${title(singular[kind])} search`,
-        entity_type: singular[kind],
-        filters: {
-          search: filters.search,
-          country: filters.country,
-          degree_level: filters.degreeLevel,
-          field_of_study: filters.fieldOfStudy,
-          verified: filters.verified,
-        },
-      }),
-    onSuccess: () => {
-      setSaved(true);
-      void qc.invalidateQueries({ queryKey: queryKeys.savedSearches });
+function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
+  const user = useSession((state) => state.user);
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const q = useQuery({
+    queryKey: queryKeys.catalogueDetail(kind, id),
+    queryFn: () => detail(kind, id),
+  });
+  const remove = useMutation({
+    mutationFn: async () => {
+      if (kind === "institutions") return catalogueApi.deleteInstitution(id);
+      if (kind === "programmes") return catalogueApi.deleteProgramme(id);
+      return catalogueApi.deleteScholarship(id);
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["catalogue"] });
+      navigate(`/app/catalogue?kind=${kind}`);
     },
   });
-  return (
-    <button
-      className="secondary-action"
-      type="button"
-      disabled={mutation.isPending || saved}
-      onClick={() => mutation.mutate()}
-    >
-      {saved ? "Search saved" : "Save current search"}
-    </button>
-  );
-}
 
-function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
-  const user = useSession((x) => x.user),
-    navigate = useNavigate(),
-    qc = useQueryClient(),
-    [editing, setEditing] = useState(false),
-    q = useQuery({
-      queryKey: queryKeys.catalogueDetail(kind, id),
-      queryFn: () => detail(kind, id),
-    });
   if (q.isPending)
     return (
       <div className="page" role="status">
@@ -337,65 +312,123 @@ function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
         <Link to="/app/catalogue">Return to catalogue</Link>
       </div>
     );
-  const item = q.data,
-    editable =
-      item.visibility === "private" &&
-      (item.created_by_user_id === user?.id || user?.is_admin);
+  const item = q.data;
+  const meta = itemMeta(item);
+  const editable =
+    item.visibility === "private" && (item.created_by_user_id === user?.id || user?.is_admin);
   const provenance = item.source_provenance as Record<string, unknown>;
-  const source =
-    "website_url" in item
-      ? item.website_url
-      : "source_url" in item
-        ? item.source_url
-        : null;
+  const source = "website_url" in item ? item.website_url : "source_url" in item ? item.source_url : null;
+
   return (
-    <div className="page phase2-page catalogue-detail">
+    <div className="page apps-page catalogue-detail">
       <Link className="back" to={`/app/catalogue?kind=${kind}`}>
-        <ArrowLeft />
-        Back to {kind}
+        <ArrowLeft aria-hidden="true" /> Back to {kindLabel[kind].toLowerCase()}
       </Link>
-      <header>
-        <span className={`visibility-badge ${item.visibility}`}>
-          {title(item.visibility)}
-        </span>
-        <h1>{item.name}</h1>
-        <p>
-          {item.visibility === "canonical"
+      <PageHeader
+        title={item.name}
+        description={
+          item.visibility === "canonical"
             ? "Shared catalogue record with source provenance."
-            : "Private record visible only within your account."}
-        </p>
-      </header>
-      <dl className="detail-list">
+            : "Private record visible only within your account."
+        }
+      />
+      <dl className="document-metadata">
+        <div>
+          <dt>Status</dt>
+          <dd>{title(item.visibility)}</dd>
+        </div>
         <div>
           <dt>Last verified</dt>
           <dd>
             {item.last_verified_at
-              ? new Intl.DateTimeFormat(undefined, {
-                  dateStyle: "long",
-                }).format(new Date(item.last_verified_at))
-              : "Not yet verified"}
+              ? formatDate(item.last_verified_at)
+              : "No verification information has been added"}
           </dd>
         </div>
+        {meta.country_code ? (
+          <div>
+            <dt>Country</dt>
+            <dd>{countryName(meta.country_code)}</dd>
+          </div>
+        ) : null}
+        {kind === "institutions" && meta.institution_type ? (
+          <div>
+            <dt>Institution type</dt>
+            <dd>{title(meta.institution_type)}</dd>
+          </div>
+        ) : null}
+        {kind === "programmes" && meta.duration ? (
+          <div>
+            <dt>Duration</dt>
+            <dd>{meta.duration}</dd>
+          </div>
+        ) : null}
+        {kind === "programmes" && meta.delivery_mode ? (
+          <div>
+            <dt>Delivery mode</dt>
+            <dd>{title(meta.delivery_mode)}</dd>
+          </div>
+        ) : null}
+        {kind === "programmes" && meta.language ? (
+          <div>
+            <dt>Language</dt>
+            <dd>{meta.language}</dd>
+          </div>
+        ) : null}
+        {kind === "programmes" && meta.tuition ? (
+          <div>
+            <dt>Tuition</dt>
+            <dd>{meta.tuition}</dd>
+          </div>
+        ) : null}
+        {kind === "programmes" && meta.intake ? (
+          <div>
+            <dt>Intake</dt>
+            <dd>{meta.intake}</dd>
+          </div>
+        ) : null}
+        {kind === "scholarships" ? (
+          <div>
+            <dt>Status</dt>
+            <dd>{meta.is_open === false ? "Closed" : "Open"}</dd>
+          </div>
+        ) : null}
+        {kind === "scholarships" && meta.deadline_at ? (
+          <div>
+            <dt>Application deadline</dt>
+            <dd>{formatDate(meta.deadline_at)}</dd>
+          </div>
+        ) : null}
+        {kind === "scholarships" && meta.funding_type ? (
+          <div>
+            <dt>Funding type</dt>
+            <dd>{meta.funding_type}</dd>
+          </div>
+        ) : null}
+        {kind === "scholarships" && meta.eligibility ? (
+          <div>
+            <dt>Eligibility</dt>
+            <dd>{meta.eligibility}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Provenance</dt>
           <dd>
-            {Object.keys(provenance).length
-              ? Object.entries(provenance)
-                  .map(([k, v]) => `${title(k)}: ${String(v)}`)
-                  .join(" · ")
+            {Object.keys(provenance ?? {}).length
+              ? Object.entries(provenance).map(([k, v]) => `${title(k)}: ${String(v)}`).join(" · ")
               : "No provenance supplied"}
           </dd>
         </div>
       </dl>
-      <div className="detail-actions">
+      <div className="document-actions">
         {source ? (
-          <a href={source} target="_blank" rel="noreferrer">
-            Open source <ExternalLink />
+          <a href={source} target="_blank" rel="noreferrer" className="apps-inline-link">
+            Open source <ExternalLink aria-hidden="true" />
           </a>
         ) : null}
         <Link
           className="primary"
-          to={`/app/applications?create=1&catalogueType=${singular[kind]}&catalogueId=${item.id}&title=${encodeURIComponent(item.name)}`}
+          to={`/app/applications?create=1&catalogueType=${kindSingular[kind]}&catalogueId=${item.id}&title=${encodeURIComponent(item.name)}`}
         >
           Create application
         </Link>
@@ -404,29 +437,16 @@ function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
             <button type="button" onClick={() => setEditing(true)}>
               Edit private record
             </button>
-            <button
-              className="danger-link"
-              type="button"
-              onClick={async () => {
-                if (!confirm("Delete this private catalogue record?")) return;
-                if (kind === "institutions")
-                  await catalogueApi.deleteInstitution(id);
-                else if (kind === "programmes")
-                  await catalogueApi.deleteProgramme(id);
-                else await catalogueApi.deleteScholarship(id);
-                await qc.invalidateQueries({ queryKey: ["catalogue"] });
-                navigate(`/app/catalogue?kind=${kind}`);
-              }}
-            >
+            <button type="button" className="apps-danger-button" onClick={() => setConfirmingDelete(true)}>
               Delete
             </button>
           </>
         ) : null}
       </div>
       {!editable && item.visibility === "private" ? (
-        <p className="muted">
-          Only the owner or an administrator can edit this private record.
-          Server authorization is still authoritative.
+        <p className="catalogue-detail-note">
+          Only the owner or an administrator can edit this private record. Server
+          authorization is still authoritative.
         </p>
       ) : null}
       {editing ? (
@@ -439,6 +459,18 @@ function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
             setEditing(false);
           }}
         />
+      ) : null}
+      {confirmingDelete ? (
+        <ConfirmationDialog
+          title={`Delete “${item.name}”?`}
+          confirmLabel="Delete record"
+          pendingLabel="Deleting…"
+          pending={remove.isPending}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => remove.mutate()}
+        >
+          <p>This permanently removes your private catalogue record. This cannot be undone.</p>
+        </ConfirmationDialog>
       ) : null}
     </div>
   );
@@ -454,24 +486,24 @@ function CatalogueCreateDialog({
   onCreated: () => void;
 }) {
   const [error, setError] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const institutions = useQuery({
-    queryKey: queryKeys.catalogue("institutions", {
-      surface: "catalogue-create",
-    }),
+    queryKey: queryKeys.catalogue("institutions", { surface: "catalogue-create" }),
     queryFn: ({ signal }) => catalogueApi.institutions({}, signal),
     enabled: kind !== "institutions",
   });
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget),
-      name = String(data.get("name")),
-      source = String(data.get("source")) || null,
-      institutionId = String(data.get("institution_id")) || null;
+    const data = new FormData(event.currentTarget);
+    const name = String(data.get("name"));
+    const source = String(data.get("source")) || null;
+    const institutionId = String(data.get("institution_id")) || null;
     try {
       if (kind === "institutions")
         await catalogueApi.createInstitution({
           name,
-          country_code: String(data.get("country_code")).toUpperCase(),
+          country_code: countryCode,
+          institution_type: String(data.get("institution_type")) || null,
           website_url: source,
           raw_source: {},
         });
@@ -481,6 +513,11 @@ function CatalogueCreateDialog({
           name,
           degree_level: String(data.get("degree_level")) || null,
           field_of_study: String(data.get("field_of_study")) || null,
+          duration: String(data.get("duration")) || null,
+          delivery_mode: String(data.get("delivery_mode")) || null,
+          language: String(data.get("language")) || null,
+          tuition: String(data.get("tuition")) || null,
+          intake: String(data.get("intake")) || null,
           source_url: source,
           raw_source: {},
         });
@@ -490,65 +527,149 @@ function CatalogueCreateDialog({
           name,
           provider_name: String(data.get("provider_name")) || null,
           award_summary: String(data.get("award_summary")) || null,
+          deadline_at: data.get("deadline_at")
+            ? new Date(`${String(data.get("deadline_at"))}T12:00:00Z`).toISOString()
+            : null,
+          funding_type: String(data.get("funding_type")) || null,
+          eligibility: String(data.get("eligibility")) || null,
+          is_open: data.get("is_open") === "on",
           source_url: source,
           raw_source: {},
         });
       onCreated();
     } catch (caught) {
-      setError(
-        caught instanceof Error ? caught.message : "Record could not be created.",
-      );
+      setError(caught instanceof Error ? caught.message : "Record could not be created.");
     }
   }
   return (
-    <div className="dialog-backdrop">
-      <form className="dialog settings-form" onSubmit={submit}>
+    <div className="apps-dialog-backdrop" role="presentation">
+      <section className="apps-dialog" role="dialog" aria-modal="true" aria-labelledby="catalogue-create-title">
         <header>
           <div>
-            <h2>Add private {singular[kind]}</h2>
-            <p>This record stays private and is not represented as verified.</p>
+            <h2 id="catalogue-create-title">Add private {kindSingular[kind]}</h2>
+            <p>This record stays private and is never shown as verified.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close">×</button>
+          <button type="button" onClick={onClose} aria-label="Close">
+            ×
+          </button>
         </header>
-        <label>Name<input name="name" required minLength={2} /></label>
-        {kind === "institutions" ? (
-          <label>Country code<input name="country_code" required minLength={2} maxLength={2} /></label>
-        ) : (
-          <label>
-            Institution {kind === "scholarships" ? "(optional)" : ""}
-            <select
-              name="institution_id"
-              required={kind === "programmes"}
-              disabled={institutions.isPending}
-            >
-              <option value="">
-                {institutions.isPending
-                  ? "Loading institutions…"
-                  : kind === "programmes"
-                    ? "Select an institution"
-                    : "No institution"}
-              </option>
-              {institutions.data?.items.map((institution) => (
-                <option key={institution.id} value={institution.id}>
-                  {institution.name}
-                </option>
-              ))}
-            </select>
-            {!institutions.isPending && !institutions.data?.items.length ? (
-              <small>
-                <Link to="/app/catalogue?kind=institutions&create=1">
-                  Add a private institution first
-                </Link>
-              </small>
-            ) : null}
+        <form className="form-grid" onSubmit={submit}>
+          <label className="wide">
+            Name
+            <input name="name" required minLength={2} autoFocus />
           </label>
-        )}
-        {kind === "programmes" ? <><label>Degree level<input name="degree_level" /></label><label>Field of study<input name="field_of_study" /></label></> : null}
-        {kind === "scholarships" ? <><label>Provider<input name="provider_name" /></label><label>Award summary<textarea name="award_summary" rows={4} /></label></> : null}
-        <label>Source URL<input name="source" type="url" /></label>
-        {error ? <p className="form-error" role="alert">{error}</p> : null}
-        <div className="dialog-actions"><button type="button" onClick={onClose}>Cancel</button><button className="primary">Create private record</button></div>
-      </form>
+          {kind === "institutions" ? (
+            <>
+              <div className="wide">
+                <CountryCombobox label="Country" value={countryCode} onChange={setCountryCode} />
+              </div>
+              <label>
+                Institution type
+                <input name="institution_type" placeholder="University, college…" />
+              </label>
+            </>
+          ) : (
+            <label className="wide">
+              Institution {kind === "scholarships" ? "(optional)" : ""}
+              <select name="institution_id" required={kind === "programmes"} disabled={institutions.isPending}>
+                <option value="">
+                  {institutions.isPending
+                    ? "Loading institutions…"
+                    : kind === "programmes"
+                      ? "Select an institution"
+                      : "No institution"}
+                </option>
+                {institutions.data?.items.map((institution) => (
+                  <option key={institution.id} value={institution.id}>
+                    {institution.name}
+                  </option>
+                ))}
+              </select>
+              {!institutions.isPending && !institutions.data?.items.length ? (
+                <small>
+                  <Link to="/app/catalogue?kind=institutions&create=1">Add a private institution first</Link>
+                </small>
+              ) : null}
+            </label>
+          )}
+          {kind === "programmes" ? (
+            <>
+              <label>
+                Degree level
+                <input name="degree_level" />
+              </label>
+              <label>
+                Field of study
+                <input name="field_of_study" />
+              </label>
+              <label>
+                Duration
+                <input name="duration" placeholder="2 years" />
+              </label>
+              <label>
+                Delivery mode
+                <input name="delivery_mode" placeholder="On campus, online, hybrid…" />
+              </label>
+              <label>
+                Language
+                <input name="language" placeholder="English" />
+              </label>
+              <label>
+                Tuition
+                <input name="tuition" placeholder="£12,000/year" />
+              </label>
+              <label>
+                Intake
+                <input name="intake" placeholder="Autumn 2027" />
+              </label>
+            </>
+          ) : null}
+          {kind === "scholarships" ? (
+            <>
+              <label>
+                Provider
+                <input name="provider_name" />
+              </label>
+              <label>
+                Funding type
+                <input name="funding_type" placeholder="Full tuition, partial, stipend…" />
+              </label>
+              <label>
+                Application deadline
+                <input name="deadline_at" type="date" />
+              </label>
+              <label className="check-field">
+                <input name="is_open" type="checkbox" defaultChecked /> Currently open
+              </label>
+              <label className="wide">
+                Award summary
+                <textarea name="award_summary" rows={3} />
+              </label>
+              <label className="wide">
+                Eligibility
+                <textarea name="eligibility" rows={3} />
+              </label>
+            </>
+          ) : null}
+          <label className="wide">
+            Source URL
+            <input name="source" type="url" />
+          </label>
+          {error ? (
+            <p className="form-error wide" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="dialog-actions wide">
+            <button type="button" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="primary" disabled={kind === "institutions" && !countryCode}>
+              Create private record
+            </button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }
@@ -560,28 +681,33 @@ function CatalogueEditDialog({
   onSaved,
 }: {
   kind: Kind;
-  item: Item;
+  item: CatalogueItem;
   onClose: () => void;
-  onSaved: (item: Item) => void;
+  onSaved: (item: CatalogueItem) => void;
 }) {
-  const meta = item as Item & {
-    degree_level?: string | null;
-    field_of_study?: string | null;
-    provider_name?: string | null;
-    award_summary?: string | null;
-  };
+  const meta = itemMeta(item);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget),
-      name = String(data.get("name"));
+    const data = new FormData(event.currentTarget);
+    const name = String(data.get("name"));
     if (kind === "institutions")
-      onSaved(await catalogueApi.updateInstitution(item.id, { name }));
+      onSaved(
+        await catalogueApi.updateInstitution(item.id, {
+          name,
+          institution_type: String(data.get("institution_type")) || null,
+        }),
+      );
     else if (kind === "programmes")
       onSaved(
         await catalogueApi.updateProgramme(item.id, {
           name,
           degree_level: String(data.get("degree_level")) || null,
           field_of_study: String(data.get("field_of_study")) || null,
+          duration: String(data.get("duration")) || null,
+          delivery_mode: String(data.get("delivery_mode")) || null,
+          language: String(data.get("language")) || null,
+          tuition: String(data.get("tuition")) || null,
+          intake: String(data.get("intake")) || null,
         }),
       );
     else
@@ -590,18 +716,102 @@ function CatalogueEditDialog({
           name,
           provider_name: String(data.get("provider_name")) || null,
           award_summary: String(data.get("award_summary")) || null,
+          deadline_at: data.get("deadline_at")
+            ? new Date(`${String(data.get("deadline_at"))}T12:00:00Z`).toISOString()
+            : null,
+          funding_type: String(data.get("funding_type")) || null,
+          eligibility: String(data.get("eligibility")) || null,
+          is_open: data.get("is_open") === "on",
         }),
       );
   }
   return (
-    <div className="dialog-backdrop">
-      <form className="dialog settings-form" onSubmit={submit}>
-        <header><h2>Edit private {singular[kind]}</h2><button type="button" onClick={onClose} aria-label="Close">×</button></header>
-        <label>Name<input name="name" required defaultValue={item.name} /></label>
-        {kind === "programmes" ? <><label>Degree level<input name="degree_level" defaultValue={meta.degree_level ?? ""} /></label><label>Field of study<input name="field_of_study" defaultValue={meta.field_of_study ?? ""} /></label></> : null}
-        {kind === "scholarships" ? <><label>Provider<input name="provider_name" defaultValue={meta.provider_name ?? ""} /></label><label>Award summary<textarea name="award_summary" defaultValue={meta.award_summary ?? ""} /></label></> : null}
-        <div className="dialog-actions"><button type="button" onClick={onClose}>Cancel</button><button className="primary">Save changes</button></div>
-      </form>
+    <div className="apps-dialog-backdrop" role="presentation">
+      <section className="apps-dialog" role="dialog" aria-modal="true" aria-labelledby="catalogue-edit-title">
+        <header>
+          <h2 id="catalogue-edit-title">Edit private {kindSingular[kind]}</h2>
+          <button type="button" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </header>
+        <form className="form-grid" onSubmit={submit}>
+          <label className="wide">
+            Name
+            <input name="name" required defaultValue={item.name} autoFocus />
+          </label>
+          {kind === "institutions" ? (
+            <label>
+              Institution type
+              <input name="institution_type" defaultValue={meta.institution_type ?? ""} placeholder="University, college…" />
+            </label>
+          ) : null}
+          {kind === "programmes" ? (
+            <>
+              <label>
+                Degree level
+                <input name="degree_level" defaultValue={meta.degree_level ?? ""} />
+              </label>
+              <label>
+                Field of study
+                <input name="field_of_study" defaultValue={meta.field_of_study ?? ""} />
+              </label>
+              <label>
+                Duration
+                <input name="duration" defaultValue={meta.duration ?? ""} placeholder="2 years" />
+              </label>
+              <label>
+                Delivery mode
+                <input name="delivery_mode" defaultValue={meta.delivery_mode ?? ""} placeholder="On campus, online, hybrid…" />
+              </label>
+              <label>
+                Language
+                <input name="language" defaultValue={meta.language ?? ""} placeholder="English" />
+              </label>
+              <label>
+                Tuition
+                <input name="tuition" defaultValue={meta.tuition ?? ""} placeholder="£12,000/year" />
+              </label>
+              <label>
+                Intake
+                <input name="intake" defaultValue={meta.intake ?? ""} placeholder="Autumn 2027" />
+              </label>
+            </>
+          ) : null}
+          {kind === "scholarships" ? (
+            <>
+              <label>
+                Provider
+                <input name="provider_name" defaultValue={meta.provider_name ?? ""} />
+              </label>
+              <label>
+                Funding type
+                <input name="funding_type" defaultValue={meta.funding_type ?? ""} placeholder="Full tuition, partial, stipend…" />
+              </label>
+              <label>
+                Application deadline
+                <input name="deadline_at" type="date" defaultValue={meta.deadline_at ? meta.deadline_at.slice(0, 10) : ""} />
+              </label>
+              <label className="check-field">
+                <input name="is_open" type="checkbox" defaultChecked={meta.is_open !== false} /> Currently open
+              </label>
+              <label className="wide">
+                Award summary
+                <textarea name="award_summary" defaultValue={meta.award_summary ?? ""} rows={3} />
+              </label>
+              <label className="wide">
+                Eligibility
+                <textarea name="eligibility" defaultValue={meta.eligibility ?? ""} rows={3} />
+              </label>
+            </>
+          ) : null}
+          <div className="dialog-actions wide">
+            <button type="button" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="primary">Save changes</button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }

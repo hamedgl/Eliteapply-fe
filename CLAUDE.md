@@ -12,6 +12,25 @@
 - Keep files under 500 lines
 - Validate input at system boundaries
 
+## Backend-contract verification (never trust, always check)
+
+`docs/api/openapi.json` is the only source of truth for what the backend supports. `src/generated/api/schema.ts` is generated from it via `npm run api:generate`. `src/tests/phase1-delta.test.ts` hardcodes exact path/schema counts to catch drift between the two — bump both counts (never make the assertion a self-comparison / tautology) and re-run `npm run api:generate` whenever the spec changes.
+
+- Before writing any FE code against a "the backend now supports X" claim (from the user, a status report, a teammate, or your own earlier message), grep `docs/api/openapi.json` directly (e.g. `python3 -c "import json; ..."`) and confirm the field/path actually exists — do not trust the claim, do not trust your own prior BE-prompt without re-checking.
+- Never mask a missing field with `(x as any).field`. If a field doesn't exist yet, either skip the feature and say so, or write it properly-typed and gated so it activates automatically once the backend adds it (see `ApplicationEmbeddedExtras` / `withEmbeddedExtras()` in `src/features/applications/model.ts` for the pattern).
+- If a backend claim turns out false, say so plainly and correct any earlier BE-prompt you wrote — don't quietly drop it.
+- After any batch of FE changes: `npx tsc -b --force --pretty false`, `npx tsc --noEmit --noUnusedLocals --noUnusedParameters -p tsconfig.app.json`, `npm run build:client`, `npx vitest run` — all clean before calling it done.
+
+## Design-system reuse discipline
+
+This app is hand-rolled CSS (no Tailwind/shadcn) with a shared design system in `src/styles/workspace.css` plus per-feature stylesheets. When redesigning/building a page:
+
+- Reuse shared primitives before inventing new ones: `PageHeader`, `SummaryStrip`, `StatusBadge`, `EmptyState`, `ProgressBar`, `OverflowMenu`, `ConfirmationDialog`, `EntityCombobox`/`CountryCombobox`, `.apps-*` classes in `workspace.css`. Grep for an existing pattern before writing a new component or class.
+- `.apps-drawer-backdrop` (right-pinned, stretch-aligned) is for real slide-in drawers only. Centered modals use `.apps-dialog` wrapped in `.apps-dialog-backdrop`. Mixing these renders a broken full-height panel pinned to the screen edge — this exact bug shipped multiple times from copy-pasted dialogs.
+- No inline `style={{}}` with made-up CSS custom properties (`--accent-color`, `--surface-subtle`, etc. that don't exist in the stylesheet). Use real tokens (`--app-blue`, `--app-violet`, `--app-surface-subtle`, ...) and real classes.
+- After touching CSS/className in a batch of files, sweep every `className` against actual CSS definitions (grep both directions) — undefined classes and unused-but-still-referenced classes both ship silently broken otherwise.
+- Don't leave dead state (`notice`/`setNotice` declared but never rendered) or silently-dropped UI (an icon import still present but the stat it labeled got cut) — these are real regressions to catch, not style nits.
+
 ## Agent Comms (SendMessage-First Coordination)
 
 Named agents coordinate via `SendMessage`, not polling or shared state.

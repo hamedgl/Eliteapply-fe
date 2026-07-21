@@ -1,0 +1,194 @@
+/* Reminders page — additions on top of the shared workspace design system. */
+
+.reminders-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem 0.85rem;
+  flex-wrap: wrap;
+}
+
+.reminders-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.reminders-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+}
+.reminders-card.is-done {
+  opacity: 0.6;
+}
+.reminders-done-toggle {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding-top: 0.15rem;
+}
+.reminders-done-toggle input {
+  width: 20px;
+  height: 20px;
+}
+.reminders-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.reminders-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.reminders-card-heading h3 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 0.98rem;
+}
+.reminders-card.is-done .reminders-card-heading h3 {
+  text-decoration: line-through;
+  color: var(--app-muted);
+}
+.reminders-card-meta {
+  margin: 0.3rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+.reminders-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+}
+.reminders-card-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+  text-transform: capitalize;
+}
+.reminders-card-tags svg {
+  width: 13px;
+  height: 13px;
+}
+
+.reminders-context-static {
+  padding: 0.6rem 0.75rem;
+  color: var(--app-muted);
+  border-radius: 8px;
+  background: var(--app-surface-subtle);
+  font-size: 0.85rem;
+}
+
+.reminders-deadline-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--app-muted);
+}
+.reminders-deadline-presets button {
+  padding: 0.3rem 0.65rem;
+  color: var(--app-blue);
+  border: 1px solid var(--app-blue-soft);
+  border-radius: 999px;
+  background: var(--app-blue-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.reminders-deadline-presets button:hover {
+  background: #e0e9ff;
+}
+
+.reminders-timezone-note {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+
+.reminders-calendar-card {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.35rem;
+}
+.reminders-calendar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.reminders-calendar-header > div {
+  display: flex;
+  gap: 0.75rem;
+}
+.reminders-calendar-header svg {
+  width: 22px;
+  height: 22px;
+  margin-top: 0.15rem;
+  color: var(--app-blue);
+  flex: none;
+}
+.reminders-calendar-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.reminders-calendar-header p {
+  margin: 0.2rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.85rem;
+}
+.reminders-calendar-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.reminders-calendar-status-row code {
+  padding: 0.3rem 0.55rem;
+  color: var(--app-text);
+  border-radius: 6px;
+  background: var(--app-surface-subtle);
+  font-size: 0.78rem;
+}
+.reminders-calendar-security {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+.reminders-calendar-empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.reminders-calendar-setup summary {
+  color: var(--app-blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reminders-calendar-setup ol {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.reminders-calendar-setup li strong {
+  display: block;
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+.reminders-calendar-setup li span {
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+.reminders-calendar-status {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}

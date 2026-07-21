@@ -5492,6 +5492,22 @@ th {
   --app-blue-hover: #103eb7;
   --app-blue-soft: #edf2ff;
   --app-green: #087b56;
+  --app-green-soft: #e6f6ef;
+  --app-violet: #6d28d9;
+  --app-violet-soft: #f2ebfe;
+  --app-teal: #0f766e;
+  --app-teal-soft: #e5f5f3;
+  --app-indigo: #4338ca;
+  --app-indigo-soft: #edeefd;
+  --app-amber: #92400e;
+  --app-amber-soft: #fdf1e0;
+  --app-red: #b42318;
+  --app-red-soft: #fdeceb;
+  --app-grey: #56617a;
+  --app-grey-soft: #eef1f6;
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 16px;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr);
@@ -5612,8 +5628,7 @@ th {
 .app-shell.sidebar-collapsed .app-brand-name,
 .app-shell.sidebar-collapsed .nav-group > p,
 .app-shell.sidebar-collapsed .sidebar nav a > span,
-.app-shell.sidebar-collapsed .sidebar-account > div,
-.app-shell.sidebar-collapsed .sidebar-account button > span {
+.app-shell.sidebar-collapsed .sidebar-account-trigger > div {
   display: none;
 }
 
@@ -5641,14 +5656,13 @@ th {
 
 .app-shell.sidebar-collapsed .sidebar-account {
   padding-inline: 0;
-  grid-template-columns: 1fr;
-  justify-items: center;
 }
 
-.app-shell.sidebar-collapsed .sidebar-account button {
+.app-shell.sidebar-collapsed .sidebar-account-trigger {
+  grid-template-columns: 1fr;
+  justify-items: center;
   width: 40px;
-  grid-column: auto;
-  justify-content: center;
+  padding: 0;
 }
 
 .sidebar-close {
@@ -5727,13 +5741,93 @@ th {
 }
 
 .sidebar-account {
+  position: relative;
   margin-top: auto;
   padding: 1rem 0.45rem 0;
+  border-top: 1px solid var(--app-line);
+}
+
+.sidebar-account-trigger {
+  width: 100%;
+  padding: 0.4rem;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 0.65rem;
-  border-top: 1px solid var(--app-line);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: start;
+}
+
+.sidebar-account-trigger:hover {
+  background: var(--app-surface-subtle);
+}
+
+.sidebar-account-menu {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 0.4rem);
+  left: 0.45rem;
+  right: 0.45rem;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  background: var(--app-surface);
+  box-shadow: 0 10px 24px rgb(16 27 59 / 16%);
+}
+
+.sidebar-account-menu a,
+.sidebar-account-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 38px;
+  padding: 0.5rem 0.6rem;
+  color: var(--app-text);
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: start;
+}
+
+.sidebar-account-menu a:hover,
+.sidebar-account-menu button:hover {
+  background: var(--app-surface-subtle);
+}
+
+.sidebar-account-menu svg {
+  width: 15px;
+  height: 15px;
+  color: var(--app-muted);
+}
+
+.sidebar-account-menu-divider {
+  height: 1px;
+  margin: 0.3rem 0.2rem;
+  background: var(--app-line);
+}
+
+.sidebar-account-menu li:last-child button {
+  color: var(--danger);
+}
+
+.sidebar-account-menu li:last-child button:hover {
+  background: #fff1f0;
+}
+
+.sidebar-account-menu li:last-child button svg {
+  color: var(--danger);
+}
+
+.sidebar-account-menu button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .account-avatar {
@@ -5758,7 +5852,7 @@ th {
   object-fit: cover;
 }
 
-.sidebar-account > div {
+.sidebar-account-trigger > div {
   min-width: 0;
 }
 
@@ -5779,37 +5873,6 @@ th {
   margin-top: 0.1rem;
   color: var(--app-muted);
   font-size: 0.72rem;
-}
-
-.sidebar-account button {
-  min-height: 36px;
-  grid-column: 1 / -1;
-  padding: 0.45rem 0.55rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--app-muted);
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-align: start;
-}
-
-.sidebar-account button:hover {
-  color: var(--danger);
-  background: #fff1f0;
-}
-
-.sidebar-account button:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
-.sidebar-account button svg {
-  width: 15px;
-  height: 15px;
 }
 
 .mobile-appbar {
@@ -7356,8 +7419,7 @@ th {
 
   .app-shell.sidebar-collapsed .app-brand-name,
   .app-shell.sidebar-collapsed .sidebar nav a > span,
-  .app-shell.sidebar-collapsed .sidebar-account > div,
-  .app-shell.sidebar-collapsed .sidebar-account button > span {
+  .app-shell.sidebar-collapsed .sidebar-account-trigger > div {
     display: initial;
   }
 
@@ -7372,14 +7434,13 @@ th {
 
   .app-shell.sidebar-collapsed .sidebar-account {
     padding: 1rem 0.45rem 0;
-    grid-template-columns: auto minmax(0, 1fr);
-    justify-items: stretch;
   }
 
-  .app-shell.sidebar-collapsed .sidebar-account button {
+  .app-shell.sidebar-collapsed .sidebar-account-trigger {
     width: auto;
-    grid-column: 1 / -1;
-    justify-content: flex-start;
+    padding: 0.4rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: stretch;
   }
 
   .app-shell .sidebar.open {
