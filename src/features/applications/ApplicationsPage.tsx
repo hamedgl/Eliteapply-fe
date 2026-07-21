@@ -19,7 +19,11 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useSearchParams,
+  type SetURLSearchParams,
+} from "react-router-dom";
 import type { components } from "../../generated/api/schema";
 import { ConflictNotice } from "../../components/ConflictNotice";
 import { ApiError } from "../../lib/api/errors";
@@ -44,6 +48,33 @@ import {
 
 type Schema = components["schemas"];
 type View = "board" | "list";
+
+/** Keeps free-text filter inputs responsive while delaying the URL/query update until typing pauses. */
+function useDebouncedFilter(
+  key: string,
+  params: URLSearchParams,
+  setParams: SetURLSearchParams,
+  view: View,
+  delay = 350,
+) {
+  const urlValue = params.get(key) ?? "";
+  const [draft, setDraft] = useState(urlValue);
+  useEffect(() => setDraft(urlValue), [urlValue]);
+  useEffect(() => {
+    if (draft === urlValue) return;
+    const timer = setTimeout(() => {
+      setParams((current) => {
+        const copy = new URLSearchParams(current);
+        if (draft) copy.set(key, draft);
+        else copy.delete(key);
+        copy.set("view", view);
+        return copy;
+      }, { replace: true });
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [draft, urlValue, key, setParams, view, delay]);
+  return [draft, setDraft] as const;
+}
 
 export function ApplicationsPage() {
   const qc = useQueryClient();
@@ -74,6 +105,36 @@ export function ApplicationsPage() {
     if (key !== "view") copy.set("view", view);
     setParams(copy, { replace: true });
   };
+  const [searchDraft, setSearchDraft] = useDebouncedFilter(
+    "search",
+    params,
+    setParams,
+    view,
+  );
+  const [institutionDraft, setInstitutionDraft] = useDebouncedFilter(
+    "institution",
+    params,
+    setParams,
+    view,
+  );
+  const [programmeDraft, setProgrammeDraft] = useDebouncedFilter(
+    "programme",
+    params,
+    setParams,
+    view,
+  );
+  const [scholarshipDraft, setScholarshipDraft] = useDebouncedFilter(
+    "scholarship",
+    params,
+    setParams,
+    view,
+  );
+  const [tagDraft, setTagDraft] = useDebouncedFilter(
+    "tag",
+    params,
+    setParams,
+    view,
+  );
   const filters: ApplicationFilters = {
     search: value("search") || undefined,
     stage: value("stage") || undefined,
@@ -370,8 +431,8 @@ export function ApplicationsPage() {
           Search
           <input
             type="search"
-            value={value("search")}
-            onChange={(event) => setParam("search", event.target.value)}
+            value={searchDraft}
+            onChange={(event) => setSearchDraft(event.target.value)}
             placeholder="Title or tag"
           />
         </label>
@@ -400,22 +461,22 @@ export function ApplicationsPage() {
           <label>
             Institution ID
             <input
-              value={value("institution")}
-              onChange={(event) => setParam("institution", event.target.value)}
+              value={institutionDraft}
+              onChange={(event) => setInstitutionDraft(event.target.value)}
             />
           </label>
           <label>
             Programme ID
             <input
-              value={value("programme")}
-              onChange={(event) => setParam("programme", event.target.value)}
+              value={programmeDraft}
+              onChange={(event) => setProgrammeDraft(event.target.value)}
             />
           </label>
           <label>
             Scholarship ID
             <input
-              value={value("scholarship")}
-              onChange={(event) => setParam("scholarship", event.target.value)}
+              value={scholarshipDraft}
+              onChange={(event) => setScholarshipDraft(event.target.value)}
             />
           </label>
           <label>
@@ -437,8 +498,8 @@ export function ApplicationsPage() {
           <label>
             Tag
             <input
-              value={value("tag")}
-              onChange={(event) => setParam("tag", event.target.value)}
+              value={tagDraft}
+              onChange={(event) => setTagDraft(event.target.value)}
             />
           </label>
           <label>
@@ -1294,6 +1355,13 @@ function safeFilename(value: string) {
   );
 }
 
+function humanizeStages(text: string) {
+  return stages.reduce(
+    (acc, stage) => acc.replace(new RegExp(`\\b${stage}\\b`, "g"), label(stage)),
+    text,
+  );
+}
+
 function readableApiError(error: unknown) {
   if (!(error instanceof ApiError))
     return error instanceof Error
@@ -1305,8 +1373,10 @@ function readableApiError(error: unknown) {
       ? cleanMessage
       : `${label(field)}: ${cleanMessage}`;
   });
-  const reason = [...new Set(details)].join(" ") || error.message;
+  const rawReason = [...new Set(details)].join(" ") || error.message;
+  const reason = humanizeStages(rawReason).trim();
+  const sentence = /[.!?]$/.test(reason) ? reason : `${reason}.`;
   return error.correlationId
-    ? `${reason} Reference: ${error.correlationId}.`
-    : reason;
+    ? `${sentence} (Reference: ${error.correlationId})`
+    : sentence;
 }
