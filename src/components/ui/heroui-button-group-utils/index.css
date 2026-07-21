@@ -1,0 +1,19 @@
+/* Button Group and Dropdown Utility Styles for EliteApply Design System */
+.heroui-button-group-root {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  background: var(--app-surface, #ffffff);
+  border: 1px solid var(--app-line, #dfe4ed);
+  box-shadow: 0 1px 3px rgba(16, 27, 59, 0.05);
+  padding: 2px;
+}
+
+.heroui-button-group-separator {
+  width: 1px;
+  height: 1.25rem;
+  background-color: var(--app-line, #dfe4ed);
+  margin-left: 2px;
+  margin-right: 2px;
+  flex-shrink: 0;
+}

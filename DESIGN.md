@@ -228,6 +228,16 @@ Every button supports rest, hover, active, focus-visible, loading and disabled s
 - One primary action per visual region.
 - Button text describes the result: “Create application,” not “Continue” when the result is creation.
 
+### Button Groups & Dropdowns
+
+Component source: `@/components/ui/heroui-button-group` (`src/components/ui/heroui-button-group.tsx`).
+
+Features & Geometry:
+- Segmented button groups with custom vertical dividers (`<ButtonGroup.Separator />`).
+- Split-action buttons with dropdown triggers (`<ChevronDown />`, `<Ellipsis />`).
+- Integrated Popover menus (`<Dropdown.Popover>`, `<Dropdown.Menu>`, `<Dropdown.Item>`).
+- Supports tertiary, icon-only, and pill group variants while preserving EliteApply color tokens.
+
 ### Links
 
 - Link text describes the destination or action.
