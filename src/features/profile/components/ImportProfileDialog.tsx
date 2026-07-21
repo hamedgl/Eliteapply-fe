@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { profileApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 
@@ -48,7 +49,7 @@ export function ImportProfileDialog({
             </p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form

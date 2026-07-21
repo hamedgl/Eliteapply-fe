@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -95,7 +96,7 @@ export function PromptDialogProvider({ children }: { children: ReactNode }) {
                 onClick={() => finish(null)}
                 aria-label="Close dialog"
               >
-                ×
+                <X aria-hidden="true" />
               </button>
             </header>
             <label>

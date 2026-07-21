@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 
 /**
  * Shared confirmation dialog for destructive/irreversible actions. Uses the
@@ -44,7 +45,7 @@ export function ConfirmationDialog({
       <header>
         <h2 id="confirmation-dialog-title">{title}</h2>
         <button type="button" className="dialog-close" onClick={onCancel} aria-label="Close">
-          ×
+          <X aria-hidden="true" />
         </button>
       </header>
       {children}

@@ -595,17 +595,22 @@ textarea {
   font: inherit;
   color: var(--ink);
   border: 1px solid #b9c2d1;
-  border-radius: 7px;
+  border-radius: 12px;
   background: #fff;
   padding: 0.72rem 0.8rem;
 }
 select {
   appearance: none;
-  padding-right: 2.2rem;
+  -webkit-appearance: none;
+  border-radius: 9999px;
+  padding: 0.65rem 2.4rem 0.65rem 1.1rem;
+  background-color: #fff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2363708a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.7rem center;
-  background-size: 15px;
+  background-position: right 0.85rem center;
+  background-size: 16px;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 textarea {
   width: 100%;
@@ -6053,7 +6058,6 @@ th {
 }
 
 .app-shell input,
-.app-shell select,
 .app-shell textarea {
   min-width: 0;
   min-height: 44px;
@@ -6061,6 +6065,16 @@ th {
   border-color: var(--app-line-strong);
   border-radius: 8px;
   background-color: var(--app-surface);
+}
+
+.app-shell select {
+  min-width: 0;
+  min-height: 44px;
+  color: var(--app-ink);
+  border-color: var(--app-line-strong);
+  border-radius: 9999px;
+  background-color: var(--app-surface);
+  padding: 0.65rem 2.4rem 0.65rem 1.1rem;
 }
 
 .app-shell input:hover,

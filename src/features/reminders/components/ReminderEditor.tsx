@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { applicationsApi } from "../../../lib/api/phase2";
 import { remindersApi } from "../../../lib/api/phase3";
 import { queryKeys } from "../../../lib/api/queryKeys";
@@ -86,7 +87,7 @@ export function ReminderEditor({
         <header>
           <h2 id="reminder-editor-title">{editing ? "Edit reminder" : "Create reminder"}</h2>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form

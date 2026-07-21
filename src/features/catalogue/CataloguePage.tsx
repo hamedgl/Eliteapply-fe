@@ -550,7 +550,7 @@ function CatalogueCreateDialog({
             <p>This record stays private and is never shown as verified.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form className="form-grid" onSubmit={submit}>
@@ -731,7 +731,7 @@ function CatalogueEditDialog({
         <header>
           <h2 id="catalogue-edit-title">Edit private {kindSingular[kind]}</h2>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form className="form-grid" onSubmit={submit}>

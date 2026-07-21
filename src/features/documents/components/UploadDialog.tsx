@@ -86,7 +86,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
         <header>
           <h2 id="upload-title">Upload document</h2>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
 

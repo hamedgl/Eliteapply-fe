@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Unlink,
   UserPlus,
+  X,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -1232,7 +1233,7 @@ function TaskEditDialog({
           <p>Update the task name and deadline.</p>
         </div>
         <button type="button" onClick={onClose} aria-label="Close dialog">
-          ×
+          <X aria-hidden="true" />
         </button>
       </header>
       <form

@@ -64,7 +64,7 @@ export function StoryEditor({
             </p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form

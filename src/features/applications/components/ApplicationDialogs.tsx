@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { applicationsApi, catalogueApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
@@ -35,7 +36,7 @@ export function DuplicateApplication({
             <p>Create a new copy of {app.title}.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form
@@ -156,7 +157,7 @@ export function CreateApplication({
         <header>
           <h2 id="create-title">Add application</h2>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form className="form-grid" onSubmit={submit}>

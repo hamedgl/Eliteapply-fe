@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { discoveryApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { CountryCombobox } from "../../../components/filters/CountryCombobox";
@@ -48,7 +49,7 @@ export function SavedSearchEditDialog({ search, onClose }: { search: SavedSearch
         <header className="apps-dialog-header">
           <h2 id="edit-saved-search-title">Edit “{search.name}”</h2>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form

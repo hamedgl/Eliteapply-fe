@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { applicationsApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
@@ -50,7 +51,7 @@ export function AttachToApplicationDialog({
             <p>Connect “{document.display_name}” to one of your applications.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <form
