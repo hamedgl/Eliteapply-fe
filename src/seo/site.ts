@@ -166,6 +166,62 @@ const pageByPath = new Map(pages.map((page) => [page.path, page]));
 
 export const PRERENDER_ROUTES = pages.map((page) => page.path);
 
+/**
+ * Client-only app shells (auth, in-app, and token-based share/verify links).
+ * Kept out of `pages`/`pageByPath` so they never enter the public sitemap or
+ * get server-rendered content — only their <title>/description differ from
+ * the generic not-found fallback below.
+ */
+const shellPages: Record<string, { title: string; description: string }> = {
+  "/app": {
+    title: "EliteApply workspace",
+    description:
+      "Sign in to manage your scholarship applications, evidence, writing and references.",
+  },
+  "/admin": {
+    title: "EliteApply admin",
+    description: "Internal EliteApply administration.",
+  },
+  "/login": {
+    title: "Sign in",
+    description: "Sign in to your EliteApply account.",
+  },
+  "/register": {
+    title: "Create your account",
+    description:
+      "Create a free EliteApply account to start organising your scholarship applications.",
+  },
+  "/confirm-email": {
+    title: "Confirm your email",
+    description:
+      "Confirm your email address to finish setting up your EliteApply account.",
+  },
+  "/forgot-password": {
+    title: "Reset your password",
+    description: "Request a password reset link for your EliteApply account.",
+  },
+  "/reset-password": {
+    title: "Reset your password",
+    description: "Choose a new password for your EliteApply account.",
+  },
+  "/share": {
+    title: "Shared document",
+    description: "View a document shared with you through EliteApply.",
+  },
+  "/collaborator-invitations": {
+    title: "Collaborator invitation",
+    description: "Accept an invitation to collaborate on an EliteApply application.",
+  },
+  "/referee": {
+    title: "Reference request",
+    description: "Submit an academic reference through EliteApply.",
+  },
+  "/verify": {
+    title: "Verify a reference",
+    description: "Verify an academic reference submitted through EliteApply.",
+  },
+};
+
 const canonicalUrl = (path: string) =>
   path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`;
 
@@ -300,14 +356,21 @@ function structuredData(page: PageDefinition, canonical: string) {
 
 export function getPageSeo(pathname: string): PageSeo {
   const normalized = pathname !== "/" ? pathname.replace(/\/$/, "") : "/";
-  const page = pageByPath.get(normalized) ?? {
-    path: normalized,
-    title: "Page not found",
-    description:
-      "The requested EliteApply page could not be found. Explore the product features or scholarship application resources instead.",
-    indexable: false,
-    kind: "utility" as const,
-  };
+  const shellPage = shellPages[normalized];
+  const page = pageByPath.get(normalized) ??
+    (shellPage && {
+      path: normalized,
+      ...shellPage,
+      indexable: false,
+      kind: "utility" as const,
+    }) ?? {
+      path: normalized,
+      title: "Page not found",
+      description:
+        "The requested EliteApply page could not be found. Explore the product features or scholarship application resources instead.",
+      indexable: false,
+      kind: "utility" as const,
+    };
   const canonical = canonicalUrl(page.path);
   return {
     ...page,

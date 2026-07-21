@@ -7,8 +7,8 @@ const SHELL_PREFIXES = [
   "/verify",
 ];
 
-function needsShellFallback(pathname) {
-  return SHELL_PREFIXES.some(
+function matchShellPrefix(pathname) {
+  return SHELL_PREFIXES.find(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
@@ -16,11 +16,12 @@ function needsShellFallback(pathname) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (!needsShellFallback(url.pathname)) {
+    const prefix = matchShellPrefix(url.pathname);
+    if (!prefix) {
       return env.ASSETS.fetch(request);
     }
     const assetResponse = await env.ASSETS.fetch(request);
     if (assetResponse.status !== 404) return assetResponse;
-    return env.ASSETS.fetch(new Request(new URL("/app/", url), request));
+    return env.ASSETS.fetch(new Request(new URL(`${prefix}/`, url), request));
   },
 };

@@ -92,13 +92,20 @@ const shellRoutes = [
   "/reset-password",
   "/app",
   "/admin",
+  "/share",
+  "/collaborator-invitations",
+  "/referee",
+  "/verify",
 ];
-const shell = pageHtml(getPageSeo("/app"));
-await writeFile(path.join(dist, "app-shell.html"), shell, "utf8");
+await writeFile(
+  path.join(dist, "app-shell.html"),
+  pageHtml(getPageSeo("/app")),
+  "utf8",
+);
 for (const pathname of shellRoutes) {
   const file = routeFile(pathname);
   await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, shell, "utf8");
+  await writeFile(file, pageHtml(getPageSeo(pathname)), "utf8");
 }
 
 await writeFile(
