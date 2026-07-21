@@ -15277,7 +15277,7 @@ body:has(.admin-shell) {
   height: 2.75rem;
   flex: none;
   content: "";
-  background: transparent url("/logo.png") center / contain no-repeat;
+  background: transparent url("/logo.webp") center / contain no-repeat;
 }
 .brand-mark,
 .app-brand > span:first-child {
