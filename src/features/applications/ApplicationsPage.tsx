@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -160,6 +161,7 @@ export function ApplicationsPage() {
     queryKey: boardKey,
     queryFn: async () => parseBoard(await applicationsApi.board(boardFilters)),
     enabled: view === "board",
+    placeholderData: keepPreviousData,
   });
   const listQuery = useInfiniteQuery({
     queryKey: [...queryKeys.applications, "list", filters],
@@ -168,6 +170,7 @@ export function ApplicationsPage() {
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.next_cursor ?? undefined,
     enabled: view === "list",
+    placeholderData: keepPreviousData,
   });
   const listApps = useMemo(
     () => listQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -175,13 +178,13 @@ export function ApplicationsPage() {
   );
   const boardApps = useMemo(() => {
     const all = Object.values(boardQuery.data?.columns ?? {}).flat();
-    const search = filters.search?.toLocaleLowerCase();
+    const search = searchDraft.trim().toLocaleLowerCase();
     return all.filter(
       (app) =>
         (!filters.stage || app.stage === filters.stage) &&
         (!search || app.title.toLocaleLowerCase().includes(search)),
     );
-  }, [boardQuery.data, filters.search, filters.stage]);
+  }, [boardQuery.data, searchDraft, filters.stage]);
   const appsByStage = useMemo(() => {
     const grouped = new Map<string, Application[]>(
       stages.map((stage) => [stage, []]),
