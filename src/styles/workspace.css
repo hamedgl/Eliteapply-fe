@@ -142,7 +142,11 @@
   gap: 0.65rem;
   margin-top: 1.5rem;
   padding: 0.75rem 0.85rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.apps-toolbar > *:not(.apps-toolbar-search) {
+  flex: none;
 }
 .apps-toolbar-search {
   display: flex;
@@ -248,7 +252,6 @@
 .apps-sort {
   display: grid;
   gap: 0.2rem;
-  margin-left: auto;
   font-size: 0.7rem;
   color: var(--app-muted);
 }
@@ -1288,7 +1291,6 @@
   .apps-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .apps-sort { margin-left: 0; }
 }
 
 @media (max-width: 720px) {
