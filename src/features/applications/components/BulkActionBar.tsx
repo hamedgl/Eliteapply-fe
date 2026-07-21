@@ -1,4 +1,5 @@
 import { label, priorities, stages } from "../model";
+import { Select } from "../../../components/ui/select";
 
 export function BulkActionBar({
   count,
@@ -33,28 +34,31 @@ export function BulkActionBar({
       <strong>{count} selected</strong>
       <label>
         Change stage
-        <select value={bulkStage} onChange={(event) => setBulkStage(event.target.value)}>
-          <option value="">Keep stage</option>
-          {stages.map((item) => (
-            <option value={item} key={item}>
-              {label(item)}
-            </option>
-          ))}
-        </select>
+        <Select
+          value={bulkStage}
+          onChange={(val: any) => setBulkStage(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+          options={[
+            { value: "", label: "Keep stage" },
+            ...stages.map((item) => ({
+              value: item,
+              label: label(item),
+            })),
+          ]}
+        />
       </label>
       <label>
         Change priority
-        <select
+        <Select
           value={bulkPriority}
-          onChange={(event) => setBulkPriority(event.target.value)}
-        >
-          <option value="">Keep priority</option>
-          {priorities.map((item) => (
-            <option value={item} key={item}>
-              {label(item)}
-            </option>
-          ))}
-        </select>
+          onChange={(val: any) => setBulkPriority(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+          options={[
+            { value: "", label: "Keep priority" },
+            ...priorities.map((item) => ({
+              value: item,
+              label: label(item),
+            })),
+          ]}
+        />
       </label>
       <label>
         Add tags

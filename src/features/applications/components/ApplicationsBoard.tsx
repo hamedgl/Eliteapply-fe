@@ -2,6 +2,7 @@ import type { RefObject } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import { label, stages, type Application } from "../model";
+import { Select } from "../../../components/ui/select";
 import { useApplicationSubtitle } from "../hooks";
 import { DeadlineCell, PriorityDot } from "./Badges";
 import { ReadinessIndicator } from "./ReadinessIndicator";
@@ -189,18 +190,16 @@ function BoardCard({
       ) : null}
       <label className="apps-board-card-stage">
         Move to
-        <select
-          aria-label={`Move ${app.title}`}
+        <Select
+          ariaLabel={`Move ${app.title}`}
           value={app.stage}
           disabled={updatePending}
-          onChange={(event) => onMove(event.target.value)}
-        >
-          {stages.map((item) => (
-            <option key={item} value={item}>
-              {label(item)}
-            </option>
-          ))}
-        </select>
+          onChange={(val: any) => onMove(typeof val === "string" ? val : (val?.target?.value ?? app.stage))}
+          options={stages.map((item) => ({
+            value: item,
+            label: label(item),
+          }))}
+        />
       </label>
     </article>
   );

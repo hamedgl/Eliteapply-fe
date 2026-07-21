@@ -13,6 +13,7 @@ import { StoryEditor } from "./components/StoryEditor";
 import { StoryAiAssistModal } from "./components/StoryAiAssistModal";
 import { LinkEntitiesModal } from "./components/LinkEntitiesModal";
 import { categories, label, sensitivities, storyReadiness, type Story } from "./model";
+import { Select } from "../../components/ui/select";
 import "../../styles/workspace.css";
 import "./stories.css";
 
@@ -178,26 +179,32 @@ export function StoriesPage() {
 
         <label className="apps-quick-filter">
           Category
-          <select value={category} onChange={(event) => setParam("category", event.target.value)}>
-            <option value="">All categories</option>
-            {categories.map((item) => (
-              <option value={item} key={item}>
-                {label(item)}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={category}
+            onChange={(val: any) => setParam("category", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+            options={[
+              { value: "", label: "All categories" },
+              ...categories.map((item) => ({
+                value: item,
+                label: label(item),
+              })),
+            ]}
+          />
         </label>
 
         <label className="apps-quick-filter">
           Privacy
-          <select value={sensitivity} onChange={(event) => setParam("sensitivity", event.target.value)}>
-            <option value="">All</option>
-            {sensitivities.map((item) => (
-              <option value={item} key={item}>
-                {label(item)}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={sensitivity}
+            onChange={(val: any) => setParam("sensitivity", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+            options={[
+              { value: "", label: "All" },
+              ...sensitivities.map((item) => ({
+                value: item,
+                label: label(item),
+              })),
+            ]}
+          />
         </label>
 
         <label className="check-field" style={{ display: "flex", alignItems: "center", gap: 6 }}>

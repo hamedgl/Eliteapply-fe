@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sparkles, X, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Select } from "../../../components/ui/select";
 import { writingApi, storiesApi } from "../../../lib/api/phase3";
 import type { Story } from "../model";
 import type { StoryAIAssistResponse } from "../../../lib/api/phase3";
@@ -30,42 +31,47 @@ export function StoryAiAssistModal({
 }) {
   const qc = useQueryClient();
   const [action, setAction] = useState<AiAction>("improve_clarity");
-  const [targetField, setTargetField] = useState<string>("action");
-  const [prompt, setPrompt] = useState<string>("");
+  const [targetField, setTargetField] = useState("action");
+  const [prompt, setPrompt] = useState("");
+  const [error, setError] = useState("");
   const [result, setResult] = useState<StoryAIAssistResponse | null>(null);
-  const [error, setError] = useState<string>("");
 
   const assistMutation = useMutation({
-    mutationFn: () =>
-      storiesApi.aiAssist(story.id, {
+    mutationFn: async () => {
+      return storiesApi.aiAssist(story.id, {
         action,
-        instruction: prompt.trim() || undefined,
-      }),
+        instruction: prompt || undefined,
+      });
+    },
     onSuccess: (data) => {
       setResult(data);
       setError("");
     },
-    onError: (err: Error) => {
-      setError(err.message || "Failed to generate AI assist suggestion.");
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : "Failed to generate AI suggestion.");
     },
   });
 
   const applyMutation = useMutation({
-    mutationFn: async () => {
-      if (!result?.suggested_text || !targetField) return;
-      const textToApply = extractText(result.suggested_text, targetField);
-      await writingApi.updateStory(story.id, {
+    mutationFn: async (suggestedText: string) => {
+      const fieldMap: Record<string, keyof Story> = {
+        situation: "situation",
+        action: "action",
+        outcome: "outcome",
+        reflection: "reflection",
+      };
+      const key = fieldMap[targetField] ?? "action";
+      return writingApi.updateStory(story.id, {
         expected_version: story.version,
-        [targetField]: textToApply,
+        [key]: suggestedText,
       });
     },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["stories"] });
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["stories"] });
       onApplied();
-      onClose();
     },
-    onError: (err: Error) => {
-      setError(err.message || "Failed to apply AI suggestion.");
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : "Failed to apply AI suggestion.");
     },
   });
 
@@ -74,16 +80,17 @@ export function StoryAiAssistModal({
 
   return (
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="apps-dialog story-ai-modal"
+      <section
+        className="apps-dialog story-ai-dialog"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="ai-assist-title"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="apps-dialog-header">
-          <div className="story-ai-title">
+          <div className="story-ai-header-title">
             <Sparkles className="icon-sparkles" aria-hidden="true" />
-            <h2 id="ai-assist-title">AI Story Polish & Assist</h2>
+            <h2 id="ai-assist-title">AI Story Polish &amp; Assist</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
             <X aria-hidden="true" />
@@ -96,22 +103,30 @@ export function StoryAiAssistModal({
           <div className="story-ai-grid">
             <label>
               Action
-              <select value={action} onChange={(e) => setAction(e.target.value as AiAction)}>
-                <option value="improve_clarity">Improve Clarity & Flow</option>
-                <option value="expand">Expand Details (SAOR)</option>
-                <option value="shorten">Make More Concise</option>
-                <option value="adapt_for_interview">Adapt for Interview</option>
-              </select>
+              <Select
+                value={action}
+                onChange={(val: any) => setAction((typeof val === "string" ? val : (val?.target?.value ?? "improve_clarity")) as AiAction)}
+                options={[
+                  { value: "improve_clarity", label: "Improve Clarity & Flow" },
+                  { value: "expand", label: "Expand Details (SAOR)" },
+                  { value: "shorten", label: "Make More Concise" },
+                  { value: "adapt_for_interview", label: "Adapt for Interview" },
+                ]}
+              />
             </label>
 
             <label>
               Target Field
-              <select value={targetField} onChange={(e) => setTargetField(e.target.value)}>
-                <option value="situation">Situation</option>
-                <option value="action">Action</option>
-                <option value="outcome">Outcome</option>
-                <option value="reflection">Reflection</option>
-              </select>
+              <Select
+                value={targetField}
+                onChange={(val: any) => setTargetField(typeof val === "string" ? val : (val?.target?.value ?? "action"))}
+                options={[
+                  { value: "situation", label: "Situation" },
+                  { value: "action", label: "Action" },
+                  { value: "outcome", label: "Outcome" },
+                  { value: "reflection", label: "Reflection" },
+                ]}
+              />
             </label>
           </div>
 
@@ -170,7 +185,7 @@ export function StoryAiAssistModal({
                   type="button"
                   className="primary"
                   disabled={applyMutation.isPending || !sugText}
-                  onClick={() => applyMutation.mutate()}
+                  onClick={() => sugText && applyMutation.mutate(sugText)}
                 >
                   <Check aria-hidden="true" /> Apply Suggestion
                 </button>
@@ -178,7 +193,7 @@ export function StoryAiAssistModal({
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

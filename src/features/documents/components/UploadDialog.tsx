@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, Loader2, Upload, X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { uploadAcademicDocument } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { documentCategories, formatBytes } from "../model";
@@ -156,17 +157,15 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
         <div className="form-grid">
           <label>
             Document type
-            <select
+            <Select
               value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              onChange={(val: any) => setCategory(typeof val === "string" ? val : (val?.target?.value ?? ""))}
               disabled={uploading}
-            >
-              {documentCategories.map((item) => (
-                <option value={item} key={item}>
-                  {label(item)}
-                </option>
-              ))}
-            </select>
+              options={documentCategories.map((item) => ({
+                value: item,
+                label: label(item),
+              }))}
+            />
           </label>
           <label>
             Expiration date

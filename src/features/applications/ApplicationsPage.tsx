@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ConflictNotice } from "../../components/ConflictNotice";
+import { Select } from "../../components/ui/select";
 import { ApiError } from "../../lib/api/errors";
 import { downloadResponse } from "../../lib/api/download";
 import { newMutationId } from "../../lib/api/mutations";
@@ -577,22 +578,25 @@ export function ApplicationsPage() {
             <kbd>/</kbd>
           )}
         </div>
-        <Filter
-          label="Stage"
+        <QuickSelectFilter
+          text="Stage"
+          label={label}
           value={value("stage")}
-          onChange={(next) => setParam("stage", next)}
+          onChange={(next: string) => setParam("stage", next)}
           options={stages}
         />
-        <Filter
-          label="Type"
+        <QuickSelectFilter
+          text="Type"
+          label={label}
           value={value("type")}
-          onChange={(next) => setParam("type", next)}
+          onChange={(next: string) => setParam("type", next)}
           options={types}
         />
-        <Filter
-          label="Priority"
+        <QuickSelectFilter
+          text="Priority"
+          label={label}
           value={value("priority")}
-          onChange={(next) => setParam("priority", next)}
+          onChange={(next: string) => setParam("priority", next)}
           options={priorities}
         />
         <button
@@ -608,16 +612,14 @@ export function ApplicationsPage() {
         </button>
         <label className="apps-sort">
           Sort
-          <select
+          <Select
             value={value("sort") || "deadline_asc"}
-            onChange={(event) => setParam("sort", event.target.value)}
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option value={option.value} key={option.value}>
-                {option.text}
-              </option>
-            ))}
-          </select>
+            onChange={(val: any) => setParam("sort", typeof val === "string" ? val : (val?.target?.value ?? "deadline_asc"))}
+            options={SORT_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.text,
+            }))}
+          />
         </label>
       </div>
 
@@ -756,13 +758,15 @@ export function ApplicationsPage() {
   );
 }
 
-function Filter({
-  label: text,
+function QuickSelectFilter({
+  text,
+  label: labelFn,
   value,
   onChange,
   options,
 }: {
-  label: string;
+  text: string;
+  label: (code: string) => string;
   value: string;
   onChange: (value: string) => void;
   options: readonly string[];
@@ -770,14 +774,17 @@ function Filter({
   return (
     <label className="apps-quick-filter">
       {text}
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">All {text.toLocaleLowerCase()}s</option>
-        {options.map((item) => (
-          <option value={item} key={item}>
-            {label(item)}
-          </option>
-        ))}
-      </select>
+      <Select
+        value={value}
+        onChange={(val: any) => onChange(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+        options={[
+          { value: "", label: `All ${text.toLocaleLowerCase()}s` },
+          ...options.map((item) => ({
+            value: item,
+            label: labelFn(item),
+          })),
+        ]}
+      />
     </label>
   );
 }

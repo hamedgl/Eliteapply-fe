@@ -20,6 +20,7 @@ import {
 import { documentsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { openSignedDownload } from "../../lib/api/signedTransport";
+import { Select } from "../../components/ui/select";
 import { formatDate, label } from "../applications/model";
 import { PageHeader } from "../../components/page/PageHeader";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
@@ -248,43 +249,45 @@ export function DocumentsPage() {
 
             <label className="apps-quick-filter">
               Category
-              <select
+              <Select
                 value={typeFilter}
-                onChange={(event) => setParam("type", event.target.value)}
-              >
-                <option value="">All categories</option>
-                {documentCategories.map((item) => (
-                  <option key={item} value={item}>
-                    {item.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase())}
-                  </option>
-                ))}
-              </select>
+                onChange={(val: any) => setParam("type", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                options={[
+                  { value: "", label: "All categories" },
+                  ...documentCategories.map((item) => ({
+                    value: item,
+                    label: item.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase()),
+                  })),
+                ]}
+              />
             </label>
 
             <label className="apps-quick-filter">
               Status
-              <select
+              <Select
                 value={statusFilter}
-                onChange={(event) => setParam("status", event.target.value)}
-              >
-                <option value="">All statuses</option>
-                <option value="ready">Ready to use</option>
-                <option value="processing">Scanning</option>
-                <option value="blocked">Flagged</option>
-                <option value="expiring">Expiring soon</option>
-              </select>
+                onChange={(val: any) => setParam("status", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                options={[
+                  { value: "", label: "All statuses" },
+                  { value: "ready", label: "Ready to use" },
+                  { value: "processing", label: "Scanning" },
+                  { value: "blocked", label: "Flagged" },
+                  { value: "expiring", label: "Expiring soon" },
+                ]}
+              />
             </label>
 
             <label className="apps-sort">
               Sort
-              <select
+              <Select
                 value={sort}
-                onChange={(event) => setParam("sort", event.target.value)}
-              >
-                <option value="recent">Recently added</option>
-                <option value="name">Name (A–Z)</option>
-                <option value="expiring">Expiration date</option>
-              </select>
+                onChange={(val: any) => setParam("sort", typeof val === "string" ? val : (val?.target?.value ?? "recent"))}
+                options={[
+                  { value: "recent", label: "Recently added" },
+                  { value: "name", label: "Name (A–Z)" },
+                  { value: "category", label: "Category" },
+                ]}
+              />
             </label>
           </div>
 

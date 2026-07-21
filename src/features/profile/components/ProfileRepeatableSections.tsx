@@ -1,4 +1,5 @@
 import { CountryCombobox } from "../../../components/filters/CountryCombobox";
+import { Select } from "../../../components/ui/select";
 import { RepeatableList } from "./RepeatableList";
 import {
   degreeLevels,
@@ -49,14 +50,12 @@ export function EducationSection({
           </label>
           <label>
             Degree
-            <select value={entry.degree} onChange={(e) => update({ degree: e.target.value })}>
-              <option value="">Select…</option>
-              {degreeLevels.map((item) => (
-                <option value={item} key={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={entry.degree}
+              onChange={(val: any) => update({ degree: typeof val === "string" ? val : (val?.target?.value ?? "") })}
+              placeholder="Select…"
+              options={degreeLevels.map((item) => ({ value: item, label: item }))}
+            />
           </label>
           <label>
             Field of study
@@ -153,14 +152,12 @@ export function LanguagesSection({
           </label>
           <label>
             Proficiency
-            <select value={entry.proficiency} onChange={(e) => update({ proficiency: e.target.value })}>
-              <option value="">Select…</option>
-              {proficiencyLevels.map((item) => (
-                <option value={item} key={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={entry.proficiency}
+              onChange={(val: any) => update({ proficiency: typeof val === "string" ? val : (val?.target?.value ?? "") })}
+              placeholder="Select…"
+              options={proficiencyLevels.map((item) => ({ value: item, label: item }))}
+            />
           </label>
           <label>
             Certification

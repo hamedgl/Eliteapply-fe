@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Select } from "../../../components/ui/select";
 import { documentsApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { documentCategories, type AcademicDocument } from "../model";
@@ -93,16 +94,14 @@ function EditForm({
             </label>
             <label>
               Category
-              <select
+              <Select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {documentCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase())}
-                  </option>
-                ))}
-              </select>
+                onChange={(val: any) => setCategory(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                options={documentCategories.map((cat) => ({
+                  value: cat,
+                  label: cat.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase()),
+                }))}
+              />
             </label>
             <label>
               Tags (comma-separated)

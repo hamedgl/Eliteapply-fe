@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Link2, Unlink, FileText, Briefcase } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storiesApi } from "../../../lib/api/phase3";
+import { Select } from "../../../components/ui/select";
 import { applicationsApi, documentsApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import type { Story } from "../model";
@@ -138,24 +139,22 @@ function LinkEntitiesContent({
             )}
 
             <div className="link-entities-picker">
-              <select
+              <Select
                 value={selectedAppId}
-                onChange={(e) => setSelectedAppId(e.target.value)}
+                onChange={(val: any) => setSelectedAppId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
                 disabled={!availableApps.length || appsQuery.isPending}
-              >
-                <option value="">
-                  {appsQuery.isPending
+                placeholder={
+                  appsQuery.isPending
                     ? "Loading applications…"
                     : availableApps.length
                     ? "Select an application to link…"
-                    : "All applications linked"}
-                </option>
-                {availableApps.map((app) => (
-                  <option key={app.id} value={app.id}>
-                    {app.title}
-                  </option>
-                ))}
-              </select>
+                    : "All applications linked"
+                }
+                options={availableApps.map((app) => ({
+                  value: app.id,
+                  label: app.title,
+                }))}
+              />
               <button
                 type="button"
                 className="primary"
@@ -197,24 +196,22 @@ function LinkEntitiesContent({
             )}
 
             <div className="link-entities-picker">
-              <select
+              <Select
                 value={selectedDocId}
-                onChange={(e) => setSelectedDocId(e.target.value)}
+                onChange={(val: any) => setSelectedDocId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
                 disabled={!availableDocs.length || docsQuery.isPending}
-              >
-                <option value="">
-                  {docsQuery.isPending
+                placeholder={
+                  docsQuery.isPending
                     ? "Loading documents…"
                     : availableDocs.length
                     ? "Select a document to link…"
-                    : "All documents linked"}
-                </option>
-                {availableDocs.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.display_name} ({doc.category})
-                  </option>
-                ))}
-              </select>
+                    : "All documents linked"
+                }
+                options={availableDocs.map((doc) => ({
+                  value: doc.id,
+                  label: doc.display_name,
+                }))}
+              />
               <button
                 type="button"
                 className="primary"

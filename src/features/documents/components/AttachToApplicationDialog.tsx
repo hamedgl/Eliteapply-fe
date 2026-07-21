@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { applicationsApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
@@ -86,18 +87,19 @@ export function AttachToApplicationDialog({
           {applicationId ? (
             <label className="wide">
               Requirement (optional)
-              <select
+              <Select
                 value={requirementId}
-                onChange={(event) => setRequirementId(event.target.value)}
+                onChange={(val: any) => setRequirementId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
                 disabled={requirements.isPending}
-              >
-                <option value="">Not tied to a specific requirement</option>
-                {requirements.data?.map((req) => (
-                  <option value={req.id} key={req.id}>
-                    {req.title}
-                  </option>
-                ))}
-              </select>
+                placeholder="Not tied to a specific requirement"
+                options={[
+                  { value: "", label: "Not tied to a specific requirement" },
+                  ...(requirements.data?.map((req) => ({
+                    value: req.id,
+                    label: req.title,
+                  })) ?? []),
+                ]}
+              />
             </label>
           ) : null}
           {attach.isError ? (

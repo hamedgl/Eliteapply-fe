@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { applicationsApi, catalogueApi } from "../../../lib/api/phase2";
+import { Select } from "../../../components/ui/select";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { label, priorities, stages, types, type Application } from "../model";
 import { readableApiError, refreshApplications } from "../utils";
@@ -173,57 +174,55 @@ export function CreateApplication({
           </label>
           <label>
             Type
-            <select
+            <Select
               name="application_type"
-              required
               value={applicationType}
-              onChange={(event) => {
-                setApplicationType(
-                  event.target.value as (typeof types)[number],
-                );
+              onChange={(val: any) => {
+                const next = typeof val === "string" ? val : (val?.target?.value ?? "custom");
+                setApplicationType(next as (typeof types)[number]);
                 setError("");
               }}
-            >
-              {types.map((item) => (
-                <option value={item} key={item}>
-                  {label(item)}
-                </option>
-              ))}
-            </select>
+              options={types.map((item) => ({
+                value: item,
+                label: label(item),
+              }))}
+            />
           </label>
           {applicationType === "programme" ? (
             <label>
               Programme opportunity
-              <select
+              <Select
                 name="programme_id"
-                required
                 defaultValue={
                   defaults?.catalogueType === "programme"
                     ? defaults.catalogueId
                     : ""
                 }
                 disabled={programmes.isPending}
-              >
-                <option value="">
-                  {programmes.isPending
+                placeholder={
+                  programmes.isPending
                     ? "Loading programmes…"
-                    : "Select a programme"}
-                </option>
-                {defaults?.catalogueType === "programme" &&
-                defaults.catalogueId &&
-                !programmes.data?.items.some(
-                  (item) => item.id === defaults.catalogueId,
-                ) ? (
-                  <option value={defaults.catalogueId}>
-                    {defaults.title || "Selected programme"}
-                  </option>
-                ) : null}
-                {programmes.data?.items.map((item) => (
-                  <option value={item.id} key={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+                    : "Select a programme"
+                }
+                options={[
+                  ...(defaults?.catalogueType === "programme" &&
+                  defaults.catalogueId &&
+                  !programmes.data?.items.some(
+                    (item) => item.id === defaults.catalogueId,
+                  )
+                    ? [
+                        {
+                          value: defaults.catalogueId,
+                          label: defaults.title || "Selected programme",
+                        },
+                      ]
+                    : []),
+                  ...(programmes.data?.items.map((item) => ({
+                    value: item.id,
+                    label: item.name,
+                  })) ?? []),
+                ]}
+              />
               <small>
                 Can’t find it?{" "}
                 <Link
@@ -239,37 +238,38 @@ export function CreateApplication({
           {applicationType === "scholarship" ? (
             <label>
               Scholarship opportunity
-              <select
+              <Select
                 name="scholarship_id"
-                required
                 defaultValue={
                   defaults?.catalogueType === "scholarship"
                     ? defaults.catalogueId
                     : ""
                 }
                 disabled={scholarships.isPending}
-              >
-                <option value="">
-                  {scholarships.isPending
+                placeholder={
+                  scholarships.isPending
                     ? "Loading scholarships…"
-                    : "Select a scholarship"}
-                </option>
-                {defaults?.catalogueType === "scholarship" &&
-                defaults.catalogueId &&
-                !scholarships.data?.items.some(
-                  (item) => item.id === defaults.catalogueId,
-                ) ? (
-                  <option value={defaults.catalogueId}>
-                    {defaults.title || "Selected scholarship"}
-                  </option>
-                ) : null}
-                {scholarships.data?.items.map((item) => (
-                  <option value={item.id} key={item.id}>
-                    {item.name}
-                    {item.provider_name ? ` — ${item.provider_name}` : ""}
-                  </option>
-                ))}
-              </select>
+                    : "Select a scholarship"
+                }
+                options={[
+                  ...(defaults?.catalogueType === "scholarship" &&
+                  defaults.catalogueId &&
+                  !scholarships.data?.items.some(
+                    (item) => item.id === defaults.catalogueId,
+                  )
+                    ? [
+                        {
+                          value: defaults.catalogueId,
+                          label: defaults.title || "Selected scholarship",
+                        },
+                      ]
+                    : []),
+                  ...(scholarships.data?.items.map((item) => ({
+                    value: item.id,
+                    label: item.name + (item.provider_name ? ` — ${item.provider_name}` : ""),
+                  })) ?? []),
+                ]}
+              />
               <small>
                 Can’t find it?{" "}
                 <Link
@@ -291,23 +291,25 @@ export function CreateApplication({
           ) : null}
           <label>
             Stage
-            <select name="stage" required>
-              {stages.map((item) => (
-                <option value={item} key={item}>
-                  {label(item)}
-                </option>
-              ))}
-            </select>
+            <Select
+              name="stage"
+              defaultValue={stages[0]}
+              options={stages.map((item) => ({
+                value: item,
+                label: label(item),
+              }))}
+            />
           </label>
           <label>
             Priority
-            <select name="priority" required>
-              {priorities.map((item) => (
-                <option value={item} key={item}>
-                  {label(item)}
-                </option>
-              ))}
-            </select>
+            <Select
+              name="priority"
+              defaultValue={priorities[0]}
+              options={priorities.map((item) => ({
+                value: item,
+                label: label(item),
+              }))}
+            />
           </label>
           <label>
             Intake
