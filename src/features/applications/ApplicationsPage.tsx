@@ -36,6 +36,7 @@ import {
   label,
   parseBoard,
   priorities,
+  PRIMARY_STAGES,
   stages,
   types,
   type Application,
@@ -127,6 +128,16 @@ export function ApplicationsPage() {
     for (const app of boardApps) grouped.get(app.stage)?.push(app);
     return grouped;
   }, [boardApps]);
+  /** Show primary stages always; show others only when they have apps. */
+  const visibleStages = useMemo(
+    () =>
+      stages.filter(
+        (stage) =>
+          PRIMARY_STAGES.has(stage) ||
+          (appsByStage.get(stage)?.length ?? 0) > 0,
+      ),
+    [appsByStage],
+  );
   useEffect(() => {
     if (
       view !== "board" ||
@@ -136,9 +147,13 @@ export function ApplicationsPage() {
       return;
     initializedCollapsedStages.current = true;
     setCollapsedStages(
-      new Set(stages.filter((stage) => !(appsByStage.get(stage)?.length ?? 0))),
+      new Set(
+        visibleStages.filter(
+          (stage) => !(appsByStage.get(stage)?.length ?? 0),
+        ),
+      ),
     );
-  }, [appsByStage, boardQuery.isPending, view]);
+  }, [appsByStage, visibleStages, boardQuery.isPending, view]);
   const visibleApps = view === "board" ? boardApps : listApps;
   const update = useMutation({
     mutationFn: ({ app, next }: { app: Application; next: string }) =>
@@ -530,7 +545,7 @@ export function ApplicationsPage() {
       ) : null}
       {view === "board" ? (
         <div className="board" aria-label="Application board">
-          {stages.map((column) => {
+          {visibleStages.map((column) => {
             const columnApps = appsByStage.get(column) ?? [];
             const collapsed = collapsedStages.has(column);
             const isDropTarget = dragOverStage === column;

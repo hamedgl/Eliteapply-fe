@@ -645,7 +645,7 @@ textarea {
 .board {
   display: flex;
   align-items: stretch;
-  gap: 0.8rem;
+  gap: 0.65rem;
   overflow-x: auto;
   padding: 0.15rem 0.15rem 1rem;
   scrollbar-color: #8e97a8 transparent;
@@ -659,12 +659,15 @@ textarea {
   min-height: 560px;
   padding: 0.7rem;
   transition:
+    flex-basis 220ms ease,
     border-color 160ms ease,
-    background-color 160ms ease;
+    background-color 160ms ease,
+    padding 220ms ease;
 }
 .board-column.is-collapsed {
-  flex-basis: 54px;
-  padding: 0.35rem;
+  flex-basis: 44px;
+  min-width: 44px;
+  padding: 0.3rem;
 }
 .board-column.is-drop-target {
   border-color: var(--blue);
@@ -690,6 +693,8 @@ textarea {
   font-size: 0.85rem;
   font-weight: 700;
   text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
 }
 .board-column-toggle:hover {
   background: #e7ebf2;
@@ -698,54 +703,71 @@ textarea {
   width: 16px;
   height: 16px;
   color: var(--muted);
+  flex-shrink: 0;
+  transition: transform 180ms ease;
 }
 .board-column-toggle strong {
   display: grid;
   place-content: center;
   background: #e5e9f0;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
+/* ── Collapsed state: arrow on top → vertical text → count at bottom ── */
 .board-column.is-collapsed .board-column-toggle {
-  min-height: 230px;
-  padding: 0.45rem 0;
+  min-height: 200px;
+  padding: 0.5rem 0.15rem;
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr auto;
   justify-items: center;
-  gap: 0.65rem;
+  align-items: start;
+  gap: 0;
+}
+.board-column.is-collapsed .board-column-toggle svg {
+  margin-bottom: 0.3rem;
 }
 .board-column.is-collapsed .board-column-toggle span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  white-space: normal;
-  line-height: 1.1;
+  white-space: nowrap;
+  line-height: 1.15;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+.board-column.is-collapsed .board-column-toggle strong {
+  margin-top: 0.4rem;
+  width: 22px;
+  height: 22px;
+  font-size: 0.68rem;
 }
 .board-column-content {
   min-height: 490px;
 }
+/* ── Application cards ── */
 .application-card {
   background: #fff;
-  border: 1px solid #cfd6e2;
+  border: 1px solid #d5dbe7;
   border-radius: 10px;
   padding: 0.9rem;
-  margin-top: 0.75rem;
-  box-shadow: 0 1px 2px rgb(16 27 59 / 5%);
+  margin-top: 0.65rem;
+  box-shadow: 0 1px 3px rgb(16 27 59 / 4%);
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease,
+    box-shadow 180ms ease,
     opacity 160ms ease,
-    transform 160ms ease;
+    transform 180ms ease;
 }
 .application-card:hover {
   border-color: #aeb9cb;
-  box-shadow: 0 7px 18px rgb(16 27 59 / 8%);
+  box-shadow: 0 6px 16px rgb(16 27 59 / 8%);
   transform: translateY(-1px);
 }
 .application-card.is-dragging {
-  opacity: 0.45;
+  opacity: 0.4;
   box-shadow: none;
+  transform: scale(0.98);
 }
 .application-card:focus-within {
   border-color: var(--blue);
@@ -767,6 +789,7 @@ textarea {
   border-radius: 5px;
   cursor: grab;
   user-select: none;
+  transition: color 120ms ease, background 120ms ease;
 }
 .application-drag-handle:hover {
   color: var(--blue);
@@ -853,8 +876,8 @@ textarea {
 .column-empty {
   display: grid;
   place-content: center;
-  min-height: 180px;
-  margin-top: 0.75rem;
+  min-height: 140px;
+  margin-top: 0.65rem;
   padding: 1.25rem;
   border: 1px dashed #cbd3df;
   border-radius: 9px;
