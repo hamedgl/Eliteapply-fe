@@ -1,10 +1,15 @@
 import {
   ChevronDown,
+  Eye,
+  FileText,
   LayoutDashboard,
   LogOut,
   Menu,
+  PenLine,
   Settings,
+  ShieldCheck,
   UserRound,
+  Users,
   X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,12 +24,42 @@ import { authApi } from "../../lib/api/auth";
 import { useSession } from "../../lib/auth/session";
 
 const productLinks = [
-  ["Interactive product preview", "/product-preview"],
-  ["Application tracker", "/features/scholarship-application-tracker"],
-  ["Writing workspace", "/features/personal-statement-workspace"],
-  ["Documents and evidence", "/features/document-organiser"],
-  ["Reference tracking", "/features/reference-tracking"],
-  ["Readiness review", "/features/submission-readiness"],
+  {
+    label: "Interactive product preview",
+    to: "/product-preview",
+    description: "See a live sample workspace before you sign up.",
+    Icon: Eye,
+  },
+  {
+    label: "Application tracker",
+    to: "/features/scholarship-application-tracker",
+    description: "Status, deadlines and the next responsible action.",
+    Icon: LayoutDashboard,
+  },
+  {
+    label: "Writing workspace",
+    to: "/features/personal-statement-workspace",
+    description: "Build statements from evidence, not a blank page.",
+    Icon: PenLine,
+  },
+  {
+    label: "Documents and evidence",
+    to: "/features/document-organiser",
+    description: "Every document mapped to the requirement it supports.",
+    Icon: FileText,
+  },
+  {
+    label: "Reference tracking",
+    to: "/features/reference-tracking",
+    description: "Referee requests and due dates, without the chasing.",
+    Icon: Users,
+  },
+  {
+    label: "Readiness review",
+    to: "/features/submission-readiness",
+    description: "One final check before you submit—not a prediction.",
+    Icon: ShieldCheck,
+  },
 ] as const;
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
@@ -55,7 +90,7 @@ export function MarketingHeader() {
 
   useEffect(() => {
     if (!menuOpen) return;
-    menuRef.current?.querySelector<HTMLElement>("summary, a")?.focus();
+    menuRef.current?.querySelector<HTMLElement>("button, a")?.focus();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -106,19 +141,7 @@ export function MarketingHeader() {
         aria-label="Main navigation"
       >
         <div className="marketing-nav-links">
-          <details className="product-menu">
-            <summary>
-              Product <ChevronDown aria-hidden="true" />
-            </summary>
-            <div className="product-menu-panel">
-              <Link to="/features">All features</Link>
-              {productLinks.map(([label, to]) => (
-                <Link key={to} to={to}>
-                  {label}
-                </Link>
-              ))}
-            </div>
-          </details>
+          <ProductMenu />
           <NavLink to="/how-it-works">How it works</NavLink>
           <NavLink to="/for-students">For students</NavLink>
           <NavLink to="/resources">Resources</NavLink>
@@ -147,6 +170,81 @@ export function MarketingHeader() {
         {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>
     </header>
+  );
+}
+
+function ProductMenu() {
+  const [open, setOpen] = useState(false);
+  const closeTimeoutRef = useRef<number | undefined>(undefined);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => () => window.clearTimeout(closeTimeoutRef.current), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [open]);
+
+  const openMenu = () => {
+    window.clearTimeout(closeTimeoutRef.current);
+    setOpen(true);
+  };
+  const scheduleClose = () => {
+    window.clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = window.setTimeout(() => setOpen(false), 180);
+  };
+  const closeMenu = () => {
+    window.clearTimeout(closeTimeoutRef.current);
+    setOpen(false);
+  };
+
+  return (
+    <div
+      className="product-menu"
+      ref={wrapperRef}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        type="button"
+        className="product-menu-trigger"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        Product <ChevronDown aria-hidden="true" />
+      </button>
+      <div className={open ? "product-menu-panel open" : "product-menu-panel"}>
+        <div className="product-menu-panel-inner">
+          <Link className="product-menu-all" to="/features" onClick={closeMenu}>
+            All features
+          </Link>
+          <div className="product-menu-list">
+            {productLinks.map(({ label, to, description, Icon }) => (
+              <Link key={to} to={to} onClick={closeMenu}>
+                <Icon aria-hidden="true" />
+                <span>
+                  <strong>{label}</strong>
+                  <small>{description}</small>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

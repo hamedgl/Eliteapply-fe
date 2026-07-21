@@ -11205,53 +11205,117 @@ body:has(.admin-shell) {
 .product-menu {
   position: relative;
 }
-.product-menu summary {
+.marketing-nav-links > a,
+.product-menu-trigger {
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--m-radius-control);
+  transition:
+    color var(--m-duration) var(--m-ease-out),
+    background-color var(--m-duration) var(--m-ease-out);
+}
+.marketing-nav-links > a:hover,
+.product-menu-trigger:hover {
+  color: var(--m-blue);
+  background: var(--m-selected);
+}
+.product-menu-trigger {
   min-height: 44px;
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  color: var(--m-ink);
+  background: transparent;
+  border: 0;
   cursor: pointer;
+  font: inherit;
   font-weight: 500;
-  list-style: none;
-  border-radius: var(--m-radius-control);
 }
-.product-menu summary::-webkit-details-marker {
-  display: none;
-}
-.product-menu summary svg {
+.product-menu-trigger svg {
   width: 16px;
   transition: transform var(--m-duration) var(--m-ease-out);
 }
-.product-menu[open] summary svg {
+.product-menu-trigger[aria-expanded="true"] svg {
   transform: rotate(180deg);
 }
 .product-menu-panel {
   position: absolute;
-  top: calc(100% + 0.75rem);
+  top: 100%;
   left: -1rem;
-  width: 280px;
+  width: 360px;
+  padding-top: 0.75rem;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--m-duration) var(--m-ease-out),
+    visibility var(--m-duration) var(--m-ease-out);
+  pointer-events: none;
+}
+.product-menu-panel.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.product-menu-panel-inner {
   padding: 0.5rem;
   background: var(--m-white);
   border: 1px solid var(--m-line-strong);
   border-radius: var(--m-radius-preview);
   box-shadow: 0 8px 8px var(--m-shadow-menu);
+  transform: translateY(-6px);
+  transition: transform var(--m-duration) var(--m-ease-out);
 }
-.product-menu-panel::before {
-  content: "";
-  position: absolute;
-  inset: -0.8rem 0 auto;
-  height: 0.8rem;
+.product-menu-panel.open .product-menu-panel-inner {
+  transform: translateY(0);
+}
+.product-menu-all {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.55rem 0.75rem;
+  color: var(--m-blue);
+  font-weight: 700;
+  border-radius: 6px;
+}
+.product-menu-all:hover {
+  background: var(--m-selected);
+}
+.product-menu-list {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--m-line);
 }
 .product-menu-panel a {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 0.75rem;
   min-height: 44px;
   padding: 0.65rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .product-menu-panel a:hover {
   background: var(--m-selected);
+}
+.product-menu-list a > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
   color: var(--m-blue);
+}
+.product-menu-list a strong,
+.product-menu-list a small {
+  display: block;
+}
+.product-menu-list a strong {
+  color: var(--m-ink);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.product-menu-list a small {
+  margin-top: 0.2rem;
+  color: var(--m-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 .landing-button.secondary {
   color: var(--m-blue) !important;
@@ -14094,7 +14158,7 @@ body:has(.admin-shell) {
   }
   .phase-one-header .marketing-nav-links > a,
   .phase-one-header .marketing-nav > .landing-button,
-  .product-menu summary {
+  .product-menu-trigger {
     width: 100%;
     min-height: 52px;
     padding: 0.65rem 0.75rem;
@@ -14141,18 +14205,29 @@ body:has(.admin-shell) {
     position: static;
     box-shadow: none;
   }
-  .product-menu summary svg {
+  .product-menu-trigger svg {
     margin-left: auto;
   }
   .product-menu-panel {
     position: static;
     width: auto;
+    padding-top: 0;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    display: none;
+  }
+  .product-menu-panel.open {
+    display: block;
+  }
+  .product-menu-panel-inner {
     margin: 0 0 0.5rem 0.75rem;
     padding: 0 0 0 0.75rem;
     border: 0;
     border-left: 1px solid var(--m-line);
     border-radius: 0;
     box-shadow: none;
+    transform: none;
   }
   .phase-one-hero {
     min-height: 0;
@@ -14672,7 +14747,7 @@ body:has(.admin-shell) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .product-menu summary svg,
+  .product-menu-trigger svg,
   .faq-list summary svg,
   .phase-one-marketing .landing-button,
   .workflow-stage-icon,
