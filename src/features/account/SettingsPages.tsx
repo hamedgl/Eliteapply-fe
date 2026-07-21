@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Camera, Download, ShieldAlert, Trash2 } from "lucide-react";
+import { Camera, Download, Eye, EyeOff, ShieldAlert, Trash2 } from "lucide-react";
 import { useSession } from "../../lib/auth/session";
 import { usersApi } from "../../lib/api/users";
 import { authApi } from "../../lib/api/auth";
@@ -242,7 +242,29 @@ export function ProfileSettings() {
   );
 }
 
+function PasswordInput({
+  className,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement>) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="password-field">
+      <input {...props} type={visible ? "text" : "password"} />
+      <button
+        type="button"
+        className="password-toggle"
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        onClick={() => setVisible((v) => !v)}
+      >
+        {visible ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+      </button>
+    </div>
+  );
+}
+
 export function SecuritySettings() {
+  const user = useSession((s) => s.user);
   const [status, setStatus] = useState<Status>(null);
   async function change(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -276,20 +298,26 @@ export function SecuritySettings() {
           </p>
         </header>
         <form className="settings-fields" onSubmit={change}>
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            defaultValue={user?.email ?? ""}
+            hidden
+            readOnly
+          />
           <label>
             Current password
-            <input
+            <PasswordInput
               name="old_password"
-              type="password"
               autoComplete="current-password"
               required
             />
           </label>
           <label>
             New password
-            <input
+            <PasswordInput
               name="new_password"
-              type="password"
               autoComplete="new-password"
               minLength={8}
               required
