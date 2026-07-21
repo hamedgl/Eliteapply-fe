@@ -758,6 +758,13 @@ export function ApplicationsPage() {
   );
 }
 
+function getPlural(word: string) {
+  const lower = word.toLowerCase();
+  if (lower.endsWith("y")) return lower.slice(0, -1) + "ies";
+  if (lower.endsWith("s") || lower.endsWith("ch") || lower.endsWith("sh")) return lower + "es";
+  return lower + "s";
+}
+
 function QuickSelectFilter({
   text,
   label: labelFn,
@@ -773,12 +780,12 @@ function QuickSelectFilter({
 }) {
   return (
     <label className="apps-quick-filter">
-      {text}
+      <span>{text}</span>
       <Select
         value={value}
         onChange={(val: any) => onChange(typeof val === "string" ? val : (val?.target?.value ?? ""))}
         options={[
-          { value: "", label: `All ${text.toLocaleLowerCase()}s` },
+          { value: "", label: `All ${getPlural(text)}` },
           ...options.map((item) => ({
             value: item,
             label: labelFn(item),

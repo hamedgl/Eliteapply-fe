@@ -6104,6 +6104,137 @@ select option {
   padding: 8px 12px;
 }
 
+/* Custom Select Component Design System Styles */
+.custom-select-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  text-align: left;
+}
+
+.custom-select-trigger {
+  position: relative;
+  display: flex;
+  min-height: 42px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 9999px !important;
+  border: 1px solid var(--app-line-strong, #cfd7e6);
+  background-color: var(--app-surface, #ffffff);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--app-ink, #1e293b);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.custom-select-trigger:hover:not(:disabled) {
+  border-color: #7c8aa3;
+  background-color: #f8fafc;
+}
+
+.custom-select-trigger:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--app-blue, #2563eb);
+}
+
+.custom-select-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.custom-select-trigger-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--app-muted, #64748b);
+  transition: transform 200ms ease, color 200ms ease;
+}
+
+.custom-select-chevron.is-open {
+  transform: rotate(180deg);
+  color: var(--app-blue, #2563eb);
+}
+
+.custom-select-popover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 9999;
+  min-width: 180px;
+  max-height: 260px;
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid var(--app-line, #e2e8f0);
+  background-color: var(--app-surface, #ffffff);
+  padding: 6px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.custom-select-option {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--app-ink, #1e293b);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.custom-select-option:hover:not(.is-disabled) {
+  background-color: #f1f5f9;
+  color: var(--app-blue, #2563eb);
+}
+
+.custom-select-option.is-selected {
+  background-color: #eff6ff;
+  color: var(--app-blue, #2563eb);
+  font-weight: 600;
+}
+
+.custom-select-option.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.custom-select-option-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--app-blue, #2563eb);
+  margin-left: auto;
+}
+
 .app-shell input:hover,
 .app-shell textarea:hover {
   border-color: #7c8aa3;

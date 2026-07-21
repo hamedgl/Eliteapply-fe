@@ -185,7 +185,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     return (
       <div
         ref={containerRef}
-        className={cn("relative inline-block w-full text-left", className)}
+        className={cn("custom-select-container", className)}
       >
         {/* Hidden input for HTML form integration */}
         {name && <input type="hidden" name={name} value={currentValue ?? ""} />}
@@ -202,23 +202,17 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           onKeyDown={handleKeyDown}
           whileTap={disabled ? undefined : { scale: 0.97 }}
           transition={SPRING_PRESS}
-          className={cn(
-            "group relative flex min-h-[44px] w-full items-center justify-between gap-3 rounded-full border border-[var(--app-line-strong,#cfd7e6)] bg-[var(--app-surface,#ffffff)] px-4 py-2 text-sm font-medium text-[var(--app-ink,#1a202c)] shadow-sm transition-colors hover:border-[#7c8aa3] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[var(--app-blue,#2563eb)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-            triggerClassName
-          )}
+          className={cn("custom-select-trigger", triggerClassName)}
         >
-          <span className="flex items-center gap-2 truncate">
+          <span className="custom-select-trigger-label">
             {selectedOption?.icon}
-            <span className="truncate">
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {selectedOption ? selectedOption.label : placeholder}
             </span>
           </span>
           <ChevronDown
             aria-hidden="true"
-            className={cn(
-              "h-4 w-4 shrink-0 text-[var(--app-muted,#64748b)] transition-transform duration-200",
-              isOpen && "rotate-180 text-[var(--app-blue,#2563eb)]"
-            )}
+            className={cn("custom-select-chevron", isOpen && "is-open")}
           />
         </motion.button>
 
@@ -233,14 +227,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               animate={{ opacity: 1, y: 4, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.96 }}
               transition={SPRING_PANEL}
-              className={cn(
-                "absolute left-0 top-full z-50 mt-1.5 max-h-64 w-full overflow-auto rounded-2xl border border-[var(--app-line,#e2e8f0)] bg-[var(--app-surface,#ffffff)] p-1.5 shadow-2xl backdrop-blur-md focus:outline-none",
-                popoverClassName
-              )}
-              style={{
-                boxShadow:
-                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.05)",
-              }}
+              className={cn("custom-select-popover", popoverClassName)}
             >
               {parsedOptions.map((option) => {
                 const isSelected = String(option.value) === String(currentValue);
@@ -256,27 +243,25 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                       }
                     }}
                     className={cn(
-                      "relative flex cursor-pointer select-none items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors",
-                      option.disabled && "cursor-not-allowed opacity-40",
-                      isSelected
-                        ? "bg-[var(--app-blue-light,#eff6ff)] text-[var(--app-blue,#2563eb)] font-semibold"
-                        : "text-[var(--app-ink,#1e293b)] hover:bg-[#f1f5f9] hover:text-[var(--app-blue,#2563eb)]"
+                      "custom-select-option",
+                      isSelected && "is-selected",
+                      option.disabled && "is-disabled"
                     )}
                   >
-                    <div className="flex items-center gap-2.5 truncate">
+                    <div className="custom-select-option-content">
                       {option.icon}
-                      <div className="flex flex-col truncate">
-                        <span className="truncate">{option.label}</span>
+                      <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {option.label}
+                        </span>
                         {option.description && (
-                          <span className="text-xs text-[var(--app-muted,#64748b)]">
+                          <span style={{ fontSize: "0.75rem", color: "var(--app-muted, #64748b)" }}>
                             {option.description}
                           </span>
                         )}
                       </div>
                     </div>
-                    {isSelected && (
-                      <Check className="h-4 w-4 shrink-0 text-[var(--app-blue,#2563eb)]" />
-                    )}
+                    {isSelected && <Check className="custom-select-check" />}
                   </div>
                 );
               })}
