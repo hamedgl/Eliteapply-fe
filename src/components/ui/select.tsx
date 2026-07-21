@@ -14,6 +14,7 @@ import {
   type ReactNode,
   type ChangeEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -71,6 +72,13 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const generatedId = useId();
     const id = idProp || generatedId;
     const containerRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const [popoverRect, setPopoverRect] = useState<{
+      left: number;
+      width: number;
+      placement: "top" | "bottom";
+      anchor: number;
+    } | null>(null);
 
     // Extract options from props or children (<option value="val">Label</option>)
     const parsedOptions: SelectOption[] = [];
@@ -130,9 +138,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     useEffect(() => {
       if (!isOpen) return;
       const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+        const target = event.target as Node;
         if (
           containerRef.current &&
-          !containerRef.current.contains(event.target as Node)
+          !containerRef.current.contains(target) &&
+          popoverRef.current &&
+          !popoverRef.current.contains(target)
         ) {
           setIsOpen(false);
         }
@@ -142,6 +153,35 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
         document.removeEventListener("touchstart", handleClickOutside);
+      };
+    }, [isOpen]);
+
+    // Track trigger position so the portaled popover stays anchored,
+    // escaping any clipping/stacking-context from scrollable ancestors (e.g. kanban columns).
+    useEffect(() => {
+      if (!isOpen) return;
+      const updateRect = () => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        // matches .custom-select-popover max-height in index.css
+        const popoverMaxHeight = 260;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const placement: "top" | "bottom" =
+          spaceBelow < popoverMaxHeight && spaceAbove > spaceBelow ? "top" : "bottom";
+        setPopoverRect({
+          left: rect.left,
+          width: rect.width,
+          placement,
+          anchor: placement === "bottom" ? rect.bottom + 6 : window.innerHeight - rect.top + 6,
+        });
+      };
+      updateRect();
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+      return () => {
+        window.removeEventListener("scroll", updateRect, true);
+        window.removeEventListener("resize", updateRect);
       };
     }, [isOpen]);
 
@@ -216,20 +256,31 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           />
         </motion.button>
 
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              role="listbox"
-              aria-activedescendant={
-                selectedOption ? `${id}-opt-${selectedOption.value}` : undefined
-              }
-              initial={{ opacity: 0, y: -6, scale: 0.96 }}
-              animate={{ opacity: 1, y: 4, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.96 }}
-              transition={SPRING_PANEL}
-              className={cn("custom-select-popover", popoverClassName)}
-            >
-              {parsedOptions.map((option) => {
+        {isOpen &&
+          popoverRect &&
+          createPortal(
+            <AnimatePresence>
+              <motion.div
+                ref={popoverRef}
+                role="listbox"
+                aria-activedescendant={
+                  selectedOption ? `${id}-opt-${selectedOption.value}` : undefined
+                }
+                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 4, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                transition={SPRING_PANEL}
+                className={cn("custom-select-popover", popoverClassName)}
+                style={{
+                  position: "fixed",
+                  left: popoverRect.left,
+                  width: popoverRect.width,
+                  ...(popoverRect.placement === "bottom"
+                    ? { top: popoverRect.anchor }
+                    : { bottom: popoverRect.anchor }),
+                }}
+              >
+                {parsedOptions.map((option) => {
                 const isSelected = String(option.value) === String(currentValue);
                 return (
                   <div
@@ -273,10 +324,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     {isSelected && <Check className="custom-select-check" />}
                   </div>
                 );
-              })}
-            </motion.div>
+                })}
+              </motion.div>
+            </AnimatePresence>,
+            document.body
           )}
-        </AnimatePresence>
       </div>
     );
   }
