@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { Select } from "../../../components/ui/select";
 import { applicationsApi } from "../../../lib/api/phase2";
 import { remindersApi } from "../../../lib/api/phase3";
 import { queryKeys } from "../../../lib/api/queryKeys";
@@ -149,7 +150,7 @@ export function ReminderEditor({
             Repeat
             <Select
               value={recurrence ?? "none"}
-              onChange={(val) => setRecurrence(typeof val === "string" ? val : val?.target?.value)}
+              onChange={(val: any) => setRecurrence(typeof val === "string" ? val : val?.target?.value)}
               options={[
                 { value: "none", label: "Does not repeat" },
                 { value: "daily", label: "Daily" },
@@ -162,7 +163,7 @@ export function ReminderEditor({
             Notify by
             <Select
               value={channel}
-              onChange={(val) => setChannel(typeof val === "string" ? val : val?.target?.value)}
+              onChange={(val: any) => setChannel(typeof val === "string" ? val : val?.target?.value)}
               options={[
                 { value: "in_app", label: "In-app" },
                 { value: "email", label: "Email" },
