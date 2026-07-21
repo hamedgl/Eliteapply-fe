@@ -99,7 +99,6 @@ export function DashboardPage() {
     dashboard.applications_by_stage,
   ).reduce((total, count) => total + Math.max(0, count), 0);
   const recommendation = getRecommendation(dashboard.recommended_next_action);
-  const profileComplete = dashboard.profile_completion_percent >= 100;
   const profile = profileQuery.data;
   const profileStatus = (done: boolean) =>
     getSetupStatus(profileQuery.isPending, profileQuery.isError, done);
@@ -195,9 +194,16 @@ export function DashboardPage() {
     },
   ];
   const setupPage = setupPages[guidePage];
-  const completedSetupItems = setupPages
-    .flatMap((page) => page.items)
-    .filter((item) => item.status === "done").length;
+  const allSetupItems = setupPages.flatMap((page) => page.items);
+  const totalSetupItems = allSetupItems.length;
+  const completedSetupItems = allSetupItems.filter(
+    (item) => item.status === "done",
+  ).length;
+  const profileReadinessPercent =
+    totalSetupItems > 0
+      ? Math.round((completedSetupItems / totalSetupItems) * 100)
+      : dashboard.profile_completion_percent;
+  const profileComplete = profileReadinessPercent >= 100;
   const setupProgressPending =
     profileQuery.isPending || documentsQuery.isPending;
   const setupProgressError = profileQuery.isError || documentsQuery.isError;
@@ -242,7 +248,7 @@ export function DashboardPage() {
         <div className="profile-readiness">
           <div>
             <span>Profile readiness</span>
-            <strong>{dashboard.profile_completion_percent}%</strong>
+            <strong>{profileReadinessPercent}%</strong>
           </div>
           <span
             className="profile-progress-bar"
@@ -250,9 +256,9 @@ export function DashboardPage() {
             aria-label="Academic profile completion"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={dashboard.profile_completion_percent}
+            aria-valuenow={profileReadinessPercent}
           >
-            <i style={{ width: `${dashboard.profile_completion_percent}%` }} />
+            <i style={{ width: `${profileReadinessPercent}%` }} />
           </span>
         </div>
       </section>
@@ -361,7 +367,7 @@ export function DashboardPage() {
               <span aria-live="polite">
                 {setupProgressPending
                   ? "Checking progress…"
-                  : `${completedSetupItems}/9 complete`}
+                  : `${completedSetupItems}/${totalSetupItems} complete`}
               </span>
             </header>
             <div className="setup-page-intro" aria-live="polite">
