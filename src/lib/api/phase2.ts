@@ -138,6 +138,14 @@ export const applicationsApi = {
     ),
   history: (id: string) =>
     apiRequest<S["AuditEventResponse"][]>(`/applications/${enc(id)}/history`),
+  activity: (id: string, category?: string, cursor?: string, limit = 25) => {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (category) params.set("category", category);
+    if (cursor) params.set("cursor", cursor);
+    return apiRequest<S["ActivityPageResponse"]>(
+      `/applications/${enc(id)}/activity?${params}`,
+    );
+  },
   addRequirement: (id: string, body: S["RequirementCreate"]) =>
     apiRequest<S["RequirementResponse"]>(
       `/applications/${enc(id)}/requirements`,
@@ -204,7 +212,9 @@ export const applicationsApi = {
       signal,
     }),
   task: (taskId: string, signal?: AbortSignal) =>
-    apiRequest<S["TaskResponse"]>(`/applications/tasks/${enc(taskId)}`, { signal }),
+    apiRequest<S["TaskResponse"]>(`/applications/tasks/${enc(taskId)}`, {
+      signal,
+    }),
   addTasks: (id: string, body: S["TaskBulkCreate"]) =>
     apiRequest<S["TaskResponse"][]>(`/applications/${enc(id)}/tasks/bulk`, {
       method: "POST",
@@ -228,6 +238,15 @@ export const applicationsApi = {
     apiRequest<S["DocumentLinkResponse"]>(
       `/applications/${enc(id)}/documents`,
       { method: "POST", body },
+    ),
+  updateDocumentLink: (
+    applicationId: string,
+    linkId: string,
+    body: S["DocumentLinkUpdate"],
+  ) =>
+    apiRequest<S["DocumentLinkResponse"]>(
+      `/applications/${enc(applicationId)}/documents/${enc(linkId)}`,
+      { method: "PATCH", body },
     ),
   documentLinks: (id: string) =>
     apiRequest<S["DocumentLinkResponse"][]>(
@@ -473,7 +492,11 @@ export async function uploadAcademicDocument(
   file: File,
   category: string,
   signal?: AbortSignal,
-  options?: { displayName?: string; tags?: string[]; expiresAt?: string | null },
+  options?: {
+    displayName?: string;
+    tags?: string[];
+    expiresAt?: string | null;
+  },
 ) {
   const allowed = [
     "application/pdf",

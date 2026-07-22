@@ -15,9 +15,13 @@ export const queryKeys = {
   tasks: (id: string) => ["applications", id, "tasks"] as const,
   readiness: (id: string) => ["applications", id, "readiness"] as const,
   applicationHistory: (id: string) => ["applications", id, "history"] as const,
+  applicationActivity: (id: string, category = "all") =>
+    ["applications", id, "activity", category] as const,
   applicationDocuments: (id: string) =>
     ["applications", id, "documents"] as const,
   collaborators: (id: string) => ["applications", id, "collaborators"] as const,
+  collaborationCapabilities: (id: string) =>
+    ["applications", id, "collaborators", "capabilities"] as const,
   collaboratorView: (id: string) =>
     ["applications", id, "collaborator-view"] as const,
   eligibility: (id: string) => ["applications", id, "eligibility"] as const,

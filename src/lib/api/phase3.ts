@@ -144,9 +144,12 @@ export const writingApi = {
       method: "POST",
     }),
   unarchiveStory: (id: string) =>
-    apiRequest<S["StoryResponse"]>(`/writing-studio/stories/${e(id)}/unarchive`, {
-      method: "POST",
-    }),
+    apiRequest<S["StoryResponse"]>(
+      `/writing-studio/stories/${e(id)}/unarchive`,
+      {
+        method: "POST",
+      },
+    ),
   linkApplication: (storyId: string, applicationId: string) =>
     apiRequest<S["StoryResponse"]>(
       `/writing-studio/stories/${e(storyId)}/applications/${e(applicationId)}`,
@@ -215,6 +218,10 @@ export const collaborationApi = {
       `/applications/${e(applicationId)}/collaborators`,
       { method: "POST", body },
     ),
+  capabilities: (applicationId: string) =>
+    apiRequest<S["CollaborationCapabilitiesResponse"]>(
+      `/applications/${e(applicationId)}/collaborators/capabilities`,
+    ),
   update: (applicationId: string, id: string, body: S["CollaboratorUpdate"]) =>
     apiRequest<S["CollaboratorResponse"]>(
       `/applications/${e(applicationId)}/collaborators/${e(id)}`,
@@ -224,6 +231,16 @@ export const collaborationApi = {
     apiRequest<void>(
       `/applications/${e(applicationId)}/collaborators/${e(id)}`,
       { method: "DELETE" },
+    ),
+  resend: (applicationId: string, id: string) =>
+    apiRequest<S["InvitationResendResponse"]>(
+      `/applications/${e(applicationId)}/collaborators/${e(id)}/resend`,
+      { method: "POST" },
+    ),
+  invitationLink: (applicationId: string, id: string) =>
+    apiRequest<S["InvitationLinkResponse"]>(
+      `/applications/${e(applicationId)}/collaborators/${e(id)}/invitation-link`,
+      { method: "POST" },
     ),
   view: (applicationId: string) =>
     apiRequest<S["CollaboratorViewResponse"]>(
@@ -262,10 +279,13 @@ export const referencesApi = {
   get: (id: string) =>
     apiRequest<S["AcademicReferenceResponse"]>(`/academic-references/${e(id)}`),
   update: (id: string, body: S["AcademicReferenceUpdate"]) =>
-    apiRequest<S["AcademicReferenceResponse"]>(`/academic-references/${e(id)}`, {
-      method: "PATCH",
-      body,
-    }),
+    apiRequest<S["AcademicReferenceResponse"]>(
+      `/academic-references/${e(id)}`,
+      {
+        method: "PATCH",
+        body,
+      },
+    ),
   resend: (id: string) =>
     apiRequest<S["AcademicReferenceResponse"]>(
       `/academic-references/${e(id)}/resend`,
@@ -289,7 +309,12 @@ export const referencesApi = {
   attach: (id: string, applicationId: string) =>
     apiRequest<S["AcademicReferenceResponse"]>(
       `/academic-references/${e(id)}/attach`,
-      { method: "POST", body: { application_id: applicationId } satisfies S["ReferenceAttachRequest"] },
+      {
+        method: "POST",
+        body: {
+          application_id: applicationId,
+        } satisfies S["ReferenceAttachRequest"],
+      },
     ),
   events: (id: string, cursor?: string | null) =>
     apiRequest<S["ReferenceEventListResponse"]>(
@@ -404,11 +429,13 @@ export const notificationsApi = {
     ),
 };
 export const remindersApi = {
-  list: (filters: {
-    aggregateType?: string;
-    status?: string;
-    cursor?: string | null;
-  } = {}) =>
+  list: (
+    filters: {
+      aggregateType?: string;
+      status?: string;
+      cursor?: string | null;
+    } = {},
+  ) =>
     apiRequest<S["ReminderListResponse"]>(
       `/reminders${qs({ ...filters, limit: 25 })}`,
     ),

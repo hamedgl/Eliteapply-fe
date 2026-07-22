@@ -65,6 +65,18 @@ const workspace = {
   tasks: [task],
   document_links: [],
   history: [],
+  readiness: {
+    application_id: applicationId,
+    overall_state: "in_progress",
+    readiness_percent: 0,
+    blocking_issues: [],
+    warnings: [],
+    missing_required_documents: [],
+    incomplete_requirements: [requirement.id],
+    unresolved_eligibility_issues: [],
+    deadline_state: "none",
+    recommended_next_actions: [],
+  },
 } satisfies S["ApplicationWorkspaceResponse"];
 
 afterEach(() => {
@@ -133,13 +145,16 @@ describe("application resource queries", () => {
       application_id: applicationId,
       document_id: "00000000-0000-4000-8000-000000000014",
       requirement_id: null,
+      version: 1,
       created_at: "2026-07-22T00:00:00Z",
     } satisfies S["DocumentLinkResponse"];
 
     cacheApplicationDocumentLink(client, applicationId, link);
     cacheApplicationDocumentLink(client, applicationId, link);
 
-    expect(client.getQueryData(queryKeys.applicationDocuments(applicationId))).toEqual([link]);
+    expect(
+      client.getQueryData(queryKeys.applicationDocuments(applicationId)),
+    ).toEqual([link]);
     client.clear();
   });
 

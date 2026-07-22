@@ -712,6 +712,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Application Activity */
+        get: operations["application_activity_api_v1_applications__application_id__activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications/{application_id}/documents": {
         parameters: {
             query?: never;
@@ -744,7 +761,8 @@ export interface paths {
         delete: operations["unlink_document_api_v1_applications__application_id__documents__link_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Document Link */
+        patch: operations["update_document_link_api_v1_applications__application_id__documents__link_id__patch"];
         trace?: never;
     };
     "/api/v1/academic-documents": {
@@ -2571,6 +2589,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/collaborators/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Collaboration Capabilities */
+        get: operations["collaboration_capabilities_api_v1_applications__application_id__collaborators_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications/{application_id}/collaborators/{collaborator_id}": {
         parameters: {
             query?: never;
@@ -2587,6 +2622,40 @@ export interface paths {
         head?: never;
         /** Update Collaborator */
         patch: operations["update_collaborator_api_v1_applications__application_id__collaborators__collaborator_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/collaborators/{collaborator_id}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend Collaborator Invitation */
+        post: operations["resend_collaborator_invitation_api_v1_applications__application_id__collaborators__collaborator_id__resend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/collaborators/{collaborator_id}/invitation-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Collaborator Invitation Link */
+        post: operations["create_collaborator_invitation_link_api_v1_applications__application_id__collaborators__collaborator_id__invitation_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/collaborator-invitations/{token}/accept": {
@@ -3765,6 +3834,54 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** ActivityActor */
+        ActivityActor: {
+            /** Id */
+            id?: string | null;
+            /** Name */
+            name: string;
+            /** Avatar Url */
+            avatar_url?: string | null;
+        };
+        /** ActivityEventResponse */
+        ActivityEventResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "application" | "requirements" | "tasks" | "documents" | "eligibility" | "collaborators";
+            actor: components["schemas"]["ActivityActor"];
+            /** Action */
+            action: string;
+            /** Affected Item */
+            affected_item?: string | null;
+            /** Change Summary */
+            change_summary?: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** ActivityPageResponse */
+        ActivityPageResponse: {
+            /** Items */
+            items: components["schemas"]["ActivityEventResponse"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @default false
+             */
+            has_more: boolean;
+            /** Total */
+            total?: number | null;
+        };
         /** AdminActionSummary */
         AdminActionSummary: {
             /**
@@ -4015,6 +4132,14 @@ export interface components {
             deadline_state: "none" | "upcoming" | "approaching" | "expired";
             /** Recommended Next Actions */
             recommended_next_actions: string[];
+            /** Components */
+            components?: {
+                [key: string]: number;
+            };
+            /** Counts */
+            counts?: {
+                [key: string]: number;
+            };
         };
         /** ApplicationReadinessSummary */
         ApplicationReadinessSummary: {
@@ -4130,7 +4255,34 @@ export interface components {
             /** Document Links */
             document_links: components["schemas"]["DocumentLinkResponse"][];
             /** History */
-            history: components["schemas"]["AuditEventResponse"][];
+            history: components["schemas"]["ActivityEventResponse"][];
+            /** Counts */
+            counts?: {
+                [key: string]: number;
+            };
+            readiness: components["schemas"]["ApplicationReadinessResponse"];
+            /** Filter Options */
+            filter_options?: {
+                [key: string]: string[];
+            };
+            /** Permissions */
+            permissions?: {
+                [key: string]: boolean;
+            };
+        };
+        /** AssigneeSummary */
+        AssigneeSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name?: string | null;
+            /** Email */
+            email: string;
+            /** Avatar Url */
+            avatar_url?: string | null;
         };
         /** AuditEventResponse */
         AuditEventResponse: {
@@ -4278,6 +4430,17 @@ export interface components {
             /** Checkout Url */
             checkout_url: string;
         };
+        /** CollaborationCapabilitiesResponse */
+        CollaborationCapabilitiesResponse: {
+            /** Current User Role */
+            current_user_role: string;
+            /** Supported Roles */
+            supported_roles: components["schemas"]["CollaboratorRoleOption"][];
+            /** Actions */
+            actions: {
+                [key: string]: boolean;
+            };
+        };
         /** CollaboratorAcceptResponse */
         CollaboratorAcceptResponse: {
             /**
@@ -4303,6 +4466,8 @@ export interface components {
              * @enum {string}
              */
             role: "viewer" | "commenter" | "advisor_editor";
+            /** Message */
+            message?: string | null;
         };
         /** CollaboratorResponse */
         CollaboratorResponse: {
@@ -4320,10 +4485,16 @@ export interface components {
             collaborator_user_id: string | null;
             /** Invited Email */
             invited_email: string;
+            /** Name */
+            name?: string | null;
+            /** Avatar Url */
+            avatar_url?: string | null;
             /** Role */
             role: string;
             /** Status */
             status: string;
+            /** Access Scope */
+            access_scope?: string[];
             /**
              * Expires At
              * Format: date-time
@@ -4333,11 +4504,25 @@ export interface components {
             accepted_at: string | null;
             /** Revoked At */
             revoked_at: string | null;
+            /** Last Activity At */
+            last_activity_at?: string | null;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
+        };
+        /** CollaboratorRoleOption */
+        CollaboratorRoleOption: {
+            /**
+             * Value
+             * @enum {string}
+             */
+            value: "viewer" | "commenter" | "advisor_editor";
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
         };
         /** CollaboratorUpdate */
         CollaboratorUpdate: {
@@ -4356,6 +4541,10 @@ export interface components {
             tasks: components["schemas"]["TaskResponse"][];
             /** Role */
             role: string;
+            /** Permissions */
+            permissions?: {
+                [key: string]: boolean;
+            };
         };
         /** CommentAnchor */
         CommentAnchor: {
@@ -4567,6 +4756,8 @@ export interface components {
         };
         /** DocumentLinkCreate */
         DocumentLinkCreate: {
+            /** Mutation Id */
+            mutation_id?: string | null;
             /**
              * Document Id
              * Format: uuid
@@ -4595,10 +4786,33 @@ export interface components {
             /** Requirement Id */
             requirement_id: string | null;
             /**
+             * Version
+             * @default 1
+             */
+            version: number;
+            /**
              * Created At
              * Format: date-time
              */
             created_at: string;
+            /** Updated At */
+            updated_at?: string | null;
+            document?: components["schemas"]["LinkedDocumentSummary"] | null;
+            requirement?: components["schemas"]["RelatedRequirementSummary"] | null;
+        };
+        /** DocumentLinkUpdate */
+        DocumentLinkUpdate: {
+            /**
+             * Mutation Id
+             * Format: uuid
+             */
+            mutation_id: string;
+            /** Expected Version */
+            expected_version: number;
+            /** Document Id */
+            document_id?: string | null;
+            /** Requirement Id */
+            requirement_id?: string | null;
         };
         /** DocumentResponse */
         DocumentResponse: {
@@ -4758,6 +4972,44 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** EligibilityDataSource */
+        EligibilityDataSource: {
+            /** Source */
+            source: string;
+            /** Label */
+            label: string;
+            /** Source Id */
+            source_id?: string | null;
+            /** Last Updated At */
+            last_updated_at?: string | null;
+        };
+        /** EligibilityEvidence */
+        EligibilityEvidence: {
+            /** Source */
+            source: string;
+            /** Summary */
+            summary: string;
+            /** Source Id */
+            source_id?: string | null;
+        };
+        /** EligibilityFinding */
+        EligibilityFinding: {
+            /** Id */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "meets_requirement" | "likely_meets" | "needs_review" | "missing_evidence" | "does_not_meet" | "unknown";
+            /** Checked */
+            checked: string;
+            /** Evidence */
+            evidence?: components["schemas"]["EligibilityEvidence"][];
+            /** Reason */
+            reason: string;
+            /** Recommended Action */
+            recommended_action: string;
+        };
         /** EligibilityHistoryResponse */
         EligibilityHistoryResponse: {
             /** Items */
@@ -4795,7 +5047,7 @@ export interface components {
              */
             application_id: string;
             /** Findings */
-            findings: unknown[];
+            findings: components["schemas"]["EligibilityFinding"][];
             /** Strengths */
             strengths: unknown[];
             /** Risks */
@@ -4808,6 +5060,17 @@ export interface components {
             readiness_components: {
                 [key: string]: unknown;
             };
+            /**
+             * Overall Status
+             * @enum {string}
+             */
+            overall_status: "eligible" | "likely_eligible" | "needs_review" | "not_eligible" | "unknown";
+            /** Trigger Source */
+            trigger_source: string;
+            /** Data Sources */
+            data_sources: components["schemas"]["EligibilityDataSource"][];
+            /** Important Changes */
+            important_changes: string[];
             /** Disclaimer */
             disclaimer: string;
             /**
@@ -4815,6 +5078,11 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Last Calculated At
+             * Format: date-time
+             */
+            last_calculated_at: string;
         };
         /** EntitlementResponse */
         EntitlementResponse: {
@@ -5297,6 +5565,26 @@ export interface components {
              */
             created_at: string;
         };
+        /** InvitationLinkResponse */
+        InvitationLinkResponse: {
+            /** Invitation Url */
+            invitation_url: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
+        /** InvitationResendResponse */
+        InvitationResendResponse: {
+            /** Status */
+            status: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
         /** LanguageEntry */
         LanguageEntry: {
             /** Id */
@@ -5332,6 +5620,27 @@ export interface components {
             evidence_reference?: string | null;
             /** Notes */
             notes?: string | null;
+        };
+        /** LinkedDocumentSummary */
+        LinkedDocumentSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+            /** Category */
+            category: string;
+            /** Malware Status */
+            malware_status: string;
+            /** Expires At */
+            expires_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -6056,6 +6365,34 @@ export interface components {
             /** Email */
             email: string;
         };
+        /** RelatedRequirementSummary */
+        RelatedRequirementSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /** Due At */
+            due_at?: string | null;
+        };
+        /** RelatedTaskSummary */
+        RelatedTaskSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /** Due At */
+            due_at?: string | null;
+        };
         /** ReminderCreate */
         ReminderCreate: {
             /**
@@ -6199,7 +6536,7 @@ export interface components {
              * @default not_started
              * @enum {string}
              */
-            status: "not_started" | "in_progress" | "ready" | "submitted" | "waived";
+            status: "not_started" | "in_progress" | "ready" | "needs_review" | "blocked" | "complete" | "submitted" | "waived";
             /**
              * Required
              * @default true
@@ -6234,7 +6571,7 @@ export interface components {
              * @default not_started
              * @enum {string}
              */
-            status: "not_started" | "in_progress" | "ready" | "submitted" | "waived";
+            status: "not_started" | "in_progress" | "ready" | "needs_review" | "blocked" | "complete" | "submitted" | "waived";
             /**
              * Required
              * @default true
@@ -6281,6 +6618,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            linked_document?: components["schemas"]["LinkedDocumentSummary"] | null;
+            related_task?: components["schemas"]["RelatedTaskSummary"] | null;
+            /**
+             * Readiness State
+             * @default not_ready
+             * @enum {string}
+             */
+            readiness_state: "not_ready" | "in_progress" | "ready" | "needs_review" | "blocked";
         };
         /** RequirementUpdate */
         RequirementUpdate: {
@@ -6289,7 +6634,7 @@ export interface components {
             /** Title */
             title?: string | null;
             /** Status */
-            status?: ("not_started" | "in_progress" | "ready" | "submitted" | "waived") | null;
+            status?: ("not_started" | "in_progress" | "ready" | "needs_review" | "blocked" | "complete" | "submitted" | "waived") | null;
             /** Required */
             required?: boolean | null;
             /** Owner */
@@ -6882,6 +7227,18 @@ export interface components {
             title: string;
             /** Due At */
             due_at?: string | null;
+            /** Requirement Id */
+            requirement_id?: string | null;
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /**
+             * Priority
+             * @default normal
+             * @enum {string}
+             */
+            priority: "low" | "normal" | "high" | "critical";
+            /** Reminder At */
+            reminder_at?: string | null;
         };
         /** TaskReorderRequest */
         TaskReorderRequest: {
@@ -6894,6 +7251,18 @@ export interface components {
             title: string;
             /** Due At */
             due_at?: string | null;
+            /** Requirement Id */
+            requirement_id?: string | null;
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /**
+             * Priority
+             * @default normal
+             * @enum {string}
+             */
+            priority: "low" | "normal" | "high" | "critical";
+            /** Reminder At */
+            reminder_at?: string | null;
             /**
              * Id
              * Format: uuid
@@ -6921,6 +7290,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Reminder Status
+             * @default none
+             * @enum {string}
+             */
+            reminder_status: "none" | "scheduled" | "sent" | "cancelled";
+            related_requirement?: components["schemas"]["RelatedRequirementSummary"] | null;
+            assignee?: components["schemas"]["AssigneeSummary"] | null;
         };
         /** TaskUpdate */
         TaskUpdate: {
@@ -6932,6 +7309,16 @@ export interface components {
             status?: ("open" | "in_progress" | "completed" | "cancelled") | null;
             /** Due At */
             due_at?: string | null;
+            /** Requirement Id */
+            requirement_id?: string | null;
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /** Priority */
+            priority?: ("low" | "normal" | "high" | "critical") | null;
+            /** Reminder At */
+            reminder_at?: string | null;
+            /** Reminder Status */
+            reminder_status?: ("none" | "scheduled" | "sent" | "cancelled") | null;
         };
         /** TemplateInputResponse */
         TemplateInputResponse: {
@@ -8451,7 +8838,11 @@ export interface operations {
     };
     list_requirements_api_v1_applications__application_id__requirements_get: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: string | null;
+                owner?: string | null;
+                type?: string | null;
+            };
             header?: never;
             path: {
                 application_id: string;
@@ -8751,7 +9142,11 @@ export interface operations {
     };
     list_tasks_api_v1_applications__application_id__tasks_get: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: string | null;
+                priority?: string | null;
+                assigneeUserId?: string | null;
+            };
             header?: never;
             path: {
                 application_id: string;
@@ -8982,9 +9377,47 @@ export interface operations {
             };
         };
     };
+    application_activity_api_v1_applications__application_id__activity_get: {
+        parameters: {
+            query?: {
+                category?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityPageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_document_links_api_v1_applications__application_id__documents_get: {
         parameters: {
-            query?: never;
+            query?: {
+                requirementId?: string | null;
+                scanStatus?: string | null;
+            };
             header?: never;
             path: {
                 application_id: string;
@@ -9066,6 +9499,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_document_link_api_v1_applications__application_id__documents__link_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentLinkUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentLinkResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -13511,6 +13980,37 @@ export interface operations {
             };
         };
     };
+    collaboration_capabilities_api_v1_applications__application_id__collaborators_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollaborationCapabilitiesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     remove_collaborator_api_v1_applications__application_id__collaborators__collaborator_id__delete: {
         parameters: {
             query?: never;
@@ -13564,6 +14064,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollaboratorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_collaborator_invitation_api_v1_applications__application_id__collaborators__collaborator_id__resend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                collaborator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationResendResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_collaborator_invitation_link_api_v1_applications__application_id__collaborators__collaborator_id__invitation_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                collaborator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationLinkResponse"];
                 };
             };
             /** @description Validation Error */

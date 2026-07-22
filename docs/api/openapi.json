@@ -1730,6 +1730,54 @@
               "format": "uuid",
               "title": "Application Id"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
           }
         ],
         "responses": {
@@ -2243,6 +2291,55 @@
               "format": "uuid",
               "title": "Application Id"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Priority"
+            }
+          },
+          {
+            "name": "assigneeUserId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assigneeuserid"
+            }
           }
         ],
         "responses": {
@@ -2566,6 +2663,100 @@
         }
       }
     },
+    "/api/v1/applications/{application_id}/activity": {
+      "get": {
+        "tags": [
+          "Academic Applications"
+        ],
+        "summary": "Application Activity",
+        "operationId": "application_activity_api_v1_applications__application_id__activity_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityPageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/applications/{application_id}/documents": {
       "post": {
         "tags": [
@@ -2644,6 +2835,39 @@
               "format": "uuid",
               "title": "Application Id"
             }
+          },
+          {
+            "name": "requirementId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Requirementid"
+            }
+          },
+          {
+            "name": "scanStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scanstatus"
+            }
           }
         ],
         "responses": {
@@ -2675,6 +2899,72 @@
       }
     },
     "/api/v1/applications/{application_id}/documents/{link_id}": {
+      "patch": {
+        "tags": [
+          "Academic Applications"
+        ],
+        "summary": "Update Document Link",
+        "operationId": "update_document_link_api_v1_applications__application_id__documents__link_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Link Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentLinkUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentLinkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Academic Applications"
@@ -10555,6 +10845,54 @@
         }
       }
     },
+    "/api/v1/applications/{application_id}/collaborators/capabilities": {
+      "get": {
+        "tags": [
+          "Collaboration"
+        ],
+        "summary": "Collaboration Capabilities",
+        "operationId": "collaboration_capabilities_api_v1_applications__application_id__collaborators_capabilities_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationCapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/applications/{application_id}/collaborators/{collaborator_id}": {
       "patch": {
         "tags": [
@@ -10658,6 +10996,122 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/collaborators/{collaborator_id}/resend": {
+      "post": {
+        "tags": [
+          "Collaboration"
+        ],
+        "summary": "Resend Collaborator Invitation",
+        "operationId": "resend_collaborator_invitation_api_v1_applications__application_id__collaborators__collaborator_id__resend_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "collaborator_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Collaborator Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResendResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/collaborators/{collaborator_id}/invitation-link": {
+      "post": {
+        "tags": [
+          "Collaboration"
+        ],
+        "summary": "Create Collaborator Invitation Link",
+        "operationId": "create_collaborator_invitation_link_api_v1_applications__application_id__collaborators__collaborator_id__invitation_link_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "collaborator_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Collaborator Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationLinkResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -14210,6 +14664,149 @@
         "title": "AcademicReferenceUpdate",
         "description": "Only permitted while the invitation is still `invited` (nothing submitted yet)."
       },
+      "ActivityActor": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ActivityActor"
+      },
+      "ActivityEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "application",
+              "requirements",
+              "tasks",
+              "documents",
+              "eligibility",
+              "collaborators"
+            ],
+            "title": "Category"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/ActivityActor"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "affected_item": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Item"
+          },
+          "change_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "actor",
+          "action",
+          "occurred_at"
+        ],
+        "title": "ActivityEventResponse"
+      },
+      "ActivityPageResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityEventResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ActivityPageResponse"
+      },
       "AdminActionSummary": {
         "properties": {
           "id": {
@@ -14946,6 +15543,20 @@
             },
             "type": "array",
             "title": "Recommended Next Actions"
+          },
+          "components": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Components"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
           }
         },
         "type": "object",
@@ -15429,10 +16040,37 @@
           },
           "history": {
             "items": {
-              "$ref": "#/components/schemas/AuditEventResponse"
+              "$ref": "#/components/schemas/ActivityEventResponse"
             },
             "type": "array",
             "title": "History"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/ApplicationReadinessResponse"
+          },
+          "filter_options": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Filter Options"
+          },
+          "permissions": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Permissions"
           }
         },
         "type": "object",
@@ -15441,9 +16079,51 @@
           "requirements",
           "tasks",
           "document_links",
-          "history"
+          "history",
+          "readiness"
         ],
         "title": "ApplicationWorkspaceResponse"
+      },
+      "AssigneeSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "AssigneeSummary"
       },
       "AuditEventResponse": {
         "properties": {
@@ -15794,6 +16474,35 @@
         ],
         "title": "CheckoutResponse"
       },
+      "CollaborationCapabilitiesResponse": {
+        "properties": {
+          "current_user_role": {
+            "type": "string",
+            "title": "Current User Role"
+          },
+          "supported_roles": {
+            "items": {
+              "$ref": "#/components/schemas/CollaboratorRoleOption"
+            },
+            "type": "array",
+            "title": "Supported Roles"
+          },
+          "actions": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_user_role",
+          "supported_roles",
+          "actions"
+        ],
+        "title": "CollaborationCapabilitiesResponse"
+      },
       "CollaboratorAcceptResponse": {
         "properties": {
           "application_id": {
@@ -15834,6 +16543,18 @@
             ],
             "title": "Role",
             "default": "viewer"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
           }
         },
         "type": "object",
@@ -15870,6 +16591,28 @@
             "type": "string",
             "title": "Invited Email"
           },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
           "role": {
             "type": "string",
             "title": "Role"
@@ -15877,6 +16620,13 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "access_scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Access Scope"
           },
           "expires_at": {
             "type": "string",
@@ -15907,6 +16657,18 @@
             ],
             "title": "Revoked At"
           },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -15927,6 +16689,34 @@
           "created_at"
         ],
         "title": "CollaboratorResponse"
+      },
+      "CollaboratorRoleOption": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "enum": [
+              "viewer",
+              "commenter",
+              "advisor_editor"
+            ],
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "description"
+        ],
+        "title": "CollaboratorRoleOption"
       },
       "CollaboratorUpdate": {
         "properties": {
@@ -15968,6 +16758,13 @@
           "role": {
             "type": "string",
             "title": "Role"
+          },
+          "permissions": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Permissions"
           }
         },
         "type": "object",
@@ -16540,6 +17337,18 @@
       },
       "DocumentLinkCreate": {
         "properties": {
+          "mutation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mutation Id"
+          },
           "document_id": {
             "type": "string",
             "format": "uuid",
@@ -16593,10 +17402,47 @@
             ],
             "title": "Requirement Id"
           },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedDocumentSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requirement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RelatedRequirementSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -16608,6 +17454,50 @@
           "created_at"
         ],
         "title": "DocumentLinkResponse"
+      },
+      "DocumentLinkUpdate": {
+        "properties": {
+          "mutation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutation Id"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Version"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mutation_id",
+          "expected_version"
+        ],
+        "title": "DocumentLinkUpdate"
       },
       "DocumentResponse": {
         "properties": {
@@ -17068,6 +17958,124 @@
         "type": "object",
         "title": "EducationSection"
       },
+      "EligibilityDataSource": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "last_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "label"
+        ],
+        "title": "EligibilityDataSource"
+      },
+      "EligibilityEvidence": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "summary"
+        ],
+        "title": "EligibilityEvidence"
+      },
+      "EligibilityFinding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "meets_requirement",
+              "likely_meets",
+              "needs_review",
+              "missing_evidence",
+              "does_not_meet",
+              "unknown"
+            ],
+            "title": "Status"
+          },
+          "checked": {
+            "type": "string",
+            "title": "Checked"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EligibilityEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "recommended_action": {
+            "type": "string",
+            "title": "Recommended Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "checked",
+          "reason",
+          "recommended_action"
+        ],
+        "title": "EligibilityFinding"
+      },
       "EligibilityHistoryResponse": {
         "properties": {
           "items": {
@@ -17150,7 +18158,9 @@
             "title": "Application Id"
           },
           "findings": {
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/EligibilityFinding"
+            },
             "type": "array",
             "title": "Findings"
           },
@@ -17178,6 +18188,35 @@
             "type": "object",
             "title": "Readiness Components"
           },
+          "overall_status": {
+            "type": "string",
+            "enum": [
+              "eligible",
+              "likely_eligible",
+              "needs_review",
+              "not_eligible",
+              "unknown"
+            ],
+            "title": "Overall Status"
+          },
+          "trigger_source": {
+            "type": "string",
+            "title": "Trigger Source"
+          },
+          "data_sources": {
+            "items": {
+              "$ref": "#/components/schemas/EligibilityDataSource"
+            },
+            "type": "array",
+            "title": "Data Sources"
+          },
+          "important_changes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Important Changes"
+          },
           "disclaimer": {
             "type": "string",
             "title": "Disclaimer"
@@ -17186,6 +18225,11 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "last_calculated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Calculated At"
           }
         },
         "type": "object",
@@ -17198,8 +18242,13 @@
           "questions",
           "readiness_score",
           "readiness_components",
+          "overall_status",
+          "trigger_source",
+          "data_sources",
+          "important_changes",
           "disclaimer",
-          "created_at"
+          "created_at",
+          "last_calculated_at"
         ],
         "title": "EligibilityResponse"
       },
@@ -18469,6 +19518,44 @@
         ],
         "title": "InterviewTurnResponse"
       },
+      "InvitationLinkResponse": {
+        "properties": {
+          "invitation_url": {
+            "type": "string",
+            "title": "Invitation Url"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invitation_url",
+          "expires_at"
+        ],
+        "title": "InvitationLinkResponse"
+      },
+      "InvitationResendResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "expires_at"
+        ],
+        "title": "InvitationResendResponse"
+      },
       "LanguageEntry": {
         "properties": {
           "id": {
@@ -18598,6 +19685,53 @@
           "status"
         ],
         "title": "LaunchGateUpdate"
+      },
+      "LinkedDocumentSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "malware_status": {
+            "type": "string",
+            "title": "Malware Status"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "category",
+          "malware_status",
+          "created_at"
+        ],
+        "title": "LinkedDocumentSummary"
       },
       "LoginRequest": {
         "properties": {
@@ -20555,6 +21689,78 @@
         ],
         "title": "RegisterResponse"
       },
+      "RelatedRequirementSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
+        "title": "RelatedRequirementSummary"
+      },
+      "RelatedTaskSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
+        "title": "RelatedTaskSummary"
+      },
       "ReminderCreate": {
         "properties": {
           "mutation_id": {
@@ -20999,6 +22205,9 @@
               "not_started",
               "in_progress",
               "ready",
+              "needs_review",
+              "blocked",
+              "complete",
               "submitted",
               "waived"
             ],
@@ -21106,6 +22315,9 @@
               "not_started",
               "in_progress",
               "ready",
+              "needs_review",
+              "blocked",
+              "complete",
               "submitted",
               "waived"
             ],
@@ -21205,6 +22417,38 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "linked_document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedDocumentSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "related_task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RelatedTaskSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "readiness_state": {
+            "type": "string",
+            "enum": [
+              "not_ready",
+              "in_progress",
+              "ready",
+              "needs_review",
+              "blocked"
+            ],
+            "title": "Readiness State",
+            "default": "not_ready"
           }
         },
         "type": "object",
@@ -21253,6 +22497,9 @@
                   "not_started",
                   "in_progress",
                   "ready",
+                  "needs_review",
+                  "blocked",
+                  "complete",
                   "submitted",
                   "waived"
                 ]
@@ -23182,6 +24429,53 @@
               }
             ],
             "title": "Due At"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "assignee_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee User Id"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "critical"
+            ],
+            "title": "Priority",
+            "default": "normal"
+          },
+          "reminder_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reminder At"
           }
         },
         "type": "object",
@@ -23229,6 +24523,53 @@
             ],
             "title": "Due At"
           },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "assignee_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee User Id"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "critical"
+            ],
+            "title": "Priority",
+            "default": "normal"
+          },
+          "reminder_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reminder At"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -23257,6 +24598,37 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "reminder_status": {
+            "type": "string",
+            "enum": [
+              "none",
+              "scheduled",
+              "sent",
+              "cancelled"
+            ],
+            "title": "Reminder Status",
+            "default": "none"
+          },
+          "related_requirement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RelatedRequirementSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assignee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssigneeSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -23324,6 +24696,76 @@
               }
             ],
             "title": "Due At"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "assignee_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee User Id"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "normal",
+                  "high",
+                  "critical"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "reminder_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reminder At"
+          },
+          "reminder_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "scheduled",
+                  "sent",
+                  "cancelled"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reminder Status"
           }
         },
         "type": "object",
