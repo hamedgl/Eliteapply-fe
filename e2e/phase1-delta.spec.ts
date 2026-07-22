@@ -153,6 +153,35 @@ test("billing uses server-owned entitlement and product values", async ({ page }
   await expect(page.getByLabel("Token amount")).toHaveValue("1000");
 });
 
+test("billing settings navigation keeps the app and its cache alive", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/app/settings/billing");
+  await expect(page.getByRole("heading", { name: "Billing & usage" })).toBeVisible();
+  const navigationCount = await page.evaluate(
+    () => performance.getEntriesByType("navigation").length,
+  );
+
+  await page
+    .getByRole("navigation", { name: "Settings" })
+    .getByRole("link", { name: "Profile" })
+    .click();
+
+  await expect(page).toHaveURL(/\/app\/settings\/profile$/);
+  await expect(
+    page.getByRole("heading", { name: "Personal details" }),
+  ).toBeVisible();
+  await expect(
+    page.evaluate(() => performance.getEntriesByType("navigation").length),
+  ).resolves.toBe(navigationCount);
+  await page.screenshot({ path: "/tmp/eliteapply-settings-navigation.png" });
+  expect(errors).toEqual([]);
+});
+
 test("document detail waits for a successful security scan", async ({ page }) => {
   await page.goto("/app/documents/00000000-0000-4000-8000-000000000002");
   await expect(page.getByRole("heading", { name: "Academic transcript.pdf" })).toBeVisible();

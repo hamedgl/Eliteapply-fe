@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import {
   Navigate,
+  Link,
   RouterProvider,
   createBrowserRouter,
   isRouteErrorResponse,
@@ -233,7 +234,7 @@ function Unavailable() {
         We won’t pretend a feature is ready before its backend capability is
         verified.
       </p>
-      <a href="/app/dashboard">Return to dashboard</a>
+      <Link to="/app/dashboard">Return to dashboard</Link>
     </div>
   );
 }
@@ -245,10 +246,10 @@ function AppRouteError() {
 
   return (
     <main className="app-route-error" role="alert">
-      <a className="app-brand" href="/app/dashboard">
+      <Link className="app-brand" to="/app/dashboard">
         <span aria-hidden="true">E</span>
         EliteApply
-      </a>
+      </Link>
       <section>
         <span className="route-error-code" aria-hidden="true">
           {status ?? "!"}
@@ -271,9 +272,9 @@ function AppRouteError() {
           >
             Reload page
           </button>
-          <a href={sessionProblem ? "/login" : "/app/dashboard"}>
+          <Link to={sessionProblem ? "/login" : "/app/dashboard"}>
             {sessionProblem ? "Go to sign in" : "Return to dashboard"}
-          </a>
+          </Link>
         </div>
       </section>
     </main>

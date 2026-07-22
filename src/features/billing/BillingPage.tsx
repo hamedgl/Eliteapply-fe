@@ -6,10 +6,11 @@ import {
 } from "@tanstack/react-query";
 import { CheckCircle2, CreditCard, ExternalLink, Gauge } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import { billingApi, newMutationId } from "../../lib/api/billing";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useEntitlements } from "../../lib/billing/provider";
+import { preloadAppRoute } from "../../app/preload";
 
 const number = new Intl.NumberFormat();
 const date = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -336,14 +337,25 @@ export function BillingPage() {
 }
 
 function SettingsNav() {
+  const tabs = [
+    ["/app/settings/profile", "Profile"],
+    ["/app/settings/security", "Security"],
+    ["/app/settings/privacy", "Privacy"],
+    ["/app/settings/billing", "Billing & usage"],
+  ] as const;
+
   return (
     <nav aria-label="Settings">
-      <a href="/app/settings/profile">Profile</a>
-      <a href="/app/settings/security">Security</a>
-      <a href="/app/settings/privacy">Privacy</a>
-      <a href="/app/settings/billing" aria-current="page">
-        Billing & usage
-      </a>
+      {tabs.map(([to, label]) => (
+        <NavLink
+          key={to}
+          to={to}
+          onPointerEnter={() => preloadAppRoute(to)}
+          onFocus={() => preloadAppRoute(to)}
+        >
+          {label}
+        </NavLink>
+      ))}
     </nav>
   );
 }

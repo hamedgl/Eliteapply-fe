@@ -6,6 +6,7 @@ import { usersApi } from "../../lib/api/users";
 import { authApi } from "../../lib/api/auth";
 import { productConfig } from "../../lib/config/product";
 import { downloadResponse } from "../../lib/api/download";
+import { preloadAppRoute } from "../../app/preload";
 
 type Status = { text: string; tone: "success" | "error" | "pending" } | null;
 
@@ -530,6 +531,8 @@ function Settings({
               className={({ isActive }) =>
                 isActive || tab.label === title ? "active" : undefined
               }
+              onPointerEnter={() => preloadAppRoute(tab.to)}
+              onFocus={() => preloadAppRoute(tab.to)}
             >
               {tab.label}
             </NavLink>
