@@ -1869,6 +1869,132 @@
   border-top: 1px solid var(--app-line);
 }
 
+.applications-filter-drawer {
+  width: min(456px, 100%);
+  border-inline-start: 1px solid var(--app-line);
+}
+.applications-filter-drawer .apps-drawer-header {
+  align-items: flex-start;
+  padding: 1.35rem 1.5rem 1.15rem;
+}
+.applications-filter-drawer .apps-drawer-header h2 {
+  color: var(--app-ink);
+  font-size: 1.35rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.applications-filter-drawer .apps-drawer-header p {
+  margin: 0.3rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.applications-filter-drawer .apps-drawer-header button {
+  width: 44px;
+  height: 44px;
+  margin: -0.35rem -0.45rem 0 0;
+  border-radius: 10px;
+}
+.applications-filter-drawer .apps-drawer-body {
+  gap: 0;
+  padding: 0 1.5rem;
+  scrollbar-gutter: stable;
+}
+.applications-filter-drawer .apps-drawer-group {
+  gap: 0.95rem;
+  padding: 1.35rem 0;
+  border-top: 1px solid var(--app-line);
+}
+.applications-filter-drawer .apps-drawer-group:first-child {
+  border-top: 0;
+}
+.applications-filter-drawer .apps-drawer-group h3 {
+  color: var(--app-ink);
+  font-size: 0.875rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.applications-filter-drawer .apps-drawer-group label,
+.applications-filter-drawer .apps-combobox-label {
+  color: var(--app-text);
+  font-size: 0.875rem;
+}
+.applications-filter-drawer .apps-combobox-control {
+  border-color: var(--app-line-strong);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.applications-filter-drawer .apps-combobox-control:focus-within {
+  box-shadow: 0 0 0 3px var(--app-blue-soft);
+}
+.applications-filter-drawer .apps-combobox-control input {
+  height: 44px;
+  color: var(--app-ink);
+  font-size: 0.875rem;
+}
+.applications-filter-drawer .check-field {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-subtle);
+  cursor: pointer;
+}
+.applications-filter-drawer .check-field input {
+  width: 18px;
+  height: 18px;
+}
+.applications-filter-drawer .apps-drawer-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 1rem 1.5rem max(1rem, env(safe-area-inset-bottom));
+  background: var(--app-surface);
+}
+.apps-drawer-result {
+  color: var(--app-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.apps-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.apps-drawer-actions > button:not(.primary) {
+  min-height: 40px;
+  padding: 0 0.85rem;
+  color: var(--app-text);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.apps-drawer-actions > button:not(.primary):hover {
+  color: var(--app-ink);
+  background: var(--app-surface-subtle);
+}
+
+@media (max-width: 520px) {
+  .applications-filter-drawer {
+    width: 100%;
+    border-inline-start: 0;
+  }
+  .applications-filter-drawer .apps-drawer-header,
+  .applications-filter-drawer .apps-drawer-body {
+    padding-inline: 1rem;
+  }
+  .applications-filter-drawer .apps-drawer-footer {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    padding-inline: 1rem;
+  }
+  .applications-filter-drawer .apps-drawer-actions {
+    justify-content: flex-end;
+  }
+}
+
 /* ── Combobox ── */
 .apps-combobox {
   position: relative;

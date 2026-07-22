@@ -26,7 +26,7 @@ export function FilterDrawer({
   open,
   onClose,
   filters,
-  setFilter,
+  onChange,
   knownTags,
   resultCount,
   onReset,
@@ -34,10 +34,7 @@ export function FilterDrawer({
   open: boolean;
   onClose: () => void;
   filters: DrawerFilters;
-  setFilter: <K extends keyof DrawerFilters>(
-    key: K,
-    value: DrawerFilters[K],
-  ) => void;
+  onChange: (updates: Partial<DrawerFilters>) => void;
   knownTags: string[];
   resultCount: number | null;
   onReset: () => void;
@@ -50,7 +47,7 @@ export function FilterDrawer({
   return (
     <div className="apps-drawer-backdrop" role="presentation" onClick={onClose}>
       <section
-        className="apps-drawer"
+        className="apps-drawer applications-filter-drawer"
         role="dialog"
         aria-modal="true"
         aria-labelledby="filter-drawer-title"
@@ -61,7 +58,10 @@ export function FilterDrawer({
         }}
       >
         <header className="apps-drawer-header">
-          <h2 id="filter-drawer-title">Filters</h2>
+          <div>
+            <h2 id="filter-drawer-title">Filters</h2>
+            <p>Selections stay visible and update results instantly.</p>
+          </div>
           <button type="button" onClick={onClose} aria-label="Close filters">
             <X aria-hidden="true" />
           </button>
@@ -81,8 +81,7 @@ export function FilterDrawer({
               value={filters.institutionId}
               valueLabel={filters.institutionName}
               onChange={(id, name) => {
-                setFilter("institutionId", id);
-                setFilter("institutionName", name);
+                onChange({ institutionId: id, institutionName: name });
               }}
             />
             <EntityCombobox
@@ -97,8 +96,7 @@ export function FilterDrawer({
               value={filters.programmeId}
               valueLabel={filters.programmeName}
               onChange={(id, name) => {
-                setFilter("programmeId", id);
-                setFilter("programmeName", name);
+                onChange({ programmeId: id, programmeName: name });
               }}
             />
             <EntityCombobox
@@ -113,8 +111,7 @@ export function FilterDrawer({
               value={filters.scholarshipId}
               valueLabel={filters.scholarshipName}
               onChange={(id, name) => {
-                setFilter("scholarshipId", id);
-                setFilter("scholarshipName", name);
+                onChange({ scholarshipId: id, scholarshipName: name });
               }}
             />
             <label>
@@ -122,7 +119,12 @@ export function FilterDrawer({
               <Select
                 value={filters.applicationType}
                 onChange={(val) =>
-                  setFilter("applicationType", typeof val === "string" ? val : (val?.target?.value ?? ""))
+                  onChange({
+                    applicationType:
+                      typeof val === "string"
+                        ? val
+                        : (val?.target?.value ?? ""),
+                  })
                 }
                 options={[
                   { value: "", label: "All types" },
@@ -143,7 +145,7 @@ export function FilterDrawer({
                 type="date"
                 value={filters.deadlineFrom}
                 onChange={(event) =>
-                  setFilter("deadlineFrom", event.target.value)
+                  onChange({ deadlineFrom: event.target.value })
                 }
               />
             </label>
@@ -152,7 +154,9 @@ export function FilterDrawer({
               <input
                 type="date"
                 value={filters.deadlineTo}
-                onChange={(event) => setFilter("deadlineTo", event.target.value)}
+                onChange={(event) =>
+                  onChange({ deadlineTo: event.target.value })
+                }
               />
             </label>
           </section>
@@ -163,7 +167,14 @@ export function FilterDrawer({
               Tag
               <Select
                 value={filters.tag}
-                onChange={(val) => setFilter("tag", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                onChange={(val) =>
+                  onChange({
+                    tag:
+                      typeof val === "string"
+                        ? val
+                        : (val?.target?.value ?? ""),
+                  })
+                }
                 options={[
                   { value: "", label: "All tags" },
                   ...knownTags.map((tag) => ({
@@ -177,7 +188,14 @@ export function FilterDrawer({
               Priority
               <Select
                 value={filters.priority}
-                onChange={(val) => setFilter("priority", typeof val === "string" ? val : (val?.target?.value ?? ""))}
+                onChange={(val) =>
+                  onChange({
+                    priority:
+                      typeof val === "string"
+                        ? val
+                        : (val?.target?.value ?? ""),
+                  })
+                }
                 options={[
                   { value: "", label: "All priorities" },
                   ...priorities.map((item) => ({
@@ -191,21 +209,28 @@ export function FilterDrawer({
               <input
                 type="checkbox"
                 checked={filters.archived}
-                onChange={(event) => setFilter("archived", event.target.checked)}
+                onChange={(event) =>
+                  onChange({ archived: event.target.checked })
+                }
               />{" "}
               Include archived
             </label>
           </section>
         </div>
         <footer className="apps-drawer-footer">
-          <button type="button" onClick={onReset}>
-            Reset filters
-          </button>
-          <button type="button" className="primary" onClick={onClose}>
+          <span className="apps-drawer-result" role="status" aria-live="polite">
             {resultCount === null
-              ? "Show results"
-              : `Show ${resultCount} application${resultCount === 1 ? "" : "s"}`}
-          </button>
+              ? "Updating results…"
+              : `${resultCount} matching application${resultCount === 1 ? "" : "s"}`}
+          </span>
+          <div className="apps-drawer-actions">
+            <button type="button" onClick={onReset}>
+              Reset
+            </button>
+            <button type="button" className="primary" onClick={onClose}>
+              Done
+            </button>
+          </div>
         </footer>
       </section>
     </div>

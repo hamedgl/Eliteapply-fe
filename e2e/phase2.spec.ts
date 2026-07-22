@@ -20,6 +20,7 @@ const app = (
   title: string,
   stage: string,
   priority = "normal",
+  tags: string[] = [],
 ) => ({
   id,
   title,
@@ -33,7 +34,7 @@ const app = (
   primary_deadline_at: "2027-01-15T12:00:00Z",
   source_url: null,
   notes: null,
-  tags: [],
+  tags,
   version: 1,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -300,6 +301,124 @@ test("application modal opens a usable private programme form", async ({
     .toBe("00000000-0000-4000-8000-000000000021");
   expect(submitted?.name).toBe("MSc Public Policy");
 });
+
+test("application filters persist every field after closing and reloading", async ({
+  page,
+}) => {
+  await page.route(/\/api\/v1\/applications\?/, (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          app(
+            "00000000-0000-4000-8000-000000000013",
+            "MSc Computer Science",
+            "preparing",
+            "normal",
+            ["Funding"],
+          ),
+        ],
+        next_cursor: null,
+        has_more: false,
+        total: 1,
+      },
+    }),
+  );
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/app/applications?view=list");
+  await page.getByRole("button", { name: "Filters" }).click();
+  const drawer = page.getByRole("dialog", { name: "Filters" });
+
+  await drawer.getByRole("combobox", { name: "Institution" }).click();
+  await drawer.getByRole("option", { name: /University of Oxford/ }).click();
+  await drawer.getByRole("combobox", { name: "Programme" }).click();
+  await drawer.getByRole("option", { name: /MSc Computer Science/ }).click();
+  await drawer.getByRole("combobox", { name: "Scholarship" }).click();
+  await drawer.getByRole("option", { name: /Rhodes Scholarship/ }).click();
+
+  await drawer
+    .locator("label", { hasText: "Application type" })
+    .getByRole("button")
+    .click();
+  await page.getByRole("option", { name: "Scholarship", exact: true }).click();
+  await drawer.getByLabel("Deadline from").fill("2026-08-01");
+  await drawer.getByLabel("Deadline to").fill("2026-12-31");
+  await drawer.locator("label", { hasText: "Tag" }).getByRole("button").click();
+  await page.getByRole("option", { name: "Funding", exact: true }).click();
+  await drawer
+    .locator("label", { hasText: "Priority" })
+    .getByRole("button")
+    .click();
+  await page.getByRole("option", { name: "High", exact: true }).click();
+  await drawer.getByLabel("Include archived").click();
+  await expect(drawer.getByLabel("Include archived")).toBeChecked();
+
+  await expect
+    .poll(() => Object.fromEntries(new URL(page.url()).searchParams))
+    .toMatchObject({
+      institution: "00000000-0000-4000-8000-000000000021",
+      institutionName: "University of Oxford",
+      programme: "00000000-0000-4000-8000-000000000031",
+      programmeName: "MSc Computer Science",
+      scholarship: "00000000-0000-4000-8000-000000000032",
+      scholarshipName: "Rhodes Scholarship",
+      type: "scholarship",
+      deadlineFrom: "2026-08-01",
+      deadlineTo: "2026-12-31",
+      tag: "Funding",
+      priority: "high",
+      archived: "true",
+    });
+
+  await drawer.getByRole("button", { name: "Done" }).click();
+  await page.reload();
+  await page.getByRole("button", { name: /Filters/ }).click();
+
+  await expect(
+    drawer.getByRole("combobox", { name: "Institution" }),
+  ).toHaveValue(
+    "University of Oxford",
+  );
+  await expect(
+    drawer.getByRole("combobox", { name: "Programme" }),
+  ).toHaveValue(
+    "MSc Computer Science",
+  );
+  await expect(
+    drawer.getByRole("combobox", { name: "Scholarship" }),
+  ).toHaveValue(
+    "Rhodes Scholarship",
+  );
+  await expect(
+    drawer.locator("label", { hasText: "Application type" }),
+  ).toContainText("Scholarship");
+  await expect(drawer.getByLabel("Deadline from")).toHaveValue("2026-08-01");
+  await expect(drawer.getByLabel("Deadline to")).toHaveValue("2026-12-31");
+  await expect(drawer.locator("label", { hasText: "Tag" })).toContainText("Funding");
+  await expect(
+    drawer.locator("label", { hasText: "Priority" }),
+  ).toContainText("High");
+  await expect(drawer.getByLabel("Include archived")).toBeChecked();
+  await page.screenshot({
+    path: "/tmp/eliteapply-filters-persisted.png",
+    fullPage: false,
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileDrawer = await drawer.boundingBox();
+  expect(mobileDrawer).not.toBeNull();
+  expect(Math.round(mobileDrawer!.width)).toBe(390);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await expect(drawer.getByRole("button", { name: "Done" })).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-filters-mobile.png",
+    fullPage: false,
+  });
+});
+
 test("board is keyboard operable and responsive", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/app/applications");

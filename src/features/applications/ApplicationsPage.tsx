@@ -121,19 +121,18 @@ export function ApplicationsPage() {
     (params.get("view") as View | null) ??
     (window.matchMedia("(max-width: 700px)").matches ? "list" : "board");
   const value = (key: string) => params.get(key) ?? "";
-  const setParam = (key: string, next: string | boolean) => {
-    setParams(
-      (current) => {
-        const copy = new URLSearchParams(current);
-        const text = typeof next === "boolean" ? (next ? "true" : "") : next;
-        if (text) copy.set(key, text);
-        else copy.delete(key);
-        if (key !== "view") copy.set("view", view);
-        return copy;
-      },
-      { replace: true },
-    );
+  const updateParams = (updates: Record<string, string | boolean>) => {
+    const copy = new URLSearchParams(window.location.search);
+    for (const [key, next] of Object.entries(updates)) {
+      const text = typeof next === "boolean" ? (next ? "true" : "") : next;
+      if (text) copy.set(key, text);
+      else copy.delete(key);
+    }
+    if (!("view" in updates)) copy.set("view", view);
+    setParams(copy, { replace: true });
   };
+  const setParam = (key: string, next: string | boolean) =>
+    updateParams({ [key]: next });
   const [searchDraft, setSearchDraft] = useDebouncedFilter(
     "search",
     params,
@@ -427,6 +426,16 @@ export function ApplicationsPage() {
     priority: value("priority"),
     archived: value("archived") === "true",
   };
+  const updateDrawerFilters = (updates: Partial<DrawerFilters>) => {
+    const nextParams: Record<string, string | boolean> = {};
+    for (const [key, next] of Object.entries(updates) as [
+      keyof DrawerFilters,
+      string | boolean,
+    ][]) {
+      nextParams[DRAWER_KEYS[key]] = next;
+    }
+    updateParams(nextParams);
+  };
   const drawerActiveCount = DRAWER_SCOPE_KEYS.filter(
     (key) => key !== "institutionName" && key !== "programmeName" && key !== "scholarshipName",
   ).filter((key) => Boolean(value(key))).length;
@@ -447,16 +456,13 @@ export function ApplicationsPage() {
     if (key === "type") return setParam("type", "");
     if (key === "priority") return setParam("priority", "");
     if (key === "institution") {
-      setParam("institution", "");
-      return setParam("institutionName", "");
+      return updateParams({ institution: "", institutionName: "" });
     }
     if (key === "programme") {
-      setParam("programme", "");
-      return setParam("programmeName", "");
+      return updateParams({ programme: "", programmeName: "" });
     }
     if (key === "scholarship") {
-      setParam("scholarship", "");
-      return setParam("scholarshipName", "");
+      return updateParams({ scholarship: "", scholarshipName: "" });
     }
     if (key === "deadlineFrom") return setParam("deadlineFrom", "");
     if (key === "deadlineTo") return setParam("deadlineTo", "");
@@ -712,7 +718,7 @@ export function ApplicationsPage() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         filters={drawerFilters}
-        setFilter={(key, val) => setParam(DRAWER_KEYS[key], val as string | boolean)}
+        onChange={updateDrawerFilters}
         knownTags={knownTags}
         resultCount={resultCount}
         onReset={resetDrawerFilters}

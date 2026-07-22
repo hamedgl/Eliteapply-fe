@@ -297,8 +297,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                   left: popoverRect.left,
                   width: popoverRect.width,
                   ...(popoverRect.placement === "bottom"
-                    ? { top: popoverRect.anchor }
-                    : { bottom: popoverRect.anchor }),
+                    ? { top: popoverRect.anchor, bottom: "auto" }
+                    : { top: "auto", bottom: popoverRect.anchor }),
                 }}
               >
                 {parsedOptions.map((option) => {
