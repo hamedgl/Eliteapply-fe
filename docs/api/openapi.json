@@ -5577,11 +5577,19 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The Academic Profile is incomplete or the request is invalid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AcademicProfileIncompleteResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WritingRequestValidationResponse"
+                    }
+                  ],
+                  "title": "Response 422 Generate Api V1 Writing Studio Documents  Document Id  Generate Post"
                 }
               }
             }
@@ -5773,11 +5781,19 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The Academic Profile is incomplete or the request is invalid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AcademicProfileIncompleteResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WritingRequestValidationResponse"
+                    }
+                  ],
+                  "title": "Response 422 Retry Generation Run Api V1 Writing Studio Generation Runs  Run Id  Retry Post"
                 }
               }
             }
@@ -13855,6 +13871,72 @@
         },
         "type": "object",
         "title": "AcademicProfileImportRequest"
+      },
+      "AcademicProfileIncompleteDetails": {
+        "properties": {
+          "required_action": {
+            "type": "string",
+            "const": "complete_academic_profile",
+            "title": "Required Action"
+          },
+          "profile_section": {
+            "type": "string",
+            "const": "education",
+            "title": "Profile Section"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "institution",
+                "field_of_study"
+              ]
+            },
+            "type": "array",
+            "title": "Missing Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "required_action",
+          "profile_section",
+          "missing_fields"
+        ],
+        "title": "AcademicProfileIncompleteDetails"
+      },
+      "AcademicProfileIncompleteResponse": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "const": "Validation Error",
+            "title": "Error"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "correlation_id": {
+            "type": "string",
+            "title": "Correlation Id"
+          },
+          "code": {
+            "type": "string",
+            "const": "academic_profile_incomplete",
+            "title": "Code"
+          },
+          "details": {
+            "$ref": "#/components/schemas/AcademicProfileIncompleteDetails"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "detail",
+          "correlation_id",
+          "code",
+          "details"
+        ],
+        "title": "AcademicProfileIncompleteResponse"
       },
       "AcademicProfileResponse": {
         "properties": {
@@ -26229,6 +26311,70 @@
           "character_count"
         ],
         "title": "WritingPreviewResponse"
+      },
+      "WritingRequestValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ctx"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "WritingRequestValidationError"
+      },
+      "WritingRequestValidationResponse": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/WritingRequestValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "WritingRequestValidationResponse"
       },
       "WritingRevisionResponse": {
         "properties": {

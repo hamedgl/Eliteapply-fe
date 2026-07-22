@@ -3546,6 +3546,39 @@ export interface components {
              */
             overwrite_existing: boolean;
         };
+        /** AcademicProfileIncompleteDetails */
+        AcademicProfileIncompleteDetails: {
+            /**
+             * Required Action
+             * @constant
+             */
+            required_action: "complete_academic_profile";
+            /**
+             * Profile Section
+             * @constant
+             */
+            profile_section: "education";
+            /** Missing Fields */
+            missing_fields: ("institution" | "field_of_study")[];
+        };
+        /** AcademicProfileIncompleteResponse */
+        AcademicProfileIncompleteResponse: {
+            /**
+             * Error
+             * @constant
+             */
+            error: "Validation Error";
+            /** Detail */
+            detail: string;
+            /** Correlation Id */
+            correlation_id: string;
+            /**
+             * Code
+             * @constant
+             */
+            code: "academic_profile_incomplete";
+            details: components["schemas"]["AcademicProfileIncompleteDetails"];
+        };
         /** AcademicProfileResponse */
         AcademicProfileResponse: {
             /** Applicant Type */
@@ -7826,6 +7859,26 @@ export interface components {
             /** Character Count */
             character_count: number;
         };
+        /** WritingRequestValidationError */
+        WritingRequestValidationError: {
+            /** Loc */
+            loc: (string | number)[];
+            /** Msg */
+            msg: string;
+            /** Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Ctx */
+            ctx?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** WritingRequestValidationResponse */
+        WritingRequestValidationResponse: {
+            /** Detail */
+            detail: components["schemas"]["WritingRequestValidationError"][];
+        };
         /** WritingRevisionResponse */
         WritingRevisionResponse: {
             /**
@@ -10992,13 +11045,13 @@ export interface operations {
                     "application/json": components["schemas"]["GenerationRunResponse"];
                 };
             };
-            /** @description Validation Error */
+            /** @description The Academic Profile is incomplete or the request is invalid. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["AcademicProfileIncompleteResponse"] | components["schemas"]["WritingRequestValidationResponse"];
                 };
             };
         };
@@ -11116,13 +11169,13 @@ export interface operations {
                     "application/json": components["schemas"]["GenerationRunResponse"];
                 };
             };
-            /** @description Validation Error */
+            /** @description The Academic Profile is incomplete or the request is invalid. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["AcademicProfileIncompleteResponse"] | components["schemas"]["WritingRequestValidationResponse"];
                 };
             };
         };

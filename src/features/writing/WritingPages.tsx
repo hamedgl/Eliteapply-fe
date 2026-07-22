@@ -11,7 +11,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { documentText, mergeText, writingApi } from "../../lib/api/phase3";
 import { ApiError } from "../../lib/api/errors";
 import { downloadResponse } from "../../lib/api/download";
@@ -20,6 +20,17 @@ import { queryKeys } from "../../lib/api/queryKeys";
 import { previewDocument } from "../../lib/safeHtml";
 import { usePromptDialog } from "../../components/PromptDialog";
 import { Select } from "../../components/ui/select";
+import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
+import {
+  academicProfileEducationPath,
+  type AcademicProfileNavigationState,
+  type WritingGenerationNavigationDraft,
+} from "../../lib/navigation";
+import {
+  academicProfileFieldLabel,
+  academicProfileRequirement,
+  type AcademicProfileRequirement,
+} from "./generationProfileRequirement";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
 const types = [
@@ -36,6 +47,13 @@ const types = [
 ] as const;
 const label = (x: string) =>
   x.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase());
+const DEFAULT_GENERATION_DRAFT: Omit<
+  WritingGenerationNavigationDraft,
+  "documentId"
+> = {
+  operation: "generate_outline",
+  instruction: "",
+};
 export function WritingLibrary() {
   const qc = useQueryClient();
   const [includeArchived, setIncludeArchived] = useState(false);
@@ -270,7 +288,8 @@ export function WritingEditor() {
   const requestText = usePromptDialog();
   const { id = "" } = useParams(),
     qc = useQueryClient(),
-    nav = useNavigate();
+    nav = useNavigate(),
+    location = useLocation();
   const q = useQuery({
     queryKey: queryKeys.writingDocument(id),
     queryFn: () => writingApi.get(id),
@@ -298,7 +317,14 @@ export function WritingEditor() {
     [quality, setQuality] = useState<Record<string, unknown> | null>(null),
     [activeRunId, setActiveRunId] = useState(""),
     [showPreview, setShowPreview] = useState(false),
-    [showReview, setShowReview] = useState(false);
+    [showReview, setShowReview] = useState(false),
+    [generationPending, setGenerationPending] = useState(false),
+    [profileRequirement, setProfileRequirement] =
+      useState<AcademicProfileRequirement | null>(null),
+    [generationDraft, setGenerationDraft] =
+      useState<WritingGenerationNavigationDraft>(() =>
+        readGenerationDraft(location.state, id),
+      );
   const pollStep = useRef(0);
   const activeRun = useQuery({
     queryKey: ["generation-run", activeRunId],
@@ -389,17 +415,50 @@ export function WritingEditor() {
   }
   async function generate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const d = new FormData(e.currentTarget);
-    const r = await writingApi.generate(id, {
-      mutation_id: crypto.randomUUID(),
-      operation: String(d.get("operation")) as "generate_outline",
-      instruction: String(d.get("instruction")),
-      evidence_ids: [],
-    });
-    pollStep.current = 0;
-    setActiveRunId(r.id);
-    qc.setQueryData(["generation-run", r.id], r);
-    void runs.refetch();
+    setGenerationPending(true);
+    try {
+      const r = await writingApi.generate(id, {
+        mutation_id: crypto.randomUUID(),
+        operation:
+          generationDraft.operation as S["GenerateWritingRequest"]["operation"],
+        instruction: generationDraft.instruction,
+        evidence_ids: [],
+      });
+      pollStep.current = 0;
+      setActiveRunId(r.id);
+      qc.setQueryData(["generation-run", r.id], r);
+      void runs.refetch();
+    } catch (error) {
+      const requirement = academicProfileRequirement(error);
+      if (!requirement) throw error;
+      setProfileRequirement(requirement);
+    } finally {
+      setGenerationPending(false);
+    }
+  }
+  async function retryGeneration(runId: string) {
+    setGenerationPending(true);
+    try {
+      const next = await writingApi.retryGeneration(runId);
+      pollStep.current = 0;
+      setActiveRunId(next.id);
+      qc.setQueryData(["generation-run", next.id], next);
+    } catch (error) {
+      const requirement = academicProfileRequirement(error);
+      if (!requirement) throw error;
+      setProfileRequirement(requirement);
+    } finally {
+      setGenerationPending(false);
+    }
+  }
+  function completeAcademicProfile() {
+    if (!profileRequirement) return;
+    const state: AcademicProfileNavigationState = {
+      returnTo: `${location.pathname}${location.search}${location.hash}`,
+      missingFields: profileRequirement.missingFields,
+      writingGenerationDraft: generationDraft,
+    };
+    nav(academicProfileEducationPath(), { state });
   }
   async function download(format: "txt" | "docx" | "pdf") {
     await downloadResponse(
@@ -604,8 +663,13 @@ export function WritingEditor() {
               Operation
               <Select
                 ariaLabel="Operation"
-                name="operation"
-                defaultValue="generate_outline"
+                value={generationDraft.operation}
+                onChange={(value) =>
+                  setGenerationDraft((current) => ({
+                    ...current,
+                    operation: String(value),
+                  }))
+                }
                 options={[
                   { value: "generate_outline", label: "Generate outline" },
                   { value: "draft_section", label: "Draft section" },
@@ -619,23 +683,38 @@ export function WritingEditor() {
             </label>
             <label>
               Instruction
-              <textarea name="instruction" required minLength={2} rows={4} />
+              <textarea
+                name="instruction"
+                required
+                minLength={2}
+                rows={4}
+                value={generationDraft.instruction}
+                onChange={(event) =>
+                  setGenerationDraft((current) => ({
+                    ...current,
+                    instruction: event.target.value,
+                  }))
+                }
+              />
             </label>
             <button
               className="primary"
               disabled={
                 Boolean(
                   entitlements.data &&
-                    entitlements.data.ai_tokens_limit -
-                      entitlements.data.ai_tokens_used +
-                      entitlements.data.purchased_tokens_remaining <=
-                      0,
+                  entitlements.data.ai_tokens_limit -
+                    entitlements.data.ai_tokens_used +
+                    entitlements.data.purchased_tokens_remaining <=
+                    0,
                 ) ||
-                Boolean(activeRun.data && !isTerminal(activeRun.data.status))
+                Boolean(activeRun.data && !isTerminal(activeRun.data.status)) ||
+                generationPending
               }
             >
               <Sparkles />
-              Generate suggestion
+              {generationPending
+                ? "Starting generation…"
+                : "Generate suggestion"}
             </button>
           </form>
           {activeRun.data ? (
@@ -648,12 +727,9 @@ export function WritingEditor() {
                 qc.setQueryData(["generation-run", next.id], next);
               }}
               onRetry={async () => {
-                const next = await writingApi.retryGeneration(
-                  activeRun.data!.id,
-                );
-                setActiveRunId(next.id);
-                qc.setQueryData(["generation-run", next.id], next);
+                await retryGeneration(activeRun.data!.id);
               }}
+              retrying={generationPending}
             />
           ) : null}
           {entitlements.data &&
@@ -725,8 +801,50 @@ export function WritingEditor() {
       {showReview ? (
         <WritingReview documentId={id} revisions={revisions.data ?? []} />
       ) : null}
+      {profileRequirement ? (
+        <ConfirmationDialog
+          title="Complete your Academic Profile"
+          confirmLabel="Complete Academic Profile"
+          cancelLabel="Not now"
+          pending={false}
+          danger={false}
+          onCancel={() => setProfileRequirement(null)}
+          onConfirm={completeAcademicProfile}
+        >
+          <p>{profileRequirement.detail}</p>
+          {profileRequirement.missingFields.length ? (
+            <div>
+              <strong>Missing information</strong>
+              <ul>
+                {profileRequirement.missingFields.map((field) => (
+                  <li key={field}>{academicProfileFieldLabel(field)}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </ConfirmationDialog>
+      ) : null}
     </div>
   );
+}
+
+function readGenerationDraft(
+  state: unknown,
+  documentId: string,
+): WritingGenerationNavigationDraft {
+  const value =
+    state && typeof state === "object"
+      ? (state as { writingGenerationDraft?: unknown }).writingGenerationDraft
+      : null;
+  if (
+    value &&
+    typeof value === "object" &&
+    (value as { documentId?: unknown }).documentId === documentId &&
+    typeof (value as { operation?: unknown }).operation === "string" &&
+    typeof (value as { instruction?: unknown }).instruction === "string"
+  )
+    return value as WritingGenerationNavigationDraft;
+  return { documentId, ...DEFAULT_GENERATION_DRAFT };
 }
 
 function isTerminal(status: string) {
@@ -749,10 +867,12 @@ function GenerationStatus({
   run,
   onCancel,
   onRetry,
+  retrying,
 }: {
   run: S["GenerationRunResponse"];
   onCancel: () => void;
   onRetry: () => void;
+  retrying: boolean;
 }) {
   const active = !isTerminal(run.status),
     failed = run.status.toLowerCase() === "failed";
@@ -775,8 +895,8 @@ function GenerationStatus({
           Cancel generation
         </button>
       ) : failed ? (
-        <button type="button" onClick={onRetry}>
-          Retry as a new run
+        <button type="button" onClick={onRetry} disabled={retrying}>
+          {retrying ? "Retrying…" : "Retry as a new run"}
         </button>
       ) : null}
     </section>

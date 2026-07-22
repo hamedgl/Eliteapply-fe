@@ -1,9 +1,97 @@
-export type FieldError={field:string;message:string;type:string};
-export class ApiError extends Error{constructor(message:string,public status:number,public code:string,public fields:FieldError[]=[],public correlationId?:string){super(message);this.name="ApiError"}}
-export async function normalizeApiError(response:Response){let payload:unknown;try{payload=await response.json()}catch{payload=null}const body=payload&&typeof payload==="object"?payload as Record<string,unknown>:{};const detail=body.detail;const correlation=response.headers.get("x-correlation-id")??(typeof body.correlation_id==="string"?body.correlation_id:undefined);if(response.status===422&&Array.isArray(detail)){const fields=detail.map(item=>{const value=item as Record<string,unknown>;const loc=Array.isArray(value.loc)?value.loc.filter(x=>x!=="body"&&x!=="query").join("."):"global";return{field:loc,message:String(value.msg??"Invalid value"),type:String(value.type??"validation")}});return new ApiError("Please correct the highlighted fields.",422,"VALIDATION_ERROR",fields,correlation)}
-// Some endpoints return a structured `detail: {code, message}` instead of a plain string — prefer that
-// specific code/message when present, so callers can branch on it instead of the generic per-status code.
-const detailObject=detail&&typeof detail==="object"&&!Array.isArray(detail)?detail as Record<string,unknown>:null;
-const detailCode=detailObject&&typeof detailObject.code==="string"?detailObject.code:null;
-const detailMessage=detailObject&&typeof detailObject.message==="string"?detailObject.message:null;
-const message=typeof detail==="string"?detail:detailMessage??(response.status>=500?"EliteApply is temporarily unavailable.":"The request could not be completed.");const codes:Record<number,string>={401:"UNAUTHORIZED",403:"FORBIDDEN",404:"NOT_FOUND",409:"CONFLICT",413:"UPLOAD_TOO_LARGE",429:"RATE_LIMITED"};return new ApiError(message,response.status,detailCode??(codes[response.status]??(response.status>=500?"SERVER_ERROR":"REQUEST_ERROR")),[],correlation)}
+export type FieldError = { field: string; message: string; type: string };
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code: string,
+    public fields: FieldError[] = [],
+    public correlationId?: string,
+    public details?: Record<string, unknown>,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+export async function normalizeApiError(response: Response) {
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+  const body =
+    payload && typeof payload === "object"
+      ? (payload as Record<string, unknown>)
+      : {};
+  const detail = body.detail;
+  const correlation =
+    response.headers.get("x-correlation-id") ??
+    (typeof body.correlation_id === "string" ? body.correlation_id : undefined);
+  if (response.status === 422 && Array.isArray(detail)) {
+    const fields = detail.map((item) => {
+      const value = item as Record<string, unknown>;
+      const loc = Array.isArray(value.loc)
+        ? value.loc.filter((x) => x !== "body" && x !== "query").join(".")
+        : "global";
+      return {
+        field: loc,
+        message: String(value.msg ?? "Invalid value"),
+        type: String(value.type ?? "validation"),
+      };
+    });
+    return new ApiError(
+      "Please correct the highlighted fields.",
+      422,
+      "VALIDATION_ERROR",
+      fields,
+      correlation,
+    );
+  }
+  // Some endpoints return a structured `detail: {code, message}` instead of a plain string — prefer that
+  // specific code/message when present, so callers can branch on it instead of the generic per-status code.
+  const detailObject =
+    detail && typeof detail === "object" && !Array.isArray(detail)
+      ? (detail as Record<string, unknown>)
+      : null;
+  const detailCode =
+    detailObject && typeof detailObject.code === "string"
+      ? detailObject.code
+      : null;
+  const detailMessage =
+    detailObject && typeof detailObject.message === "string"
+      ? detailObject.message
+      : null;
+  const responseCode = typeof body.code === "string" ? body.code : null;
+  const responseDetails =
+    body.details &&
+    typeof body.details === "object" &&
+    !Array.isArray(body.details)
+      ? (body.details as Record<string, unknown>)
+      : undefined;
+  const message =
+    typeof detail === "string"
+      ? detail
+      : (detailMessage ??
+        (response.status >= 500
+          ? "EliteApply is temporarily unavailable."
+          : "The request could not be completed."));
+  const codes: Record<number, string> = {
+    401: "UNAUTHORIZED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    409: "CONFLICT",
+    413: "UPLOAD_TOO_LARGE",
+    429: "RATE_LIMITED",
+  };
+  return new ApiError(
+    message,
+    response.status,
+    responseCode ??
+      detailCode ??
+      codes[response.status] ??
+      (response.status >= 500 ? "SERVER_ERROR" : "REQUEST_ERROR"),
+    [],
+    correlation,
+    responseDetails,
+  );
+}

@@ -1210,51 +1210,6 @@ th {
   display: block;
   color: var(--danger);
 }
-.profile-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
-  gap: 1rem;
-  margin-top: 2rem;
-}
-.profile-layout main section,
-.profile-layout aside {
-  border: 1px solid var(--line);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-.profile-layout main section > label {
-  margin-top: 1rem;
-  text-transform: capitalize;
-}
-.profile-layout aside {
-  height: max-content;
-}
-.profile-layout aside > svg {
-  color: var(--blue);
-}
-.profile-layout aside ul {
-  list-style: none;
-  padding: 0;
-}
-.profile-layout aside li {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.7rem 0;
-  border-top: 1px solid var(--line);
-  text-transform: capitalize;
-}
-.profile-layout aside li strong {
-  font-size: 0.7rem;
-}
-.profile-layout aside h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.profile-layout aside h2 svg {
-  width: 18px;
-}
 .version-row {
   display: grid;
   padding: 0.7rem 0;
@@ -1384,8 +1339,7 @@ th {
   .page-heading .primary {
     justify-self: start;
   }
-  .workspace-overview,
-  .profile-layout {
+  .workspace-overview {
     grid-template-columns: 1fr;
   }
   .form-grid {

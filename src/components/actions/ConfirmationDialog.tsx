@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
+import "../../styles/workspace.css";
 
 /**
  * Shared confirmation dialog for destructive/irreversible actions. Uses the
@@ -10,6 +11,7 @@ export function ConfirmationDialog({
   title,
   children,
   confirmLabel,
+  cancelLabel = "Cancel",
   pendingLabel,
   pending,
   danger = true,
@@ -19,6 +21,7 @@ export function ConfirmationDialog({
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
   pendingLabel?: string;
   pending: boolean;
   danger?: boolean;
@@ -44,14 +47,19 @@ export function ConfirmationDialog({
     >
       <header>
         <h2 id="confirmation-dialog-title">{title}</h2>
-        <button type="button" className="dialog-close" onClick={onCancel} aria-label="Close">
+        <button
+          type="button"
+          className="dialog-close"
+          onClick={onCancel}
+          aria-label="Close"
+        >
           <X aria-hidden="true" />
         </button>
       </header>
       {children}
       <div className="dialog-actions">
         <button type="button" onClick={onCancel} disabled={pending}>
-          Cancel
+          {cancelLabel}
         </button>
         <button
           type="button"
