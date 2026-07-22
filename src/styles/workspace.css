@@ -553,11 +553,17 @@
   font-size: 0.8rem;
 }
 .apps-table-actions-cell {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
+  text-align: right;
   white-space: nowrap;
+}
+.apps-table-actions-cell > * {
+  vertical-align: middle;
+}
+.apps-table-actions-cell > * + * {
+  margin-left: 0.4rem;
+}
+.apps-table-actions-cell .apps-row-menu {
+  display: inline-block;
 }
 .apps-row-open {
   display: inline-flex;
@@ -1379,7 +1385,7 @@
     text-transform: uppercase;
   }
   .apps-table-actions-cell {
-    justify-content: flex-start;
+    text-align: left;
   }
 }
 
