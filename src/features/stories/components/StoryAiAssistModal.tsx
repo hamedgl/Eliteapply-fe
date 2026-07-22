@@ -35,6 +35,7 @@ export function StoryAiAssistModal({
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState<StoryAIAssistResponse | null>(null);
+  const [applied, setApplied] = useState(false);
 
   const assistMutation = useMutation({
     mutationFn: async () => {
@@ -46,6 +47,7 @@ export function StoryAiAssistModal({
     onSuccess: (data) => {
       setResult(data);
       setError("");
+      setApplied(false);
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : "Failed to generate AI suggestion.");
@@ -68,9 +70,12 @@ export function StoryAiAssistModal({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["stories"] });
+      setError("");
+      setApplied(true);
       onApplied();
     },
     onError: (err) => {
+      setApplied(false);
       setError(err instanceof Error ? err.message : "Failed to apply AI suggestion.");
     },
   });
@@ -177,6 +182,12 @@ export function StoryAiAssistModal({
                 </div>
               </div>
 
+              {applied ? (
+                <div className="apps-notice is-success" role="status">
+                  <Check aria-hidden="true" /> Suggestion applied to {targetField}.
+                </div>
+              ) : null}
+
               <div className="story-ai-actions">
                 <button type="button" onClick={() => assistMutation.mutate()} disabled={assistMutation.isPending}>
                   Regenerate
@@ -187,7 +198,13 @@ export function StoryAiAssistModal({
                   disabled={applyMutation.isPending || !sugText}
                   onClick={() => sugText && applyMutation.mutate(sugText)}
                 >
-                  <Check aria-hidden="true" /> Apply Suggestion
+                  {applyMutation.isPending ? (
+                    "Applying…"
+                  ) : (
+                    <>
+                      <Check aria-hidden="true" /> Apply Suggestion
+                    </>
+                  )}
                 </button>
               </div>
             </div>

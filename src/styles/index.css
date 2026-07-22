@@ -1003,10 +1003,10 @@ th {
   gap: 0.7rem;
 }
 .dialog-actions button:not(.primary) {
-  padding: 0.7rem 1rem;
+  padding: 0.78rem 1.3rem;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 9999px;
 }
 .back {
   display: inline-flex;

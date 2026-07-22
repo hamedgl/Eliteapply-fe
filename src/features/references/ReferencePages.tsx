@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Select } from "../../components/ui/select";
 import { referencesApi } from "../../lib/api/phase3";
 import { documentsApi } from "../../lib/api/phase2";
 import { downloadResponse } from "../../lib/api/download";
@@ -48,24 +49,17 @@ export function ReferencesPage() {
       </header>
       <label className="reference-status-filter">
         Status
-        <select
+        <Select
           value={status}
-          onChange={(event) => setStatus(event.target.value)}
-        >
-          <option value="">All statuses</option>
-          {[
-            "pending",
-            "opened",
-            "approved",
-            "declined",
-            "expired",
-            "revoked",
-          ].map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+          onChange={(val: any) => setStatus(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+          options={[
+            { value: "", label: "All statuses" },
+            ...["pending", "opened", "approved", "declined", "expired", "revoked"].map((item) => ({
+              value: item,
+              label: item,
+            })),
+          ]}
+        />
       </label>
       {items.map((x) => (
         <article className="reference-row" key={x.id}>
@@ -170,7 +164,7 @@ export function ReferenceDetail() {
         {item.approved_at && !item.confidential ? <button onClick={async () => downloadResponse(await referencesApi.download(id), `reference-${item.public_id}.pdf`)}>Download letter</button> : null}
         {item.approved_at ? <Link to={`/verify/academic-reference/${item.public_id}`}>Public verification</Link> : null}
       </div>
-      {!terminal ? <details className="phase3-panel"><summary>Edit request details</summary><form className="settings-form" onSubmit={async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); try { await referencesApi.update(id, { expected_version: item.version, referee_name: String(data.get("referee_name")), referee_role: data.get("referee_role") as "professor" | "supervisor" | "teacher" | "employer" | "mentor", institution: String(data.get("institution")) || null, department: String(data.get("department")) || null, student_context: { summary: String(data.get("student_context")) } }); await reference.refetch(); } catch (caught) { const message = caught instanceof Error ? caught.message : "Update failed."; alert(message.includes("409") ? `${message} Refresh the latest request before reapplying your edits.` : message); } }}><label>Referee name<input name="referee_name" defaultValue={item.referee_name} required /></label><label>Role<select name="referee_role" defaultValue={item.referee_role}>{["professor", "supervisor", "teacher", "employer", "mentor"].map((role) => <option key={role}>{role}</option>)}</select></label><label>Institution<input name="institution" defaultValue={item.institution ?? ""} /></label><label>Department<input name="department" /></label><label>Updated student context<textarea name="student_context" /></label><button className="primary">Save request</button></form></details> : null}
+      {!terminal ? <details className="phase3-panel"><summary>Edit request details</summary><form className="settings-form" onSubmit={async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); try { await referencesApi.update(id, { expected_version: item.version, referee_name: String(data.get("referee_name")), referee_role: data.get("referee_role") as "professor" | "supervisor" | "teacher" | "employer" | "mentor", institution: String(data.get("institution")) || null, department: String(data.get("department")) || null, student_context: { summary: String(data.get("student_context")) } }); await reference.refetch(); } catch (caught) { const message = caught instanceof Error ? caught.message : "Update failed."; alert(message.includes("409") ? `${message} Refresh the latest request before reapplying your edits.` : message); } }}><label>Referee name<input name="referee_name" defaultValue={item.referee_name} required /></label><label>Role<Select name="referee_role" defaultValue={item.referee_role} options={["professor", "supervisor", "teacher", "employer", "mentor"].map((role) => ({ value: role, label: role }))} /></label><label>Institution<input name="institution" defaultValue={item.institution ?? ""} /></label><label>Department<input name="department" /></label><label>Updated student context<textarea name="student_context" /></label><button className="primary">Save request</button></form></details> : null}
       {mutate.error ? <p role="alert">{mutate.error instanceof Error ? mutate.error.message : "Action failed."}</p> : null}
       <section className="phase3-panel"><h2>Integrity history</h2><p className="muted">Each event is chained by the service. Hash metadata is shown for auditability.</p>
         {eventItems.length ? <ol className="phase3-timeline">{eventItems.map((event) => <li key={event.id}><strong>{event.event_type.replaceAll("_", " ")}</strong><time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString()}</time><small>Hash {event.event_hash.slice(0, 12)}…</small></li>)}</ol> : <p>No events recorded yet.</p>}
@@ -249,11 +243,18 @@ export function NewReference() {
         </label>
         <label>
           Mode
-          <select name="mode" value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            <option value="referee_direct">Referee writes directly</option>
-            <option value="student_draft">Student draft</option>
-            <option value="existing_upload">Existing upload</option>
-          </select>
+          <Select
+            name="mode"
+            value={mode}
+            onChange={(val: any) =>
+              setMode((typeof val === "string" ? val : (val?.target?.value ?? "referee_direct")) as typeof mode)
+            }
+            options={[
+              { value: "referee_direct", label: "Referee writes directly" },
+              { value: "student_draft", label: "Student draft" },
+              { value: "existing_upload", label: "Existing upload" },
+            ]}
+          />
         </label>
         <label>
           Referee name
@@ -265,13 +266,13 @@ export function NewReference() {
         </label>
         <label>
           Role
-          <select name="referee_role">
-            {["professor", "supervisor", "teacher", "employer", "mentor"].map(
-              (x) => (
-                <option value={x}>{x}</option>
-              ),
-            )}
-          </select>
+          <Select
+            name="referee_role"
+            options={["professor", "supervisor", "teacher", "employer", "mentor"].map((x) => ({
+              value: x,
+              label: x,
+            }))}
+          />
         </label>
         <label>
           Institution
@@ -380,15 +381,16 @@ export function RefereePage() {
           <SafeObject value={request} />
           <label>
             Decision
-            <select
+            <Select
               value={decision}
-              onChange={(event) =>
-                setDecision(event.target.value as typeof decision)
+              onChange={(val: any) =>
+                setDecision((typeof val === "string" ? val : (val?.target?.value ?? "approve")) as typeof decision)
               }
-            >
-              <option value="approve">Approve and submit</option>
-              <option value="decline">Decline request</option>
-            </select>
+              options={[
+                { value: "approve", label: "Approve and submit" },
+                { value: "decline", label: "Decline request" },
+              ]}
+            />
           </label>
           <label>
             Display name

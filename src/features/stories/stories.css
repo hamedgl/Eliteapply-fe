@@ -48,6 +48,9 @@
   margin: 0.4rem 0 0;
   color: var(--app-text);
   font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .story-card-meta {
   display: flex;

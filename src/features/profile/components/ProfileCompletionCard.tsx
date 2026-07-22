@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, History } from "lucide-react";
+import { CheckCircle2, Circle } from "lucide-react";
 import { ProgressBar } from "../../../components/data-display/ProgressBar";
 import { formatDate } from "../../applications/model";
 import { profileCompletionPercent, sectionLabels, sectionOrder, type SectionKey } from "../model";
@@ -6,11 +6,9 @@ import { profileCompletionPercent, sectionLabels, sectionOrder, type SectionKey 
 export function ProfileCompletionCard({
   completion,
   updatedAt,
-  onViewHistory,
 }: {
   completion: Record<string, boolean>;
   updatedAt: string | null;
-  onViewHistory: () => void;
 }) {
   const percent = profileCompletionPercent(completion);
   const done = sectionOrder.filter((key) => completion[key]).length;
@@ -34,9 +32,6 @@ export function ProfileCompletionCard({
         ))}
       </ul>
       {updatedAt ? <p className="profile-last-saved">Last saved {formatDate(updatedAt)}</p> : null}
-      <button type="button" className="apps-inline-link" onClick={onViewHistory}>
-        <History aria-hidden="true" /> View version history
-      </button>
     </aside>
   );
 }

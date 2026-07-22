@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { History, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { PageHeader } from "../../components/page/PageHeader";
@@ -16,7 +16,6 @@ import {
   type SectionKey,
 } from "./model";
 import { ProfileCompletionCard } from "./components/ProfileCompletionCard";
-import { VersionHistoryDrawer } from "./components/VersionHistoryDrawer";
 import { DeleteProfileDialog } from "./components/DeleteProfileDialog";
 import { ImportProfileDialog } from "./components/ImportProfileDialog";
 import { GoalsFields, InterestsFields } from "./components/ProfileSections";
@@ -35,7 +34,6 @@ const AUTOSAVE_DELAY = 1200;
 export function AcademicProfilePage() {
   const qc = useQueryClient();
   const [activeSection, setActiveSection] = useState<SectionKey>("goals");
-  const [showHistory, setShowHistory] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -155,23 +153,20 @@ export function AcademicProfilePage() {
             <button type="button" onClick={() => setShowImport(true)}>
               Import profile
             </button>
-            <OverflowMenu
-              label="Profile actions"
-              items={[
-                { key: "history", label: "View version history", icon: History, onClick: () => setShowHistory(true) },
-                ...(profile
-                  ? [
-                      {
-                        key: "delete",
-                        label: "Delete profile",
-                        icon: Trash2,
-                        danger: true,
-                        onClick: () => setConfirmingDelete(true),
-                      },
-                    ]
-                  : []),
-              ]}
-            />
+            {profile ? (
+              <OverflowMenu
+                label="Profile actions"
+                items={[
+                  {
+                    key: "delete",
+                    label: "Delete profile",
+                    icon: Trash2,
+                    danger: true,
+                    onClick: () => setConfirmingDelete(true),
+                  },
+                ]}
+              />
+            ) : null}
           </>
         }
       />
@@ -237,16 +232,9 @@ export function AcademicProfilePage() {
           ) : null}
         </main>
 
-        <ProfileCompletionCard
-          completion={completion}
-          updatedAt={profile?.updated_at ?? null}
-          onViewHistory={() => setShowHistory(true)}
-        />
+        <ProfileCompletionCard completion={completion} updatedAt={profile?.updated_at ?? null} />
       </div>
 
-      {showHistory ? (
-        <VersionHistoryDrawer currentVersion={profile?.version ?? null} onClose={() => setShowHistory(false)} />
-      ) : null}
       {showImport ? (
         <ImportProfileDialog currentVersion={profile?.version ?? null} onClose={() => setShowImport(false)} />
       ) : null}
