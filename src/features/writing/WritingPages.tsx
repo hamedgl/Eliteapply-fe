@@ -19,6 +19,7 @@ import { billingApi } from "../../lib/api/billing";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { previewDocument } from "../../lib/safeHtml";
 import { usePromptDialog } from "../../components/PromptDialog";
+import { Select } from "../../components/ui/select";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
 const types = [
@@ -155,7 +156,10 @@ export function NewWriting() {
       for (const includeArchived of [false, true])
         qc.setQueryData<S["WritingDocumentResponse"][]>(
           ["writing", { includeArchived }],
-          (current) => [x, ...(current ?? []).filter((item) => item.id !== x.id)],
+          (current) => [
+            x,
+            ...(current ?? []).filter((item) => item.id !== x.id),
+          ],
         );
       nav(`/app/writing/${x.id}`);
     } catch (x) {
@@ -172,59 +176,63 @@ export function NewWriting() {
         </label>
         <label>
           Application type
-          <select
+          <Select
+            ariaLabel="Application type"
             value={applicationType}
-            onChange={(e) => setApplicationType(e.target.value)}
-          >
-            <option value="programme">Programme</option>
-            <option value="scholarship">Scholarship</option>
-            <option value="fellowship">Fellowship</option>
-            <option value="grant">Grant</option>
-          </select>
+            onChange={(value) => setApplicationType(String(value))}
+            options={[
+              { value: "programme", label: "Programme" },
+              { value: "scholarship", label: "Scholarship" },
+              { value: "fellowship", label: "Fellowship" },
+              { value: "grant", label: "Grant" },
+            ]}
+          />
         </label>
         <label>
           Document type
-          <select
-            name="document_type"
+          <Select
+            ariaLabel="Document type"
             value={documentType}
-            onChange={(e) => {
-              setDocumentType(e.target.value as typeof documentType);
+            onChange={(value) => {
+              setDocumentType(String(value) as typeof documentType);
               setTemplateId("");
             }}
-          >
-            {types.map((x) => (
-              <option key={x} value={x}>
-                {label(x)}
-              </option>
-            ))}
-          </select>
+            options={types.map((value) => ({ value, label: label(value) }))}
+          />
         </label>
         {documentType === "academic_cv" ? (
           <label>
             Academic CV mode
-            <select name="cv_mode">
-              <option value="graduate">Graduate</option>
-              <option value="scholarship">Scholarship</option>
-              <option value="research">Research</option>
-              <option value="phd">PhD</option>
-              <option value="undergraduate">Undergraduate</option>
-              <option value="internship">Internship</option>
-            </select>
+            <Select
+              ariaLabel="Academic CV mode"
+              name="cv_mode"
+              defaultValue="graduate"
+              options={[
+                { value: "graduate", label: "Graduate" },
+                { value: "scholarship", label: "Scholarship" },
+                { value: "research", label: "Research" },
+                { value: "phd", label: "PhD" },
+                { value: "undergraduate", label: "Undergraduate" },
+                { value: "internship", label: "Internship" },
+              ]}
+            />
           </label>
         ) : null}
         <label>
           Template
-          <select
+          <Select
+            ariaLabel="Template"
             value={templateId}
-            onChange={(e) => setTemplateId(e.target.value)}
-          >
-            <option value="">Start without a template</option>
-            {templates.data?.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+            disabled={templates.isPending}
+            onChange={(value) => setTemplateId(String(value))}
+            options={[
+              { value: "", label: "Start without a template" },
+              ...(templates.data ?? []).map((item) => ({
+                value: item.id,
+                label: item.name,
+              })),
+            ]}
+          />
         </label>
         {template.data ? (
           <section className="template-preview">
@@ -442,20 +450,19 @@ export function WritingEditor() {
           <button onClick={save} disabled={!dirty}>
             Save
           </button>
-          <select
-            aria-label="Export"
-            onChange={(e) =>
-              e.target.value && download(e.target.value as "txt")
+          <Select
+            ariaLabel="Export"
+            value=""
+            onChange={(value) =>
+              value && download(String(value) as "txt" | "docx" | "pdf")
             }
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Export
-            </option>
-            <option value="txt">TXT</option>
-            <option value="docx">DOCX</option>
-            <option value="pdf">PDF</option>
-          </select>
+            options={[
+              { value: "", label: "Export", disabled: true },
+              { value: "txt", label: "TXT" },
+              { value: "docx", label: "DOCX" },
+              { value: "pdf", label: "PDF" },
+            ]}
+          />
           <button
             aria-label="Duplicate document"
             onClick={async () => {
@@ -595,12 +602,20 @@ export function WritingEditor() {
           <form onSubmit={generate}>
             <label>
               Operation
-              <select name="operation">
-                <option value="generate_outline">Generate outline</option>
-                <option value="draft_section">Draft section</option>
-                <option value="improve_paragraph">Improve paragraph</option>
-                <option value="academic_cv_bullets">Academic CV bullets</option>
-              </select>
+              <Select
+                ariaLabel="Operation"
+                name="operation"
+                defaultValue="generate_outline"
+                options={[
+                  { value: "generate_outline", label: "Generate outline" },
+                  { value: "draft_section", label: "Draft section" },
+                  { value: "improve_paragraph", label: "Improve paragraph" },
+                  {
+                    value: "academic_cv_bullets",
+                    label: "Academic CV bullets",
+                  },
+                ]}
+              />
             </label>
             <label>
               Instruction
@@ -828,14 +843,18 @@ function WritingReview({
           </label>
           <label>
             Revision (optional)
-            <select name="revision_id">
-              <option value="">Current document</option>
-              {revisions.map((revision) => (
-                <option key={revision.id} value={revision.id}>
-                  Revision {revision.revision_number}
-                </option>
-              ))}
-            </select>
+            <Select
+              ariaLabel="Revision"
+              name="revision_id"
+              defaultValue=""
+              options={[
+                { value: "", label: "Current document" },
+                ...revisions.map((revision) => ({
+                  value: revision.id,
+                  label: `Revision ${revision.revision_number}`,
+                })),
+              ]}
+            />
           </label>
           <div className="comment-anchor">
             <label>
@@ -934,10 +953,15 @@ function WritingReview({
         >
           <label>
             Scope
-            <select name="scope">
-              <option value="view">View only</option>
-              <option value="comment">View and comment</option>
-            </select>
+            <Select
+              ariaLabel="Scope"
+              name="scope"
+              defaultValue="view"
+              options={[
+                { value: "view", label: "View only" },
+                { value: "comment", label: "View and comment" },
+              ]}
+            />
           </label>
           <label>
             Passcode (optional)

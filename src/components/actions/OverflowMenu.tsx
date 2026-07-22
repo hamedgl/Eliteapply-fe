@@ -43,14 +43,18 @@ export function OverflowMenu({
       const gap = 5;
       const viewportPadding = 8;
       const spaceBelow = window.innerHeight - rect.bottom;
-      const placement = spaceBelow < menuMaxHeight && rect.top > spaceBelow ? "top" : "bottom";
+      const placement =
+        spaceBelow < menuMaxHeight && rect.top > spaceBelow ? "top" : "bottom";
       setPosition({
         left: Math.min(
           window.innerWidth - menuWidth - viewportPadding,
           Math.max(viewportPadding, rect.right - menuWidth),
         ),
         placement,
-        anchor: placement === "bottom" ? rect.bottom + gap : window.innerHeight - rect.top + gap,
+        anchor:
+          placement === "bottom"
+            ? rect.bottom + gap
+            : window.innerHeight - rect.top + gap,
       });
     };
     updatePosition();
@@ -74,39 +78,51 @@ export function OverflowMenu({
       >
         <MoreHorizontal aria-hidden="true" />
       </button>
-      {open && position ? createPortal(
-        <ul
-          ref={menuRef}
-          className="apps-row-menu-list"
-          role="menu"
-          style={{
-            left: position.left,
-            ...(position.placement === "bottom" ? { top: position.anchor } : { bottom: position.anchor }),
-          }}
-        >
-          {items.map((item) =>
-            "divider" in item ? (
-              <li key={item.key} className="apps-row-menu-divider" role="separator" />
-            ) : (
-              <li key={item.key} role="none">
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={item.danger ? "apps-row-menu-danger" : undefined}
-                  disabled={item.disabled}
-                  onClick={() => {
-                    setOpen(false);
-                    item.onClick();
-                  }}
-                >
-                  <item.icon aria-hidden="true" /> {item.label}
-                </button>
-              </li>
-            ),
-          )}
-        </ul>,
-        rootRef.current?.closest(".apps-drawer, .app-shell") ?? document.body,
-      ) : null}
+      {open && position
+        ? createPortal(
+            <ul
+              ref={menuRef}
+              className="apps-row-menu-list"
+              role="menu"
+              style={{
+                left: position.left,
+                ...(position.placement === "bottom"
+                  ? { top: position.anchor }
+                  : { bottom: position.anchor }),
+              }}
+            >
+              {items.map((item) =>
+                "divider" in item ? (
+                  <li
+                    key={item.key}
+                    className="apps-row-menu-divider"
+                    role="separator"
+                  />
+                ) : (
+                  <li key={item.key} role="none">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={
+                        item.danger ? "apps-row-menu-danger" : undefined
+                      }
+                      disabled={item.disabled}
+                      onClick={() => {
+                        setOpen(false);
+                        item.onClick();
+                      }}
+                    >
+                      <item.icon aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
+                ),
+              )}
+            </ul>,
+            rootRef.current?.closest(".apps-drawer, .app-shell") ??
+              document.body,
+          )
+        : null}
     </div>
   );
 }

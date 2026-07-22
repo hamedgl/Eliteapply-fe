@@ -2118,23 +2118,36 @@
   box-shadow: 0 10px 24px rgb(16 27 59 / 14%);
 }
 .apps-row-menu-list button {
-  display: flex;
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
   align-items: center;
+  justify-content: stretch;
+  justify-items: start;
   gap: 0.55rem;
   width: 100%;
+  min-height: 40px;
   padding: 0.55rem 0.6rem;
   color: var(--app-text);
+  border: 0;
   border-radius: 7px;
+  background: transparent;
   font-size: 0.85rem;
-  text-align: left;
+  text-align: start;
+  transform: none;
 }
-.apps-row-menu-list button:hover {
+.apps-row-menu-list button:hover:not(:disabled),
+.apps-row-menu-list button:active:not(:disabled) {
   background: var(--app-surface-subtle);
+  transform: none;
 }
 .apps-row-menu-list button svg {
   width: 15px;
   height: 15px;
   color: var(--app-muted);
+}
+.apps-row-menu-list button span {
+  min-width: 0;
+  text-align: start;
 }
 .apps-row-menu-divider {
   height: 1px;

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  AnimatePresence,
-  motion,
-} from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   forwardRef,
   useCallback,
@@ -67,7 +64,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       ariaLabel,
       children,
     },
-    ref
+    ref,
   ) => {
     const generatedId = useId();
     const id = idProp || generatedId;
@@ -98,15 +95,23 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     }
 
     const isControlled = valueProp !== undefined;
-    const [internalValue, setInternalValue] = useState<string>(
-      defaultValue || (parsedOptions[0]?.value ?? "")
-    );
+    const resetValue = defaultValue || (parsedOptions[0]?.value ?? "");
+    const [internalValue, setInternalValue] = useState<string>(resetValue);
     const currentValue = isControlled ? valueProp : internalValue;
 
     const [isOpen, setIsOpen] = useState(false);
 
+    useEffect(() => {
+      if (isControlled) return;
+      const form = containerRef.current?.closest("form");
+      if (!form) return;
+      const reset = () => setInternalValue(resetValue);
+      form.addEventListener("reset", reset);
+      return () => form.removeEventListener("reset", reset);
+    }, [isControlled, resetValue]);
+
     const selectedOption = parsedOptions.find(
-      (opt) => String(opt.value) === String(currentValue)
+      (opt) => String(opt.value) === String(currentValue),
     );
 
     const handleSelect = useCallback(
@@ -131,7 +136,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           }
         }
       },
-      [isControlled, name, onChange]
+      [isControlled, name, onChange],
     );
 
     // Close popover on outside click
@@ -168,12 +173,17 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         const spaceBelow = window.innerHeight - rect.bottom;
         const spaceAbove = rect.top;
         const placement: "top" | "bottom" =
-          spaceBelow < popoverMaxHeight && spaceAbove > spaceBelow ? "top" : "bottom";
+          spaceBelow < popoverMaxHeight && spaceAbove > spaceBelow
+            ? "top"
+            : "bottom";
         setPopoverRect({
           left: rect.left,
           width: rect.width,
           placement,
-          anchor: placement === "bottom" ? rect.bottom + 6 : window.innerHeight - rect.top + 6,
+          anchor:
+            placement === "bottom"
+              ? rect.bottom + 6
+              : window.innerHeight - rect.top + 6,
         });
       };
       updateRect();
@@ -199,9 +209,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           setIsOpen(true);
         } else {
           const currentIndex = parsedOptions.findIndex(
-            (o) => String(o.value) === String(currentValue)
+            (o) => String(o.value) === String(currentValue),
           );
-          const nextIndex = Math.min(currentIndex + 1, parsedOptions.length - 1);
+          const nextIndex = Math.min(
+            currentIndex + 1,
+            parsedOptions.length - 1,
+          );
           if (parsedOptions[nextIndex]) {
             handleSelect(String(parsedOptions[nextIndex].value));
           }
@@ -212,7 +225,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           setIsOpen(true);
         } else {
           const currentIndex = parsedOptions.findIndex(
-            (o) => String(o.value) === String(currentValue)
+            (o) => String(o.value) === String(currentValue),
           );
           const prevIndex = Math.max(currentIndex - 1, 0);
           if (parsedOptions[prevIndex]) {
@@ -246,7 +259,13 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         >
           <span className="custom-select-trigger-label">
             {selectedOption?.icon}
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {selectedOption ? selectedOption.label : placeholder}
             </span>
           </span>
@@ -264,7 +283,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 ref={popoverRef}
                 role="listbox"
                 aria-activedescendant={
-                  selectedOption ? `${id}-opt-${selectedOption.value}` : undefined
+                  selectedOption
+                    ? `${id}-opt-${selectedOption.value}`
+                    : undefined
                 }
                 initial={{ opacity: 0, y: -6, scale: 0.96 }}
                 animate={{ opacity: 1, y: 4, scale: 1 }}
@@ -281,57 +302,75 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 }}
               >
                 {parsedOptions.map((option) => {
-                const isSelected = String(option.value) === String(currentValue);
-                return (
-                  <div
-                    key={String(option.value)}
-                    id={`${id}-opt-${option.value}`}
-                    role="option"
-                    aria-selected={isSelected}
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!option.disabled) {
-                        handleSelect(String(option.value));
-                      }
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!option.disabled) {
-                        handleSelect(String(option.value));
-                      }
-                    }}
-                    className={cn(
-                      "custom-select-option",
-                      isSelected && "is-selected",
-                      option.disabled && "is-disabled"
-                    )}
-                  >
-                    <div className="custom-select-option-content">
-                      {option.icon}
-                      <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {option.label}
-                        </span>
-                        {option.description && (
-                          <span style={{ fontSize: "0.75rem", color: "var(--app-muted, #64748b)" }}>
-                            {option.description}
+                  const isSelected =
+                    String(option.value) === String(currentValue);
+                  return (
+                    <div
+                      key={String(option.value)}
+                      id={`${id}-opt-${option.value}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!option.disabled) {
+                          handleSelect(String(option.value));
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!option.disabled) {
+                          handleSelect(String(option.value));
+                        }
+                      }}
+                      className={cn(
+                        "custom-select-option",
+                        isSelected && "is-selected",
+                        option.disabled && "is-disabled",
+                      )}
+                    >
+                      <div className="custom-select-option-content">
+                        {option.icon}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <span
+                            style={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {option.label}
                           </span>
-                        )}
+                          {option.description && (
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--app-muted, #64748b)",
+                              }}
+                            >
+                              {option.description}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {isSelected && <Check className="custom-select-check" />}
                     </div>
-                    {isSelected && <Check className="custom-select-check" />}
-                  </div>
-                );
+                  );
                 })}
               </motion.div>
             </AnimatePresence>,
-            document.body
+            document.body,
           )}
       </div>
     );
-  }
+  },
 );
 
 Select.displayName = "Select";
