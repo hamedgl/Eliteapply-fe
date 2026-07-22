@@ -286,6 +286,11 @@ export const referencesApi = {
       `/academic-references/${e(id)}/revoke`,
       { method: "POST" },
     ),
+  attach: (id: string, applicationId: string) =>
+    apiRequest<S["AcademicReferenceResponse"]>(
+      `/academic-references/${e(id)}/attach`,
+      { method: "POST", body: { application_id: applicationId } satisfies S["ReferenceAttachRequest"] },
+    ),
   events: (id: string, cursor?: string | null) =>
     apiRequest<S["ReferenceEventListResponse"]>(
       `/academic-references/${e(id)}/events${qs({ cursor, limit: 50 })}`,

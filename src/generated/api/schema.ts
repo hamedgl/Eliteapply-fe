@@ -1898,6 +1898,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/academic-references/{request_id}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Attach Reference */
+        post: operations["attach_reference_api_v1_academic_references__request_id__attach_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/academic-references/{request_id}/revoke": {
         parameters: {
             query?: never;
@@ -2394,6 +2411,23 @@ export interface paths {
         get: operations["inspect_reference_events_api_v1_admin_references__request_id__events_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/references/{request_id}/verification-level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update Reference Verification Level */
+        post: operations["update_reference_verification_level_api_v1_admin_references__request_id__verification_level_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3566,6 +3600,12 @@ export interface components {
             institution?: string | null;
             /** Department */
             department?: string | null;
+            /**
+             * Reference Type
+             * @default academic
+             * @enum {string}
+             */
+            reference_type: "academic" | "professional" | "personal" | "other";
             /** Relationship Context */
             relationship_context?: {
                 [key: string]: unknown;
@@ -3582,6 +3622,8 @@ export interface components {
             destinations?: {
                 [key: string]: unknown;
             }[];
+            /** Expires In Days */
+            expires_in_days?: number | null;
         };
         /** AcademicReferenceListResponse */
         AcademicReferenceListResponse: {
@@ -3609,6 +3651,8 @@ export interface components {
              * Format: uuid
              */
             application_id: string;
+            /** Application Ids */
+            application_ids?: string[];
             /** Mode */
             mode: string;
             /** Confidential */
@@ -3617,10 +3661,25 @@ export interface components {
             referee_name: string;
             /** Referee Role */
             referee_role: string;
+            /** Referee Email Masked */
+            referee_email_masked: string;
             /** Institution */
             institution: string | null;
-            /** Status */
-            status: string;
+            /**
+             * Reference Type
+             * @enum {string}
+             */
+            reference_type: "academic" | "professional" | "personal" | "other";
+            /**
+             * Verification Level
+             * @enum {string}
+             */
+            verification_level: "unverified" | "email_verified" | "domain_verified" | "document_verified";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "invited" | "approved" | "declined" | "expired" | "cancelled" | "revoked";
             /**
              * Public Id
              * Format: uuid
@@ -3682,6 +3741,8 @@ export interface components {
             institution?: string | null;
             /** Department */
             department?: string | null;
+            /** Reference Type */
+            reference_type?: ("academic" | "professional" | "personal" | "other") | null;
             /** Student Context */
             student_context?: {
                 [key: string]: unknown;
@@ -5787,6 +5848,14 @@ export interface components {
             /** Decline Reason Category */
             decline_reason_category?: ("no_relationship" | "insufficient_time" | "policy_conflict" | "other") | null;
         };
+        /** ReferenceAttachRequest */
+        ReferenceAttachRequest: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+        };
         /** ReferenceEventListResponse */
         ReferenceEventListResponse: {
             /** Items */
@@ -5842,6 +5911,21 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /**
+         * ReferenceVerificationLevelUpdate
+         * @description Admin-only: bumps a reference past self-attested `email_verified` once a
+         *     human has confirmed the referee's institutional domain or reviewed a document.
+         *     `unverified`/`email_verified` are system-managed and not settable here.
+         */
+        ReferenceVerificationLevelUpdate: {
+            /**
+             * Verification Level
+             * @enum {string}
+             */
+            verification_level: "domain_verified" | "document_verified";
+            /** Reason */
+            reason: string;
         };
         /** ReferenceVerificationResponse */
         ReferenceVerificationResponse: {
@@ -6530,11 +6614,16 @@ export interface components {
         StoryAIAssistRequest: {
             /**
              * Action
+             * @default improve_clarity
              * @enum {string}
              */
             action: "improve_clarity" | "shorten" | "adapt_for_interview" | "expand";
             /** Instruction */
             instruction?: string | null;
+            /** Prompt */
+            prompt?: string | null;
+            /** Target Field */
+            target_field?: string | null;
         };
         /** StoryAIAssistResponse */
         StoryAIAssistResponse: {
@@ -11944,6 +12033,41 @@ export interface operations {
             };
         };
     };
+    attach_reference_api_v1_academic_references__request_id__attach_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceAttachRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicReferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     revoke_reference_api_v1_academic_references__request_id__revoke_post: {
         parameters: {
             query?: never;
@@ -12969,6 +13093,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CursorPage_ReferenceEventSummary_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_reference_verification_level_api_v1_admin_references__request_id__verification_level_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceVerificationLevelUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicReferenceResponse"];
                 };
             };
             /** @description Validation Error */

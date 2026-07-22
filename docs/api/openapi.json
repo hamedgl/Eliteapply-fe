@@ -7999,6 +7999,64 @@
         }
       }
     },
+    "/api/v1/academic-references/{request_id}/attach": {
+      "post": {
+        "tags": [
+          "Academic Engagement"
+        ],
+        "summary": "Attach Reference",
+        "operationId": "attach_reference_api_v1_academic_references__request_id__attach_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceAttachRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicReferenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/academic-references/{request_id}/revoke": {
       "post": {
         "tags": [
@@ -9808,6 +9866,64 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CursorPage_ReferenceEventSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/references/{request_id}/verification-level": {
+      "post": {
+        "tags": [
+          "Admin Operations"
+        ],
+        "summary": "Update Reference Verification Level",
+        "operationId": "update_reference_verification_level_api_v1_admin_references__request_id__verification_level_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceVerificationLevelUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicReferenceResponse"
                 }
               }
             }
@@ -13594,6 +13710,17 @@
             ],
             "title": "Department"
           },
+          "reference_type": {
+            "type": "string",
+            "enum": [
+              "academic",
+              "professional",
+              "personal",
+              "other"
+            ],
+            "title": "Reference Type",
+            "default": "academic"
+          },
           "relationship_context": {
             "additionalProperties": true,
             "type": "object",
@@ -13636,6 +13763,19 @@
             "type": "array",
             "maxItems": 30,
             "title": "Destinations"
+          },
+          "expires_in_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 3.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In Days"
           }
         },
         "type": "object",
@@ -13704,6 +13844,14 @@
             "format": "uuid",
             "title": "Application Id"
           },
+          "application_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Application Ids"
+          },
           "mode": {
             "type": "string",
             "title": "Mode"
@@ -13720,6 +13868,10 @@
             "type": "string",
             "title": "Referee Role"
           },
+          "referee_email_masked": {
+            "type": "string",
+            "title": "Referee Email Masked"
+          },
           "institution": {
             "anyOf": [
               {
@@ -13731,8 +13883,36 @@
             ],
             "title": "Institution"
           },
+          "reference_type": {
+            "type": "string",
+            "enum": [
+              "academic",
+              "professional",
+              "personal",
+              "other"
+            ],
+            "title": "Reference Type"
+          },
+          "verification_level": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "email_verified",
+              "domain_verified",
+              "document_verified"
+            ],
+            "title": "Verification Level"
+          },
           "status": {
             "type": "string",
+            "enum": [
+              "invited",
+              "approved",
+              "declined",
+              "expired",
+              "cancelled",
+              "revoked"
+            ],
             "title": "Status"
           },
           "public_id": {
@@ -13857,7 +14037,10 @@
           "confidential",
           "referee_name",
           "referee_role",
+          "referee_email_masked",
           "institution",
+          "reference_type",
+          "verification_level",
           "status",
           "public_id",
           "expires_at",
@@ -13940,6 +14123,23 @@
               }
             ],
             "title": "Department"
+          },
+          "reference_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "academic",
+                  "professional",
+                  "personal",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Type"
           },
           "student_context": {
             "anyOf": [
@@ -19885,6 +20085,20 @@
         ],
         "title": "RefereeSubmission"
       },
+      "ReferenceAttachRequest": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id"
+        ],
+        "title": "ReferenceAttachRequest"
+      },
       "ReferenceEventListResponse": {
         "properties": {
           "items": {
@@ -20006,6 +20220,31 @@
           "created_at"
         ],
         "title": "ReferenceEventSummary"
+      },
+      "ReferenceVerificationLevelUpdate": {
+        "properties": {
+          "verification_level": {
+            "type": "string",
+            "enum": [
+              "domain_verified",
+              "document_verified"
+            ],
+            "title": "Verification Level"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verification_level",
+          "reason"
+        ],
+        "title": "ReferenceVerificationLevelUpdate",
+        "description": "Admin-only: bumps a reference past self-attested `email_verified` once a\nhuman has confirmed the referee's institutional domain or reviewed a document.\n`unverified`/`email_verified` are system-managed and not settable here."
       },
       "ReferenceVerificationResponse": {
         "properties": {
@@ -22121,7 +22360,8 @@
               "adapt_for_interview",
               "expand"
             ],
-            "title": "Action"
+            "title": "Action",
+            "default": "improve_clarity"
           },
           "instruction": {
             "anyOf": [
@@ -22134,12 +22374,33 @@
               }
             ],
             "title": "Instruction"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "target_field": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Field"
           }
         },
         "type": "object",
-        "required": [
-          "action"
-        ],
         "title": "StoryAIAssistRequest"
       },
       "StoryAIAssistResponse": {
