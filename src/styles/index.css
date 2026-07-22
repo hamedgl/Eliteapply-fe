@@ -5512,6 +5512,7 @@ th {
   grid-template-columns: 252px minmax(0, 1fr);
   color: var(--app-ink);
   background: var(--app-canvas);
+  transition: grid-template-columns 220ms var(--m-ease-out, ease-out);
 }
 
 .app-shell.sidebar-collapsed {
@@ -5545,6 +5546,7 @@ th {
   flex-direction: column;
   border-inline-end: 1px solid var(--app-line);
   background: #fbfcff;
+  transition: width 220ms var(--m-ease-out, ease-out), padding 220ms var(--m-ease-out, ease-out);
 }
 
 .sidebar-head {
@@ -5898,6 +5900,43 @@ th {
   padding: 2.75rem clamp(1.5rem, 3vw, 2.5rem) 4rem;
 }
 
+.app-shell .route-loading {
+  min-height: 46vh;
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  padding-top: 3.25rem;
+}
+
+.route-loading-label {
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.route-loading-title {
+  width: min(28rem, 72%);
+  height: 2.5rem;
+}
+
+.route-loading-copy {
+  width: min(38rem, 92%);
+  height: 1rem;
+}
+
+.route-loading-panels {
+  margin-top: 1.4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr);
+  gap: 1rem;
+}
+
+.route-loading-panels > div {
+  min-height: 14rem;
+}
+
 .app-shell .page > h1,
 .app-shell .page header h1,
 .app-shell .page-heading h1 {
@@ -5962,13 +6001,13 @@ th {
   color: var(--app-blue);
   border-color: var(--app-line-strong);
   background: #f4f6fb;
-  transform: scale(1.02);
+  transform: translateY(-1px);
 }
 
 .app-shell
   :where(button:not(.primary), .secondary-action):active:not(:disabled) {
   background: #e9edf5;
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .app-shell :where(button:not(.primary), .secondary-action):disabled {
@@ -6013,12 +6052,12 @@ th {
 .app-shell .primary:hover:not(:disabled) {
   border-color: var(--app-blue-hover);
   background: var(--app-blue-hover);
-  transform: scale(1.02);
+  transform: translateY(-1px);
 }
 
 .app-shell .primary:active:not(:disabled) {
   background: #0b338f;
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .app-shell .primary:disabled {
@@ -7677,6 +7716,10 @@ select option {
     padding: 2rem 1.5rem 3.5rem;
   }
 
+  .route-loading-panels {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-layout {
     grid-template-columns: 1fr;
   }
@@ -7952,6 +7995,7 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-shell,
   .app-shell .sidebar,
   .profile-progress-bar i,
   .app-shell .sidebar nav a,

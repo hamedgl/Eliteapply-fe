@@ -79,6 +79,26 @@ test("dashboard turns empty backend state into clear next actions", async ({
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test("navigation preloads the next workspace route on hover", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/app/dashboard");
+
+  const applicationPageRequest = page.waitForRequest(
+    (request) =>
+      request.url().includes("/src/features/applications/ApplicationsPage.tsx"),
+  );
+  await page.getByRole("link", { name: "Applications" }).hover();
+  await applicationPageRequest;
+  await expect(
+    page.getByRole("heading", { name: "Good morning, Hamed" }),
+  ).toBeVisible();
+  await page.screenshot({ path: "/tmp/eliteapply-navigation-preload.png" });
+  expect(errors).toEqual([]);
+});
+
 test("workspace guide uses real saved data and keeps three actions per page", async ({
   page,
 }, testInfo) => {

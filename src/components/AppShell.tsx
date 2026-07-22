@@ -30,6 +30,7 @@ import { notificationsApi } from "../lib/api/phase3";
 import { queryKeys } from "../lib/api/queryKeys";
 import { useDismiss } from "../lib/dom-hooks";
 import { PromptDialogProvider } from "./PromptDialog";
+import { preloadAppRoute } from "../app/preload";
 
 const navigationGroups = [
   {
@@ -147,6 +148,10 @@ export function AppShell() {
     });
   }
 
+  function prepareRoute(path: string) {
+    preloadAppRoute(path);
+  }
+
   const displayName = user?.full_name?.trim() || "Your account";
   const avatarLabel = (user?.full_name || user?.email || "EA")
     .slice(0, 1)
@@ -166,6 +171,8 @@ export function AppShell() {
         <NavLink
           className="mobile-notifications"
           to="/app/notifications"
+          onPointerEnter={() => prepareRoute("/app/notifications")}
+          onFocus={() => prepareRoute("/app/notifications")}
           aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
         >
           <Bell aria-hidden="true" />
@@ -241,6 +248,8 @@ export function AppShell() {
             to="/app/notifications"
             title="Notifications"
             onClick={closeSidebar}
+            onPointerEnter={() => prepareRoute("/app/notifications")}
+            onFocus={() => prepareRoute("/app/notifications")}
           >
             <Bell aria-hidden="true" />
             <span>Notifications</span>
@@ -262,6 +271,8 @@ export function AppShell() {
                   end={href === "/app/dashboard"}
                   title={label}
                   onClick={closeSidebar}
+                  onPointerEnter={() => prepareRoute(href)}
+                  onFocus={() => prepareRoute(href)}
                   className={({ isActive }) => (isActive ? "active" : "")}
                 >
                   <Icon aria-hidden="true" />
@@ -303,6 +314,8 @@ export function AppShell() {
                   to="/app/settings/profile"
                   role="menuitem"
                   onClick={() => setAccountMenuOpen(false)}
+                  onPointerEnter={() => prepareRoute("/app/settings/profile")}
+                  onFocus={() => prepareRoute("/app/settings/profile")}
                 >
                   <UserRound aria-hidden="true" /> Account
                 </NavLink>
@@ -312,6 +325,8 @@ export function AppShell() {
                   to="/app/settings/billing"
                   role="menuitem"
                   onClick={() => setAccountMenuOpen(false)}
+                  onPointerEnter={() => prepareRoute("/app/settings/billing")}
+                  onFocus={() => prepareRoute("/app/settings/billing")}
                 >
                   <CreditCard aria-hidden="true" /> Billing
                 </NavLink>

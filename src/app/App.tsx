@@ -7,12 +7,18 @@ import {
   useLocation,
   useRouteError,
 } from "react-router-dom";
-import {
-  LandingPage,
-  ProductPreviewPage,
-} from "../features/landing/LandingPage";
 import { useSession } from "../lib/auth/session";
-const AppShell = lazy(() =>
+const LandingPage = lazy(() =>
+    import("../features/landing/LandingPage").then((x) => ({
+      default: x.LandingPage,
+    })),
+  ),
+  ProductPreviewPage = lazy(() =>
+    import("../features/landing/LandingPage").then((x) => ({
+      default: x.ProductPreviewPage,
+    })),
+  ),
+  AppShell = lazy(() =>
     import("../components/AppShell").then((x) => ({ default: x.AppShell })),
   ),
   AuthPage = lazy(() =>
@@ -175,16 +181,23 @@ const AppShell = lazy(() =>
       default: x.MarketingNotFoundPage,
     })),
   );
-const load = (node: React.ReactNode) => (
-  <Suspense
-    fallback={
-      <div className="page" role="status">
-        Loading workspace…
+function RouteLoading() {
+  return (
+    <div className="page route-loading" role="status" aria-busy="true">
+      <span className="route-loading-label">Opening workspace</span>
+      <div className="skeleton route-loading-title" />
+      <div className="skeleton route-loading-copy" />
+      <div className="route-loading-panels">
+        <div className="skeleton" />
+        <div className="skeleton" />
       </div>
-    }
-  >
-    {node}
-  </Suspense>
+      <span className="sr-only">Loading workspace…</span>
+    </div>
+  );
+}
+
+const load = (node: React.ReactNode) => (
+  <Suspense fallback={<RouteLoading />}>{node}</Suspense>
 );
 function Protected() {
   const token = useSession((s) => s.accessToken),
@@ -268,8 +281,8 @@ function AppRouteError() {
 }
 
 const router = createBrowserRouter([
-  { path: "/", element: <LandingPage /> },
-  { path: "/product-preview", element: <ProductPreviewPage /> },
+  { path: "/", element: load(<LandingPage />) },
+  { path: "/product-preview", element: load(<ProductPreviewPage />) },
   { path: "/features/*", element: load(<MarketingPage />) },
   { path: "/how-it-works", element: load(<MarketingPage />) },
   { path: "/for-students", element: load(<MarketingPage />) },

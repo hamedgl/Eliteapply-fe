@@ -8,7 +8,14 @@ import { CapabilityProvider } from "../lib/capabilities/provider";
 import { EntitlementProvider } from "../lib/billing/provider";
 
 const client = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+  defaultOptions: {
+    queries: {
+      staleTime: 120_000,
+      gcTime: 1_800_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
 });
 
 function Bootstrap() {
