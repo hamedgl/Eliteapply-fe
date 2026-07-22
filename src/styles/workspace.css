@@ -608,11 +608,11 @@
   background: var(--app-surface-subtle);
 }
 .apps-row-menu-list {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.3rem);
+  position: fixed;
   z-index: 10;
   width: 190px;
+  max-height: min(320px, calc(100vh - 16px));
+  overflow-y: auto;
   margin: 0;
   padding: 0.35rem;
   list-style: none;

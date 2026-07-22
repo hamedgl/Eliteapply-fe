@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { components } from "../generated/api/schema";
 import {
+  cacheApplicationDocumentLink,
   getApplicationRequirements,
   getApplicationTasks,
   invalidateApplicationResource,
@@ -122,6 +123,23 @@ describe("application resource queries", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     requirements.unmount();
     tasks.unmount();
+    client.clear();
+  });
+
+  it("caches a successful document attachment for the application Documents tab", () => {
+    const client = new QueryClient();
+    const link = {
+      id: "00000000-0000-4000-8000-000000000013",
+      application_id: applicationId,
+      document_id: "00000000-0000-4000-8000-000000000014",
+      requirement_id: null,
+      created_at: "2026-07-22T00:00:00Z",
+    } satisfies S["DocumentLinkResponse"];
+
+    cacheApplicationDocumentLink(client, applicationId, link);
+    cacheApplicationDocumentLink(client, applicationId, link);
+
+    expect(client.getQueryData(queryKeys.applicationDocuments(applicationId))).toEqual([link]);
     client.clear();
   });
 

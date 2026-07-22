@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
+import { createPortal } from "react-dom";
 import { MoreHorizontal } from "lucide-react";
 import { useDismiss } from "../../lib/dom-hooks";
 
@@ -24,7 +25,42 @@ export function OverflowMenu({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  useDismiss([rootRef], () => setOpen(false), open);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [position, setPosition] = useState<{
+    left: number;
+    placement: "top" | "bottom";
+    anchor: number;
+  } | null>(null);
+  useDismiss([rootRef, menuRef], () => setOpen(false), open);
+
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const menuWidth = 190;
+      const menuMaxHeight = 320;
+      const gap = 5;
+      const viewportPadding = 8;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const placement = spaceBelow < menuMaxHeight && rect.top > spaceBelow ? "top" : "bottom";
+      setPosition({
+        left: Math.min(
+          window.innerWidth - menuWidth - viewportPadding,
+          Math.max(viewportPadding, rect.right - menuWidth),
+        ),
+        placement,
+        anchor: placement === "bottom" ? rect.bottom + gap : window.innerHeight - rect.top + gap,
+      });
+    };
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open]);
 
   return (
     <div className="apps-row-menu" ref={rootRef}>
@@ -38,8 +74,16 @@ export function OverflowMenu({
       >
         <MoreHorizontal aria-hidden="true" />
       </button>
-      {open ? (
-        <ul className="apps-row-menu-list" role="menu">
+      {open && position ? createPortal(
+        <ul
+          ref={menuRef}
+          className="apps-row-menu-list"
+          role="menu"
+          style={{
+            left: position.left,
+            ...(position.placement === "bottom" ? { top: position.anchor } : { bottom: position.anchor }),
+          }}
+        >
           {items.map((item) =>
             "divider" in item ? (
               <li key={item.key} className="apps-row-menu-divider" role="separator" />
@@ -60,7 +104,8 @@ export function OverflowMenu({
               </li>
             ),
           )}
-        </ul>
+        </ul>,
+        rootRef.current?.closest(".app-shell") ?? document.body,
       ) : null}
     </div>
   );

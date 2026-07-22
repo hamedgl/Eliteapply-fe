@@ -6,6 +6,7 @@ import { applicationsApi } from "../../../lib/api/phase2";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { label } from "../../applications/model";
+import { cacheApplicationDocumentLink } from "../../applications/applicationQueries";
 import type { AcademicDocument } from "../model";
 
 export function AttachToApplicationDialog({
@@ -32,8 +33,13 @@ export function AttachToApplicationDialog({
         document_id: document.id,
         requirement_id: requirementId || null,
       }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.workspace(applicationId) });
+    onSuccess: (link) => {
+      cacheApplicationDocumentLink(qc, applicationId, link);
+      void Promise.all([
+        qc.invalidateQueries({ queryKey: queryKeys.workspace(applicationId) }),
+        qc.invalidateQueries({ queryKey: queryKeys.documentLinks(document.id) }),
+        qc.invalidateQueries({ queryKey: queryKeys.documents }),
+      ]);
       onClose();
     },
   });

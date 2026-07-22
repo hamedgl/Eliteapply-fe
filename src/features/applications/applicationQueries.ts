@@ -71,6 +71,17 @@ export function seedApplicationWorkspace(
   );
 }
 
+export function cacheApplicationDocumentLink(
+  client: QueryClient,
+  applicationId: string,
+  link: S["DocumentLinkResponse"],
+) {
+  client.setQueryData<S["DocumentLinkResponse"][]>(
+    queryKeys.applicationDocuments(applicationId),
+    (current) => [link, ...(current ?? []).filter((item) => item.id !== link.id)],
+  );
+}
+
 export function invalidateApplicationResource(
   client: QueryClient,
   applicationId: string,
