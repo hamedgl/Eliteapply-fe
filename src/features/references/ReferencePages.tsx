@@ -8,7 +8,7 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Select } from "../../components/ui/select";
 import { referencesApi } from "../../lib/api/phase3";
-import { documentsApi } from "../../lib/api/phase2";
+import { applicationsApi, documentsApi } from "../../lib/api/phase2";
 import { downloadResponse } from "../../lib/api/download";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { track } from "../../lib/analytics/track";
@@ -179,16 +179,27 @@ export function NewReference() {
       ReturnType<typeof referencesApi.create>
     > | null>(null);
   const documents = useQuery({ queryKey: queryKeys.documents, queryFn: documentsApi.list });
+  const applications = useQuery({ queryKey: queryKeys.applications, queryFn: () => applicationsApi.list() });
   const [mode, setMode] = useState<"student_draft" | "referee_direct" | "existing_upload">("referee_direct");
+  const [applicationId, setApplicationId] = useState("");
   const [error, setError] = useState("");
   const mutationId = useRef("");
+  useEffect(() => {
+    if (!applicationId && applications.data?.items.length) {
+      setApplicationId(applications.data.items[0].id);
+    }
+  }, [applications.data, applicationId]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!applicationId) {
+      setError("Select an application first.");
+      return;
+    }
     const d = Object.fromEntries(new FormData(e.currentTarget)),
       selectedMode = d.mode as typeof mode;
     try { const x = await referencesApi.create({
       mutation_id: mutationId.current ||= crypto.randomUUID(),
-      application_id: String(d.application_id),
+      application_id: applicationId,
       mode: selectedMode,
       confidential: d.confidential === "on",
       confidentiality_acknowledged: d.ack === "on",
@@ -238,8 +249,25 @@ export function NewReference() {
       <h1>New academic reference</h1>
       <form className="settings-form" onSubmit={submit}>
         <label>
-          Application ID
-          <input name="application_id" required />
+          Application
+          {applications.data?.items.length ? (
+            <Select
+              value={applicationId}
+              onChange={(val: any) =>
+                setApplicationId(typeof val === "string" ? val : (val?.target?.value ?? ""))
+              }
+              options={applications.data.items.map((application) => ({
+                value: application.id,
+                label: application.institution_name
+                  ? `${application.title} · ${application.institution_name}`
+                  : application.title,
+              }))}
+            />
+          ) : (
+            <p className="apps-dialog-subtext">
+              {applications.isPending ? "Loading applications…" : "You don't have any applications yet."}
+            </p>
+          )}
         </label>
         <label>
           Mode
@@ -301,7 +329,7 @@ export function NewReference() {
           <input name="ack" type="checkbox" />I understand confidential final
           content may not be visible to me.
         </label>
-        <button className="primary">Create invitation</button>
+        <button className="primary" disabled={!applicationId}>Create invitation</button>
         {error ? <p role="alert">{error}</p> : null}
       </form>
     </div>
