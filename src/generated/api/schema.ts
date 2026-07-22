@@ -8466,7 +8466,7 @@ export interface operations {
                 tag?: string | null;
                 tags?: string[] | null;
                 archived?: boolean;
-                sort?: string;
+                sort?: "deadline_asc" | "deadline_desc" | "updated_desc" | "created_desc" | "priority_desc" | "readiness_asc" | "readiness_desc" | "title_asc" | "title_desc";
                 cursor?: string | null;
                 limit?: number;
             };

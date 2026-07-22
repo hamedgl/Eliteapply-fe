@@ -21,7 +21,11 @@ import { Select } from "../../components/ui/select";
 import { ApiError } from "../../lib/api/errors";
 import { downloadResponse } from "../../lib/api/download";
 import { newMutationId } from "../../lib/api/mutations";
-import { applicationsApi, type ApplicationFilters } from "../../lib/api/phase2";
+import {
+  applicationsApi,
+  type ApplicationFilters,
+  type ApplicationSort,
+} from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import {
   label,
@@ -58,7 +62,9 @@ const SORT_OPTIONS = [
   { value: "readiness_desc", text: "Readiness: highest" },
   { value: "title_asc", text: "Title: A to Z" },
   { value: "title_desc", text: "Title: Z to A" },
-] as const;
+] as const satisfies ReadonlyArray<{ value: ApplicationSort; text: string }>;
+const isApplicationSort = (value: string): value is ApplicationSort =>
+  SORT_OPTIONS.some((option) => option.value === value);
 const DRAWER_KEYS: Record<keyof DrawerFilters, string> = {
   applicationType: "type",
   institutionId: "institution",
@@ -135,6 +141,10 @@ export function ApplicationsPage() {
     view,
   );
 
+  const requestedSort = value("sort");
+  const selectedSort = isApplicationSort(requestedSort)
+    ? requestedSort
+    : "deadline_asc";
   const filters: ApplicationFilters = {
     search: value("search") || undefined,
     stage: value("stage") || undefined,
@@ -147,7 +157,7 @@ export function ApplicationsPage() {
     deadlineTo: value("deadlineTo") || undefined,
     tag: value("tag") || undefined,
     archived: value("archived") === "true" || undefined,
-    sort: value("sort") || "deadline_asc",
+    sort: selectedSort,
   };
   const boardFilters = {
     applicationType: filters.applicationType,
@@ -613,7 +623,7 @@ export function ApplicationsPage() {
         <label className="apps-sort">
           Sort
           <Select
-            value={value("sort") || "deadline_asc"}
+            value={selectedSort}
             onChange={(val: any) => setParam("sort", typeof val === "string" ? val : (val?.target?.value ?? "deadline_asc"))}
             options={SORT_OPTIONS.map((option) => ({
               value: option.value,

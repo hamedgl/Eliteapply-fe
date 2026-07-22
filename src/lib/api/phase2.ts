@@ -1,7 +1,11 @@
-import type { components } from "../../generated/api/schema";
+import type { components, operations } from "../../generated/api/schema";
 import { apiRequest } from "./client";
 import { uploadToSignedUrl } from "./signedTransport";
 type S = components["schemas"];
+type ApplicationListQuery = NonNullable<
+  operations["list_applications_api_v1_applications_get"]["parameters"]["query"]
+>;
+export type ApplicationSort = NonNullable<ApplicationListQuery["sort"]>;
 const enc = encodeURIComponent;
 const query = (
   values: Record<
@@ -38,7 +42,7 @@ export type ApplicationFilters = {
   tag?: string;
   tags?: string[] | string;
   archived?: boolean;
-  sort?: string;
+  sort?: ApplicationSort;
   cursor?: string | null;
   limit?: number;
 };

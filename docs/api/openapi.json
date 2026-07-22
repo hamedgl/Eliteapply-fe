@@ -981,6 +981,17 @@
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "deadline_asc",
+                "deadline_desc",
+                "updated_desc",
+                "created_desc",
+                "priority_desc",
+                "readiness_asc",
+                "readiness_desc",
+                "title_asc",
+                "title_desc"
+              ],
               "type": "string",
               "default": "deadline_asc",
               "title": "Sort"
