@@ -8,15 +8,18 @@ describe("OverflowMenu", () => {
     const Icon = () => null;
     const { container } = render(
       <div className="app-shell">
-        <div data-testid="clipping-parent" style={{ overflow: "hidden" }}>
-          <OverflowMenu label="More actions" items={[{ key: "edit", label: "Edit", icon: Icon, onClick }]} />
-        </div>
+        <section className="apps-drawer" data-testid="drawer">
+          <div data-testid="clipping-parent" style={{ overflow: "hidden" }}>
+            <OverflowMenu label="More actions" items={[{ key: "edit", label: "Edit", icon: Icon, onClick }]} />
+          </div>
+        </section>
       </div>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "More actions" }));
     const menu = await screen.findByRole("menu");
     expect(screen.getByTestId("clipping-parent")).not.toContainElement(menu);
+    expect(screen.getByTestId("drawer")).toContainElement(menu);
     expect(container.querySelector(".app-shell")).toContainElement(menu);
 
     fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));

@@ -105,7 +105,7 @@ export function OverflowMenu({
             ),
           )}
         </ul>,
-        rootRef.current?.closest(".app-shell") ?? document.body,
+        rootRef.current?.closest(".apps-drawer, .app-shell") ?? document.body,
       ) : null}
     </div>
   );
