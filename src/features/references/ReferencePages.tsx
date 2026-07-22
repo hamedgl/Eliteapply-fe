@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
 import { Select } from "../../components/ui/select";
 import { referencesApi } from "../../lib/api/phase3";
 import { applicationsApi, documentsApi } from "../../lib/api/phase2";
@@ -182,6 +183,7 @@ export function NewReference() {
   const applications = useQuery({ queryKey: queryKeys.applications, queryFn: () => applicationsApi.list() });
   const [mode, setMode] = useState<"student_draft" | "referee_direct" | "existing_upload">("referee_direct");
   const [applicationId, setApplicationId] = useState("");
+  const [existingDocumentId, setExistingDocumentId] = useState("");
   const [error, setError] = useState("");
   const mutationId = useRef("");
   useEffect(() => {
@@ -193,6 +195,10 @@ export function NewReference() {
     e.preventDefault();
     if (!applicationId) {
       setError("Select an application first.");
+      return;
+    }
+    if (mode === "existing_upload" && !existingDocumentId) {
+      setError("Select an existing document first.");
       return;
     }
     const d = Object.fromEntries(new FormData(e.currentTarget)),
@@ -211,7 +217,7 @@ export function NewReference() {
       relationship_context: { summary: String(d.relationship) },
       student_context: { summary: String(d.context) },
       student_draft: selectedMode === "student_draft" ? String(d.student_draft) || null : null,
-      existing_document_id: selectedMode === "existing_upload" ? String(d.existing_document_id) : null,
+      existing_document_id: selectedMode === "existing_upload" ? existingDocumentId : null,
       destinations: String(d.destinations).split("\n").map((value) => value.trim()).filter(Boolean).map((destination) => ({ destination })),
     });
     mutationId.current = ""; setCreated(x); void track("first_referee_invited").catch(() => undefined); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not create the invitation."); }
@@ -219,29 +225,36 @@ export function NewReference() {
   if (created)
     return (
       <div className="page">
-        <h1>Invitation created</h1>
-        <p>
-          EliteApply sent the invitation securely. No referee token is exposed
-          to this browser.
-        </p>
-        <dl>
-          <div>
-            <dt>Status</dt>
-            <dd>{created.status}</dd>
+        <div className="apps-empty">
+          <CheckCircle2 aria-hidden="true" className="apps-empty-icon" />
+          <h2>Invitation sent</h2>
+          <p>
+            EliteApply sent the invitation securely. No referee token is exposed
+            to this browser.
+          </p>
+          <section className="phase3-summary-grid">
+            <div>
+              <small>Status</small>
+              <span className="status-pill">{created.status.replaceAll("_", " ")}</span>
+            </div>
+            <div>
+              <small>Expires</small>
+              <strong>{new Date(created.expires_at).toLocaleDateString()}</strong>
+            </div>
+          </section>
+          <div className="apps-empty-actions">
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                setCreated(null);
+                nav("/app/references");
+              }}
+            >
+              Done
+            </button>
           </div>
-          <div>
-            <dt>Expires</dt>
-            <dd>{new Date(created.expires_at).toLocaleDateString()}</dd>
-          </div>
-        </dl>
-        <button
-          onClick={() => {
-            setCreated(null);
-            nav("/app/references");
-          }}
-        >
-          Done
-        </button>
+        </div>
       </div>
     );
   return (
@@ -319,7 +332,22 @@ export function NewReference() {
           <textarea name="context" />
         </label>
         {mode === "student_draft" ? <label>Student draft<textarea name="student_draft" required minLength={50} /></label> : null}
-        {mode === "existing_upload" ? <label>Existing document<select name="existing_document_id" required><option value="">Select a document</option>{documents.data?.map((document) => <option key={document.id} value={document.id}>{document.display_name}</option>)}</select></label> : null}
+        {mode === "existing_upload" ? (
+          <label>
+            Existing document
+            <Select
+              value={existingDocumentId}
+              placeholder="Select a document"
+              onChange={(val: any) =>
+                setExistingDocumentId(typeof val === "string" ? val : (val?.target?.value ?? ""))
+              }
+              options={(documents.data ?? []).map((document) => ({
+                value: document.id,
+                label: document.display_name,
+              }))}
+            />
+          </label>
+        ) : null}
         <label>Destinations <span className="muted">(one per line)</span><textarea name="destinations" placeholder="Oxford MSc Computer Science&#10;Rhodes Scholarship" /></label>
         <label className="check">
           <input name="confidential" type="checkbox" />

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
+import { Select } from "../../components/ui/select";
+import { applicationsApi } from "../../lib/api/phase2";
 import { interviewsApi, uploadInterviewAudio } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { track } from "../../lib/analytics/track";
@@ -33,17 +35,37 @@ export function InterviewsPage() {
 export function NewInterviewPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [applicationId, setApplicationId] = useState("");
+  const applications = useQuery({ queryKey: queryKeys.applications, queryFn: () => applicationsApi.list() });
   const mutationId = useRef("");
   const create = useMutation({ mutationFn: interviewsApi.create, onSuccess: (session) => { mutationId.current = ""; void track("first_interview_session").catch(() => undefined); navigate(`/app/interviews/${session.id}`); }, onError: (caught) => setError(caught instanceof Error ? caught.message : "Could not start interview.") });
+  useEffect(() => {
+    if (!applicationId && applications.data?.items.length) setApplicationId(applications.data.items[0].id);
+  }, [applications.data, applicationId]);
   function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
-    create.mutate({ mutation_id: mutationId.current ||= crypto.randomUUID(), application_id: String(data.get("application_id")), interview_type: data.get("interview_type") as S["AcademicInterviewCreate"]["interview_type"], mode: data.get("mode") as S["AcademicInterviewCreate"]["mode"] });
+    event.preventDefault();
+    if (!applicationId) { setError("Select an application first."); return; }
+    const data = new FormData(event.currentTarget);
+    create.mutate({ mutation_id: mutationId.current ||= crypto.randomUUID(), application_id: applicationId, interview_type: data.get("interview_type") as S["AcademicInterviewCreate"]["interview_type"], mode: data.get("mode") as S["AcademicInterviewCreate"]["mode"] });
   }
   return <div className="page"><Link to="/app/interviews">← Interview history</Link><h1>New practice session</h1><p>Choose the interview you want to rehearse. Questions and progression are owned by the service.</p><form className="settings-form" onSubmit={submit}>
-    <label>Application ID<input name="application_id" required /></label>
-    <label>Interview type<select name="interview_type">{["undergraduate","graduate","mba","phd_supervisor","scholarship_panel","research_fellowship","visa_credibility","custom"].map((type) => <option key={type} value={type}>{type.replaceAll("_", " ")}</option>)}</select></label>
-    <label>Practice mode<select name="mode"><option value="chat">Chat</option><option value="written">Written</option><option value="voice">Voice with transcription</option></select></label>
-    <button className="primary" disabled={create.isPending}>{create.isPending ? "Preparing session…" : "Start session"}</button>{error ? <p role="alert">{error}</p> : null}
+    <label>Application
+      {applications.data?.items.length ? (
+        <Select
+          value={applicationId}
+          onChange={(val: any) => setApplicationId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
+          options={applications.data.items.map((application) => ({
+            value: application.id,
+            label: application.institution_name ? `${application.title} · ${application.institution_name}` : application.title,
+          }))}
+        />
+      ) : (
+        <p className="apps-dialog-subtext">{applications.isPending ? "Loading applications…" : "You don't have any applications yet."}</p>
+      )}
+    </label>
+    <label>Interview type<Select name="interview_type" options={["undergraduate","graduate","mba","phd_supervisor","scholarship_panel","research_fellowship","visa_credibility","custom"].map((type) => ({ value: type, label: type.replaceAll("_", " ") }))} /></label>
+    <label>Practice mode<Select name="mode" options={[{ value: "chat", label: "Chat" }, { value: "written", label: "Written" }, { value: "voice", label: "Voice with transcription" }]} /></label>
+    <button className="primary" disabled={create.isPending || !applicationId}>{create.isPending ? "Preparing session…" : "Start session"}</button>{error ? <p role="alert">{error}</p> : null}
   </form></div>;
 }
 

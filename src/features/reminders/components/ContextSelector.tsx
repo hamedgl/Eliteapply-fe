@@ -3,6 +3,7 @@ import { applicationsApi } from "../../../lib/api/phase2";
 import { referencesApi, interviewsApi } from "../../../lib/api/phase3";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
+import { Select } from "../../../components/ui/select";
 import { aggregateLabel, aggregateTypes } from "../model";
 
 export type ContextValue = {
@@ -54,21 +55,16 @@ export function ContextSelector({
     <>
       <label>
         Related to
-        <select
+        <Select
           value={value.aggregateType}
-          onChange={(event) =>
+          onChange={(val: any) =>
             onChange({
               ...emptyContext,
-              aggregateType: event.target.value as ContextValue["aggregateType"],
+              aggregateType: (typeof val === "string" ? val : val?.target?.value) as ContextValue["aggregateType"],
             })
           }
-        >
-          {aggregateTypes.map((type) => (
-            <option value={type} key={type}>
-              {aggregateLabel[type]}
-            </option>
-          ))}
-        </select>
+          options={aggregateTypes.map((type) => ({ value: type, label: aggregateLabel[type] }))}
+        />
       </label>
 
       {value.aggregateType === "application" ? (
@@ -107,20 +103,21 @@ export function ContextSelector({
           {value.applicationId ? (
             <label>
               {value.aggregateType === "requirement" ? "Requirement" : "Task"}
-              <select
+              <Select
                 value={value.aggregateId}
-                onChange={(event) => onChange({ ...value, aggregateId: event.target.value })}
+                onChange={(val: any) =>
+                  onChange({ ...value, aggregateId: typeof val === "string" ? val : (val?.target?.value ?? "") })
+                }
                 disabled={value.aggregateType === "requirement" ? requirements.isPending : tasks.isPending}
-              >
-                <option value="">Not tied to a specific one</option>
-                {(value.aggregateType === "requirement" ? requirements.data : tasks.data)?.map(
-                  (item) => (
-                    <option value={item.id} key={item.id}>
-                      {item.title}
-                    </option>
-                  ),
-                )}
-              </select>
+                placeholder="Not tied to a specific one"
+                options={[
+                  { value: "", label: "Not tied to a specific one" },
+                  ...((value.aggregateType === "requirement" ? requirements.data : tasks.data)?.map((item) => ({
+                    value: item.id,
+                    label: item.title,
+                  })) ?? []),
+                ]}
+              />
             </label>
           ) : null}
         </>
@@ -129,36 +126,40 @@ export function ContextSelector({
       {value.aggregateType === "reference" ? (
         <label>
           Reference
-          <select
+          <Select
             value={value.aggregateId}
-            onChange={(event) => onChange({ ...value, aggregateId: event.target.value })}
+            onChange={(val: any) =>
+              onChange({ ...value, aggregateId: typeof val === "string" ? val : (val?.target?.value ?? "") })
+            }
             disabled={references.isPending}
-          >
-            <option value="">Choose a reference</option>
-            {references.data?.items.map((ref) => (
-              <option value={ref.id} key={ref.id}>
-                {ref.referee_name} — {ref.referee_role}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "Choose a reference" },
+              ...(references.data?.items.map((ref) => ({
+                value: ref.id,
+                label: `${ref.referee_name} — ${ref.referee_role}`,
+              })) ?? []),
+            ]}
+          />
         </label>
       ) : null}
 
       {value.aggregateType === "interview" ? (
         <label>
           Interview
-          <select
+          <Select
             value={value.aggregateId}
-            onChange={(event) => onChange({ ...value, aggregateId: event.target.value })}
+            onChange={(val: any) =>
+              onChange({ ...value, aggregateId: typeof val === "string" ? val : (val?.target?.value ?? "") })
+            }
             disabled={interviews.isPending}
-          >
-            <option value="">Choose an interview</option>
-            {interviews.data?.items.map((interview) => (
-              <option value={interview.id} key={interview.id}>
-                {interview.interview_type} · {interview.mode}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "Choose an interview" },
+              ...(interviews.data?.items.map((interview) => ({
+                value: interview.id,
+                label: `${interview.interview_type} · ${interview.mode}`,
+              })) ?? []),
+            ]}
+          />
         </label>
       ) : null}
     </>
