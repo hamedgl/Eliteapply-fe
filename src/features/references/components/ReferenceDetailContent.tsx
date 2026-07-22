@@ -154,7 +154,14 @@ export function ReferenceDetailContent({
 
       <section className="apps-drawer-group">
         <h3>Reference content</h3>
-        {reference.confidential ? (
+        {reference.mode === "existing_upload" ? (
+          <p className="apps-dialog-subtext">
+            <CheckCircle2 aria-hidden="true" />
+            {reference.status === "approved"
+              ? "The referee reviewed and confirmed the uploaded document. Use Download verified document to open your file."
+              : "Waiting for the referee to review the uploaded document."}
+          </p>
+        ) : reference.confidential ? (
           <p className="reference-protected-notice">
             <Lock aria-hidden="true" /> Reference content is confidential and cannot be viewed from your account.
           </p>

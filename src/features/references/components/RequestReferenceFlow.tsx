@@ -43,6 +43,8 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
     queryFn: documentsApi.list,
     enabled: mode === "existing_upload",
   });
+  const cleanDocuments = (documents.data ?? []).filter((document) => document.malware_status === "clean");
+  const selectedDocument = cleanDocuments.find((document) => document.id === existingDocumentId);
 
   const create = useMutation({
     mutationFn: () =>
@@ -67,7 +69,7 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
           .split("\n")
           .map((value) => value.trim())
           .filter(Boolean)
-          .map((destination) => ({ destination })),
+          .map((name) => ({ name })),
       }),
     onSuccess: (created) => {
       mutationId.current = newMutationId();
@@ -236,8 +238,11 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                 value={existingDocumentId}
                 placeholder="Select a document"
                 onChange={(val: any) => setExistingDocumentId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
-                options={(documents.data ?? []).map((document) => ({ value: document.id, label: document.display_name }))}
+                options={cleanDocuments.map((document) => ({ value: document.id, label: document.display_name }))}
               />
+              {documents.isSuccess && !cleanDocuments.length ? (
+                <span className="muted">No security-cleared documents are available. Upload a document and wait for scanning to finish.</span>
+              ) : null}
             </label>
           ) : null}
           <label>
@@ -296,6 +301,24 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               <dt>Due</dt>
               <dd>{expiresInDays ? `${expiresInDays} days from now` : "14 days from now (default)"}</dd>
             </div>
+            {mode === "existing_upload" ? (
+              <div>
+                <dt>Document to verify</dt>
+                <dd>{selectedDocument?.display_name ?? "Not selected"}</dd>
+              </div>
+            ) : null}
+            {relationship.trim() ? (
+              <div>
+                <dt>Relationship</dt>
+                <dd>{relationship.trim()}</dd>
+              </div>
+            ) : null}
+            {context.trim() ? (
+              <div>
+                <dt>Guidance</dt>
+                <dd>{context.trim()}</dd>
+              </div>
+            ) : null}
           </dl>
           <p className="apps-dialog-subtext">{visibilityPreview}</p>
           <p className="apps-dialog-subtext">

@@ -10,11 +10,14 @@ import { useSlashFocus } from "../applications/hooks";
 import { useFocusTrap } from "../../lib/dom-hooks";
 import { referencesApi } from "../../lib/api/phase3";
 import { downloadResponse } from "../../lib/api/download";
+import { documentsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
+import { openSignedDownload } from "../../lib/api/signedTransport";
 import {
   applyReferenceFilters,
   buildReferenceFilterChips,
   emptyReferenceFilters,
+  methodLabel,
   type Reference,
   type ReferenceFilters,
 } from "./model";
@@ -32,6 +35,17 @@ import { ReferenceDetailContent } from "./components/ReferenceDetailContent";
 import { RequestReferenceFlow } from "./components/RequestReferenceFlow";
 import type { ReferenceActionKind } from "./components/ReferenceActionMenu";
 import "../../styles/workspace.css";
+
+async function downloadReference(reference: Reference) {
+  if (reference.mode === "existing_upload" && reference.existing_document_id) {
+    openSignedDownload((await documentsApi.download(reference.existing_document_id)).download_url);
+    return;
+  }
+  await downloadResponse(
+    await referencesApi.download(reference.id),
+    `reference-${reference.public_id}.txt`,
+  );
+}
 
 function sortReferences(items: Reference[], sort: string): Reference[] {
   const sorted = [...items];
@@ -172,8 +186,9 @@ export function ReferencesPage() {
     }
     if (kind === "certificate" || kind === "download") {
       const filename = `reference-${reference.public_id}${kind === "certificate" ? "-certificate" : ""}.pdf`;
-      (kind === "certificate" ? referencesApi.certificate(reference.id) : referencesApi.download(reference.id))
-        .then((response) => downloadResponse(response, filename))
+      (kind === "certificate"
+        ? referencesApi.certificate(reference.id).then((response) => downloadResponse(response, filename))
+        : downloadReference(reference))
         .catch(() => setDownloadError("Could not download the file. Try again shortly."));
     }
   };
@@ -539,8 +554,9 @@ export function ReferenceDetail() {
     }
     if (kind === "certificate" || kind === "download") {
       const filename = `reference-${item.public_id}${kind === "certificate" ? "-certificate" : ""}.pdf`;
-      (kind === "certificate" ? referencesApi.certificate(id) : referencesApi.download(id))
-        .then((response) => downloadResponse(response, filename))
+      (kind === "certificate"
+        ? referencesApi.certificate(id).then((response) => downloadResponse(response, filename))
+        : downloadReference(item))
         .catch(() => setDownloadError("Could not download the file. Try again shortly."));
     }
   };
@@ -623,45 +639,89 @@ export function NewReference() {
     </div>
   );
 }
+
+type RefereeRequestData = Awaited<ReturnType<typeof referencesApi.refereeGet>>;
+
+function contextSummary(context: Record<string, unknown>) {
+  return typeof context.summary === "string" ? context.summary.trim() : "";
+}
+
 export function RefereePage() {
-  const { token = "" } = useParams(),
-    [code, setCode] = useState(""),
-    [request, setRequest] = useState<Record<string, unknown> | null>(null),
-    [decision, setDecision] = useState<"approve" | "decline">("approve"),
-    [done, setDone] = useState(false),
-    [error, setError] = useState(""), [submitting, setSubmitting] = useState(false);
+  const { token = "" } = useParams();
+  const [code, setCode] = useState("");
+  const [request, setRequest] = useState<RefereeRequestData | null>(null);
+  const [decision, setDecision] = useState<"approve" | "decline">("approve");
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [openingDocument, setOpeningDocument] = useState(false);
+
   async function unlock() {
+    if (unlocking) return;
+    setUnlocking(true);
+    setError("");
     try {
       setRequest(await referencesApi.refereeGet(token, code));
     } catch {
       setError("The invitation or code could not be verified.");
+    } finally {
+      setUnlocking(false);
     }
   }
+
+  async function openDocument() {
+    if (openingDocument) return;
+    setOpeningDocument(true);
+    setError("");
+    try {
+      openSignedDownload((await referencesApi.refereeDocument(token, code)).download_url);
+    } catch {
+      setError("The document could not be opened. Check that the invitation is still active.");
+    } finally {
+      setOpeningDocument(false);
+    }
+  }
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (submitting) return;
-    setSubmitting(true); setError("");
+    setSubmitting(true);
+    setError("");
     const data = new FormData(e.currentTarget);
-    try { await referencesApi.refereeSubmit(token, code, {
-      decision,
-      final_content:
-        decision === "approve" ? String(data.get("content")) : null,
-      referee_display_name: String(data.get("referee_display_name")),
-      role_title: String(data.get("role_title")) || null,
-      relationship_confirmation: data.get("relationship_confirmation") === "on",
-      relationship_duration: String(data.get("relationship_duration")) || null,
-      authenticity_attestation: data.get("authenticity_attestation") === "on",
-      authority_consent: data.get("authority_consent") === "on",
-      conflict_of_interest: String(data.get("conflict_of_interest")) || null,
-      signature_name: String(data.get("signature_name")) || null,
-      decline_reason_category: decision === "decline" ? data.get("decline_reason_category") as "no_relationship" | "insufficient_time" | "policy_conflict" | "other" : null,
-      existing_document_id: String(data.get("existing_document_id")) || null,
-    });
-    setCode("");
-    setRequest(null);
-    setDone(true);
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "Submission failed. Your form is still available to retry."); setSubmitting(false); }
+    try {
+      await referencesApi.refereeSubmit(token, code, {
+        decision,
+        final_content:
+          decision === "approve" && request?.mode !== "existing_upload"
+            ? String(data.get("content"))
+            : null,
+        referee_display_name: String(data.get("referee_display_name")),
+        role_title: String(data.get("role_title")) || null,
+        relationship_confirmation: data.get("relationship_confirmation") === "on",
+        relationship_duration: String(data.get("relationship_duration")) || null,
+        authenticity_attestation: data.get("authenticity_attestation") === "on",
+        authority_consent: data.get("authority_consent") === "on",
+        conflict_of_interest: String(data.get("conflict_of_interest")) || null,
+        signature_name: String(data.get("signature_name")) || null,
+        decline_reason_category:
+          decision === "decline"
+            ? (data.get("decline_reason_category") as "no_relationship" | "insufficient_time" | "policy_conflict" | "other")
+            : null,
+        existing_document_id:
+          decision === "approve" && request?.mode === "existing_upload"
+            ? request.existing_document?.id ?? null
+            : null,
+      });
+      setCode("");
+      setRequest(null);
+      setDone(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Submission failed. Your form is still available to retry.");
+      setSubmitting(false);
+    }
   }
+
   if (done)
     return (
       <Public title="Reference submitted">
@@ -672,7 +732,7 @@ export function RefereePage() {
       </Public>
     );
   return (
-    <Public title="Submit an academic reference">
+    <Public title="Review an academic reference request">
       {!request ? (
         <div className="settings-form">
           <p>
@@ -685,16 +745,43 @@ export function RefereePage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               autoComplete="one-time-code"
+              inputMode="numeric"
+              maxLength={6}
             />
           </label>
-          <button className="primary" onClick={unlock}>
-            Continue securely
+          <button className="primary" onClick={unlock} disabled={unlocking || code.trim().length !== 6}>
+            {unlocking ? "Checking…" : "Continue securely"}
           </button>
           {error ? <p role="alert">{error}</p> : null}
         </div>
       ) : (
         <form className="settings-form" onSubmit={submit}>
-          <SafeObject value={request} />
+          <section className="reference-public-brief" aria-labelledby="reference-request-details">
+            <h2 id="reference-request-details">What you’re being asked to do</h2>
+            <dl className="reference-detail-facts">
+              <div><dt>Application</dt><dd>{request.application_title}</dd></div>
+              <div><dt>Method</dt><dd>{methodLabel(request.mode)}</dd></div>
+              <div><dt>Due</dt><dd>{new Date(request.expires_at).toLocaleDateString()}</dd></div>
+              <div><dt>Privacy</dt><dd>{request.confidential ? "Confidential response" : "Visible to the applicant"}</dd></div>
+              {request.destinations?.length ? (
+                <div><dt>Destinations</dt><dd>{request.destinations.join(", ")}</dd></div>
+              ) : null}
+            </dl>
+            {contextSummary(request.relationship_context) ? (
+              <div className="reference-public-context"><strong>Relationship provided by the applicant</strong><p>{contextSummary(request.relationship_context)}</p></div>
+            ) : null}
+            {contextSummary(request.student_context) ? (
+              <div className="reference-public-context"><strong>Applicant guidance</strong><p>{contextSummary(request.student_context)}</p></div>
+            ) : null}
+            {request.mode === "existing_upload" && request.existing_document ? (
+              <div className="reference-public-document">
+                <div><strong>Document to review</strong><span>{request.existing_document.display_name}</span></div>
+                <button type="button" onClick={openDocument} disabled={openingDocument}>
+                  {openingDocument ? "Opening…" : "Open document securely"}
+                </button>
+              </div>
+            ) : null}
+          </section>
           <label>
             Decision
             <Select
@@ -716,33 +803,24 @@ export function RefereePage() {
             Role or title
             <input name="role_title" />
           </label>
-          <label>How long have you known the applicant?<input name="relationship_duration" required /></label>
           {decision === "approve" ? (
-            <label>
-              Final reference
-              <textarea name="content" minLength={50} required rows={14} />
-            </label>
+            <>
+              <label>How long have you known the applicant?<input name="relationship_duration" required /></label>
+              {request.mode !== "existing_upload" ? (
+                <label>
+                  {request.mode === "student_draft" ? "Review and edit the applicant’s draft" : "Final reference"}
+                  <textarea name="content" minLength={50} required rows={14} defaultValue={request.student_draft ?? ""} />
+                </label>
+              ) : null}
+              <label>Potential conflict of interest <span className="muted">(write “None” if not applicable)</span><textarea name="conflict_of_interest" required /></label>
+              <label>Signature name<input name="signature_name" required /></label>
+              <label className="check"><input name="relationship_confirmation" type="checkbox" required />I confirm the stated relationship.</label>
+              <label className="check"><input name="authenticity_attestation" type="checkbox" required />I attest that this submission is authentic.</label>
+              <label className="check"><input name="authority_consent" type="checkbox" required />I am authorized to submit this reference.</label>
+            </>
           ) : null}
           {decision === "decline" ? <label>Reason for declining<select name="decline_reason_category" required><option value="no_relationship">I do not know the applicant</option><option value="insufficient_time">I do not have enough time</option><option value="policy_conflict">Institutional policy conflict</option><option value="other">Other</option></select></label> : null}
-          {decision === "approve" ? <label>Existing supporting document ID <span className="muted">(optional alternative)</span><input name="existing_document_id" /></label> : null}
-          <label>Potential conflict of interest <span className="muted">(write “None” if not applicable)</span><textarea name="conflict_of_interest" required /></label>
-          <label>
-            Signature name
-            <input name="signature_name" required />
-          </label>
-          <label className="check">
-            <input name="relationship_confirmation" type="checkbox" required />I
-            confirm the stated relationship.
-          </label>
-          <label className="check">
-            <input name="authenticity_attestation" type="checkbox" required />I
-            attest that this submission is authentic.
-          </label>
-          <label className="check">
-            <input name="authority_consent" type="checkbox" required />I am
-            authorized to submit this reference.
-          </label>
-          <p className="phase3-consent">By submitting, you confirm that the reference is your own honest assessment, that you have authority to provide it, and that EliteApply may securely store and share it with the stated destinations.</p>
+          {decision === "approve" ? <p className="phase3-consent">By submitting, you confirm that the reference is your own honest assessment, that you have authority to provide it, and that EliteApply may securely store and share it with the stated destinations.</p> : null}
           <button className="primary" disabled={submitting}>{submitting ? "Submitting securely…" : "Submit reference"}</button>
           {error ? <p role="alert">{error}</p> : null}
         </form>
@@ -814,19 +892,5 @@ function Public({
       <h1>{title}</h1>
       {children}
     </main>
-  );
-}
-function SafeObject({ value }: { value: Record<string, unknown> }) {
-  return (
-    <dl>
-      {Object.entries(value)
-        .filter(([k]) => !/(token|email|content|context)/i.test(k))
-        .map(([k, v]) => (
-          <div>
-            <dt>{k.replaceAll("_", " ")}</dt>
-            <dd>{typeof v === "string" ? v : "Provided"}</dd>
-          </div>
-        ))}
-    </dl>
   );
 }

@@ -2000,6 +2000,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/referee/academic-reference/{token}/document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Referee Reference Document */
+        get: operations["referee_reference_document_api_v1_referee_academic_reference__token__document_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/referee/academic-reference/{token}/submit": {
         parameters: {
             query?: never;
@@ -5807,6 +5824,55 @@ export interface components {
             items: components["schemas"]["OpportunityMatchResult"][];
             /** Disclaimer */
             disclaimer: string;
+        };
+        /** RefereeExistingDocumentResponse */
+        RefereeExistingDocumentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+        };
+        /** RefereeRequestResponse */
+        RefereeRequestResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "student_draft" | "referee_direct" | "existing_upload";
+            /** Confidential */
+            confidential: boolean;
+            /** Application Title */
+            application_title: string;
+            /** Destinations */
+            destinations?: string[];
+            /** Student Context */
+            student_context: {
+                [key: string]: unknown;
+            };
+            /** Relationship Context */
+            relationship_context: {
+                [key: string]: unknown;
+            };
+            /** Student Draft */
+            student_draft?: string | null;
+            existing_document?: components["schemas"]["RefereeExistingDocumentResponse"] | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
         };
         /** RefereeSubmission */
         RefereeSubmission: {
@@ -12214,9 +12280,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["RefereeRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    referee_reference_document_api_v1_referee_academic_reference__token__document_get: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Reference-Code": string;
+            };
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDownloadResponse"];
                 };
             };
             /** @description Validation Error */

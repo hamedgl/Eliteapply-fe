@@ -304,8 +304,13 @@ export const referencesApi = {
       raw: true,
     }),
   refereeGet: (token: string, code: string) =>
-    apiRequest<Record<string, unknown>>(
+    apiRequest<S["RefereeRequestResponse"]>(
       `/referee/academic-reference/${e(token)}`,
+      { public: true, headers: { "X-Reference-Code": code } },
+    ),
+  refereeDocument: (token: string, code: string) =>
+    apiRequest<S["DocumentDownloadResponse"]>(
+      `/referee/academic-reference/${e(token)}/document`,
       { public: true, headers: { "X-Reference-Code": code } },
     ),
   refereeSubmit: (token: string, code: string, body: S["RefereeSubmission"]) =>
@@ -480,4 +485,3 @@ export const usageApi = {
 };
 export const storiesApi = writingApi;
 export type StoryAIAssistResponse = S["StoryAIAssistResponse"];
-

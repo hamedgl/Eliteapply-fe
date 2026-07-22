@@ -16,8 +16,7 @@ export type ReferenceActionKind =
  * Real per-action gating, matching what the API actually allows:
  * remind/resend while non-terminal, edit only while `invited`, certificate
  * once approved, letter download once approved and non-confidential, attach
- * only once approved, cancel while non-terminal, revoke unless already
- * revoked.
+ * only while approved, cancel while pending, and revoke only while approved.
  */
 export function ReferenceActionMenu({
   reference,
@@ -30,8 +29,8 @@ export function ReferenceActionMenu({
 }) {
   const active = !terminalReferenceStatuses.has(reference.status);
   const editable = reference.status === "invited";
-  const approved = Boolean(reference.approved_at);
-  const revoked = Boolean(reference.revoked_at) || reference.status === "revoked";
+  const approved = reference.status === "approved";
+  const certifiable = Boolean(reference.approved_at);
 
   const topItems = [
     active
@@ -43,7 +42,7 @@ export function ReferenceActionMenu({
     editable
       ? { key: "edit", label: "Edit request", icon: Pencil, disabled: pending, onClick: () => onAction("edit") }
       : null,
-    approved
+    certifiable
       ? {
           key: "certificate",
           label: "Download verification certificate",
@@ -52,10 +51,10 @@ export function ReferenceActionMenu({
           onClick: () => onAction("certificate"),
         }
       : null,
-    approved && !reference.confidential
+    approved && (!reference.confidential || reference.mode === "existing_upload")
       ? {
           key: "download",
-          label: "Download reference letter",
+          label: reference.mode === "existing_upload" ? "Download verified document" : "Download reference letter",
           icon: Download,
           disabled: pending,
           onClick: () => onAction("download"),
@@ -76,7 +75,7 @@ export function ReferenceActionMenu({
     active
       ? { key: "cancel", label: "Cancel request", icon: XCircle, disabled: pending, onClick: () => onAction("cancel") }
       : null,
-    !revoked
+    approved
       ? {
           key: "revoke",
           label: "Revoke request",

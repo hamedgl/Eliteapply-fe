@@ -8310,9 +8310,58 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Referee Request Api V1 Referee Academic Reference  Token  Get"
+                  "$ref": "#/components/schemas/RefereeRequestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/referee/academic-reference/{token}/document": {
+      "get": {
+        "tags": [
+          "Academic Engagement"
+        ],
+        "summary": "Referee Reference Document",
+        "operationId": "referee_reference_document_api_v1_referee_academic_reference__token__document_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          },
+          {
+            "name": "X-Reference-Code",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Reference-Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDownloadResponse"
                 }
               }
             }
@@ -19955,6 +20004,115 @@
           "disclaimer"
         ],
         "title": "RecommendationsResponse"
+      },
+      "RefereeExistingDocumentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "content_type",
+          "size_bytes"
+        ],
+        "title": "RefereeExistingDocumentResponse"
+      },
+      "RefereeRequestResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "student_draft",
+              "referee_direct",
+              "existing_upload"
+            ],
+            "title": "Mode"
+          },
+          "confidential": {
+            "type": "boolean",
+            "title": "Confidential"
+          },
+          "application_title": {
+            "type": "string",
+            "title": "Application Title"
+          },
+          "destinations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Destinations"
+          },
+          "student_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Student Context"
+          },
+          "relationship_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Relationship Context"
+          },
+          "student_draft": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Draft"
+          },
+          "existing_document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RefereeExistingDocumentResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "mode",
+          "confidential",
+          "application_title",
+          "student_context",
+          "relationship_context",
+          "expires_at"
+        ],
+        "title": "RefereeRequestResponse"
       },
       "RefereeSubmission": {
         "properties": {

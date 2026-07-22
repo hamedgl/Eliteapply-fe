@@ -1504,6 +1504,51 @@
   font-size: 0.88rem;
 }
 
+.reference-public-brief {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+.reference-public-brief h2,
+.reference-public-context p {
+  margin: 0;
+}
+.reference-public-context {
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--app-line);
+}
+.reference-public-context strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.reference-public-document {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-blue-soft);
+}
+.reference-public-document div {
+  display: grid;
+  gap: 0.2rem;
+}
+.reference-public-document span {
+  color: var(--app-muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .reference-public-document {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .reference-application-usage {
   margin-top: 0.9rem;
   padding-top: 0.9rem;
