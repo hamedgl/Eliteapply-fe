@@ -105,6 +105,7 @@ export function CataloguePage() {
   if (id) return <CatalogueDetail kind={kind} id={id} />;
 
   const noFiltersActive = !filters.search && !filters.country && !filters.degreeLevel && !filters.fieldOfStudy && !filters.verified;
+  const addPrivateLabel = `Add private ${kindSingular[kind]}`;
 
   return (
     <div className="page apps-page catalogue-page">
@@ -113,32 +114,36 @@ export function CataloguePage() {
         title="Academic catalogue"
         description="Discover verified institutions, programmes and scholarships, then add the most relevant opportunities to your workspace."
         actions={
-          <>
-            <Link className="apps-icon-button" to="/app/discovery" aria-label="Saved searches & matches" title="Saved searches & matches">
-              <Search aria-hidden="true" />
-            </Link>
-            <button className="primary" type="button" onClick={() => setCreating(true)}>
-              <Plus aria-hidden="true" /> Add private record
-            </button>
-          </>
+          <Link className="apps-icon-button" to="/app/discovery" aria-label="Saved searches & matches" title="Saved searches & matches">
+            <Search aria-hidden="true" />
+          </Link>
         }
       />
 
       <CatalogueSummary onSelectKind={switchKind} />
 
-      <nav className="catalogue-tabs" aria-label="Catalogue type">
-        {KINDS.map((value) => (
-          <button
-            key={value}
-            type="button"
-            className={kind === value ? "selected" : ""}
-            aria-pressed={kind === value}
-            onClick={() => switchKind(value)}
-          >
-            {kindLabel[value]}
-          </button>
-        ))}
-      </nav>
+      <div className="catalogue-tab-row">
+        <nav className="catalogue-tabs" aria-label="Catalogue type">
+          {KINDS.map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={kind === value ? "selected" : ""}
+              aria-pressed={kind === value}
+              onClick={() => switchKind(value)}
+            >
+              {kindLabel[value]}
+            </button>
+          ))}
+        </nav>
+        <button
+          className="primary catalogue-add-private"
+          type="button"
+          onClick={() => setCreating(true)}
+        >
+          <Plus aria-hidden="true" /> {addPrivateLabel}
+        </button>
+      </div>
 
       <div className="apps-card apps-toolbar">
         <div className="apps-toolbar-search">
@@ -235,7 +240,7 @@ export function CataloguePage() {
           icon={Search}
           heading={`No ${kind} yet`}
           description="Add a private research record to start building your own catalogue entries."
-          primaryAction={{ label: "Add private record", onClick: () => setCreating(true) }}
+          primaryAction={{ label: addPrivateLabel, onClick: () => setCreating(true) }}
         />
       ) : (
         <EmptyState

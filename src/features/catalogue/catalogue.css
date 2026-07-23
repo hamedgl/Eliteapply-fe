@@ -1,9 +1,16 @@
 /* Catalogue page — additions on top of the shared workspace design system. */
 
+.catalogue-tab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
 .catalogue-tabs {
   display: inline-flex;
   gap: 0.25rem;
-  margin-top: 1.5rem;
   padding: 3px;
   border: 1px solid var(--app-line);
   border-radius: var(--app-radius-sm);
@@ -19,6 +26,10 @@
 .catalogue-tabs button.selected {
   color: var(--app-blue);
   background: var(--app-blue-soft);
+}
+
+.catalogue-add-private {
+  flex: none;
 }
 
 .catalogue-verified-toggle {
@@ -122,4 +133,25 @@
 .catalogue-report-issue-button svg {
   width: 14px;
   height: 14px;
+}
+
+@media (max-width: 720px) {
+  .catalogue-tab-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .catalogue-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .catalogue-tabs button {
+    flex: 1;
+  }
+
+  .catalogue-add-private {
+    width: 100%;
+    justify-content: center;
+  }
 }

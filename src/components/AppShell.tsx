@@ -17,6 +17,7 @@ import {
   CalendarClock,
   Search,
   Settings,
+  Sparkles,
   UserRound,
   Users,
   X,
@@ -29,8 +30,13 @@ import { useSession } from "../lib/auth/session";
 import { notificationsApi } from "../lib/api/phase3";
 import { queryKeys } from "../lib/api/queryKeys";
 import { useDismiss } from "../lib/dom-hooks";
+import { useEntitlements } from "../lib/billing/provider";
 import { PromptDialogProvider } from "./PromptDialog";
 import { preloadAppRoute } from "../app/preload";
+import { ProgressBar } from "./data-display/ProgressBar";
+import "../styles/workspace.css";
+
+const compactNumber = new Intl.NumberFormat(undefined, { notation: "compact" });
 
 const navigationGroups = [
   {
@@ -79,6 +85,25 @@ export function AppShell() {
     queryFn: notificationsApi.unreadCount,
     refetchInterval: document.hidden ? false : 60_000,
   });
+  const entitlements = useEntitlements();
+  const entitlement = entitlements.data;
+  const tokensUsedPercent = entitlement?.ai_tokens_limit
+    ? Math.min(
+        100,
+        Math.round(
+          (entitlement.ai_tokens_used / entitlement.ai_tokens_limit) * 100,
+        ),
+      )
+    : 0;
+  const daysUntilReset = entitlement
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(entitlement.ai_tokens_reset_at).getTime() - Date.now()) /
+            86_400_000,
+        ),
+      )
+    : null;
 
   function closeSidebar() {
     setOpen(false);
@@ -282,6 +307,37 @@ export function AppShell() {
             </div>
           ))}
         </nav>
+
+        {entitlement ? (
+          <div className="sidebar-plan">
+            <p className="sidebar-plan-name">
+              <Sparkles aria-hidden="true" />
+              <strong>{entitlement.plan_label} Plan</strong>
+            </p>
+            <p className="sidebar-plan-limit">
+              {compactNumber.format(entitlement.ai_tokens_limit)} tokens
+            </p>
+            <ProgressBar
+              percent={tokensUsedPercent}
+              label="AI tokens used"
+            />
+            <p className="sidebar-plan-meta">
+              {compactNumber.format(entitlement.ai_tokens_used)} used
+              {daysUntilReset !== null
+                ? ` · renews in ${daysUntilReset} days`
+                : null}
+            </p>
+            <NavLink
+              className="sidebar-plan-manage"
+              to="/app/settings/billing"
+              onClick={closeSidebar}
+              onPointerEnter={() => prepareRoute("/app/settings/billing")}
+              onFocus={() => prepareRoute("/app/settings/billing")}
+            >
+              Manage plan
+            </NavLink>
+          </div>
+        ) : null}
 
         <footer className="sidebar-account" ref={accountMenuRef}>
           <button
