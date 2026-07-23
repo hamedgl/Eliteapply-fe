@@ -79,6 +79,61 @@ test("dashboard turns empty backend state into clear next actions", async ({
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test("upcoming deadlines use an interactive compact calendar", async ({
+  page,
+}) => {
+  const applicationId = "00000000-0000-4000-8000-000000000070";
+  await page.route("**/api/v1/dashboard", (route) =>
+    route.fulfill({
+      json: {
+        ...dashboard,
+        applications_by_stage: { preparing: 1 },
+        upcoming_deadlines: [
+          {
+            application_id: applicationId,
+            application_title: "Oxford scholarship",
+            deadline_at: "2026-07-24T00:00:00Z",
+          },
+        ],
+      },
+    }),
+  );
+
+  await page.goto("/app/dashboard");
+  const deadlines = page
+    .locator(".dashboard-surface")
+    .filter({ hasText: "Upcoming deadlines" });
+  await expect(deadlines.getByText("July 2026")).toBeVisible();
+  await expect(
+    deadlines.getByRole("button", { name: /Oxford scholarship/ }),
+  ).toBeVisible();
+  await deadlines.getByRole("button", { name: "Next period" }).click();
+  await expect(deadlines.getByText("August 2026")).toBeVisible();
+  await deadlines.getByRole("button", { name: "Previous period" }).click();
+  await expect(deadlines.getByText("July 2026")).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-dashboard-deadline-calendar.png",
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-dashboard-deadline-calendar-mobile.png",
+    fullPage: true,
+    animations: "disabled",
+  });
+
+  await deadlines.getByRole("button", { name: /Oxford scholarship/ }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/app/applications/${applicationId}$`),
+  );
+});
+
 test("navigation preloads the next workspace route on hover", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => {

@@ -30,21 +30,40 @@ input[type="radio"] {
 
 /* Native `required` stays authoritative; the star is only a visual cue. */
 label:has(> :is(input, select, textarea):required) {
-  padding-inline-start: 0.75rem;
+  padding-inline-start: 0;
   position: relative;
 }
 
 label:has(> :is(input, select, textarea):required)::before {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-start: 0;
-  color: var(--danger);
-  content: "*";
+  display: none;
+}
+
+label:has(> :is(input, select, textarea):required) > span:first-child::after {
+  content: " *";
+  color: var(--danger, #b42318);
   font-weight: 700;
 }
-.check-field {
-  grid-template-columns: auto 1fr;
-  align-items: center;
+.check-field,
+.check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--app-ink, #101b3b);
+  min-height: 24px;
+}
+.check-field input[type="checkbox"],
+.check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--app-blue, #174bd6);
+  flex-shrink: 0;
 }
 button,
 a {
@@ -564,14 +583,68 @@ small {
   display: grid;
   gap: 1.2rem;
   max-width: 620px;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+}
+.settings-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--app-ink, #101b3b);
+  width: 100%;
+}
+.settings-form label > :is(input, select, textarea) {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--app-line-strong, #cfd7e6);
+  border-radius: 8px;
+  background: var(--app-surface, #ffffff);
+  color: var(--app-ink, #101b3b);
+  font-size: 0.875rem;
+  font-weight: 400;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.settings-form label > :is(input, select, textarea):hover {
+  border-color: #94a3b8;
+}
+.settings-form label > :is(input, select, textarea):focus,
+.settings-form label > :is(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: var(--app-blue, #174bd6);
+  box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
+}
+.form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.settings-form .form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.settings-form button.primary {
+  justify-self: start;
+  width: auto;
+  border-radius: 8px;
+  padding: 0.6rem 1.35rem;
+  min-height: 40px;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 .settings-form button:not(.primary) {
   justify-self: start;
-  padding: 0.7rem 1rem;
+  padding: 0.6rem 1.25rem;
+  min-height: 40px;
   background: #fff;
   border: 1px solid #aeb8c9;
-  border-radius: 7px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 .danger {
   color: var(--danger) !important;
@@ -1113,8 +1186,9 @@ th {
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.125rem 1rem;
+  align-items: start;
 }
 .form-grid .wide {
   grid-column: 1/-1;
@@ -1122,13 +1196,31 @@ th {
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.7rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 .dialog-actions button:not(.primary) {
-  padding: 0.78rem 1.3rem;
+  padding: 0.6rem 1.25rem;
+  min-height: 40px;
   background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 9999px;
+  border: 1px solid var(--app-line-strong, var(--line, #cbd5e1));
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--app-ink, #101b3b);
+  transition: all 150ms ease;
+}
+.dialog-actions button:not(.primary):hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+.dialog-actions button.primary {
+  padding: 0.6rem 1.35rem;
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 .back {
   display: inline-flex;
@@ -6085,11 +6177,8 @@ th {
   margin: 0.55rem 0 0;
   color: var(--app-muted);
   line-height: 1.55;
-  text-wrap: pretty;
-}
-
 .app-shell :where(button:not(.primary), .secondary-action) {
-  min-height: 40px;
+  min-height: 42px;
   padding: 0.55rem 1rem;
   display: inline-flex;
   align-items: center;
@@ -6097,7 +6186,7 @@ th {
   gap: 0.4rem;
   color: var(--app-ink);
   border: 1px solid var(--app-line);
-  border-radius: 9999px;
+  border-radius: 8px;
   background: var(--app-surface);
   font-family: "DM Sans", sans-serif;
   font-size: 0.82rem;
@@ -6136,7 +6225,7 @@ th {
   color: #9f2018;
   border-color: #e4aaa5;
   background: #fff;
-  border-radius: 9999px;
+  border-radius: 8px;
 }
 
 .app-shell :where(button.danger, button.danger-link):hover:not(:disabled) {
@@ -6152,7 +6241,7 @@ th {
   justify-content: center;
   color: #fff;
   border: 1px solid var(--app-blue);
-  border-radius: 9999px;
+  border-radius: 8px;
   background: var(--app-blue);
   box-shadow: none;
   font-family: "DM Sans", sans-serif;
@@ -6207,8 +6296,8 @@ th {
   min-height: 44px;
   color: var(--app-ink);
   border: 1px solid var(--app-line-strong);
-  border-radius: 9999px;
-  background-color: var(--app-surface);
+  border-radius: 8px;
+  background-color: var(--app-surface);lor: var(--app-surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1rem center;
@@ -6255,7 +6344,7 @@ select option {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-radius: 9999px !important;
+  border-radius: 8px !important;
   border: 1px solid var(--app-line-strong, #cfd7e6);
   background-color: var(--app-surface, #ffffff);
   padding: 0.5rem 1rem;

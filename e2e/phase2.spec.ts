@@ -233,12 +233,19 @@ test("scholarship applications require and submit a catalogue scholarship", asyn
   await page.goto("/app/applications");
   await page.getByRole("button", { name: "Add application" }).click();
   const dialog = page.getByRole("dialog", { name: "Add application" });
+  const titleWidth = await dialog.getByLabel("Title").evaluate((input) => ({
+    input: input.getBoundingClientRect().width,
+    label: input.closest("label")!.getBoundingClientRect().width,
+  }));
+  expect(titleWidth.input / titleWidth.label).toBeGreaterThan(0.95);
   await dialog.getByLabel("Title").fill("Rhodes 2027");
-  await dialog.getByLabel("Type").selectOption("scholarship");
+  await dialog.getByLabel("Type").click();
+  await page.getByRole("option", { name: "Scholarship" }).click();
   await expect(dialog.getByText("Scholarship opportunity")).toBeVisible();
-  await dialog
-    .locator('select[name="scholarship_id"]')
-    .selectOption({ label: "Rhodes Scholarship — Rhodes Trust" });
+  await dialog.getByLabel("Scholarship opportunity").click();
+  await page
+    .getByRole("option", { name: "Rhodes Scholarship — Rhodes Trust" })
+    .click();
   expect(
     await dialog
       .locator(":is(input, select, textarea):required")

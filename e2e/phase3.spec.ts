@@ -245,6 +245,93 @@ test("interview history remains usable on mobile", async ({ page }) => {
   await page.screenshot({ path: "/tmp/eliteapply-phase3-interviews-mobile.png", fullPage: true });
 });
 
+test("calendar combines reminders and deadlines across responsive views", async ({
+  page,
+}) => {
+  const reminder = {
+    id: "00000000-0000-4000-8000-000000000050",
+    aggregate_type: "custom",
+    aggregate_id: null,
+    title: "Submit final transcript",
+    notes: "Upload the stamped copy.",
+    scheduled_at: "2026-07-23T09:00:00Z",
+    timezone: "Europe/Lisbon",
+    recurrence: "none",
+    channel: "in_app",
+    status: "scheduled",
+    snoozed_until: null,
+    version: 1,
+    created_at: "2026-07-14T09:00:00Z",
+    updated_at: "2026-07-14T09:00:00Z",
+  };
+  await page.route("**/api/v1/reminders?**", (route) =>
+    route.fulfill({
+      json: { items: [reminder], next_cursor: null, has_more: false },
+    }),
+  );
+  await page.route("**/api/v1/applications?**", (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000060",
+            title: "Oxford scholarship",
+            application_type: "scholarship",
+            primary_deadline_at: "2026-07-24T00:00:00Z",
+          },
+        ],
+        next_cursor: null,
+        has_more: false,
+      },
+    }),
+  );
+
+  await page.goto("/app/reminders?view=calendar");
+  await expect(
+    page.getByRole("button", { name: /Submit final transcript/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Submit final transcript/ }),
+  ).toHaveCSS("text-align", "left");
+  await expect(
+    page.getByRole("button", { name: /Oxford scholarship/ }),
+  ).toBeVisible();
+  const todayMarker = await page
+    .locator(".event-manager-month-grid > .today .event-manager-day-heading > button")
+    .first()
+    .boundingBox();
+  expect(todayMarker).not.toBeNull();
+  expect(Math.abs(todayMarker!.width - todayMarker!.height)).toBeLessThan(0.5);
+  await page
+    .getByRole("button", { name: /Submit final transcript/ })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Edit reminder" }),
+  ).toBeVisible();
+  await page.locator(".reminders-editor").screenshot({
+    path: "/tmp/eliteapply-reminder-editor.png",
+    animations: "disabled",
+  });
+  await page.getByRole("button", { name: "Close" }).click();
+  await page.screenshot({
+    path: "/tmp/eliteapply-reminders-calendar-desktop.png",
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator(".event-manager")).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-reminders-calendar-mobile.png",
+    fullPage: true,
+    animations: "disabled",
+  });
+});
+
 test("calendar sync creates, copies, opens and revokes a private feed", async ({
   page,
 }) => {

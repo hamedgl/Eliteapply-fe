@@ -19,10 +19,12 @@ function toLocalInputValue(date: Date) {
 export function ReminderEditor({
   editing,
   timezone,
+  initialScheduledAt,
   onClose,
 }: {
   editing?: Reminder;
   timezone: string;
+  initialScheduledAt?: Date;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
@@ -31,7 +33,11 @@ export function ReminderEditor({
   const [title, setTitle] = useState(editing?.title ?? "");
   const [notes, setNotes] = useState(editing?.notes ?? "");
   const [scheduledAt, setScheduledAt] = useState(
-    editing ? toLocalInputValue(new Date(editing.scheduled_at)) : "",
+    editing
+      ? toLocalInputValue(new Date(editing.scheduled_at))
+      : initialScheduledAt
+        ? toLocalInputValue(initialScheduledAt)
+        : "",
   );
   const [recurrence, setRecurrence] = useState(editing?.recurrence ?? "none");
   const [channel, setChannel] = useState(editing?.channel ?? "in_app");
@@ -80,7 +86,7 @@ export function ReminderEditor({
   return (
     <div className="apps-dialog-backdrop" role="presentation">
       <section
-        className="apps-dialog"
+        className="apps-dialog reminders-editor"
         role="dialog"
         aria-modal="true"
         aria-labelledby="reminder-editor-title"

@@ -1,0 +1,687 @@
+.event-manager {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-text);
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+
+.event-manager button,
+.event-manager input,
+.event-manager select {
+  font: inherit;
+}
+
+.event-manager-header,
+.event-manager-header > div,
+.event-manager-navigation,
+.event-manager-toolbar,
+.event-manager-views,
+.event-manager-day-heading {
+  display: flex;
+  align-items: center;
+}
+
+.event-manager-header {
+  min-height: 72px;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.event-manager-header > div {
+  min-width: 0;
+  gap: 1rem;
+}
+
+.event-manager-header h2 {
+  margin: 0;
+  color: var(--app-ink);
+  font-family: "DM Sans", sans-serif;
+  font-size: 1.12rem;
+  letter-spacing: -0.01em;
+}
+
+.event-manager-navigation {
+  gap: 0.3rem;
+}
+
+.event-manager-navigation button,
+.event-manager-views button,
+.event-manager-day-add,
+.event-manager-week header button {
+  display: inline-grid;
+  min-width: 34px;
+  min-height: 34px;
+  place-items: center;
+  padding: 0.35rem 0.65rem;
+  color: var(--app-text);
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.event-manager-navigation svg,
+.event-manager-views svg,
+.event-manager-primary svg,
+.event-manager-day-add svg,
+.event-manager-week header button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.event-manager-primary {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.9rem;
+  color: #fff;
+  border: 1px solid var(--app-blue);
+  border-radius: 999px;
+  background: var(--app-blue);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.event-manager-toolbar {
+  gap: 0.65rem;
+  padding: 0.75rem 1.15rem;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.event-manager-search {
+  position: relative;
+  min-width: 180px;
+  flex: 1;
+}
+
+.event-manager-search svg {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0.75rem;
+  width: 16px;
+  height: 16px;
+  color: var(--app-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.event-manager-search input,
+.event-manager-toolbar select {
+  width: 100%;
+  min-height: 40px;
+  color: var(--app-ink);
+  border: 1px solid var(--app-line-strong);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.event-manager-search input {
+  padding: 0.55rem 0.75rem 0.55rem 2.2rem;
+}
+
+.event-manager-toolbar select {
+  width: auto;
+  min-width: 130px;
+  padding: 0.55rem 2rem 0.55rem 0.7rem;
+}
+
+.event-manager-views {
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--app-line);
+  border-radius: 9px;
+  background: var(--app-surface);
+}
+
+.event-manager-views button {
+  min-height: 34px;
+  display: inline-flex;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+}
+
+.event-manager-views button.selected {
+  color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+
+.event-manager-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  color: var(--app-muted);
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.event-manager-weekdays span {
+  padding: 0.55rem 0.25rem;
+}
+
+.event-manager-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.event-manager-month-grid > div {
+  min-width: 0;
+  min-height: 122px;
+  padding: 0.45rem;
+  border-inline-end: 1px solid var(--app-line);
+  border-block-end: 1px solid var(--app-line);
+  background: var(--app-surface);
+  transition: background-color 140ms ease;
+}
+
+.event-manager-month-grid > div:nth-child(7n) {
+  border-inline-end: 0;
+}
+
+.event-manager-month-grid > div:nth-last-child(-n + 7) {
+  border-block-end: 0;
+}
+
+.event-manager-month-grid > div.outside {
+  background: var(--app-surface-subtle);
+}
+
+.event-manager-month-grid > div.can-drop:hover {
+  background: var(--app-blue-soft);
+}
+
+.event-manager-day-heading {
+  min-height: 28px;
+  justify-content: space-between;
+}
+
+.event-manager-day-heading > button:first-child {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  max-width: 28px;
+  max-height: 28px;
+  aspect-ratio: 1;
+  flex: 0 0 28px;
+  padding: 0;
+  color: var(--app-text);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.event-manager-month-grid > div.today .event-manager-day-heading > button:first-child {
+  color: var(--app-blue);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--app-blue);
+}
+
+.event-manager-month-grid > div.outside .event-manager-day-heading > button:first-child {
+  color: var(--app-muted);
+}
+
+.event-manager-day-add {
+  min-width: 27px;
+  min-height: 27px;
+  padding: 0;
+  opacity: 0;
+}
+
+.event-manager-month-grid > div:hover .event-manager-day-add,
+.event-manager-day-add:focus-visible {
+  opacity: 1;
+}
+
+.event-manager-day-events {
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+}
+
+.event-manager-day-events > button:last-child:not(.event-manager-event) {
+  justify-self: start;
+  padding: 0.15rem;
+  color: var(--app-muted);
+  border: 0;
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.event-manager-event {
+  --event-color: var(--app-blue);
+  --event-soft: var(--app-blue-soft);
+  width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  color: var(--app-ink);
+  border: 0;
+  border-radius: 6px;
+  background: var(--event-soft);
+  text-align: left;
+}
+
+.event-manager-event > i {
+  width: 3px;
+  height: 18px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--event-color);
+}
+
+.event-manager-event > span {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.event-manager-event strong,
+.event-manager-event small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-manager-event strong {
+  color: inherit;
+  font-size: 0.7rem;
+}
+
+.event-manager-event small {
+  display: none;
+  margin-top: 0.08rem;
+  color: var(--app-muted);
+  font-size: 0.64rem;
+}
+
+.event-manager-event.detailed {
+  min-height: 48px;
+  padding: 0.55rem 0.65rem;
+}
+
+.event-manager-event.detailed strong {
+  font-size: 0.82rem;
+}
+
+.event-manager-event.detailed small,
+.event-manager-week .event-manager-event small,
+.event-manager-day-view .event-manager-event small,
+.event-manager-mini-agenda .event-manager-event small {
+  display: block;
+}
+
+.event-manager-event:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-color) 28%, transparent);
+}
+
+.event-manager-event.tone-green {
+  --event-color: var(--app-green);
+  --event-soft: var(--app-green-soft);
+}
+
+.event-manager-event.tone-violet {
+  --event-color: var(--app-violet);
+  --event-soft: var(--app-violet-soft);
+}
+
+.event-manager-event.tone-amber {
+  --event-color: var(--app-amber);
+  --event-soft: var(--app-amber-soft);
+}
+
+.event-manager-event.tone-red {
+  --event-color: var(--app-red);
+  --event-soft: var(--app-red-soft);
+}
+
+.event-manager-event.tone-neutral {
+  --event-color: var(--app-muted);
+  --event-soft: #eef1f6;
+}
+
+.event-manager-week {
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.event-manager-week > section {
+  min-width: 0;
+  min-height: 430px;
+  border-inline-end: 1px solid var(--app-line);
+}
+
+.event-manager-week > section:last-child {
+  border-inline-end: 0;
+}
+
+.event-manager-week > section > header {
+  position: relative;
+  min-height: 74px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.15rem;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.event-manager-week > section > header span {
+  color: var(--app-muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.event-manager-week > section > header strong {
+  color: var(--app-ink);
+  font-size: 1rem;
+}
+
+.event-manager-week > section > header button {
+  position: absolute;
+  inset-block-start: 0.25rem;
+  inset-inline-end: 0.25rem;
+  min-width: 25px;
+  min-height: 25px;
+  padding: 0;
+}
+
+.event-manager-week > section > div {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  padding: 0.5rem;
+}
+
+.event-manager-empty-day {
+  padding: 0.4rem;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.event-manager-day-view {
+  max-height: 660px;
+  overflow-y: auto;
+}
+
+.event-manager-day-view > div {
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  border-bottom: 1px solid var(--app-line);
+}
+
+.event-manager-day-view > div:last-child {
+  border-bottom: 0;
+}
+
+.event-manager-day-view > div > time {
+  padding: 0.65rem;
+  color: var(--app-muted);
+  border-inline-end: 1px solid var(--app-line);
+  font-size: 0.72rem;
+  text-align: end;
+}
+
+.event-manager-day-view > div > section {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.45rem;
+}
+
+.event-manager-hour-add {
+  min-height: 38px;
+  padding: 0.4rem;
+  color: transparent;
+  border: 1px dashed transparent;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 0.72rem;
+  text-align: start;
+}
+
+.event-manager-day-view > div:hover .event-manager-hour-add,
+.event-manager-hour-add:focus-visible {
+  color: var(--app-blue);
+  border-color: var(--app-line);
+}
+
+.event-manager-agenda {
+  display: grid;
+}
+
+.event-manager-agenda > section {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.3fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.event-manager-agenda > section:last-child {
+  border-bottom: 0;
+}
+
+.event-manager-agenda > section > time {
+  color: var(--app-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.event-manager-agenda > section > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.event-manager-empty {
+  margin: 0;
+  padding: 3rem 1rem;
+  color: var(--app-muted);
+  text-align: center;
+}
+
+.event-manager.is-compact {
+  border: 0;
+  border-radius: 0;
+}
+
+.event-manager.is-compact .event-manager-header {
+  min-height: 54px;
+  padding: 0.7rem 1rem;
+}
+
+.event-manager.is-compact .event-manager-header h2 {
+  font-size: 0.88rem;
+}
+
+.event-manager.is-compact .event-manager-header > div {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.event-manager.is-compact .event-manager-weekdays {
+  padding-inline: 0.75rem;
+  border-top: 1px solid var(--app-line);
+}
+
+.event-manager-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.1rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.event-manager-mini-grid button {
+  position: relative;
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--app-text);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.72rem;
+}
+
+.event-manager-mini-grid button.outside {
+  color: #9aa5b8;
+}
+
+.event-manager-mini-grid button.selected {
+  color: #fff;
+  background: var(--app-blue);
+}
+
+.event-manager-mini-grid button.today:not(.selected) {
+  color: var(--app-blue);
+  box-shadow: inset 0 0 0 1px var(--app-blue);
+}
+
+.event-manager-mini-grid button i {
+  position: absolute;
+  inset-block-end: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.event-manager-mini-agenda {
+  min-height: 118px;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.event-manager-mini-agenda > strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--app-muted);
+  font-size: 0.7rem;
+}
+
+.event-manager-mini-agenda > div {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.event-manager-mini-agenda > p {
+  margin: 0.8rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .event-manager-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .event-manager-search {
+    flex-basis: 100%;
+  }
+
+  .event-manager-views {
+    margin-inline-start: auto;
+  }
+
+  .event-manager-month-grid > div {
+    min-height: 92px;
+    padding: 0.3rem;
+  }
+
+  .event-manager-event {
+    min-height: 20px;
+    padding: 0.2rem;
+  }
+
+  .event-manager-event > i {
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+  }
+
+  .event-manager-month .event-manager-event strong,
+  .event-manager-month .event-manager-event small {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .event-manager-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .event-manager-header > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .event-manager-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .event-manager-toolbar select {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .event-manager-views {
+    width: 100%;
+    order: 3;
+  }
+
+  .event-manager-views button {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .event-manager-views button span {
+    display: none;
+  }
+
+  .event-manager-weekdays span {
+    font-size: 0;
+  }
+
+  .event-manager-weekdays span::first-letter {
+    font-size: 0.68rem;
+  }
+
+  .event-manager-month-grid > div {
+    min-height: 70px;
+  }
+
+  .event-manager-day-add {
+    display: none;
+  }
+
+  .event-manager-agenda > section {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+}

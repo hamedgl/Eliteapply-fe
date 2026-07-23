@@ -11,11 +11,16 @@ import {
   Plus,
 } from "lucide-react";
 import { useState, type ComponentType, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { platformApi, safeDashboard } from "../../lib/api/platform";
 import { documentsApi, profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
+import {
+  EventManager,
+  type CalendarEvent,
+  type CalendarEventTone,
+} from "../../components/ui/event-manager";
 
 type Deadline = Record<string, unknown>;
 type SetupStatus = "done" | "todo" | "checking" | "unavailable";
@@ -54,6 +59,7 @@ const recommendationRoutes: Record<
 
 export function DashboardPage() {
   const user = useSession((state) => state.user);
+  const navigate = useNavigate();
   const [guidePage, setGuidePage] = useState(0);
   const query = useQuery({
     queryKey: queryKeys.dashboard,
@@ -94,6 +100,16 @@ export function DashboardPage() {
   }
 
   const dashboard = query.data;
+  const deadlineEvents = dashboard.upcoming_deadlines
+    .map(toDeadlineEvent)
+    .filter((event): event is CalendarEvent => Boolean(event))
+    .sort(
+      (a, b) =>
+        new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+    );
+  const firstDeadline = deadlineEvents[0]
+    ? new Date(deadlineEvents[0].startAt)
+    : new Date();
   const firstName = user?.full_name?.trim().split(/\s+/)[0];
   const applicationCount = Object.values(
     dashboard.applications_by_stage,
@@ -295,24 +311,22 @@ export function DashboardPage() {
             title="Upcoming deadlines"
             action={
               dashboard.upcoming_deadlines.length > 0 ? (
-                <Link to="/app/applications">
-                  View applications <ArrowRight aria-hidden="true" />
+                <Link to="/app/reminders?view=calendar">
+                  Open calendar <ArrowRight aria-hidden="true" />
                 </Link>
               ) : null
             }
           >
-            {dashboard.upcoming_deadlines.length > 0 ? (
-              <ul className="deadline-list">
-                {dashboard.upcoming_deadlines
-                  .slice(0, 4)
-                  .map((deadline, index) => (
-                    <DeadlineRow
-                      deadline={deadline}
-                      index={index}
-                      key={index}
-                    />
-                  ))}
-              </ul>
+            {deadlineEvents.length > 0 ? (
+              <EventManager
+                compact
+                events={deadlineEvents}
+                initialDate={firstDeadline}
+                onEventSelect={(event) => {
+                  const href = (event.source as { href?: string })?.href;
+                  if (href) navigate(href);
+                }}
+              />
             ) : (
               <EmptyState
                 icon={CalendarDays}
@@ -510,13 +524,10 @@ function ApplicationStages({
   );
 }
 
-function DeadlineRow({
-  deadline,
-  index,
-}: {
-  deadline: Deadline;
-  index: number;
-}) {
+function toDeadlineEvent(
+  deadline: Deadline,
+  index: number,
+): CalendarEvent | null {
   const title =
     readString(deadline, ["title", "application_title", "name"]) ||
     `Application deadline ${index + 1}`;
@@ -526,25 +537,21 @@ function DeadlineRow({
     "due_at",
     "date",
   ]);
-  const parsedDate = rawDate ? new Date(rawDate) : null;
-  const date =
-    parsedDate && !Number.isNaN(parsedDate.getTime())
-      ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-          parsedDate,
-        )
-      : "Date not provided";
-
-  return (
-    <li>
-      <span aria-hidden="true">
-        <CalendarDays />
-      </span>
-      <div>
-        <strong>{title}</strong>
-        <time dateTime={rawDate || undefined}>{date}</time>
-      </div>
-    </li>
-  );
+  if (!rawDate || Number.isNaN(new Date(rawDate).getTime())) return null;
+  const applicationId = readString(deadline, ["application_id", "id"]);
+  return {
+    id: `dashboard-deadline:${applicationId || index}`,
+    title,
+    startAt: rawDate,
+    kind: "deadline",
+    tone: deadlineTone(rawDate),
+    allDay: true,
+    source: {
+      href: applicationId
+        ? `/app/applications/${applicationId}`
+        : "/app/applications",
+    },
+  };
 }
 
 function StatRow({
@@ -647,6 +654,13 @@ function readString(record: Deadline, keys: string[]) {
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
+}
+
+function deadlineTone(value: string): CalendarEventTone {
+  const days = (new Date(value).getTime() - Date.now()) / 86_400_000;
+  if (days < 0) return "red";
+  if (days <= 7) return "amber";
+  return "violet";
 }
 
 function getSetupStatus(

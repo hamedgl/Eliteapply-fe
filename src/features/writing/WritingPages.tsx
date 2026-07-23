@@ -189,11 +189,16 @@ export function NewWriting() {
       <h1>New writing document</h1>
       <form className="settings-form" onSubmit={submit}>
         <label>
-          Title
-          <input name="title" required minLength={2} />
+          <span>Title</span>
+          <input
+            name="title"
+            required
+            minLength={2}
+            placeholder="e.g. Statement of Purpose — Oxford MSc"
+          />
         </label>
         <label>
-          Application type
+          <span>Application type</span>
           <Select
             ariaLabel="Application type"
             value={applicationType}
@@ -207,7 +212,7 @@ export function NewWriting() {
           />
         </label>
         <label>
-          Document type
+          <span>Document type</span>
           <Select
             ariaLabel="Document type"
             value={documentType}
@@ -220,7 +225,7 @@ export function NewWriting() {
         </label>
         {documentType === "academic_cv" ? (
           <label>
-            Academic CV mode
+            <span>Academic CV mode</span>
             <Select
               ariaLabel="Academic CV mode"
               name="cv_mode"
@@ -237,7 +242,7 @@ export function NewWriting() {
           </label>
         ) : null}
         <label>
-          Template
+          <span>Template</span>
           <Select
             ariaLabel="Template"
             value={templateId}
@@ -267,19 +272,39 @@ export function NewWriting() {
           </section>
         ) : null}
         <label>
-          Prompt or question
-          <textarea name="prompt_text" rows={4} />
+          <span>Prompt or question</span>
+          <textarea
+            name="prompt_text"
+            rows={4}
+            placeholder="Paste the essay prompt or question here..."
+          />
         </label>
-        <label>
-          Word limit
-          <input name="word_limit" type="number" min={1} max={20000} />
-        </label>
-        <label>
-          Character limit
-          <input name="character_limit" type="number" min={1} max={100000} />
-        </label>
+        <div className="form-row-2">
+          <label>
+            <span>Word limit</span>
+            <input
+              name="word_limit"
+              type="number"
+              min={1}
+              max={20000}
+              placeholder="e.g. 500"
+            />
+          </label>
+          <label>
+            <span>Character limit</span>
+            <input
+              name="character_limit"
+              type="number"
+              min={1}
+              max={100000}
+              placeholder="e.g. 3000"
+            />
+          </label>
+        </div>
         {error ? <p role="alert">{error}</p> : null}
-        <button className="primary">Create document</button>
+        <div className="form-actions">
+          <button className="primary">Create document</button>
+        </div>
       </form>
     </div>
   );
@@ -660,7 +685,7 @@ export function WritingEditor() {
           <h2>Generate suggestion</h2>
           <form onSubmit={generate}>
             <label>
-              Operation
+              <span>Operation</span>
               <Select
                 ariaLabel="Operation"
                 value={generationDraft.operation}
@@ -682,7 +707,7 @@ export function WritingEditor() {
               />
             </label>
             <label>
-              Instruction
+              <span>Instruction</span>
               <textarea
                 name="instruction"
                 required
@@ -958,11 +983,11 @@ function WritingReview({
           }}
         >
           <label>
-            General or anchored comment
+            <span>General or anchored comment</span>
             <textarea name="body" required maxLength={5000} rows={3} />
           </label>
           <label>
-            Revision (optional)
+            <span>Revision (optional)</span>
             <Select
               ariaLabel="Revision"
               name="revision_id"
@@ -978,11 +1003,11 @@ function WritingReview({
           </label>
           <div className="comment-anchor">
             <label>
-              Anchor start (optional)
+              <span>Anchor start (optional)</span>
               <input name="anchor_start" type="number" min={0} />
             </label>
             <label>
-              Anchor end (optional)
+              <span>Anchor end (optional)</span>
               <input name="anchor_end" type="number" min={0} />
             </label>
           </div>
@@ -1072,7 +1097,7 @@ function WritingReview({
           }}
         >
           <label>
-            Scope
+            <span>Scope</span>
             <Select
               ariaLabel="Scope"
               name="scope"
@@ -1084,11 +1109,11 @@ function WritingReview({
             />
           </label>
           <label>
-            Passcode (optional)
+            <span>Passcode (optional)</span>
             <input name="passcode" type="password" minLength={4} />
           </label>
           <label>
-            Expiry (optional)
+            <span>Expiry (optional)</span>
             <input name="expires_at" type="datetime-local" />
           </label>
           <button className="primary">Create secure link</button>

@@ -434,10 +434,11 @@ export const remindersApi = {
       aggregateType?: string;
       status?: string;
       cursor?: string | null;
+      limit?: number;
     } = {},
   ) =>
     apiRequest<S["ReminderListResponse"]>(
-      `/reminders${qs({ ...filters, limit: 25 })}`,
+      `/reminders${qs({ ...filters, limit: filters.limit ?? 25 })}`,
     ),
   get: (id: string) => apiRequest<S["ReminderResponse"]>(`/reminders/${e(id)}`),
   create: (body: S["ReminderCreate"]) =>

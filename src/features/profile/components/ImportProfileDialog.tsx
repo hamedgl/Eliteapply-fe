@@ -71,23 +71,24 @@ export function ImportProfileDialog({
           }}
         >
           <label>
-            Applicant type to import
-            <input name="applicant_type" />
+            <span>Applicant type to import</span>
+            <input name="applicant_type" placeholder="e.g. Graduate" />
           </label>
           <label>
-            Study level to import
-            <input name="intended_study_level" />
+            <span>Study level to import</span>
+            <input name="intended_study_level" placeholder="e.g. Master's / PhD" />
           </label>
           <label className="wide">
-            Countries to import
-            <input name="target_countries" placeholder="Portugal, United Kingdom" />
+            <span>Countries to import</span>
+            <input name="target_countries" placeholder="e.g. Portugal, United Kingdom" />
           </label>
           <label className="wide">
-            Academic background to import
-            <textarea name="education_summary" rows={4} />
+            <span>Academic background to import</span>
+            <textarea name="education_summary" rows={4} placeholder="Paste your academic background or degree summary..." />
           </label>
           <label className="check-field wide">
-            <input name="overwrite_existing" type="checkbox" /> Overwrite matching existing fields
+            <input name="overwrite_existing" type="checkbox" />
+            <span>Overwrite matching existing fields</span>
           </label>
           {error ? (
             <p className="form-error wide" role="alert">

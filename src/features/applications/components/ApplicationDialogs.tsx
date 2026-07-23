@@ -150,7 +150,7 @@ export function CreateApplication({
   return (
     <div className="apps-dialog-backdrop" role="presentation">
       <section
-        className="apps-dialog"
+        className="apps-dialog application-create-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-title"
@@ -163,17 +163,18 @@ export function CreateApplication({
         </header>
         <form className="form-grid" onSubmit={submit}>
           <label className="wide">
-            Title
+            <span>Title</span>
             <input
               name="title"
               required
               minLength={2}
               autoFocus
               defaultValue={defaults?.title}
+              placeholder="e.g. Gates Cambridge Scholarship 2027"
             />
           </label>
           <label>
-            Type
+            <span>Type</span>
             <Select
               name="application_type"
               value={applicationType}
@@ -190,7 +191,7 @@ export function CreateApplication({
           </label>
           {applicationType === "programme" ? (
             <label>
-              Programme opportunity
+              <span>Programme opportunity</span>
               <Select
                 name="programme_id"
                 defaultValue={
@@ -237,7 +238,7 @@ export function CreateApplication({
           ) : null}
           {applicationType === "scholarship" ? (
             <label>
-              Scholarship opportunity
+              <span>Scholarship opportunity</span>
               <Select
                 name="scholarship_id"
                 defaultValue={
@@ -290,7 +291,7 @@ export function CreateApplication({
             </p>
           ) : null}
           <label>
-            Stage
+            <span>Stage</span>
             <Select
               name="stage"
               defaultValue={stages[0]}
@@ -301,7 +302,7 @@ export function CreateApplication({
             />
           </label>
           <label>
-            Priority
+            <span>Priority</span>
             <Select
               name="priority"
               defaultValue={priorities[0]}
@@ -312,24 +313,24 @@ export function CreateApplication({
             />
           </label>
           <label>
-            Intake
+            <span>Intake</span>
             <input name="intake" placeholder="Autumn 2027" />
           </label>
           <label>
-            Primary deadline
+            <span>Primary deadline</span>
             <input name="deadline" type="date" />
           </label>
           <label className="wide">
-            Source URL
-            <input name="source_url" type="url" />
+            <span>Source URL</span>
+            <input name="source_url" type="url" placeholder="https://" />
           </label>
           <label className="wide">
-            Tags
+            <span>Tags</span>
             <input name="tags" placeholder="UK, research, funding" />
           </label>
           <label className="wide">
-            Notes
-            <textarea name="notes" rows={4} />
+            <span>Notes</span>
+            <textarea name="notes" rows={4} placeholder="Add notes..." />
           </label>
           {error ? (
             <p className="form-error wide" role="alert">
