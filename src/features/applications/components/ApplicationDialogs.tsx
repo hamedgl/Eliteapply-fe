@@ -111,6 +111,20 @@ export function CreateApplication({
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
+    const opportunityField =
+      applicationType === "programme"
+        ? "programme_id"
+        : applicationType === "scholarship"
+          ? "scholarship_id"
+          : null;
+    if (opportunityField && !String(data[opportunityField] ?? "")) {
+      setError(`Select a ${applicationType} opportunity.`);
+      event.currentTarget
+        .querySelector<HTMLInputElement>(`input[name="${opportunityField}"]`)
+        ?.parentElement?.querySelector<HTMLButtonElement>("button")
+        ?.focus();
+      return;
+    }
     try {
       await applicationsApi.create({
         mutation_id: mutationId,
@@ -163,7 +177,7 @@ export function CreateApplication({
         </header>
         <form className="form-grid" onSubmit={submit}>
           <label className="wide">
-            <span>Title</span>
+            <span className="required-field-label">Title</span>
             <input
               name="title"
               required
@@ -174,9 +188,10 @@ export function CreateApplication({
             />
           </label>
           <label>
-            <span>Type</span>
+            <span className="required-field-label">Type</span>
             <Select
               name="application_type"
+              required
               value={applicationType}
               onChange={(val: any) => {
                 const next = typeof val === "string" ? val : (val?.target?.value ?? "custom");
@@ -191,9 +206,12 @@ export function CreateApplication({
           </label>
           {applicationType === "programme" ? (
             <label>
-              <span>Programme opportunity</span>
+              <span className="required-field-label">
+                Programme opportunity
+              </span>
               <Select
                 name="programme_id"
+                required
                 defaultValue={
                   defaults?.catalogueType === "programme"
                     ? defaults.catalogueId
@@ -238,9 +256,12 @@ export function CreateApplication({
           ) : null}
           {applicationType === "scholarship" ? (
             <label>
-              <span>Scholarship opportunity</span>
+              <span className="required-field-label">
+                Scholarship opportunity
+              </span>
               <Select
                 name="scholarship_id"
+                required
                 defaultValue={
                   defaults?.catalogueType === "scholarship"
                     ? defaults.catalogueId
@@ -291,9 +312,10 @@ export function CreateApplication({
             </p>
           ) : null}
           <label>
-            <span>Stage</span>
+            <span className="required-field-label">Stage</span>
             <Select
               name="stage"
+              required
               defaultValue={stages[0]}
               options={stages.map((item) => ({
                 value: item,
@@ -302,9 +324,10 @@ export function CreateApplication({
             />
           </label>
           <label>
-            <span>Priority</span>
+            <span className="required-field-label">Priority</span>
             <Select
               name="priority"
+              required
               defaultValue={priorities[0]}
               options={priorities.map((item) => ({
                 value: item,

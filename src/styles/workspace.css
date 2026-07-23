@@ -2668,6 +2668,34 @@
   font-size: 0.875rem;
 }
 
+.application-create-dialog .form-grid > label:not(.check):not(.check-field) {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-self: start;
+}
+
+.application-create-dialog .form-grid > label.wide {
+  grid-column: 1 / -1;
+}
+
+.application-create-dialog .form-grid > label.wide > :is(input, textarea) {
+  width: 100%;
+}
+
+.application-create-dialog .required-field-label::before {
+  content: "*";
+  margin-right: 0.3rem;
+  color: var(--danger, #b42318);
+  font-weight: 700;
+}
+
+.application-create-dialog
+  label:has(> :is(input, select, textarea):required)
+  > .required-field-label:first-child::after {
+  content: none;
+}
+
 .apps-notice {
   display: flex;
   align-items: center;

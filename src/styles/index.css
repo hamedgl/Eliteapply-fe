@@ -6177,6 +6177,8 @@ th {
   margin: 0.55rem 0 0;
   color: var(--app-muted);
   line-height: 1.55;
+}
+
 .app-shell :where(button:not(.primary), .secondary-action) {
   min-height: 42px;
   padding: 0.55rem 1rem;
