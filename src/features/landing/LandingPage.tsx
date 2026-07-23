@@ -1371,19 +1371,250 @@ function PreviewFrame({
   );
 }
 
+type TrackerAppItem = {
+  id: string;
+  name: string;
+  grantor: string;
+  status: "In progress" | "Planning" | "Drafting" | "Submitted";
+  priority: "High" | "Medium" | "Normal";
+  deadline: string;
+  daysLeft: number;
+  nextAction: string;
+  requirements: { id: string; label: string; done: boolean }[];
+};
+
+const INITIAL_TRACKER_APPS: TrackerAppItem[] = [
+  {
+    id: "rhodes",
+    name: "Rhodes Scholarship",
+    grantor: "University of Oxford",
+    status: "In progress",
+    priority: "High",
+    deadline: "15 Sep",
+    daysLeft: 54,
+    nextAction: "Connect evidence",
+    requirements: [
+      { id: "stmt", label: "Personal statement (1,000 words)", done: true },
+      { id: "refs", label: "3 Academic & leadership references", done: true },
+      { id: "trans", label: "Certified university transcript", done: true },
+      { id: "evid", label: "Community impact evidence portfolio", done: false },
+    ],
+  },
+  {
+    id: "futures",
+    name: "Global Futures",
+    grantor: "Cambridge Trust",
+    status: "Planning",
+    priority: "Medium",
+    deadline: "2 Oct",
+    daysLeft: 71,
+    nextAction: "Review requirements",
+    requirements: [
+      { id: "prop", label: "Research proposal outline", done: true },
+      { id: "budg", label: "Estimated study budget plan", done: false },
+      { id: "cv", label: "Academic CV (2 pages)", done: true },
+      { id: "sup", label: "Faculty sponsor nomination", done: false },
+    ],
+  },
+  {
+    id: "fellowship",
+    name: "Research Fellowship",
+    grantor: "Stanford Graduate School",
+    status: "Drafting",
+    priority: "High",
+    deadline: "18 Oct",
+    daysLeft: 87,
+    nextAction: "Continue statement",
+    requirements: [
+      { id: "abstr", label: "Abstract & summary statement", done: true },
+      { id: "pub", label: "Publication & project list", done: true },
+      { id: "essay", label: "Motivation statement draft", done: false },
+      { id: "rec", label: "Department recommendation letter", done: false },
+    ],
+  },
+  {
+    id: "fulbright",
+    name: "Fulbright Award",
+    grantor: "US-UK Educational Commission",
+    status: "In progress",
+    priority: "High",
+    deadline: "24 Oct",
+    daysLeft: 93,
+    nextAction: "Finalize budget",
+    requirements: [
+      { id: "host", label: "Host institution affiliation letter", done: true },
+      { id: "proj", label: "Project statement", done: true },
+      { id: "budg2", label: "Travel & living allowance budget", done: false },
+      { id: "ref2", label: "Language evaluation form", done: true },
+    ],
+  },
+  {
+    id: "schwarzman",
+    name: "Schwarzman Scholars",
+    grantor: "Tsinghua University",
+    status: "Submitted",
+    priority: "Normal",
+    deadline: "1 Nov",
+    daysLeft: 101,
+    nextAction: "Prepare interview",
+    requirements: [
+      { id: "video", label: "1-minute video introduction", done: true },
+      { id: "essay2", label: "Leadership essay", done: true },
+      { id: "app", label: "Submitted application form", done: true },
+    ],
+  },
+];
+
 function TrackerPreview() {
-  const rows = [
-    ["Rhodes Scholarship", "In progress", "15 Sep", "72%", "Connect evidence"],
-    ["Global Futures", "Planning", "2 Oct", "38%", "Review requirements"],
-    ["Research Fellowship", "Drafting", "18 Oct", "56%", "Continue statement"],
-  ];
+  const [apps, setApps] = useState<TrackerAppItem[]>(INITIAL_TRACKER_APPS);
+  const [selectedId, setSelectedId] = useState<string>("rhodes");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isFilterBarOpen, setIsFilterBarOpen] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  const toggleRequirement = (appId: string, reqId: string) => {
+    setApps((prev) =>
+      prev.map((app) => {
+        if (app.id !== appId) return app;
+        const updatedReqs = app.requirements.map((r) =>
+          r.id === reqId ? { ...r, done: !r.done } : r,
+        );
+        const doneCount = updatedReqs.filter((r) => r.done).length;
+        const newProgress = Math.round((doneCount / updatedReqs.length) * 100);
+        return {
+          ...app,
+          requirements: updatedReqs,
+          status:
+            newProgress === 100
+              ? "Submitted"
+              : app.status === "Submitted"
+                ? "In progress"
+                : app.status,
+        };
+      }),
+    );
+  };
+
+  const handleNextActionClick = (app: TrackerAppItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedId(app.id);
+    setToastMessage(`Triggered action: "${app.nextAction}" for ${app.name}`);
+  };
+
+  const filteredApps = apps.filter((app) => {
+    const matchesSearch =
+      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.grantor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.nextAction.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" ||
+      app.status.toLowerCase().replace(/\s+/g, "-") === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const selectedApp = apps.find((a) => a.id === selectedId) || filteredApps[0];
+
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case "In progress":
+        return "in-progress";
+      case "Planning":
+        return "planning";
+      case "Drafting":
+        return "drafting";
+      case "Submitted":
+        return "submitted";
+      default:
+        return "in-progress";
+    }
+  };
+
   return (
     <PreviewFrame title="Applications">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="tracker-toast-bar" role="status">
+          <span>{toastMessage}</span>
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setToastMessage(null)}
+            aria-label="Close notification"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Toolbar */}
       <div className="preview-toolbar">
-        <Search aria-hidden="true" />
-        <span>Search applications</span>
-        <Filter aria-hidden="true" />
+        <Search size={18} aria-hidden="true" />
+        <input
+          type="text"
+          className="tracker-search-input"
+          placeholder="Search applications (e.g. Rhodes, Stanford)..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          aria-label="Search applications"
+        />
+        {searchTerm && (
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setSearchTerm("")}
+            title="Clear search"
+            aria-label="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
+        <button
+          className={`tracker-icon-btn ${isFilterBarOpen || statusFilter !== "all" ? "active" : ""}`}
+          onClick={() => setIsFilterBarOpen((prev) => !prev)}
+          title="Filter status"
+          aria-label="Toggle status filter"
+        >
+          <Filter size={18} aria-hidden="true" />
+        </button>
       </div>
+
+      {/* Toggleable Filter Chips */}
+      {isFilterBarOpen && (
+        <div className="tracker-filter-bar">
+          <span style={{ color: "var(--m-muted)", fontWeight: 600 }}>Status:</span>
+          {[
+            { id: "all", label: "All" },
+            { id: "in-progress", label: "In progress" },
+            { id: "planning", label: "Planning" },
+            { id: "drafting", label: "Drafting" },
+            { id: "submitted", label: "Submitted" },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              className={`tracker-filter-chip ${statusFilter === chip.id ? "active" : ""}`}
+              onClick={() => setStatusFilter(chip.id)}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {statusFilter !== "all" && (
+            <button
+              className="tracker-action-btn"
+              style={{ fontSize: "0.72rem", marginLeft: "auto" }}
+              onClick={() => setStatusFilter("all")}
+            >
+              Reset filter
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Applications Table */}
       <div
         className="tracker-table"
         role="table"
@@ -1396,29 +1627,182 @@ function TrackerPreview() {
           <span role="columnheader">Progress</span>
           <span role="columnheader">Next action</span>
         </div>
-        {rows.map((row, index) => (
+
+        {filteredApps.length === 0 ? (
           <div
-            className={`tracker-row ${index === 0 ? "selected" : ""}`}
-            role="row"
-            key={row[0]}
+            style={{
+              padding: "2rem",
+              textAlign: "center",
+              color: "var(--m-muted)",
+              fontSize: "0.85rem",
+            }}
           >
-            {row.map((cell, cellIndex) => (
-              <span role="cell" key={cell}>
-                {cellIndex === 3 ? (
-                  <>
-                    <i className="mini-progress">
-                      <b style={{ width: cell }} />
-                    </i>
-                    {cell}
-                  </>
-                ) : (
-                  cell
-                )}
-              </span>
+            No applications found matching "{searchTerm}".
+            <br />
+            <button
+              className="tracker-action-btn"
+              style={{ marginTop: "0.5rem" }}
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("all");
+              }}
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          filteredApps.map((app) => {
+            const doneCount = app.requirements.filter((r) => r.done).length;
+            const progressPct = Math.round(
+              (doneCount / app.requirements.length) * 100,
+            );
+            const isSelected = selectedApp?.id === app.id;
+
+            return (
+              <div
+                className={`tracker-row ${isSelected ? "selected" : ""}`}
+                role="row"
+                tabIndex={0}
+                key={app.id}
+                onClick={() => setSelectedId(app.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedId(app.id);
+                  }
+                }}
+                aria-selected={isSelected}
+              >
+                <span role="cell">
+                  <strong>{app.name}</strong>
+                  <br />
+                  <small style={{ color: "var(--m-muted)", fontWeight: 400 }}>
+                    {app.grantor}
+                  </small>
+                </span>
+                <span role="cell">
+                  <span className={`status-pill ${getStatusClass(app.status)}`}>
+                    {app.status}
+                  </span>
+                </span>
+                <span role="cell">{app.deadline}</span>
+                <span role="cell">
+                  <i className="mini-progress">
+                    <b style={{ width: `${progressPct}%` }} />
+                  </i>
+                  {progressPct}%
+                </span>
+                <span role="cell">
+                  <button
+                    className="tracker-action-btn"
+                    onClick={(e) => handleNextActionClick(app, e)}
+                    title={`Action: ${app.nextAction}`}
+                  >
+                    {app.nextAction} <ArrowRight size={12} />
+                  </button>
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Selected Application Workspace Detail Card */}
+      {selectedApp && (
+        <div className="tracker-detail-card">
+          <div className="tracker-detail-header">
+            <div>
+              <h4>{selectedApp.name}</h4>
+              <p>
+                {selectedApp.grantor} • Priority:{" "}
+                <span style={{ fontWeight: 600, color: "var(--m-text-strong)" }}>
+                  {selectedApp.priority}
+                </span>{" "}
+                • {selectedApp.daysLeft} days left ({selectedApp.deadline})
+              </p>
+            </div>
+            <span className={`status-pill ${getStatusClass(selectedApp.status)}`}>
+              {selectedApp.status}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: "0.8rem",
+              margin: "0.5rem 0",
+            }}
+          >
+            <span style={{ color: "var(--m-text-strong)", fontWeight: 600 }}>
+              Requirements checklist (
+              {selectedApp.requirements.filter((r) => r.done).length} of{" "}
+              {selectedApp.requirements.length} complete):
+            </span>
+            <span style={{ color: "var(--m-blue)", fontWeight: 600 }}>
+              {Math.round(
+                (selectedApp.requirements.filter((r) => r.done).length /
+                  selectedApp.requirements.length) *
+                  100,
+              )}
+              % overall progress
+            </span>
+          </div>
+
+          {/* Checklist items */}
+          <div className="tracker-req-list">
+            {selectedApp.requirements.map((req) => (
+              <label
+                key={req.id}
+                className={`tracker-req-item ${req.done ? "done" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleRequirement(selectedApp.id, req.id);
+                  setToastMessage(
+                    `${req.done ? "Unchecked" : "Completed"}: "${req.label}"`,
+                  );
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={req.done}
+                  onChange={() => {}}
+                  style={{ accentColor: "var(--m-blue)" }}
+                />
+                <span>{req.label}</span>
+              </label>
             ))}
           </div>
-        ))}
-      </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "1rem",
+              paddingTop: "0.75rem",
+              borderTop: "1px solid var(--m-line-soft)",
+            }}
+          >
+            <span style={{ fontSize: "0.78rem", color: "var(--m-muted)" }}>
+              Tip: Click any requirement item to update progress live!
+            </span>
+            <button
+              className="tracker-action-btn"
+              style={{
+                background: "var(--m-blue)",
+                color: "#ffffff",
+                padding: "6px 12px",
+                borderRadius: "6px",
+              }}
+              onClick={(e) => handleNextActionClick(selectedApp, e)}
+            >
+              {selectedApp.nextAction} <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </PreviewFrame>
   );
 }
@@ -1691,95 +2075,1248 @@ function WritingCapabilityPreview() {
   );
 }
 
+type DocumentItem = {
+  id: string;
+  name: string;
+  mappedApps: string[];
+  status: "Ready" | "Update needed" | "Missing";
+  fileSize: string;
+  lastUpdated: string;
+  version: string;
+  reqsCoveredCount: number;
+};
+
+const INITIAL_DOCUMENTS: DocumentItem[] = [
+  {
+    id: "transcript",
+    name: "Academic transcript",
+    mappedApps: ["Rhodes", "Global Futures"],
+    status: "Ready",
+    fileSize: "2.4 MB",
+    lastUpdated: "12 Aug",
+    version: "v2.1",
+    reqsCoveredCount: 3,
+  },
+  {
+    id: "degree",
+    name: "Degree certificate",
+    mappedApps: ["Rhodes"],
+    status: "Ready",
+    fileSize: "1.1 MB",
+    lastUpdated: "5 Jun",
+    version: "v1.0",
+    reqsCoveredCount: 2,
+  },
+  {
+    id: "proposal",
+    name: "Research proposal",
+    mappedApps: ["Research Fellowship"],
+    status: "Update needed",
+    fileSize: "840 KB",
+    lastUpdated: "15 Jul",
+    version: "v1.2",
+    reqsCoveredCount: 2,
+  },
+  {
+    id: "portfolio",
+    name: "Community impact portfolio",
+    mappedApps: ["Rhodes", "Fulbright"],
+    status: "Ready",
+    fileSize: "4.8 MB",
+    lastUpdated: "18 Aug",
+    version: "v3.0",
+    reqsCoveredCount: 2,
+  },
+  {
+    id: "financial",
+    name: "Financial declaration form",
+    mappedApps: [],
+    status: "Missing",
+    fileSize: "—",
+    lastUpdated: "Not uploaded",
+    version: "—",
+    reqsCoveredCount: 0,
+  },
+];
+
+const AVAILABLE_APPS = [
+  "Rhodes",
+  "Global Futures",
+  "Research Fellowship",
+  "Fulbright",
+  "Schwarzman",
+];
+
 function DocumentsCapabilityPreview() {
-  const rows = [
-    ["Academic transcript", "Rhodes, Global Futures", "Ready"],
-    ["Degree certificate", "Rhodes", "Ready"],
-    ["Research proposal", "Research Fellowship", "Update needed"],
-  ];
+  const [docs, setDocs] = useState<DocumentItem[]>(INITIAL_DOCUMENTS);
+  const [selectedId, setSelectedId] = useState<string>("transcript");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isFilterBarOpen, setIsFilterBarOpen] = useState<boolean>(false);
+  const [isMappingPickerOpen, setIsMappingPickerOpen] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  const toggleAppMapping = (docId: string, appName: string) => {
+    setDocs((prev) =>
+      prev.map((doc) => {
+        if (doc.id !== docId) return doc;
+        const isMapped = doc.mappedApps.includes(appName);
+        const updatedApps = isMapped
+          ? doc.mappedApps.filter((a) => a !== appName)
+          : [...doc.mappedApps, appName];
+        return {
+          ...doc,
+          mappedApps: updatedApps,
+          status:
+            updatedApps.length === 0
+              ? "Missing"
+              : doc.status === "Missing"
+                ? "Ready"
+                : doc.status,
+        };
+      }),
+    );
+  };
+
+  const handleUploadNewVersion = (doc: DocumentItem) => {
+    setDocs((prev) =>
+      prev.map((d) => {
+        if (d.id !== doc.id) return d;
+        const verNum = parseFloat(d.version.replace("v", "")) || 1.0;
+        const nextVer = `v${(verNum + 0.1).toFixed(1)}`;
+        return {
+          ...d,
+          status: "Ready",
+          version: nextVer,
+          lastUpdated: "Just now",
+          fileSize: d.fileSize === "—" ? "1.8 MB" : d.fileSize,
+        };
+      }),
+    );
+    setToastMessage(
+      `Uploaded ${doc.name} ${doc.status === "Missing" ? "v1.0" : "newer version"}! Status is now Ready.`,
+    );
+  };
+
+  const filteredDocs = docs.filter((doc) => {
+    const matchesSearch =
+      doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.mappedApps.some((a) =>
+        a.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    const matchesStatus =
+      statusFilter === "all" ||
+      doc.status.toLowerCase().replace(/\s+/g, "-") === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const selectedDoc = docs.find((d) => d.id === selectedId) || filteredDocs[0];
+
+  const readyMappedCount = docs.filter(
+    (d) => d.status === "Ready" && d.mappedApps.length > 0,
+  ).length;
+  const connectedCount = Math.min(9, 5 + readyMappedCount);
+
   return (
     <PreviewFrame title="Documents and evidence">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className="tracker-toast-bar"
+          role="status"
+          style={{ margin: "0.5rem 1.25rem" }}
+        >
+          <span>{toastMessage}</span>
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setToastMessage(null)}
+            aria-label="Close notification"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="preview-toolbar" style={{ margin: "0.75rem 1.25rem" }}>
+        <Search size={18} aria-hidden="true" />
+        <input
+          type="text"
+          className="tracker-search-input"
+          placeholder="Search documents or mapped applications..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          aria-label="Search documents"
+        />
+        {searchTerm && (
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setSearchTerm("")}
+            title="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
+        <button
+          className={`tracker-icon-btn ${isFilterBarOpen || statusFilter !== "all" ? "active" : ""}`}
+          onClick={() => setIsFilterBarOpen((prev) => !prev)}
+          title="Filter status"
+        >
+          <Filter size={18} aria-hidden="true" />
+        </button>
+      </div>
+
+      {/* Status Filter Chips */}
+      {isFilterBarOpen && (
+        <div
+          className="tracker-filter-bar"
+          style={{ margin: "0 1.25rem 0.75rem" }}
+        >
+          <span style={{ color: "var(--m-muted)", fontWeight: 600 }}>Filter:</span>
+          {[
+            { id: "all", label: "All" },
+            { id: "ready", label: "Ready" },
+            { id: "update-needed", label: "Update needed" },
+            { id: "missing", label: "Missing" },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              className={`tracker-filter-chip ${statusFilter === chip.id ? "active" : ""}`}
+              onClick={() => setStatusFilter(chip.id)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Document List */}
       <div className="document-preview-list">
-        {rows.map(([name, mapped, status]) => (
-          <div key={name}>
-            <FileText aria-hidden="true" />
-            <span>
-              <strong>{name}</strong>
-              <small>Mapped to {mapped}</small>
-            </span>
-            <em className={status === "Update needed" ? "attention" : ""}>
-              {status}
+        {filteredDocs.length === 0 ? (
+          <div
+            style={{
+              padding: "1.5rem",
+              textAlign: "center",
+              color: "var(--m-muted)",
+              fontSize: "0.82rem",
+            }}
+          >
+            No documents found matching "{searchTerm}".
+          </div>
+        ) : (
+          filteredDocs.map((doc) => {
+            const isSelected = selectedDoc?.id === doc.id;
+            return (
+              <div
+                key={doc.id}
+                tabIndex={0}
+                onClick={() => setSelectedId(doc.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedId(doc.id);
+                  }
+                }}
+                className={`tracker-row-item ${isSelected ? "selected" : ""}`}
+                style={{
+                  cursor: "pointer",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "6px",
+                  margin: "2px 0",
+                  background: isSelected ? "var(--m-selected)" : "transparent",
+                  borderLeft: isSelected
+                    ? "3px solid var(--m-blue)"
+                    : "3px solid transparent",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <FileText
+                  aria-hidden="true"
+                  style={{
+                    color: isSelected ? "var(--m-blue)" : "var(--m-muted)",
+                  }}
+                />
+                <span>
+                  <strong>{doc.name}</strong>
+                  <small>
+                    {doc.mappedApps.length > 0
+                      ? `Mapped to ${doc.mappedApps.join(", ")}`
+                      : "Not mapped to any application"}
+                  </small>
+                </span>
+                <em
+                  className={
+                    doc.status === "Update needed"
+                      ? "attention"
+                      : doc.status === "Missing"
+                        ? "missing"
+                        : ""
+                  }
+                >
+                  {doc.status}
+                </em>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Document Workspace Details Inspector Card */}
+      {selectedDoc && (
+        <div
+          className="tracker-detail-card"
+          style={{ margin: "0.5rem 1.25rem 1rem" }}
+        >
+          <div className="tracker-detail-header">
+            <div>
+              <h4>{selectedDoc.name}</h4>
+              <p>
+                Size: <strong>{selectedDoc.fileSize}</strong> • Version:{" "}
+                <strong>{selectedDoc.version}</strong> • Updated:{" "}
+                {selectedDoc.lastUpdated}
+              </p>
+            </div>
+            <em
+              className={
+                selectedDoc.status === "Update needed"
+                  ? "attention"
+                  : selectedDoc.status === "Missing"
+                    ? "missing"
+                    : ""
+              }
+            >
+              {selectedDoc.status}
             </em>
           </div>
-        ))}
-      </div>
-      <div className="preview-summary">
+
+          <div style={{ fontSize: "0.8rem", margin: "0.5rem 0" }}>
+            <strong style={{ color: "var(--m-text-strong)" }}>
+              Mapped applications:
+            </strong>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.4rem",
+                marginTop: "0.4rem",
+              }}
+            >
+              {selectedDoc.mappedApps.length === 0 ? (
+                <span style={{ fontSize: "0.75rem", color: "var(--m-muted)" }}>
+                  No applications mapped yet.
+                </span>
+              ) : (
+                selectedDoc.mappedApps.map((appName) => (
+                  <span
+                    key={appName}
+                    className="tracker-filter-chip active"
+                    style={{ fontSize: "0.72rem", padding: "2px 8px" }}
+                    onClick={() => toggleAppMapping(selectedDoc.id, appName)}
+                    title="Click to unmap"
+                  >
+                    {appName} ✕
+                  </span>
+                ))
+              )}
+              <button
+                className="tracker-action-btn"
+                style={{ fontSize: "0.72rem" }}
+                onClick={() => setIsMappingPickerOpen(!isMappingPickerOpen)}
+              >
+                + Manage mappings
+              </button>
+            </div>
+
+            {/* Mapping Selector */}
+            {isMappingPickerOpen && (
+              <div
+                style={{
+                  marginTop: "0.5rem",
+                  padding: "0.5rem",
+                  background: "var(--m-canvas)",
+                  borderRadius: "6px",
+                  border: "1px solid var(--m-line-soft)",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    color: "var(--m-text-strong)",
+                  }}
+                >
+                  Toggle mapping:
+                </span>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "0.3rem",
+                    marginTop: "0.3rem",
+                  }}
+                >
+                  {AVAILABLE_APPS.map((appName) => {
+                    const isMapped = selectedDoc.mappedApps.includes(appName);
+                    return (
+                      <button
+                        key={appName}
+                        className={`tracker-filter-chip ${isMapped ? "active" : ""}`}
+                        style={{ fontSize: "0.72rem" }}
+                        onClick={() => toggleAppMapping(selectedDoc.id, appName)}
+                      >
+                        {isMapped ? `✓ ${appName}` : `+ ${appName}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "0.8rem",
+              paddingTop: "0.6rem",
+              borderTop: "1px solid var(--m-line-soft)",
+            }}
+          >
+            <span style={{ fontSize: "0.75rem", color: "var(--m-muted)" }}>
+              {selectedDoc.status === "Update needed"
+                ? "⚠️ Needs newer document version for 2026 application cycle."
+                : "Document is connected and verified."}
+            </span>
+            <button
+              className="tracker-action-btn"
+              style={{
+                background: "var(--m-blue)",
+                color: "#ffffff",
+                padding: "5px 10px",
+                borderRadius: "6px",
+              }}
+              onClick={() => handleUploadNewVersion(selectedDoc)}
+            >
+              {selectedDoc.status === "Missing"
+                ? "Upload document"
+                : "Upload newer version"}{" "}
+              <ArrowRight size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Requirement Coverage Summary Bar */}
+      <div
+        className="preview-summary"
+        style={{ cursor: "pointer" }}
+        onClick={() =>
+          setToastMessage(
+            `Requirement coverage: ${connectedCount} of 9 document requirements connected across all applications.`,
+          )
+        }
+      >
         <Folder aria-hidden="true" />
         <span>
-          <strong>Requirement coverage</strong>7 of 9 document requirements
-          connected
+          <strong>Requirement coverage</strong>
+          {connectedCount} of 9 document requirements connected
         </span>
       </div>
     </PreviewFrame>
   );
 }
+
+type ReferenceItem = {
+  id: string;
+  name: string;
+  requirement: string;
+  institution: string;
+  status: "Confirmed" | "Request sent" | "Follow-up due" | "Draft";
+  due: string;
+  lastContact: string;
+  attachedContext: string[];
+};
+
+const INITIAL_REFERENCES: ReferenceItem[] = [
+  {
+    id: "khan",
+    name: "Dr A. Khan",
+    requirement: "Academic reference",
+    institution: "University of Oxford",
+    status: "Confirmed",
+    due: "28 Aug",
+    lastContact: "Confirmed 12 Aug",
+    attachedContext: ["Certified transcript", "Research abstract", "Custom prompt notes"],
+  },
+  {
+    id: "okoro",
+    name: "Prof. D. Okoro",
+    requirement: "Research potential",
+    institution: "Cambridge Trust",
+    status: "Request sent",
+    due: "2 Sep",
+    lastContact: "Request sent 18 Aug",
+    attachedContext: ["Project summary draft", "CV v2"],
+  },
+  {
+    id: "nair",
+    name: "M. Priya Nair",
+    requirement: "Leadership context",
+    institution: "Community NGO",
+    status: "Follow-up due",
+    due: "5 Sep",
+    lastContact: "Sent 5 Aug (18 days ago)",
+    attachedContext: ["Leadership initiative log", "Volunteer summary"],
+  },
+  {
+    id: "vance",
+    name: "Prof. E. Vance",
+    requirement: "Department chair",
+    institution: "Stanford Graduate School",
+    status: "Confirmed",
+    due: "15 Sep",
+    lastContact: "Confirmed 15 Aug",
+    attachedContext: ["Academic record", "Publication list"],
+  },
+  {
+    id: "tanaka",
+    name: "Dr. H. Tanaka",
+    requirement: "Laboratory supervisor",
+    institution: "RIKEN Institute",
+    status: "Draft",
+    due: "20 Sep",
+    lastContact: "Not sent yet",
+    attachedContext: ["Lab project draft"],
+  },
+];
 
 function ReferencesCapabilityPreview() {
-  const rows = [
-    ["Dr A. Khan", "Academic reference", "Confirmed", "28 Aug"],
-    ["Prof. D. Okoro", "Research potential", "Request sent", "2 Sep"],
-    ["M. Priya Nair", "Leadership context", "Follow-up due", "5 Sep"],
-  ];
+  const [refs, setRefs] = useState<ReferenceItem[]>(INITIAL_REFERENCES);
+  const [selectedId, setSelectedId] = useState<string>("khan");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isFilterBarOpen, setIsFilterBarOpen] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  const handleSendReminder = (refItem: ReferenceItem) => {
+    setRefs((prev) =>
+      prev.map((r) => {
+        if (r.id !== refItem.id) return r;
+        return {
+          ...r,
+          status: "Request sent",
+          lastContact: "Reminder sent just now",
+        };
+      }),
+    );
+    setToastMessage(
+      `Sent follow-up reminder to ${refItem.name} for ${refItem.requirement}!`,
+    );
+  };
+
+  const filteredRefs = refs.filter((r) => {
+    const matchesSearch =
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.requirement.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.institution.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" ||
+      r.status.toLowerCase().replace(/\s+/g, "-") === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const selectedRef = refs.find((r) => r.id === selectedId) || filteredRefs[0];
+
+  const confirmedCount = refs.filter((r) => r.status === "Confirmed").length;
+  const sentCount = refs.filter((r) => r.status === "Request sent").length;
+  const followUpCount = refs.filter((r) => r.status === "Follow-up due").length;
+
   return (
     <PreviewFrame title="Reference tracking">
-      <div className="reference-preview-list">
-        {rows.map(([name, requirement, status, due]) => (
-          <div key={name}>
-            <span>
-              <strong>{name}</strong>
-              <small>{requirement}</small>
-            </span>
-            <em data-status={status}>{status}</em>
-            <time>{due}</time>
-          </div>
-        ))}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className="tracker-toast-bar"
+          role="status"
+          style={{ margin: "0.5rem 1.25rem" }}
+        >
+          <span>{toastMessage}</span>
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setToastMessage(null)}
+            aria-label="Close notification"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="preview-toolbar" style={{ margin: "0.75rem 1.25rem" }}>
+        <Search size={18} aria-hidden="true" />
+        <input
+          type="text"
+          className="tracker-search-input"
+          placeholder="Search referees or requirements..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          aria-label="Search references"
+        />
+        {searchTerm && (
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setSearchTerm("")}
+            title="Clear search"
+          >
+            <X size={14} />
+          </button>
+        )}
+        <button
+          className={`tracker-icon-btn ${isFilterBarOpen || statusFilter !== "all" ? "active" : ""}`}
+          onClick={() => setIsFilterBarOpen((prev) => !prev)}
+          title="Filter status"
+        >
+          <Filter size={18} aria-hidden="true" />
+        </button>
       </div>
-      <div className="preview-summary">
+
+      {/* Status Filter Chips */}
+      {isFilterBarOpen && (
+        <div
+          className="tracker-filter-bar"
+          style={{ margin: "0 1.25rem 0.75rem" }}
+        >
+          <span style={{ color: "var(--m-muted)", fontWeight: 600 }}>Filter:</span>
+          {[
+            { id: "all", label: "All" },
+            { id: "confirmed", label: "Confirmed" },
+            { id: "request-sent", label: "Request sent" },
+            { id: "follow-up-due", label: "Follow-up due" },
+            { id: "draft", label: "Draft" },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              className={`tracker-filter-chip ${statusFilter === chip.id ? "active" : ""}`}
+              onClick={() => setStatusFilter(chip.id)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Reference List */}
+      <div className="reference-preview-list">
+        {filteredRefs.length === 0 ? (
+          <div
+            style={{
+              padding: "1.5rem",
+              textAlign: "center",
+              color: "var(--m-muted)",
+              fontSize: "0.82rem",
+            }}
+          >
+            No references found matching "{searchTerm}".
+          </div>
+        ) : (
+          filteredRefs.map((item) => {
+            const isSelected = selectedRef?.id === item.id;
+            return (
+              <div
+                key={item.id}
+                tabIndex={0}
+                onClick={() => setSelectedId(item.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedId(item.id);
+                  }
+                }}
+                style={{
+                  cursor: "pointer",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "6px",
+                  margin: "2px 0",
+                  background: isSelected ? "var(--m-selected)" : "transparent",
+                  borderLeft: isSelected
+                    ? "3px solid var(--m-blue)"
+                    : "3px solid transparent",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <span>
+                  <strong>{item.name}</strong>
+                  <small>
+                    {item.requirement} • {item.institution}
+                  </small>
+                </span>
+                <em data-status={item.status}>{item.status}</em>
+                <time>{item.due}</time>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Reference Workspace Inspector Card */}
+      {selectedRef && (
+        <div
+          className="tracker-detail-card"
+          style={{ margin: "0.5rem 1.25rem 1rem" }}
+        >
+          <div className="tracker-detail-header">
+            <div>
+              <h4>{selectedRef.name}</h4>
+              <p>
+                {selectedRef.requirement} •{" "}
+                <strong>{selectedRef.institution}</strong> • Target Due:{" "}
+                <strong>{selectedRef.due}</strong>
+              </p>
+            </div>
+            <em data-status={selectedRef.status}>{selectedRef.status}</em>
+          </div>
+
+          <div style={{ fontSize: "0.8rem", margin: "0.5rem 0" }}>
+            <p style={{ margin: "0 0 0.4rem 0", color: "var(--m-muted)" }}>
+              Last activity:{" "}
+              <span style={{ color: "var(--m-text-strong)", fontWeight: 600 }}>
+                {selectedRef.lastContact}
+              </span>
+            </p>
+            <strong style={{ color: "var(--m-text-strong)" }}>
+              Connected context package:
+            </strong>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.4rem",
+                marginTop: "0.4rem",
+              }}
+            >
+              {selectedRef.attachedContext.map((ctx) => (
+                <span
+                  key={ctx}
+                  className="tracker-filter-chip"
+                  style={{ fontSize: "0.72rem", background: "var(--m-canvas)" }}
+                >
+                  📄 {ctx}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "0.8rem",
+              paddingTop: "0.6rem",
+              borderTop: "1px solid var(--m-line-soft)",
+            }}
+          >
+            <span style={{ fontSize: "0.75rem", color: "var(--m-muted)" }}>
+              {selectedRef.status === "Confirmed"
+                ? "✓ Reference is signed and uploaded confidentially."
+                : selectedRef.status === "Follow-up due"
+                  ? "⚠️ Overdue for follow-up message."
+                  : "Request portal is active."}
+            </span>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              {selectedRef.status === "Follow-up due" ||
+              selectedRef.status === "Request sent" ? (
+                <button
+                  className="tracker-action-btn"
+                  style={{
+                    background: "var(--m-blue)",
+                    color: "#ffffff",
+                    padding: "5px 10px",
+                    borderRadius: "6px",
+                  }}
+                  onClick={() => handleSendReminder(selectedRef)}
+                >
+                  Send reminder <ArrowRight size={12} />
+                </button>
+              ) : selectedRef.status === "Draft" ? (
+                <button
+                  className="tracker-action-btn"
+                  style={{
+                    background: "var(--m-blue)",
+                    color: "#ffffff",
+                    padding: "5px 10px",
+                    borderRadius: "6px",
+                  }}
+                  onClick={() => handleSendReminder(selectedRef)}
+                >
+                  Send request link <ArrowRight size={12} />
+                </button>
+              ) : (
+                <button
+                  className="tracker-action-btn"
+                  style={{ fontSize: "0.75rem" }}
+                  onClick={() =>
+                    setToastMessage(
+                      `Verified submission receipt for ${selectedRef.name} (Confidential).`,
+                    )
+                  }
+                >
+                  View receipt ✓
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shared Context Summary Bar */}
+      <div
+        className="preview-summary"
+        style={{ cursor: "pointer" }}
+        onClick={() =>
+          setToastMessage(
+            `Reference status overview: ${confirmedCount} confirmed, ${sentCount} request sent, ${followUpCount} follow-up due.`,
+          )
+        }
+      >
         <Users aria-hidden="true" />
         <span>
-          <strong>Shared context stays visible</strong>Prompt, deadline and
-          supporting notes remain connected.
+          <strong>Shared context stays visible</strong>
+          {confirmedCount} confirmed, {sentCount} request sent, {followUpCount} follow-up due. Prompt & deadline connected.
         </span>
       </div>
     </PreviewFrame>
   );
 }
 
+type TaskItem = {
+  id: string;
+  label: string;
+  done: boolean;
+};
+
+type ReadinessArea = {
+  id: string;
+  name: string;
+  status: string;
+  action: string;
+  tasks: TaskItem[];
+};
+
+type ApplicationReadinessData = {
+  id: string;
+  appName: string;
+  daysToDeadline: number;
+  deadlineDate: string;
+  areas: ReadinessArea[];
+};
+
+const INITIAL_READINESS_APPS: ApplicationReadinessData[] = [
+  {
+    id: "rhodes",
+    appName: "Rhodes Scholarship",
+    daysToDeadline: 18,
+    deadlineDate: "15 Sep",
+    areas: [
+      {
+        id: "reqs",
+        name: "Requirements coverage",
+        status: "2 missing",
+        action: "Review",
+        tasks: [
+          { id: "r1", label: "Personal statement (1,000 words)", done: true },
+          { id: "r2", label: "Certified transcript", done: true },
+          { id: "r3", label: "Community impact portfolio", done: false },
+          { id: "r4", label: "Financial declaration", done: false },
+        ],
+      },
+      {
+        id: "evidence",
+        name: "Evidence coverage",
+        status: "3 need attention",
+        action: "Review",
+        tasks: [
+          { id: "e1", label: "Peer support program metric", done: true },
+          { id: "e2", label: "Faculty mentor verification letter", done: false },
+          { id: "e3", label: "Community research data log", done: false },
+          { id: "e4", label: "Award certificate scan", done: false },
+        ],
+      },
+      {
+        id: "writing",
+        name: "Writing status",
+        status: "Draft in review",
+        action: "Open draft",
+        tasks: [
+          { id: "w1", label: "Core narrative structure", done: true },
+          { id: "w2", label: "Specific outcome metric added", done: true },
+          { id: "w3", label: "Proofreading & word count check", done: false },
+        ],
+      },
+      {
+        id: "refs",
+        name: "Reference status",
+        status: "1 follow-up due",
+        action: "Follow up",
+        tasks: [
+          { id: "rf1", label: "Dr A. Khan (Academic)", done: true },
+          { id: "rf2", label: "Prof. D. Okoro (Research)", done: true },
+          { id: "rf3", label: "M. Priya Nair (Leadership)", done: false },
+        ],
+      },
+      {
+        id: "decl",
+        name: "Declaration status",
+        status: "Not started",
+        action: "Complete",
+        tasks: [
+          { id: "d1", label: "Academic integrity affirmation", done: false },
+          { id: "d2", label: "Final submission consent", done: false },
+        ],
+      },
+    ],
+  },
+  {
+    id: "fulbright",
+    appName: "Fulbright Award",
+    daysToDeadline: 35,
+    deadlineDate: "24 Oct",
+    areas: [
+      {
+        id: "reqs2",
+        name: "Requirements coverage",
+        status: "1 missing",
+        action: "Review",
+        tasks: [
+          { id: "fr1", label: "Host institution affiliation letter", done: true },
+          { id: "fr2", label: "Project statement", done: true },
+          { id: "fr3", label: "Travel budget plan", done: false },
+        ],
+      },
+      {
+        id: "evidence2",
+        name: "Evidence coverage",
+        status: "All covered",
+        action: "Verified",
+        tasks: [
+          { id: "fe1", label: "Language evaluation", done: true },
+          { id: "fe2", label: "Publication record", done: true },
+        ],
+      },
+      {
+        id: "writing2",
+        name: "Writing status",
+        status: "Polished & ready",
+        action: "Open draft",
+        tasks: [
+          { id: "fw1", label: "Final proofreading complete", done: true },
+        ],
+      },
+      {
+        id: "refs2",
+        name: "Reference status",
+        status: "All confirmed",
+        action: "Complete",
+        tasks: [
+          { id: "frf1", label: "3 of 3 References confirmed", done: true },
+        ],
+      },
+      {
+        id: "decl2",
+        name: "Declaration status",
+        status: "Signed",
+        action: "Signed",
+        tasks: [
+          { id: "fd1", label: "Full consent verified", done: true },
+        ],
+      },
+    ],
+  },
+];
+
 function ReadinessCapabilityPreview() {
-  const rows = [
-    ["Requirements coverage", "2 missing", "Review"],
-    ["Evidence coverage", "3 need attention", "Review"],
-    ["Writing status", "Draft in review", "Open draft"],
-    ["Reference status", "1 follow-up due", "Follow up"],
-    ["Declaration status", "Not started", "Complete"],
-  ];
+  const [apps, setApps] = useState<ApplicationReadinessData[]>(
+    INITIAL_READINESS_APPS,
+  );
+  const [selectedAppId, setSelectedAppId] = useState<string>("rhodes");
+  const [selectedAreaId, setSelectedAreaId] = useState<string>("reqs");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  const toggleTask = (appId: string, areaId: string, taskId: string) => {
+    setApps((prev) =>
+      prev.map((app) => {
+        if (app.id !== appId) return app;
+        const updatedAreas = app.areas.map((area) => {
+          if (area.id !== areaId) return area;
+          const updatedTasks = area.tasks.map((t) =>
+            t.id === taskId ? { ...t, done: !t.done } : t,
+          );
+          const doneCount = updatedTasks.filter((t) => t.done).length;
+          const totalCount = updatedTasks.length;
+          const isComplete = doneCount === totalCount;
+          let newStatus = area.status;
+          if (isComplete) {
+            newStatus = "All complete ✓";
+          } else {
+            const missing = totalCount - doneCount;
+            newStatus = `${missing} missing`;
+          }
+          return {
+            ...area,
+            tasks: updatedTasks,
+            status: newStatus,
+            action: isComplete ? "Verified ✓" : area.action.replace(" ✓", ""),
+          };
+        });
+        return { ...app, areas: updatedAreas };
+      }),
+    );
+  };
+
+  const selectedApp = apps.find((a) => a.id === selectedAppId) || apps[0];
+
+  const totalTasks = selectedApp.areas.flatMap((a) => a.tasks);
+  const doneTasks = totalTasks.filter((t) => t.done);
+  const readinessPct = Math.round(
+    (doneTasks.length / totalTasks.length) * 100,
+  );
+
+  const selectedArea =
+    selectedApp.areas.find((a) => a.id === selectedAreaId) ||
+    selectedApp.areas[0];
+
+  const handleQuickAction = (area: ReadinessArea, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedAreaId(area.id);
+    const incompleteTask = area.tasks.find((t) => !t.done);
+    if (incompleteTask) {
+      toggleTask(selectedApp.id, area.id, incompleteTask.id);
+      setToastMessage(
+        `Completed task: "${incompleteTask.label}" in ${area.name}`,
+      );
+    } else {
+      setToastMessage(`All items in ${area.name} are already verified!`);
+    }
+  };
+
   return (
     <PreviewFrame title="Application readiness">
-      <div className="readiness-overview">
-        <span>
-          <strong>72%</strong> ready for final review
-        </span>
-        <small>18 days to deadline</small>
-      </div>
-      <div className="readiness-list">
-        {rows.map(([area, state, action]) => (
-          <div key={area}>
-            <span>{area}</span>
-            <em>{state}</em>
-            <b>{action}</b>
-          </div>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className="tracker-toast-bar"
+          role="status"
+          style={{ margin: "0.5rem 1.25rem 0" }}
+        >
+          <span>{toastMessage}</span>
+          <button
+            className="tracker-icon-btn"
+            onClick={() => setToastMessage(null)}
+            aria-label="Close notification"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Application Switcher Tabs */}
+      <div
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          padding: "0.75rem 1.25rem 0.25rem",
+          fontSize: "0.8rem",
+          overflowX: "auto",
+        }}
+      >
+        {apps.map((app) => (
+          <button
+            key={app.id}
+            className={`tracker-filter-chip ${selectedAppId === app.id ? "active" : ""}`}
+            onClick={() => setSelectedAppId(app.id)}
+          >
+            {app.appName}
+          </button>
         ))}
       </div>
+
+      {/* Overview Banner */}
+      <div
+        className="readiness-overview"
+        style={{
+          background: readinessPct === 100 ? "#ecfdf5" : "var(--m-pale)",
+          transition: "background 0.3s ease",
+        }}
+      >
+        <span>
+          <strong
+            style={{
+              color: readinessPct === 100 ? "#047857" : "var(--m-blue)",
+            }}
+          >
+            {readinessPct}%
+          </strong>{" "}
+          {readinessPct === 100
+            ? "ready for final submission! 🎉"
+            : "ready for final review"}
+        </span>
+        <small>
+          {selectedApp.daysToDeadline} days to deadline (
+          {selectedApp.deadlineDate})
+        </small>
+      </div>
+
+      {/* Area Rows List */}
+      <div className="readiness-list">
+        {selectedApp.areas.map((row) => {
+          const isAreaSelected = selectedArea?.id === row.id;
+          const isComplete = row.tasks.every((t) => t.done);
+          return (
+            <div
+              key={row.id}
+              tabIndex={0}
+              onClick={() => setSelectedAreaId(row.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedAreaId(row.id);
+                }
+              }}
+              style={{
+                cursor: "pointer",
+                padding: "0.65rem 0.8rem",
+                borderRadius: "6px",
+                margin: "2px 0",
+                background: isAreaSelected
+                  ? "var(--m-selected)"
+                  : "transparent",
+                borderLeft: isAreaSelected
+                  ? "3px solid var(--m-blue)"
+                  : "3px solid transparent",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span style={{ fontWeight: isAreaSelected ? 600 : 400 }}>
+                {row.name}
+              </span>
+              <em
+                style={{
+                  color: isComplete
+                    ? "var(--m-success)"
+                    : "var(--m-warning)",
+                }}
+              >
+                {row.status}
+              </em>
+              <b
+                onClick={(e) => handleQuickAction(row, e)}
+                style={{ cursor: "pointer" }}
+                title={`Click to resolve ${row.name}`}
+              >
+                {row.action}
+              </b>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Selected Readiness Area Task Inspector */}
+      {selectedArea && (
+        <div
+          className="tracker-detail-card"
+          style={{ margin: "0.5rem 1.25rem 1rem" }}
+        >
+          <div className="tracker-detail-header">
+            <div>
+              <h4>{selectedArea.name}</h4>
+              <p>
+                {selectedArea.tasks.filter((t) => t.done).length} of{" "}
+                {selectedArea.tasks.length} items complete
+              </p>
+            </div>
+            <em
+              style={{
+                color: selectedArea.tasks.every((t) => t.done)
+                  ? "var(--m-success)"
+                  : "var(--m-warning)",
+              }}
+            >
+              {selectedArea.status}
+            </em>
+          </div>
+
+          <div className="tracker-req-list">
+            {selectedArea.tasks.map((task) => (
+              <label
+                key={task.id}
+                className={`tracker-req-item ${task.done ? "done" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTask(selectedApp.id, selectedArea.id, task.id);
+                  setToastMessage(
+                    `${task.done ? "Unchecked" : "Completed"}: "${task.label}"`,
+                  );
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={task.done}
+                  onChange={() => {}}
+                  style={{ accentColor: "var(--m-blue)" }}
+                />
+                <span>{task.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "0.8rem",
+              paddingTop: "0.6rem",
+              borderTop: "1px solid var(--m-line-soft)",
+            }}
+          >
+            <span style={{ fontSize: "0.75rem", color: "var(--m-muted)" }}>
+              Tip: Click items to toggle readiness status live!
+            </span>
+            <button
+              className="tracker-action-btn"
+              style={{
+                background: "var(--m-blue)",
+                color: "#ffffff",
+                padding: "5px 10px",
+                borderRadius: "6px",
+              }}
+              onClick={(e) => handleQuickAction(selectedArea, e)}
+            >
+              {selectedArea.action} <ArrowRight size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <p className="readiness-disclaimer">
         Readiness shows what is complete or missing. It does not predict an
         award decision.
