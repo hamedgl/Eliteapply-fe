@@ -24,6 +24,7 @@ import {
   type CalendarEvent,
   type CalendarEventTone,
 } from "../../components/ui/event-manager";
+import { ApplicationReadinessCard } from "./components/ApplicationReadinessCard";
 
 type Deadline = Record<string, unknown>;
 type SetupStatus = "done" | "todo" | "checking" | "unavailable";
@@ -437,6 +438,8 @@ export function DashboardPage() {
             />
           )}
         </DashboardSurface>
+
+        <ApplicationReadinessCard />
 
         <section
           className="setup-checklist"

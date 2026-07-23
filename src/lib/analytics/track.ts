@@ -1,1 +1,22 @@
-import type{components}from"../../generated/api/schema";import{apiRequest}from"../api/client";type Event=components["schemas"]["AnalyticsEventCreate"];const forbidden=/password|token|code|content|essay|reference|profile|story/i;export async function track(event_name:Event["event_name"],properties:Record<string,unknown>={}){const safe=Object.fromEntries(Object.entries(properties).filter(([key,value])=>!forbidden.test(key)&&["string","number","boolean"].includes(typeof value)));await apiRequest<void>("/analytics/events",{method:"POST",body:{event_name,properties:safe}})}
+import type { components } from "../../generated/api/schema";
+import { apiRequest } from "../api/client";
+
+type Event = components["schemas"]["AnalyticsEventCreate"];
+const forbidden = /password|token|code|content|essay|reference|profile|story/i;
+
+export async function track(
+  event_name: Event["event_name"] | (string & {}),
+  properties: Record<string, unknown> = {},
+) {
+  const safe = Object.fromEntries(
+    Object.entries(properties).filter(
+      ([key, value]) =>
+        !forbidden.test(key) &&
+        ["string", "number", "boolean"].includes(typeof value),
+    ),
+  );
+  await apiRequest<void>("/analytics/events", {
+    method: "POST",
+    body: { event_name, properties: safe },
+  });
+}

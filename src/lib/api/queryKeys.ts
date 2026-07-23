@@ -5,6 +5,7 @@ export const queryKeys = {
   flag: (key: string) => ["feature-flag", key] as const,
   onboarding: ["onboarding"] as const,
   dashboard: ["dashboard"] as const,
+  dashboardReadiness: ["dashboard", "readiness"] as const,
   profile: ["academic-profile"] as const,
   profileVersions: ["academic-profile", "versions"] as const,
   applications: ["applications"] as const,

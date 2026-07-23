@@ -73,7 +73,7 @@ import type { components } from "../../generated/api/schema";
 import "../../styles/workspace.css";
 
 type S = components["schemas"];
-type Tab =
+export type Tab =
   | "overview"
   | "requirements"
   | "tasks"
@@ -82,7 +82,7 @@ type Tab =
   | "collaborators"
   | "activity";
 
-const TABS: Tab[] = [
+export const TABS: Tab[] = [
   "overview",
   "requirements",
   "tasks",
@@ -91,6 +91,54 @@ const TABS: Tab[] = [
   "collaborators",
   "activity",
 ];
+
+export const TAB_ALIASES: Record<string, Tab> = {
+  checklist: "requirements",
+  checklists: "requirements",
+  requirement: "requirements",
+  requirements_list: "requirements",
+  task: "tasks",
+  todo: "tasks",
+  todos: "tasks",
+  doc: "documents",
+  docs: "documents",
+  file: "documents",
+  files: "documents",
+  attachment: "documents",
+  attachments: "documents",
+  eligibility_check: "eligibility",
+  recommendation: "eligibility",
+  recommendations: "eligibility",
+  matches: "eligibility",
+  collaboration: "collaborators",
+  collaborator: "collaborators",
+  team: "collaborators",
+  members: "collaborators",
+  sharing: "collaborators",
+  history: "activity",
+  timeline: "activity",
+  audit: "activity",
+  logs: "activity",
+  events: "activity",
+  details: "overview",
+  info: "overview",
+  summary: "overview",
+  home: "overview",
+  main: "overview",
+};
+
+export function resolveWorkspaceTab(rawResource?: string | null): Tab {
+  if (!rawResource) return "overview";
+  const normalized = rawResource.toLowerCase().trim();
+  if (TABS.includes(normalized as Tab)) {
+    return normalized as Tab;
+  }
+  if (normalized in TAB_ALIASES) {
+    return TAB_ALIASES[normalized];
+  }
+  return "overview";
+}
+
 const REQUIREMENT_DONE = new Set(["ready", "complete", "submitted", "waived"]);
 const TASK_DONE = new Set(["completed", "cancelled"]);
 
@@ -99,8 +147,7 @@ export function ApplicationWorkspace() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [params] = useSearchParams();
-  const activeTab: Tab =
-    resource && TABS.includes(resource as Tab) ? (resource as Tab) : "overview";
+  const activeTab: Tab = resolveWorkspaceTab(resource);
   const [editOpen, setEditOpen] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
@@ -216,14 +263,6 @@ export function ApplicationWorkspace() {
     },
   });
 
-  if (resource && !TABS.includes(resource as Tab)) {
-    return (
-      <PageError
-        title="Workspace section not found"
-        onRetry={() => navigate(`/app/applications/${id}`)}
-      />
-    );
-  }
   if (
     collaboratorView.data?.application &&
     ["viewer", "commenter", "advisor_editor"].includes(

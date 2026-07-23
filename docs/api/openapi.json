@@ -4729,6 +4729,32 @@
         ]
       }
     },
+    "/api/v1/dashboard/readiness": {
+      "get": {
+        "tags": [
+          "Student Workspace"
+        ],
+        "summary": "Dashboard Readiness",
+        "operationId": "dashboard_readiness_api_v1_dashboard_readiness_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardReadinessResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/onboarding": {
       "get": {
         "tags": [
@@ -17212,6 +17238,329 @@
           "portal_url"
         ],
         "title": "CustomerPortalResponse"
+      },
+      "DashboardApplicationItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "application_type": {
+            "type": "string",
+            "title": "Application Type"
+          },
+          "institution_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Id"
+          },
+          "programme_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Programme Id"
+          },
+          "scholarship_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scholarship Id"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority"
+          },
+          "intake": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intake"
+          },
+          "primary_deadline_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Deadline At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "pre_archive_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Archive Stage"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "institution_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Name"
+          },
+          "programme_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Programme Name"
+          },
+          "scholarship_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scholarship Name"
+          },
+          "institution_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Display Name"
+          },
+          "programme_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Programme Display Name"
+          },
+          "scholarship_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scholarship Display Name"
+          },
+          "readiness_percent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readiness Percent"
+          },
+          "readiness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationReadinessSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "readiness_state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "due_soon",
+              "needs_attention",
+              "on_track",
+              "incomplete_setup"
+            ],
+            "title": "Readiness State"
+          },
+          "primary_missing_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Missing Requirement"
+          },
+          "recommended_action": {
+            "$ref": "#/components/schemas/DashboardRecommendedAction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "application_type",
+          "institution_id",
+          "programme_id",
+          "scholarship_id",
+          "stage",
+          "priority",
+          "intake",
+          "primary_deadline_at",
+          "source_url",
+          "notes",
+          "tags",
+          "version",
+          "created_at",
+          "updated_at",
+          "readiness_state",
+          "recommended_action"
+        ],
+        "title": "DashboardApplicationItem"
+      },
+      "DashboardReadinessResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardApplicationItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total_active": {
+            "type": "integer",
+            "title": "Total Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total_active"
+        ],
+        "title": "DashboardReadinessResponse"
+      },
+      "DashboardRecommendedAction": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "href"
+        ],
+        "title": "DashboardRecommendedAction"
       },
       "DashboardResponse": {
         "properties": {

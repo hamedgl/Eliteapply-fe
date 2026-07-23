@@ -222,3 +222,16 @@ describe("application resource queries", () => {
     client.clear();
   });
 });
+
+describe("resolveWorkspaceTab", () => {
+  it("resolves exact tab names, aliases, and unknown fallback tabs accurately", async () => {
+    const { resolveWorkspaceTab } = await import("../features/applications/ApplicationWorkspace");
+    expect(resolveWorkspaceTab("requirements")).toBe("requirements");
+    expect(resolveWorkspaceTab("checklist")).toBe("requirements");
+    expect(resolveWorkspaceTab("docs")).toBe("documents");
+    expect(resolveWorkspaceTab("todos")).toBe("tasks");
+    expect(resolveWorkspaceTab("details")).toBe("overview");
+    expect(resolveWorkspaceTab("unknown_tab_name")).toBe("overview");
+    expect(resolveWorkspaceTab(null)).toBe("overview");
+  });
+});

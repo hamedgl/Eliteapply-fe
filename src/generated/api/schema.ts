@@ -1083,6 +1083,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Readiness */
+        get: operations["dashboard_readiness_api_v1_dashboard_readiness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/onboarding": {
         parameters: {
             query?: never;
@@ -4700,6 +4717,91 @@ export interface components {
         CustomerPortalResponse: {
             /** Portal Url */
             portal_url: string;
+        };
+        /** DashboardApplicationItem */
+        DashboardApplicationItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Application Type */
+            application_type: string;
+            /** Institution Id */
+            institution_id: string | null;
+            /** Programme Id */
+            programme_id: string | null;
+            /** Scholarship Id */
+            scholarship_id: string | null;
+            /** Stage */
+            stage: string;
+            /** Priority */
+            priority: string;
+            /** Intake */
+            intake: string | null;
+            /** Primary Deadline At */
+            primary_deadline_at: string | null;
+            /** Source Url */
+            source_url: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Tags */
+            tags: string[];
+            /** Submitted At */
+            submitted_at?: string | null;
+            /** Pre Archive Stage */
+            pre_archive_stage?: string | null;
+            /** Version */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Institution Name */
+            institution_name?: string | null;
+            /** Programme Name */
+            programme_name?: string | null;
+            /** Scholarship Name */
+            scholarship_name?: string | null;
+            /** Institution Display Name */
+            institution_display_name?: string | null;
+            /** Programme Display Name */
+            programme_display_name?: string | null;
+            /** Scholarship Display Name */
+            scholarship_display_name?: string | null;
+            /** Readiness Percent */
+            readiness_percent?: number | null;
+            readiness?: components["schemas"]["ApplicationReadinessSummary"] | null;
+            /**
+             * Readiness State
+             * @enum {string}
+             */
+            readiness_state: "ready" | "due_soon" | "needs_attention" | "on_track" | "incomplete_setup";
+            /** Primary Missing Requirement */
+            primary_missing_requirement?: string | null;
+            recommended_action: components["schemas"]["DashboardRecommendedAction"];
+        };
+        /** DashboardReadinessResponse */
+        DashboardReadinessResponse: {
+            /** Items */
+            items: components["schemas"]["DashboardApplicationItem"][];
+            /** Total Active */
+            total_active: number;
+        };
+        /** DashboardRecommendedAction */
+        DashboardRecommendedAction: {
+            /** Label */
+            label: string;
+            /** Href */
+            href: string;
         };
         /** DashboardResponse */
         DashboardResponse: {
@@ -10547,6 +10649,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
+                };
+            };
+        };
+    };
+    dashboard_readiness_api_v1_dashboard_readiness_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardReadinessResponse"];
                 };
             };
         };

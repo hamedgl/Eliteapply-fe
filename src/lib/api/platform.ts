@@ -4,6 +4,8 @@ import { apiRequest } from "./client";
 export type Dashboard = components["schemas"]["DashboardResponse"];
 export type Onboarding = components["schemas"]["OnboardingResponse"];
 export type Capability = components["schemas"]["PlatformCapability"];
+export type DashboardReadinessResponse = components["schemas"]["DashboardReadinessResponse"];
+export type DashboardApplicationItem = components["schemas"]["DashboardApplicationItem"];
 
 export const platformApi = {
   identity: () => apiRequest<Record<string, unknown>>("/platform/identity"),
@@ -11,6 +13,7 @@ export const platformApi = {
   flag: (key: string) => apiRequest<Record<string, unknown>>(`/feature-flags/${encodeURIComponent(key)}`),
   onboarding: () => apiRequest<Onboarding>("/onboarding"),
   dashboard: () => apiRequest<Dashboard>("/dashboard"),
+  dashboardReadiness: () => apiRequest<DashboardReadinessResponse>("/dashboard/readiness"),
 };
 
 export function safeDashboard(value: unknown): Dashboard {
