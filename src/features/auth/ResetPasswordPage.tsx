@@ -4,23 +4,11 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { authApi } from "../../lib/api/auth";
 import { ApiError } from "../../lib/api/errors";
+import {
+  PASSWORD_RULES,
+  passwordMeetsRequirements,
+} from "./passwordRules";
 import "./auth-form.css";
-
-const PASSWORD_RULES: Array<{
-  key: string;
-  label: string;
-  test: (value: string) => boolean;
-}> = [
-  { key: "length", label: "At least 8 characters", test: (v) => v.length >= 8 },
-  { key: "upper", label: "One uppercase letter", test: (v) => /[A-Z]/.test(v) },
-  { key: "lower", label: "One lowercase letter", test: (v) => /[a-z]/.test(v) },
-  { key: "number", label: "One number", test: (v) => /[0-9]/.test(v) },
-  {
-    key: "symbol",
-    label: "One symbol",
-    test: (v) => /[^A-Za-z0-9]/.test(v),
-  },
-];
 
 function isCodeRelated(message: string) {
   return /\bcode\b|expired/i.test(message);
@@ -34,7 +22,7 @@ function AuthBrand() {
       </Link>
       <div>
         <h2>
-          Your applications.
+          Your applications
           <br />
           One clear system.
         </h2>
@@ -75,7 +63,7 @@ export function ResetPasswordPage() {
         : "Choose a new password | EliteApply";
   }, [success, errorKind]);
 
-  const rulesPassed = PASSWORD_RULES.every((rule) => rule.test(password));
+  const rulesPassed = passwordMeetsRequirements(password);
   const passwordsMatch = password.length > 0 && password === confirm;
   const canSubmit =
     rulesPassed &&
