@@ -501,10 +501,6 @@ export function documentText(content: Record<string, unknown> | undefined) {
       .join("\n\n");
   return "";
 }
-export const mergeText = (
-  content: Record<string, unknown> | undefined,
-  text: string,
-) => ({ ...content, text });
 export const usageApi = {
   get: (entityType: string, entityId: string) =>
     apiRequest<S["EntityUsageResponse"]>(

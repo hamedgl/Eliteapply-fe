@@ -12,7 +12,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { documentText, mergeText, writingApi } from "../../lib/api/phase3";
+import { writingApi } from "../../lib/api/phase3";
 import { ApiError } from "../../lib/api/errors";
 import { downloadResponse } from "../../lib/api/download";
 import { billingApi } from "../../lib/api/billing";
@@ -31,6 +31,8 @@ import {
   academicProfileRequirement,
   type AcademicProfileRequirement,
 } from "./generationProfileRequirement";
+import { TrixField } from "./TrixField";
+import { contentToHtml, countText, mergeHtml } from "./documentHtml";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
 const types = [
@@ -47,6 +49,20 @@ const types = [
 ] as const;
 const label = (x: string) =>
   x.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase());
+/**
+ * The backend caps serialized `content` at 256 KiB and rejects it as a field
+ * validation error, so a too-large document must not surface as a bare
+ * "Save failed" with no way for the writer to tell what went wrong.
+ */
+function saveFailureMessage(error: unknown) {
+  if (!(error instanceof ApiError)) return "Save failed";
+  if (error.code === "CONFLICT") return "Conflict — reload to compare";
+  const contentIssue = error.fields.find((field) =>
+    field.field.split(".").includes("content"),
+  );
+  const reason = contentIssue?.message.replace(/^value error,\s*/i, "").trim();
+  return reason ? `Save failed — ${reason}` : "Save failed";
+}
 const DEFAULT_GENERATION_DRAFT: Omit<
   WritingGenerationNavigationDraft,
   "documentId"
@@ -368,7 +384,7 @@ export function WritingEditor() {
   });
   useEffect(() => {
     if (q.data) {
-      setText(documentText(q.data.content));
+      setText(contentToHtml(q.data.content));
       setDirty(false);
     }
   }, [q.data?.version]);
@@ -402,31 +418,21 @@ export function WritingEditor() {
       ]);
     }
   }, [activeRun.data?.status, id, qc]);
-  const counts = useMemo(
-    () => ({
-      words: text.trim() ? text.trim().split(/\s+/).length : 0,
-      chars: text.length,
-    }),
-    [text],
-  );
+  const counts = useMemo(() => countText(text), [text]);
   async function save() {
     if (!q.data) return;
     setStatus("Saving…");
     try {
       const next = await writingApi.update(id, {
         expected_version: q.data.version,
-        content: mergeText(q.data.content, text),
+        content: mergeHtml(q.data.content, text),
         revision_name: "Manual save",
       });
       qc.setQueryData(["writing", id], next);
       setDirty(false);
       setStatus("Saved");
     } catch (x) {
-      setStatus(
-        x instanceof ApiError && x.code === "CONFLICT"
-          ? "Conflict — reload to compare"
-          : "Save failed",
-      );
+      setStatus(saveFailureMessage(x));
     }
   }
   async function analyze() {
@@ -612,11 +618,11 @@ export function WritingEditor() {
           ))}
         </aside>
         <main>
-          <textarea
-            aria-label="Document content"
+          <TrixField
+            ariaLabel="Document content"
             value={text}
-            onChange={(e) => {
-              setText(e.target.value);
+            onChange={(html) => {
+              setText(html);
               setDirty(true);
               setStatus("Unsaved");
             }}

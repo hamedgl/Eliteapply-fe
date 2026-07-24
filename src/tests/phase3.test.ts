@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   documentText,
   interviewsApi,
-  mergeText,
   notificationsApi,
   referencesApi,
   remindersApi,
 } from "../lib/api/phase3";
+import { mergeHtml } from "../features/writing/documentHtml";
 import { selectInterviewAudioType } from "../features/interviews/InterviewPage";
 import { safeNotificationPath } from "../lib/navigation";
 afterEach(() => {
@@ -16,8 +16,16 @@ afterEach(() => {
 describe("Phase 3 security and content adapters", () => {
   it("preserves unknown content keys when editing text", () => {
     expect(
-      mergeText({ blocks: [], backend_extension: { safe: true } }, "Draft"),
-    ).toEqual({ blocks: [], backend_extension: { safe: true }, text: "Draft" });
+      mergeHtml(
+        { blocks: [], backend_extension: { safe: true } },
+        "<div>Draft</div>",
+      ),
+    ).toEqual({
+      blocks: [],
+      backend_extension: { safe: true },
+      text: "<div>Draft</div>",
+      format: "html",
+    });
   });
   it("reads guarded text and never renders arbitrary objects", () => {
     expect(
