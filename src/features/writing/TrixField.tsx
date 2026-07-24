@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import "trix";
 import "trix/dist/trix.css";
+import type { FontKey } from "./documentHtml";
 
 type TrixEditorElement = HTMLElement & {
   editor?: { loadHTML(html: string): void };
@@ -12,7 +13,11 @@ declare module "react" {
       "trix-editor": React.DetailedHTMLProps<
         React.HTMLAttributes<TrixEditorElement>,
         TrixEditorElement
-      > & { input?: string };
+      > & { input?: string; toolbar?: string };
+      "trix-toolbar": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
     }
   }
 }
@@ -23,17 +28,25 @@ declare module "react" {
  * Trix owns its DOM, so the element stays uncontrolled: incoming `value` is
  * pushed in only when it differs from what the editor last emitted, otherwise
  * every keystroke would reload the document and reset the caret and undo stack.
+ *
+ * The toolbar is rendered here rather than left to Trix's auto-insertion so that
+ * document-level controls can share the same bar as the formatting buttons.
  */
 export function TrixField({
   value,
   onChange,
   ariaLabel,
+  font,
+  toolbarExtra,
 }: {
   value: string;
   onChange: (html: string) => void;
   ariaLabel: string;
+  font: FontKey;
+  toolbarExtra?: ReactNode;
 }) {
   const inputId = useId();
+  const toolbarId = useId();
   const editorRef = useRef<TrixEditorElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastEmitted = useRef<string | null>(null);
@@ -89,9 +102,20 @@ export function TrixField({
   }, [value]);
 
   return (
-    <div className="writing-trix">
+    <div className="writing-trix" data-font={font}>
+      <div className="writing-trix-bar">
+        <trix-toolbar id={toolbarId} />
+        {toolbarExtra ? (
+          <div className="writing-trix-bar-extra">{toolbarExtra}</div>
+        ) : null}
+      </div>
       <input ref={inputRef} id={inputId} type="hidden" />
-      <trix-editor ref={editorRef} input={inputId} aria-label={ariaLabel} />
+      <trix-editor
+        ref={editorRef}
+        input={inputId}
+        toolbar={toolbarId}
+        aria-label={ariaLabel}
+      />
     </div>
   );
 }

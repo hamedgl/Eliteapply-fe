@@ -32,7 +32,15 @@ import {
   type AcademicProfileRequirement,
 } from "./generationProfileRequirement";
 import { TrixField } from "./TrixField";
-import { contentToHtml, countText, mergeHtml } from "./documentHtml";
+import {
+  contentToHtml,
+  countText,
+  documentFont,
+  DEFAULT_FONT,
+  FONTS,
+  mergeHtml,
+  type FontKey,
+} from "./documentHtml";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
 const types = [
@@ -353,6 +361,7 @@ export function WritingEditor() {
     retry: false,
   });
   const [text, setText] = useState(""),
+    [font, setFont] = useState<FontKey>(DEFAULT_FONT),
     [dirty, setDirty] = useState(false),
     [status, setStatus] = useState("Saved"),
     [quality, setQuality] = useState<Record<string, unknown> | null>(null),
@@ -385,6 +394,7 @@ export function WritingEditor() {
   useEffect(() => {
     if (q.data) {
       setText(contentToHtml(q.data.content));
+      setFont(documentFont(q.data.content));
       setDirty(false);
     }
   }, [q.data?.version]);
@@ -425,7 +435,7 @@ export function WritingEditor() {
     try {
       const next = await writingApi.update(id, {
         expected_version: q.data.version,
-        content: mergeHtml(q.data.content, text),
+        content: mergeHtml(q.data.content, text, font),
         revision_name: "Manual save",
       });
       qc.setQueryData(["writing", id], next);
@@ -621,11 +631,24 @@ export function WritingEditor() {
           <TrixField
             ariaLabel="Document content"
             value={text}
+            font={font}
             onChange={(html) => {
               setText(html);
               setDirty(true);
               setStatus("Unsaved");
             }}
+            toolbarExtra={
+              <Select
+                ariaLabel="Typeface"
+                value={font}
+                onChange={(value) => {
+                  setFont(value as FontKey);
+                  setDirty(true);
+                  setStatus("Unsaved");
+                }}
+                options={FONTS.map((option) => ({ ...option }))}
+              />
+            }
           />
           <footer>
             <span>

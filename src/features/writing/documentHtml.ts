@@ -52,11 +52,38 @@ export function contentToHtml(content: Record<string, unknown> | undefined) {
   return isEditorHtml(content) ? text : plainTextToHtml(text);
 }
 
+/**
+ * Typeface options. Document-level rather than per-selection: the backend
+ * sanitiser allows 12 tags and strips every attribute except `href`, so a
+ * `<span style="font-family:…">` would not survive a save. Only system faces and
+ * the two already-self-hosted families are offered, so switching costs no download.
+ */
+export const FONTS = [
+  { value: "serif", label: "Source Serif" },
+  { value: "sans", label: "DM Sans" },
+  { value: "times", label: "Times New Roman" },
+  { value: "arial", label: "Arial" },
+  { value: "mono", label: "Monospace" },
+] as const;
+
+export type FontKey = (typeof FONTS)[number]["value"];
+
+export const DEFAULT_FONT: FontKey = "serif";
+
+/** Stored font, validated — the value comes off the wire and drives a CSS attribute. */
+export function documentFont(content: Record<string, unknown> | undefined) {
+  const stored = content?.font;
+  return FONTS.some((option) => option.value === stored)
+    ? (stored as FontKey)
+    : DEFAULT_FONT;
+}
+
 /** Stored content for editor HTML, tagged so the next read knows the format. */
 export const mergeHtml = (
   content: Record<string, unknown> | undefined,
   html: string,
-) => ({ ...content, text: html, format: HTML_FORMAT });
+  font: FontKey = DEFAULT_FONT,
+) => ({ ...content, text: html, format: HTML_FORMAT, font });
 
 /**
  * Plain text for word/character counts. Block boundaries have to become newlines

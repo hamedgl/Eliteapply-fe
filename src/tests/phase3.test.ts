@@ -25,6 +25,7 @@ describe("Phase 3 security and content adapters", () => {
       backend_extension: { safe: true },
       text: "<div>Draft</div>",
       format: "html",
+      font: "serif",
     });
   });
   it("reads guarded text and never renders arbitrary objects", () => {

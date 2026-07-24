@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   contentToHtml,
   countText,
+  DEFAULT_FONT,
+  documentFont,
   htmlToPlainText,
   isEditorHtml,
   mergeHtml,
@@ -51,6 +53,7 @@ describe("writing document content format", () => {
       evidence: [1],
       text: "<div>x</div>",
       format: "html",
+      font: DEFAULT_FONT,
     });
   });
 
@@ -64,6 +67,18 @@ describe("writing document content format", () => {
       words: 3,
       chars: 11,
     });
+  });
+
+  it("round-trips the chosen typeface", () => {
+    expect(documentFont(mergeHtml({}, "<div>x</div>", "times"))).toBe("times");
+  });
+
+  it("falls back to the default for a missing or unknown typeface", () => {
+    expect(documentFont(undefined)).toBe(DEFAULT_FONT);
+    expect(documentFont({ text: "x" })).toBe(DEFAULT_FONT);
+    // Comes off the wire and drives a CSS attribute, so it cannot be trusted.
+    expect(documentFont({ font: "comic-sans" })).toBe(DEFAULT_FONT);
+    expect(documentFont({ font: 42 })).toBe(DEFAULT_FONT);
   });
 
   it("reports an empty document as zero", () => {

@@ -2,12 +2,17 @@ import { describe, expect, it } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { TrixField } from "./TrixField";
-import { contentToHtml } from "./documentHtml";
+import { contentToHtml, DEFAULT_FONT } from "./documentHtml";
 
 function Harness({ initial }: { initial: string }) {
   const [value, setValue] = useState(initial);
   return (
-    <TrixField value={value} onChange={setValue} ariaLabel="Document content" />
+    <TrixField
+      value={value}
+      onChange={setValue}
+      ariaLabel="Document content"
+      font={DEFAULT_FONT}
+    />
   );
 }
 
