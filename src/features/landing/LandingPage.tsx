@@ -37,8 +37,8 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import closingPathIllustration from "../../assets/illustrations/application-path.png";
-import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.png";
+import closingPathIllustration from "../../assets/illustrations/application-path.webp";
+import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.webp";
 import comparisonWith from "../../assets/comparison-with.webp";
 import comparisonWithout from "../../assets/comparison-without.webp";
 import { usePageSeo } from "../../seo/usePageSeo";

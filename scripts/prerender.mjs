@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -12,6 +12,12 @@ const template = await readFile(path.join(dist, "index.html"), "utf8");
 const redirectFile = path.join(dist, "_redirects");
 const baseRedirects = await readFile(redirectFile, "utf8").catch(() => "");
 const socialImage = "https://eliteapply.net/og-eliteapply.jpg";
+
+const distAssets = await readdir(path.join(dist, "assets")).catch(() => []);
+const heroImageFile = distAssets.find((f) => f.startsWith("hero-campus") && f.endsWith(".webp"));
+const heroPreloadTag = heroImageFile
+  ? `\n    <link rel="preload" href="/assets/${heroImageFile}" as="image" type="image/webp" fetchpriority="high" />`
+  : "";
 
 const escapeAttribute = (value) =>
   String(value)
@@ -47,6 +53,7 @@ function seoHead(seo) {
     <meta name="twitter:image" content="${socialImage}" />
     <meta name="twitter:image:alt" content="EliteApply scholarship application workspace" />
     <script id="seo-structured-data" type="application/ld+json">${safeJson(seo.structuredData)}</script>
+    ${heroPreloadTag}
     <!--seo:end-->`;
 }
 
