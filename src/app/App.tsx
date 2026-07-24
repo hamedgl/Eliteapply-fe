@@ -9,17 +9,16 @@ import {
   useRouteError,
 } from "react-router-dom";
 import { useSession } from "../lib/auth/session";
-const LandingPage = lazy(() =>
-    import("../features/landing/LandingPage").then((x) => ({
-      default: x.LandingPage,
-    })),
-  ),
-  ProductPreviewPage = lazy(() =>
-    import("../features/landing/LandingPage").then((x) => ({
-      default: x.ProductPreviewPage,
-    })),
-  ),
-  AppShell = lazy(() =>
+import {
+  LandingPage,
+  ProductPreviewPage,
+} from "../features/landing/LandingPage";
+import {
+  MarketingNotFoundPage,
+  MarketingRoute as MarketingPage,
+} from "../features/marketing/MarketingPages";
+
+const AppShell = lazy(() =>
     import("../components/AppShell").then((x) => ({ default: x.AppShell })),
   ),
   AuthPage = lazy(() =>
@@ -171,16 +170,6 @@ const LandingPage = lazy(() =>
     import("../features/admin/AdminPanel").then((x) => ({
       default: x.AdminPanel,
     })),
-  ),
-  MarketingPage = lazy(() =>
-    import("../features/marketing/MarketingPages").then((x) => ({
-      default: x.MarketingRoute,
-    })),
-  ),
-  MarketingNotFoundPage = lazy(() =>
-    import("../features/marketing/MarketingPages").then((x) => ({
-      default: x.MarketingNotFoundPage,
-    })),
   );
 function RouteLoading() {
   return (
@@ -282,28 +271,28 @@ function AppRouteError() {
 }
 
 const router = createBrowserRouter([
-  { path: "/", element: load(<LandingPage />) },
-  { path: "/product-preview", element: load(<ProductPreviewPage />) },
-  { path: "/features/*", element: load(<MarketingPage />) },
-  { path: "/how-it-works", element: load(<MarketingPage />) },
-  { path: "/for-students", element: load(<MarketingPage />) },
-  { path: "/pricing", element: load(<MarketingPage />) },
-  { path: "/security", element: load(<MarketingPage />) },
-  { path: "/about", element: load(<MarketingPage />) },
-  { path: "/contact", element: load(<MarketingPage />) },
-  { path: "/resources/*", element: load(<MarketingPage />) },
+  { path: "/", element: <LandingPage /> },
+  { path: "/product-preview", element: <ProductPreviewPage /> },
+  { path: "/features/*", element: <MarketingPage /> },
+  { path: "/how-it-works", element: <MarketingPage /> },
+  { path: "/for-students", element: <MarketingPage /> },
+  { path: "/pricing", element: <MarketingPage /> },
+  { path: "/security", element: <MarketingPage /> },
+  { path: "/about", element: <MarketingPage /> },
+  { path: "/contact", element: <MarketingPage /> },
+  { path: "/resources/*", element: <MarketingPage /> },
   {
     path: "/scholarship-application-tracker",
-    element: load(<MarketingPage />),
+    element: <MarketingPage />,
   },
   {
     path: "/scholarship-application-organiser",
-    element: load(<MarketingPage />),
+    element: <MarketingPage />,
   },
-  { path: "/scholarship-deadline-tracker", element: load(<MarketingPage />) },
+  { path: "/scholarship-deadline-tracker", element: <MarketingPage /> },
   {
     path: "/scholarship-application-checklist",
-    element: load(<MarketingPage />),
+    element: <MarketingPage />,
   },
   {
     path: "/login",
@@ -324,9 +313,9 @@ const router = createBrowserRouter([
   { path: "/confirm-email", element: <AuthPage mode="confirm" /> },
   { path: "/forgot-password", element: <AuthPage mode="forgot" /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
-  { path: "/terms", element: load(<MarketingPage />) },
-  { path: "/privacy", element: load(<MarketingPage />) },
-  { path: "/accessibility", element: load(<MarketingPage />) },
+  { path: "/terms", element: <MarketingPage /> },
+  { path: "/privacy", element: <MarketingPage /> },
+  { path: "/accessibility", element: <MarketingPage /> },
   { path: "/share/:token", element: load(<SharedWriting />) },
   {
     path: "/collaborator-invitations/:token/accept",
@@ -384,7 +373,7 @@ const router = createBrowserRouter([
       { path: "unavailable", element: <Unavailable /> },
     ],
   },
-  { path: "*", element: load(<MarketingNotFoundPage />) },
+  { path: "*", element: <MarketingNotFoundPage /> },
 ]);
 export function App() {
   const previousPath = useRef(router.state.location.pathname);

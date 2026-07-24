@@ -25,6 +25,22 @@ function Bootstrap() {
 
   useEffect(() => {
     let active = true;
+    const pathname = window.location.pathname;
+    const isAppPath =
+      pathname.startsWith("/app") ||
+      pathname.startsWith("/admin") ||
+      pathname === "/login" ||
+      pathname === "/register";
+    let hasSession = false;
+    try {
+      hasSession = localStorage.getItem("ea_has_session") === "1";
+    } catch {}
+
+    if (!hasSession && !isAppPath) {
+      setInitializing(false);
+      return;
+    }
+
     void (async () => {
       try {
         const tokens = await authApi.refresh();

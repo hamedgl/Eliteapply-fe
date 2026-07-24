@@ -1234,8 +1234,8 @@ function ProblemOutcome() {
             className="comparison-media"
             src={comparisonWithout}
             alt="Scholarship deadlines, emails, requirements and document drafts scattered across tabs and notes."
-            width="1052"
-            height="712"
+            width="700"
+            height="474"
             loading="lazy"
             decoding="async"
           />
@@ -1267,8 +1267,8 @@ function ProblemOutcome() {
             className="comparison-media"
             src={comparisonWith}
             alt="EliteApply timeline, actionable tasks, centralized documents and progress tracking in one structured workspace."
-            width="1052"
-            height="712"
+            width="700"
+            height="474"
             loading="lazy"
             decoding="async"
           />
@@ -4288,6 +4288,7 @@ function GuidedWorkflowBoard({
         >
           {workflowStageDetails.map((item, index) => (
             <li
+              role="presentation"
               className={
                 index === activeGuide
                   ? "active"

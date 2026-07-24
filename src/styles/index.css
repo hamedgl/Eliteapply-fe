@@ -14644,7 +14644,7 @@ body:has(.admin-shell) {
   background: var(--m-warning-soft);
 }
 .document-preview-list em.missing {
-  color: #dc2626;
+  color: #b91c1c;
   background: #fef2f2;
   border: 1px solid #fecaca;
 }
