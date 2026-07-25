@@ -348,6 +348,16 @@ export const referencesApi = {
       `/referee/academic-reference/${e(token)}/document`,
       { public: true, headers: { "X-Reference-Code": code } },
     ),
+  refereePolish: (token: string, code: string, body: S["RefereePolishRequest"]) =>
+    apiRequest<S["RefereePolishResponse"]>(
+      `/referee/academic-reference/${e(token)}/polish`,
+      {
+        method: "POST",
+        body,
+        public: true,
+        headers: { "X-Reference-Code": code },
+      },
+    ),
   refereeSubmit: (token: string, code: string, body: S["RefereeSubmission"]) =>
     apiRequest<Record<string, unknown>>(
       `/referee/academic-reference/${e(token)}/submit`,

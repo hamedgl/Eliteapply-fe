@@ -3333,6 +3333,75 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   display: block;
   margin-bottom: 0.3rem;
 }
+.reference-referee-details,
+.reference-letter-editor {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--app-line);
+}
+.reference-referee-details h2,
+.reference-letter-editor h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.reference-referee-details > div:first-child > p,
+.reference-letter-heading p {
+  max-width: 65ch;
+  margin: 0.25rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.875rem;
+}
+.field-help {
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+.reference-referee-details input[readonly] {
+  background: var(--app-surface-subtle);
+  color: var(--app-muted);
+}
+.reference-letter-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.reference-letter-heading > button {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 0.45rem;
+}
+.reference-letter-heading > button svg {
+  width: 16px;
+  height: 16px;
+}
+.reference-polish-suggestion {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--app-blue-soft);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-subtle);
+}
+.reference-polish-suggestion > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+.reference-polish-suggestion > div:first-child span {
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+.reference-polish-suggestion > textarea {
+  min-height: 12rem;
+  resize: vertical;
+}
+.reference-polish-suggestion > div:last-child {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
 .reference-public-document {
   display: flex;
   align-items: center;
@@ -3352,6 +3421,17 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
 }
 
 @media (max-width: 560px) {
+  .reference-letter-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .reference-letter-heading > button {
+    justify-content: center;
+  }
+  .reference-polish-suggestion > div:last-child {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
   .reference-public-document {
     align-items: stretch;
     flex-direction: column;

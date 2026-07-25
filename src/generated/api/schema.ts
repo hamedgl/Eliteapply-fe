@@ -2052,6 +2052,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/referee/academic-reference/{token}/polish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Polish Reference */
+        post: operations["polish_reference_api_v1_referee_academic_reference__token__polish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/referee/academic-reference/{token}/document": {
         parameters: {
             query?: never;
@@ -3210,6 +3227,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bootstrap CSRF cookie for client-side authentication initialization */
+        get: operations["bootstrap_csrf_api_v1_auth_csrf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -3238,6 +3272,23 @@ export interface paths {
         put?: never;
         /** Invalidate all tokens (global sign out) */
         post: operations["logout_api_v1_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke all active sessions for the current user */
+        post: operations["logout_all_api_v1_auth_logout_all_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6424,6 +6475,16 @@ export interface components {
             /** Size Bytes */
             size_bytes: number;
         };
+        /** RefereePolishRequest */
+        RefereePolishRequest: {
+            /** Content */
+            content: string;
+        };
+        /** RefereePolishResponse */
+        RefereePolishResponse: {
+            /** Polished Content */
+            polished_content: string;
+        };
         /** RefereeRequestResponse */
         RefereeRequestResponse: {
             /**
@@ -6438,6 +6499,27 @@ export interface components {
             mode: "student_draft" | "referee_direct" | "existing_upload";
             /** Confidential */
             confidential: boolean;
+            /** Referee Name */
+            referee_name: string;
+            /**
+             * Referee Email
+             * Format: email
+             */
+            referee_email: string;
+            /**
+             * Referee Role
+             * @enum {string}
+             */
+            referee_role: "professor" | "supervisor" | "teacher" | "employer" | "mentor";
+            /** Institution */
+            institution: string | null;
+            /** Department */
+            department: string | null;
+            /**
+             * Reference Type
+             * @enum {string}
+             */
+            reference_type: "academic" | "professional" | "personal" | "other";
             /** Application Title */
             application_title: string;
             /** Destinations */
@@ -6473,6 +6555,14 @@ export interface components {
             existing_document_id?: string | null;
             /** Referee Display Name */
             referee_display_name: string;
+            /** Referee Role */
+            referee_role?: ("professor" | "supervisor" | "teacher" | "employer" | "mentor") | null;
+            /** Institution */
+            institution?: string | null;
+            /** Department */
+            department?: string | null;
+            /** Relationship To Applicant */
+            relationship_to_applicant?: string | null;
             /** Role Title */
             role_title?: string | null;
             /**
@@ -6766,6 +6856,11 @@ export interface components {
             application_id?: string | null;
             /** Application Title */
             application_title?: string | null;
+            /**
+             * Read Only
+             * @default false
+             */
+            read_only: boolean;
         };
         /** ReminderSnoozeRequest */
         ReminderSnoozeRequest: {
@@ -13062,7 +13157,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/pdf": string;
                 };
             };
             /** @description Validation Error */
@@ -13093,7 +13188,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/plain": string;
+                    "application/pdf": string;
                 };
             };
             /** @description Validation Error */
@@ -13127,6 +13222,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RefereeRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    polish_reference_api_v1_referee_academic_reference__token__polish_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Reference-Code": string;
+            };
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefereePolishRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefereePolishResponse"];
                 };
             };
             /** @description Validation Error */
@@ -15602,6 +15734,26 @@ export interface operations {
             };
         };
     };
+    bootstrap_csrf_api_v1_auth_csrf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
     refresh_tokens_api_v1_auth_refresh_post: {
         parameters: {
             query?: never;
@@ -15623,6 +15775,26 @@ export interface operations {
         };
     };
     logout_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
+    logout_all_api_v1_auth_logout_all_post: {
         parameters: {
             query?: never;
             header?: never;

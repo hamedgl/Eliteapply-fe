@@ -8600,8 +8600,11 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
-                "schema": {}
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
               }
             }
           },
@@ -8646,9 +8649,10 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "text/plain": {
+              "application/pdf": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -8700,6 +8704,67 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RefereeRequestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/referee/academic-reference/{token}/polish": {
+      "post": {
+        "tags": [
+          "Academic Engagement"
+        ],
+        "summary": "Polish Reference",
+        "operationId": "polish_reference_api_v1_referee_academic_reference__token__polish_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          },
+          {
+            "name": "X-Reference-Code",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Reference-Code"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefereePolishRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefereePolishResponse"
                 }
               }
             }
@@ -22037,6 +22102,34 @@
         ],
         "title": "RefereeExistingDocumentResponse"
       },
+      "RefereePolishRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 100000,
+            "minLength": 50,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "RefereePolishRequest"
+      },
+      "RefereePolishResponse": {
+        "properties": {
+          "polished_content": {
+            "type": "string",
+            "title": "Polished Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "polished_content"
+        ],
+        "title": "RefereePolishResponse"
+      },
       "RefereeRequestResponse": {
         "properties": {
           "id": {
@@ -22056,6 +22149,58 @@
           "confidential": {
             "type": "boolean",
             "title": "Confidential"
+          },
+          "referee_name": {
+            "type": "string",
+            "title": "Referee Name"
+          },
+          "referee_email": {
+            "type": "string",
+            "format": "email",
+            "title": "Referee Email"
+          },
+          "referee_role": {
+            "type": "string",
+            "enum": [
+              "professor",
+              "supervisor",
+              "teacher",
+              "employer",
+              "mentor"
+            ],
+            "title": "Referee Role"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "reference_type": {
+            "type": "string",
+            "enum": [
+              "academic",
+              "professional",
+              "personal",
+              "other"
+            ],
+            "title": "Reference Type"
           },
           "application_title": {
             "type": "string",
@@ -22110,6 +22255,12 @@
           "id",
           "mode",
           "confidential",
+          "referee_name",
+          "referee_email",
+          "referee_role",
+          "institution",
+          "department",
+          "reference_type",
           "application_title",
           "student_context",
           "relationship_context",
@@ -22158,6 +22309,60 @@
             "maxLength": 250,
             "minLength": 2,
             "title": "Referee Display Name"
+          },
+          "referee_role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "professor",
+                  "supervisor",
+                  "teacher",
+                  "employer",
+                  "mentor"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referee Role"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "relationship_to_applicant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relationship To Applicant"
           },
           "role_title": {
             "anyOf": [
@@ -22883,6 +23088,11 @@
               }
             ],
             "title": "Application Title"
+          },
+          "read_only": {
+            "type": "boolean",
+            "title": "Read Only",
+            "default": false
           }
         },
         "type": "object",

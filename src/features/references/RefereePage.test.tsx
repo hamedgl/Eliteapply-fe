@@ -17,6 +17,12 @@ describe("RefereePage", () => {
         id: "request-id",
         mode: "existing_upload",
         confidential: false,
+        referee_name: "Professor Example",
+        referee_email: "professor@example.edu",
+        referee_role: "professor",
+        institution: "Example University",
+        department: "Computer Science",
+        reference_type: "academic",
         application_title: "MSc Artificial Intelligence",
         destinations: ["Example University"],
         student_context: { summary: "Please verify the attached official letter." },
@@ -47,8 +53,13 @@ describe("RefereePage", () => {
     expect(await screen.findByText("Official reference.pdf")).toBeInTheDocument();
     expect(screen.getByText("Please verify the attached official letter.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Final reference")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Full name")).toHaveValue("Professor Example");
+    expect(screen.getByLabelText("Institution")).toHaveValue("Example University");
+    expect(screen.getByLabelText("Relationship to the applicant")).toHaveValue(
+      "You supervised my dissertation.",
+    );
 
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Professor Example" } });
+    fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Professor Example" } });
     fireEvent.change(screen.getByLabelText("How long have you known the applicant?"), { target: { value: "Two years" } });
     fireEvent.change(screen.getByLabelText(/Potential conflict of interest/), { target: { value: "None" } });
     fireEvent.change(screen.getByLabelText("Signature name"), { target: { value: "Professor Example" } });
@@ -63,6 +74,57 @@ describe("RefereePage", () => {
       decision: "approve",
       final_content: null,
       existing_document_id: "document-id",
+      referee_role: "professor",
+      institution: "Example University",
+      department: "Computer Science",
+      relationship_to_applicant: "You supervised my dissertation.",
     });
+  });
+
+  it("keeps AI polish as a reviewable suggestion before submission", async () => {
+    const original = "I supervised this applicant during a demanding research project. ".repeat(2);
+    const polished = "I supervised the applicant throughout a demanding research project. ".repeat(2);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/polish")) return Response.json({ polished_content: polished });
+      return Response.json({
+        id: "request-id",
+        mode: "referee_direct",
+        confidential: false,
+        referee_name: "Dr Example",
+        referee_email: "dr@example.edu",
+        referee_role: "supervisor",
+        institution: "Example University",
+        department: "Research",
+        reference_type: "academic",
+        application_title: "Research Fellowship",
+        destinations: [],
+        student_context: {},
+        relationship_context: { summary: "Research supervisor" },
+        student_draft: null,
+        existing_document: null,
+        expires_at: "2026-08-05T00:00:00Z",
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <MemoryRouter initialEntries={["/referee/academic-reference/token-value"]}>
+        <Routes>
+          <Route path="/referee/academic-reference/:token" element={<RefereePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Reference code"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue securely" }));
+    const editor = await screen.findByLabelText("Final reference");
+    fireEvent.change(editor, { target: { value: original } });
+    fireEvent.click(screen.getByRole("button", { name: "Polish with AI" }));
+
+    expect(await screen.findByLabelText("Polished reference suggestion")).toHaveValue(polished);
+    expect(editor).toHaveValue(original);
+    fireEvent.click(screen.getByRole("button", { name: "Use suggestion" }));
+    expect(editor).toHaveValue(polished);
   });
 });

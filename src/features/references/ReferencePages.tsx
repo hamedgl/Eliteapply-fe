@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { Plus, Sparkles, X } from "lucide-react";
 import { Select } from "../../components/ui/select";
 import { ApiError } from "../../lib/api/errors";
 import { PageHeader } from "../../components/page/PageHeader";
@@ -43,7 +43,7 @@ async function downloadReference(reference: Reference) {
   }
   await downloadResponse(
     await referencesApi.download(reference.id),
-    `reference-${reference.public_id}.txt`,
+    `reference-${reference.public_id}.pdf`,
   );
 }
 
@@ -656,13 +656,18 @@ export function RefereePage() {
   const [unlocking, setUnlocking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [openingDocument, setOpeningDocument] = useState(false);
+  const [letter, setLetter] = useState("");
+  const [polishSuggestion, setPolishSuggestion] = useState("");
+  const [polishing, setPolishing] = useState(false);
 
   async function unlock() {
     if (unlocking) return;
     setUnlocking(true);
     setError("");
     try {
-      setRequest(await referencesApi.refereeGet(token, code));
+      const unlocked = await referencesApi.refereeGet(token, code);
+      setRequest(unlocked);
+      setLetter(unlocked.student_draft ?? "");
     } catch {
       setError("The invitation or code could not be verified.");
     } finally {
@@ -680,6 +685,20 @@ export function RefereePage() {
       setError("The document could not be opened. Check that the invitation is still active.");
     } finally {
       setOpeningDocument(false);
+    }
+  }
+
+  async function polishLetter() {
+    if (polishing || letter.trim().length < 50) return;
+    setPolishing(true);
+    setError("");
+    try {
+      const result = await referencesApi.refereePolish(token, code, { content: letter });
+      setPolishSuggestion(result.polished_content);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "AI polish is unavailable. Your draft is unchanged.");
+    } finally {
+      setPolishing(false);
     }
   }
 
@@ -712,6 +731,10 @@ export function RefereePage() {
           decision === "approve" && request?.mode === "existing_upload"
             ? request.existing_document?.id ?? null
             : null,
+        referee_role: String(data.get("referee_role")) as "professor" | "supervisor" | "teacher" | "employer" | "mentor",
+        institution: String(data.get("institution")) || null,
+        department: String(data.get("department")) || null,
+        relationship_to_applicant: String(data.get("relationship_to_applicant")) || null,
       });
       setCode("");
       setRequest(null);
@@ -795,25 +818,108 @@ export function RefereePage() {
               ]}
             />
           </label>
-          <label>
-            Display name
-            <input name="referee_display_name" required minLength={2} />
-          </label>
-          <label>
-            Role or title
-            <input name="role_title" />
-          </label>
+          <section className="reference-referee-details" aria-labelledby="reference-referee-details">
+            <div>
+              <h2 id="reference-referee-details">Your details</h2>
+              <p>These were provided by the applicant. Correct anything that is inaccurate before submitting.</p>
+            </div>
+            <div className="form-grid">
+              <label>
+                Full name
+                <input name="referee_display_name" defaultValue={request.referee_name} autoComplete="name" required minLength={2} />
+              </label>
+              <label>
+                Invitation email
+                <input type="email" value={request.referee_email} autoComplete="email" readOnly aria-describedby="reference-email-help" />
+                <span id="reference-email-help" className="field-help">Verified through this invitation and cannot be changed here.</span>
+              </label>
+              <label>
+                Relationship
+                <Select
+                  name="referee_role"
+                  defaultValue={request.referee_role}
+                  options={[
+                    { value: "professor", label: "Professor" },
+                    { value: "supervisor", label: "Supervisor" },
+                    { value: "teacher", label: "Teacher" },
+                    { value: "employer", label: "Employer" },
+                    { value: "mentor", label: "Mentor" },
+                  ]}
+                />
+              </label>
+              <label>
+                Professional title <span className="muted">(optional)</span>
+                <input name="role_title" autoComplete="organization-title" />
+              </label>
+              <label>
+                Institution
+                <input name="institution" defaultValue={request.institution ?? ""} autoComplete="organization" />
+              </label>
+              <label>
+                Department <span className="muted">(optional)</span>
+                <input name="department" defaultValue={request.department ?? ""} />
+              </label>
+            </div>
+            <label>
+              Relationship to the applicant
+              <textarea
+                name="relationship_to_applicant"
+                defaultValue={contextSummary(request.relationship_context)}
+                rows={3}
+              />
+            </label>
+          </section>
           {decision === "approve" ? (
             <>
               <label>How long have you known the applicant?<input name="relationship_duration" required /></label>
               {request.mode !== "existing_upload" ? (
-                <label>
-                  {request.mode === "student_draft" ? "Review and edit the applicant’s draft" : "Final reference"}
-                  <textarea name="content" minLength={50} required rows={14} defaultValue={request.student_draft ?? ""} />
-                </label>
+                <section className="reference-letter-editor" aria-labelledby="reference-letter-heading">
+                  <div className="reference-letter-heading">
+                    <div>
+                      <h2 id="reference-letter-heading">
+                        {request.mode === "student_draft" ? "Review and edit the applicant’s draft" : "Write the reference letter"}
+                      </h2>
+                      <p>The final letter remains fully editable until you submit it.</p>
+                    </div>
+                    <button type="button" onClick={polishLetter} disabled={polishing || letter.trim().length < 50}>
+                      <Sparkles aria-hidden="true" />
+                      {polishing ? "Polishing…" : "Polish with AI"}
+                    </button>
+                  </div>
+                  <label>
+                    Final reference
+                    <textarea
+                      name="content"
+                      minLength={50}
+                      required
+                      rows={16}
+                      value={letter}
+                      onChange={(event) => {
+                        setLetter(event.target.value);
+                        setPolishSuggestion("");
+                      }}
+                    />
+                  </label>
+                  <p className="field-help">
+                    AI polish improves clarity and grammar without intentionally adding facts. Your draft is sent to EliteApply’s AI service and nothing changes until you apply the suggestion.
+                  </p>
+                  {polishSuggestion ? (
+                    <div className="reference-polish-suggestion" aria-live="polite">
+                      <div><strong>Polished suggestion</strong><span>Review it carefully for factual accuracy.</span></div>
+                      <textarea value={polishSuggestion} readOnly rows={12} aria-label="Polished reference suggestion" />
+                      <div>
+                        <button type="button" onClick={() => setPolishSuggestion("")}>Keep my draft</button>
+                        <button type="button" className="primary" onClick={() => {
+                          setLetter(polishSuggestion);
+                          setPolishSuggestion("");
+                        }}>Use suggestion</button>
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
               ) : null}
               <label>Potential conflict of interest <span className="muted">(write “None” if not applicable)</span><textarea name="conflict_of_interest" required /></label>
-              <label>Signature name<input name="signature_name" required /></label>
+              <label>Signature name<input name="signature_name" defaultValue={request.referee_name} autoComplete="name" required /></label>
               <label className="check"><input name="relationship_confirmation" type="checkbox" required />I confirm the stated relationship.</label>
               <label className="check"><input name="authenticity_attestation" type="checkbox" required />I attest that this submission is authentic.</label>
               <label className="check"><input name="authority_consent" type="checkbox" required />I am authorized to submit this reference.</label>
