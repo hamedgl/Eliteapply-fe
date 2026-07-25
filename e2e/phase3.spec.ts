@@ -141,6 +141,50 @@ test("writing library and editor are responsive and save-state aware", async ({
   ).toBeLessThanOrEqual(0);
 });
 
+test("document preview opens as a responsive modal and closes with Escape", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.route(
+    `**/writing-studio/documents/${doc.id}/preview`,
+    (route) =>
+      route.fulfill({
+        json: {
+          html: "<p>Dear Admissions Committee,</p><p>My academic journey has prepared me for advanced study.</p>",
+          word_count: 229,
+          character_count: 1446,
+        },
+      }),
+  );
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/app/writing/${doc.id}`);
+  await expect(page).toHaveTitle(/EliteApply/);
+  await page.getByRole("button", { name: "Preview" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Document preview" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("229 words · 1446 characters")).toBeVisible();
+  await expect(dialog.getByTitle("Sanitized document preview")).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-writing-preview-desktop.png",
+    animations: "disabled",
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(dialog).toHaveCSS("border-radius", "0px");
+  await page.screenshot({
+    path: "/tmp/eliteapply-writing-preview-mobile.png",
+    animations: "disabled",
+  });
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test("new writing survives an empty library cache and a failed completion refresh", async ({
   page,
 }) => {

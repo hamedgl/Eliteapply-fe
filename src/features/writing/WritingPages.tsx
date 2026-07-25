@@ -14,7 +14,7 @@ import {
   Share2,
   Sparkles,
   Trash2,
-  XCircle,
+  X,
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { writingApi } from "../../lib/api/phase3";
@@ -239,6 +239,7 @@ export function WritingEditor() {
         readGenerationDraft(location.state, id),
       );
   const pollStep = useRef(0);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
   const activeRun = useQuery({
     queryKey: ["generation-run", activeRunId],
     queryFn: ({ signal }) => writingApi.generationRun(activeRunId, signal),
@@ -254,6 +255,10 @@ export function WritingEditor() {
     queryFn: () => writingApi.preview(id),
     enabled: showPreview,
   });
+  useEffect(() => {
+    const node = previewDialogRef.current;
+    if (showPreview && node && !node.open) node.showModal();
+  }, [showPreview]);
   useEffect(() => {
     if (q.data) {
       setText(contentToHtml(q.data.content));
@@ -692,29 +697,56 @@ export function WritingEditor() {
         </aside>
       </div>
       {showPreview ? (
-        <section className="writing-preview" aria-label="Document preview">
+        <dialog
+          ref={previewDialogRef}
+          className="writing-preview"
+          aria-labelledby="writing-preview-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            setShowPreview(false);
+          }}
+        >
           <header>
             <div>
-              <h2>Rendered preview</h2>
+              <h2 id="writing-preview-title">Document preview</h2>
               <p>
                 {preview.data
                   ? `${preview.data.word_count} words · ${preview.data.character_count} characters`
                   : "Preparing preview…"}
               </p>
             </div>
-            <button onClick={() => setShowPreview(false)}>
-              <XCircle />
-              Close
+            <button
+              type="button"
+              className="writing-preview-close"
+              onClick={() => setShowPreview(false)}
+            >
+              <X aria-hidden="true" />
+              <span>Close</span>
             </button>
           </header>
-          {preview.data ? (
-            <iframe
-              title="Sanitized document preview"
-              sandbox=""
-              srcDoc={previewDocument(preview.data.html)}
-            />
-          ) : null}
-        </section>
+          <div className="writing-preview-canvas">
+            {preview.data ? (
+              <iframe
+                title="Sanitized document preview"
+                sandbox=""
+                srcDoc={previewDocument(preview.data.html)}
+              />
+            ) : preview.isError ? (
+              <div className="writing-preview-state" role="alert">
+                <AlertTriangle aria-hidden="true" />
+                <p>We couldn’t prepare this preview.</p>
+                <button type="button" onClick={() => void preview.refetch()}>
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <div className="writing-preview-state" role="status">
+                <Loader2 className="writing-preview-spinner" aria-hidden="true" />
+                <p>Preparing your document preview…</p>
+              </div>
+            )}
+          </div>
+        </dialog>
       ) : null}
       {showReview ? (
         <WritingReview documentId={id} revisions={revisions.data ?? []} />

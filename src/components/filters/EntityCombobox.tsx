@@ -88,6 +88,8 @@ export function EntityCombobox({
               const option = options[activeIndex];
               if (option) selectOption(option);
             } else if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
               setOpen(false);
             }
           }}

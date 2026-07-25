@@ -270,6 +270,18 @@ test("scholarship applications require and submit a catalogue scholarship", asyn
   expect(submitted?.programme_id).toBeNull();
 });
 
+test("Escape closes custom application modals", async ({ page }) => {
+  await page.goto("/app/applications");
+  await page.getByRole("button", { name: "Add application" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add application" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Type").click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+});
+
 test("application modal opens a usable private programme form", async ({
   page,
 }) => {

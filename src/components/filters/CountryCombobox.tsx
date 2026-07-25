@@ -58,7 +58,11 @@ export function CountryCombobox({
             if (event.key === "Enter" && options[0]) {
               event.preventDefault();
               select(options[0].code);
-            } else if (event.key === "Escape") setOpen(false);
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setOpen(false);
+            }
           }}
         />
         {value ? (

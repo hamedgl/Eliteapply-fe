@@ -123,6 +123,31 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
+    const closeTopModal = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Escape" ||
+        event.defaultPrevented ||
+        (event.target as Element | null)?.closest('[aria-expanded="true"]')
+      )
+        return;
+      const modal = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="dialog"]:not(dialog)'),
+      )
+        .filter((element) => element.getClientRects().length)
+        .at(-1);
+      const close = modal?.querySelector<HTMLButtonElement>(
+        'button[aria-label="Close"]',
+      );
+      if (!close) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      close.click();
+    };
+    document.addEventListener("keydown", closeTopModal);
+    return () => document.removeEventListener("keydown", closeTopModal);
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";

@@ -201,7 +201,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         setIsOpen((prev) => !prev);
-      } else if (event.key === "Escape") {
+      } else if (event.key === "Escape" && isOpen) {
+        event.preventDefault();
+        event.stopPropagation();
         setIsOpen(false);
       } else if (event.key === "ArrowDown") {
         event.preventDefault();
