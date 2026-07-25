@@ -169,6 +169,9 @@ export function DashboardPage() {
     documentsQuery.isError,
     Boolean(documentsQuery.data?.length),
   );
+  const hasLinkedDocument = (documentsQuery.data ?? []).some(
+    (item) => (item.link_count ?? item.linked_application_ids?.length ?? 0) > 0,
+  );
   const setupPages: Array<{
     title: string;
     items: SetupItem[];
@@ -267,20 +270,23 @@ export function DashboardPage() {
           label: "Plan your next application task",
           detail: "Turn requirements into trackable tasks",
           explain:
-            "Complete once you have created at least one task, whether or not it is still open — finishing your tasks does not reopen this step.",
+            "Complete once you are tracking an application, or have created a task on one — finishing your tasks does not reopen this step.",
           href: "/app/applications",
-          status: dashboard.tasks.total > 0 ? "done" : "todo",
+          status:
+            applicationCount > 0 || dashboard.tasks.total > 0 ? "done" : "todo",
         },
         {
           label: "Resolve document gaps",
           detail: "Match documents to what applications need",
           explain:
-            "Complete when you have applications and none of them is missing a required document.",
+            "Complete once a document is linked to one of your applications, or no application is missing a required document.",
           href: "/app/documents",
-          status:
-            applicationCount > 0 && dashboard.missing_documents === 0
-              ? "done"
-              : "todo",
+          status: getSetupStatus(
+            documentsQuery.isPending,
+            documentsQuery.isError,
+            hasLinkedDocument ||
+              (applicationCount > 0 && dashboard.missing_documents === 0),
+          ),
         },
       ],
     },
