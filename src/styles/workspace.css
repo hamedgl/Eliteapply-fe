@@ -2626,6 +2626,7 @@
 }
 
 .form-grid > label:not(.check):not(.check-field),
+.settings-form label:not(.check):not(.check-field),
 .apps-dialog label:not(.check):not(.check-field):not(.reference-method-option) {
   min-width: 0;
   display: flex;
@@ -2637,6 +2638,7 @@
 }
 
 .form-grid > label:not(.check):not(.check-field) > :is(input, select, textarea),
+.settings-form label:not(.check):not(.check-field) > :is(input, select, textarea),
 .apps-dialog label:not(.check):not(.check-field):not(.reference-method-option) > :is(input, select, textarea) {
   width: 100%;
   min-height: 42px;
@@ -2651,12 +2653,15 @@
 }
 
 .form-grid > label:not(.check):not(.check-field) > :is(input, select, textarea):hover,
+.settings-form label:not(.check):not(.check-field) > :is(input, select, textarea):hover,
 .apps-dialog label:not(.check):not(.check-field):not(.reference-method-option) > :is(input, select, textarea):hover {
   border-color: #94a3b8;
 }
 
 .form-grid > label:not(.check):not(.check-field) > :is(input, select, textarea):focus,
 .form-grid > label:not(.check):not(.check-field) > :is(input, select, textarea):focus-visible,
+.settings-form label:not(.check):not(.check-field) > :is(input, select, textarea):focus,
+.settings-form label:not(.check):not(.check-field) > :is(input, select, textarea):focus-visible,
 .apps-dialog label:not(.check):not(.check-field):not(.reference-method-option) > :is(input, select, textarea):focus-visible {
   outline: none;
   border-color: var(--app-blue, #174bd6);
@@ -2686,6 +2691,13 @@
 .application-create-dialog .required-field-label::before {
   content: "*";
   margin-right: 0.3rem;
+  color: var(--danger, #b42318);
+  font-weight: 700;
+}
+
+label:has(> :is(input, select, textarea):required) > span:first-child::after,
+.required-field-label::after {
+  content: " *";
   color: var(--danger, #b42318);
   font-weight: 700;
 }
