@@ -19,6 +19,7 @@ export type AuthSessionState = {
   sessionEpoch: number;
   lastRefreshAt: number | null;
   degradedReason?: string | null;
+  initializing: boolean;
 };
 
 export type AuthClearReason =

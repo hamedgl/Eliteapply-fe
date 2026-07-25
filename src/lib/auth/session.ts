@@ -33,6 +33,7 @@ export const useSession = create<AuthStore>((set, get) => ({
   sessionEpoch: 0,
   lastRefreshAt: null,
   degradedReason: null,
+  initializing: true,
 
   setAuthenticated: ({ accessToken, idToken = null, expiresIn, user = null }) => {
     try {
@@ -46,6 +47,7 @@ export const useSession = create<AuthStore>((set, get) => ({
       user: user ?? state.user,
       lastRefreshAt: Date.now(),
       degradedReason: null,
+      initializing: false,
     }));
   },
 
@@ -66,6 +68,7 @@ export const useSession = create<AuthStore>((set, get) => ({
       accessTokenExpiresAt: null,
       user: null,
       degradedReason: null,
+      initializing: false,
     });
   },
 
@@ -73,6 +76,7 @@ export const useSession = create<AuthStore>((set, get) => ({
     set({
       status: "degraded",
       degradedReason: reason ?? "Network connection degraded",
+      initializing: false,
     });
   },
 
@@ -88,6 +92,7 @@ export const useSession = create<AuthStore>((set, get) => ({
       user: null,
       sessionEpoch: state.sessionEpoch + 1,
       degradedReason: null,
+      initializing: false,
     }));
   },
 
@@ -102,12 +107,15 @@ export const useSession = create<AuthStore>((set, get) => ({
   setInitializing: (initializing) => {
     set((state) => {
       if (initializing) {
-        return { status: "initializing" };
+        return { status: "initializing", initializing: true };
       }
-      if (state.status === "initializing" || state.status === "uninitialized") {
-        return { status: state.accessToken ? "authenticated" : "anonymous" };
-      }
-      return {};
+      const nextStatus =
+        state.status === "initializing" || state.status === "uninitialized"
+          ? state.accessToken
+            ? "authenticated"
+            : "anonymous"
+          : state.status;
+      return { status: nextStatus, initializing: false };
     });
   },
 
