@@ -12,6 +12,13 @@ const apiProxy: Record<string, ProxyOptions> = {
     target: API_TARGET,
     changeOrigin: true,
     configure: (proxy) => {
+      proxy.on("proxyReq", (proxyReq) => {
+        // CSRFAndOriginMiddleware only allows FRONTEND_URL, so a forwarded
+        // "Origin: http://localhost:5173" gets 403 origin_not_allowed. It skips the
+        // check when the header is absent; the CSRF double-submit token still applies,
+        // and this rewrite exists only in the dev/preview server.
+        proxyReq.removeHeader("origin");
+      });
       proxy.on("proxyRes", (proxyRes) => {
         const cookies = proxyRes.headers["set-cookie"];
         if (Array.isArray(cookies)) {
