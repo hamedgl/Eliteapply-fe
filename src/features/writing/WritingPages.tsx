@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { writingApi } from "../../lib/api/phase3";
+import { applicationsApi } from "../../lib/api/phase2";
+import { EntityCombobox } from "../../components/filters/EntityCombobox";
 import { ApiError } from "../../lib/api/errors";
 import { downloadResponse } from "../../lib/api/download";
 import { billingApi } from "../../lib/api/billing";
@@ -334,7 +336,7 @@ export function NewWriting() {
   );
 }
 export function WritingEditor() {
-  const requestText = usePromptDialog();
+  const [attachPick, setAttachPick] = useState({ id: "", name: "" });
   const { id = "" } = useParams(),
     qc = useQueryClient(),
     nav = useNavigate(),
@@ -692,24 +694,37 @@ export function WritingEditor() {
               Detach application
             </button>
           ) : (
-            <button
-              onClick={async () => {
-                const applicationId = (
-                  await requestText({
-                    title: "Attach application",
-                    label: "Application ID",
-                    required: true,
-                    submitLabel: "Attach",
-                  })
-                )?.trim();
-                if (applicationId) {
-                  const next = await writingApi.attach(id, applicationId);
+            <>
+              <EntityCombobox
+                queryKey={queryKeys.applications}
+                search={async (search) => {
+                  const result = await applicationsApi.list({
+                    search,
+                    limit: 10,
+                  });
+                  return result.items.map((app) => ({
+                    id: app.id,
+                    name: app.title,
+                    hint: label(app.stage),
+                  }));
+                }}
+                label="Application"
+                placeholder="Search your applications…"
+                value={attachPick.id}
+                valueLabel={attachPick.name}
+                onChange={(pickedId, name) => setAttachPick({ id: pickedId, name })}
+              />
+              <button
+                disabled={!attachPick.id}
+                onClick={async () => {
+                  const next = await writingApi.attach(id, attachPick.id);
                   qc.setQueryData(queryKeys.writingDocument(id), next);
-                }
-              }}
-            >
-              Attach application
-            </button>
+                  setAttachPick({ id: "", name: "" });
+                }}
+              >
+                Attach application
+              </button>
+            </>
           )}
           <h2>Generate suggestion</h2>
           <form onSubmit={generate}>
