@@ -75,7 +75,11 @@ function Bootstrap() {
           useSession.getState().clearSession();
         }
       } catch {
-        useSession.getState().clearSession();
+        // ponytail: only drop the session if the refresh never produced a token.
+        // A failing /users/me (network, 500) must not log the user out.
+        if (!useSession.getState().accessToken) {
+          useSession.getState().clearSession();
+        }
       } finally {
         if (active) setInitializing(false);
       }

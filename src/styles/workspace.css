@@ -1114,7 +1114,7 @@
 .bulk-grid select,
 .detail-filter-bar select,
 .detail-row-actions select {
-  min-height: 44px;
+  min-height: 42px;
   border: 1px solid var(--app-line-strong);
   border-radius: 8px;
   color: var(--app-ink);
