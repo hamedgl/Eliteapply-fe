@@ -1658,11 +1658,44 @@ th {
   background: #fff;
   border-radius: 7px;
 }
-.save-state {
-  color: var(--green);
+.writing-identity {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
 }
-.save-state.dirty {
-  color: var(--amber);
+.writing-identity > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  width: fit-content;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--app-blue);
+}
+.writing-identity > a svg {
+  width: 14px;
+  height: 14px;
+}
+.writing-identity-line {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.writing-editor > header .writing-identity h1 {
+  display: block;
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--app-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.writing-identity-meta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--app-muted);
 }
 .editor-grid {
   display: grid;
@@ -1683,6 +1716,118 @@ th {
   border: 0;
   text-align: left;
   margin: 0.2rem 0;
+}
+.writing-rail {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  background: var(--app-surface);
+}
+.writing-rail .writing-rail-section > h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.writing-rail .writing-rail-section > h2 svg {
+  width: 14px;
+  height: 14px;
+}
+.writing-rail-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--app-muted);
+}
+.writing-rail nav {
+  display: grid;
+  gap: 0.15rem;
+}
+.writing-editor .writing-outline-link {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  border-left: 2px solid var(--app-line);
+  border-radius: 0 6px 6px 0;
+  background: transparent;
+  font-size: 0.83rem;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--app-text);
+  cursor: pointer;
+}
+.writing-editor .writing-outline-link:hover {
+  border-left-color: var(--app-blue);
+  background: var(--app-surface-subtle);
+  color: var(--app-ink);
+}
+.writing-revisions {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.writing-revisions li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+}
+.writing-revisions li:hover {
+  background: var(--app-surface-subtle);
+}
+.writing-revisions li > div {
+  display: grid;
+  min-width: 0;
+}
+.writing-revision-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--app-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.writing-revision-meta {
+  font-size: 0.72rem;
+  color: var(--app-muted);
+}
+.writing-editor .writing-revision-restore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--app-muted);
+  /* Dimmed rather than hidden: hover-only controls are unreachable on touch. */
+  opacity: 0.55;
+}
+.writing-revisions li:hover .writing-revision-restore,
+.writing-editor .writing-revision-restore:focus-visible {
+  opacity: 1;
+}
+.writing-editor .writing-revision-restore:hover {
+  border-color: var(--app-line);
+  background: var(--app-surface);
+  color: var(--app-blue);
+}
+.writing-revision-restore svg {
+  width: 15px;
+  height: 15px;
 }
 .editor-grid > main {
   padding: 0 1rem;

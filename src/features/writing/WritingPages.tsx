@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
+  Check,
+  ChevronLeft,
+  CircleDashed,
   Copy,
   Eye,
   FilePlus2,
   Gauge,
-  History,
+  Loader2,
   MessageCircle,
   Share2,
   Sparkles,
@@ -36,6 +40,8 @@ import {
 } from "./generationProfileRequirement";
 import { TrixField } from "./TrixField";
 import { QualityAnalysisDialog } from "./QualityAnalysisDialog";
+import { DocumentOutline } from "./DocumentOutline";
+import { StatusBadge } from "../../components/data-display/StatusBadge";
 import {
   contentToHtml,
   countText,
@@ -337,6 +343,32 @@ export function NewWriting() {
     </div>
   );
 }
+/** Save state as a badge: unsaved edits, in-flight save, saved, or the failure reason. */
+function SaveState({ dirty, status }: { dirty: boolean; status: string }) {
+  if (dirty)
+    return (
+      <StatusBadge tone="amber" icon={CircleDashed}>
+        Unsaved changes
+      </StatusBadge>
+    );
+  if (status.startsWith("Saving"))
+    return (
+      <StatusBadge tone="blue" icon={Loader2}>
+        Saving…
+      </StatusBadge>
+    );
+  if (status === "Saved")
+    return (
+      <StatusBadge tone="green" icon={Check}>
+        Saved
+      </StatusBadge>
+    );
+  return (
+    <StatusBadge tone="red" icon={AlertTriangle}>
+      {status}
+    </StatusBadge>
+  );
+}
 export function WritingEditor() {
   const [attachPick, setAttachPick] = useState({ id: "", name: "" });
   const { id = "" } = useParams(),
@@ -539,12 +571,18 @@ export function WritingEditor() {
   return (
     <div className="writing-editor">
       <header>
-        <div>
-          <Link to="/app/writing">Writing Studio</Link>
-          <h1>{q.data.title}</h1>
-          <span className={`save-state ${dirty ? "dirty" : ""}`}>
-            {dirty ? "Unsaved" : status}
-          </span>
+        <div className="writing-identity">
+          <Link to="/app/writing">
+            <ChevronLeft aria-hidden="true" />
+            Writing Studio
+          </Link>
+          <div className="writing-identity-line">
+            <h1>{q.data.title}</h1>
+            <SaveState dirty={dirty} status={status} />
+          </div>
+          <p className="writing-identity-meta">
+            {label(q.data.document_type)} · {counts.words} words
+          </p>
         </div>
         <div>
           <button onClick={() => setShowPreview((value) => !value)}>
@@ -612,35 +650,17 @@ export function WritingEditor() {
         </p>
       ) : null}
       <div className="editor-grid">
-        <aside>
-          <h2>Document outline</h2>
-          {[
-            "Introduction",
-            "Academic background",
-            "Research experience",
-            "Why this programme",
-            "Future goals",
-          ].map((x) => (
-            <button key={x}>{x}</button>
-          ))}
-          <button onClick={() => revisions.refetch()}>
-            <History />
-            Revision history
-          </button>
-          {revisions.data?.map((r) => (
-            <button
-              key={r.id}
-              onClick={async () => {
-                if (confirm("Restore this revision?")) {
-                  const x = await writingApi.restore(id, r.id);
-                  qc.setQueryData(["writing", id], x);
-                }
-              }}
-            >
-              Revision {r.revision_number} · {r.name ?? r.reason}
-            </button>
-          ))}
-        </aside>
+        <DocumentOutline
+          html={text}
+          revisions={revisions.data ?? []}
+          onRestore={async (revisionId) => {
+            qc.setQueryData(
+              queryKeys.writingDocument(id),
+              await writingApi.restore(id, revisionId),
+            );
+            void revisions.refetch();
+          }}
+        />
         <main>
           <TrixField
             ariaLabel="Document content"
