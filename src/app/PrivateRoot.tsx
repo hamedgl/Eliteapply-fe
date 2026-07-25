@@ -1,13 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { App } from "./App";
-import { authApi } from "../lib/api/auth";
 import { usersApi } from "../lib/api/users";
 import { useSession } from "../lib/auth/session";
+import { performTokenRefresh } from "../lib/auth/refresh";
+import { onAuthCleanup } from "../lib/auth/auth-cleanup";
+import { authChannel } from "../lib/auth/auth-channel";
 import { CapabilityProvider } from "../lib/capabilities/provider";
 import { EntitlementProvider } from "../lib/billing/provider";
 
-const client = new QueryClient({
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 120_000,
@@ -19,9 +21,29 @@ const client = new QueryClient({
 });
 
 function Bootstrap() {
-  const setTokens = useSession((state) => state.setTokens);
+  const setAuthenticated = useSession((state) => state.setAuthenticated);
   const setUser = useSession((state) => state.setUser);
   const setInitializing = useSession((state) => state.setInitializing);
+
+  useEffect(() => {
+    const unsubscribeCleanup = onAuthCleanup(() => {
+      queryClient.clear();
+    });
+
+    const unsubscribeChannel = authChannel.subscribe((msg) => {
+      if (msg.type === "LOGOUT" || msg.type === "SESSION_EXPIRED") {
+        queryClient.clear();
+        useSession.getState().clearSession();
+      } else if (msg.type === "REFRESH_COMPLETED") {
+        // another tab refreshed successfully, perform soft check if needed
+      }
+    });
+
+    return () => {
+      unsubscribeCleanup();
+      unsubscribeChannel();
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -43,20 +65,46 @@ function Bootstrap() {
 
     void (async () => {
       try {
-        const tokens = await authApi.refresh();
+        const refreshRes = await performTokenRefresh();
         if (!active) return;
-        setTokens(tokens);
-        setUser(await usersApi.me());
+
+        if (refreshRes.kind === "success") {
+          const user = await usersApi.me();
+          if (active) setUser(user);
+        } else if (refreshRes.kind === "invalid_session") {
+          useSession.getState().clearSession();
+        }
       } catch {
-        useSession.getState().clear();
+        useSession.getState().clearSession();
       } finally {
         if (active) setInitializing(false);
       }
     })();
+
     return () => {
       active = false;
     };
-  }, [setInitializing, setTokens, setUser]);
+  }, [setInitializing, setUser]);
+
+  useEffect(() => {
+    const handleFocusOrVisible = () => {
+      const state = useSession.getState();
+      if (state.status !== "authenticated" || !state.accessTokenExpiresAt) return;
+
+      const skewMs = 60_000;
+      if (Date.now() + skewMs >= state.accessTokenExpiresAt) {
+        void performTokenRefresh();
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrVisible);
+    document.addEventListener("visibilitychange", handleFocusOrVisible);
+
+    return () => {
+      window.removeEventListener("focus", handleFocusOrVisible);
+      document.removeEventListener("visibilitychange", handleFocusOrVisible);
+    };
+  }, []);
 
   return (
     <CapabilityProvider>
@@ -69,7 +117,7 @@ function Bootstrap() {
 
 export function PrivateRoot() {
   return (
-    <QueryClientProvider client={client}>
+    <QueryClientProvider client={queryClient}>
       <Bootstrap />
     </QueryClientProvider>
   );
