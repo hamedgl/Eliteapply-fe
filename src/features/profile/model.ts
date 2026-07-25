@@ -4,10 +4,10 @@ type S = components["schemas"];
 export type Profile = S["AcademicProfileResponse"];
 
 /**
- * `sections` is a fully open JSON bag server-side (`additionalProperties: true`,
- * no per-key schema) — the shape below is a client convention, not a backend
- * contract. Older profiles may still have the legacy `{ summary: string }`
- * shape per section; readers here fall back gracefully rather than lose data.
+ * `AcademicProfileSections` fixes the section keys; each section stays open
+ * (`additionalProperties: true`), so the entry shapes below are a client
+ * convention. Older profiles may still hold the legacy `{ summary: string }`
+ * shape per section; readers fall back gracefully rather than lose data.
  */
 export type EducationEntry = {
   id: string;
@@ -73,6 +73,25 @@ export type InterestsSection = {
 
 export const newId = () => crypto.randomUUID();
 
+/*
+ * `AcademicProfileSections` names these sections `tests`, `research`, `honors`
+ * and `interests`. The server now normalises legacy long keys on read and a
+ * migration renamed the stored ones, so this is a safety net for anything the
+ * server has not normalised (older instance, cached response): reads accept
+ * either name and writes emit the canonical key only.
+ */
+const LEGACY_SECTION_KEYS: Record<string, string> = {
+  tests: "standardized_tests",
+  research: "research_experience",
+  honors: "honors_and_activities",
+  interests: "academic_interests",
+};
+
+function readSection(sections: Record<string, unknown>, key: string) {
+  const legacyKey = LEGACY_SECTION_KEYS[key];
+  return sections[key] ?? (legacyKey ? sections[legacyKey] : undefined);
+}
+
 function asEntries<T>(raw: unknown, fallback: (legacy: string) => T | null): T[] {
   if (raw && typeof raw === "object" && Array.isArray((raw as { entries?: unknown }).entries)) {
     return (raw as { entries: T[] }).entries;
@@ -90,7 +109,7 @@ function asEntries<T>(raw: unknown, fallback: (legacy: string) => T | null): T[]
 }
 
 export function readEducation(sections: Record<string, unknown>): EducationEntry[] {
-  return asEntries(sections.education, (text) => ({
+  return asEntries(readSection(sections, "education"), (text) => ({
     id: newId(),
     institution: "",
     degree: "",
@@ -105,7 +124,7 @@ export function readEducation(sections: Record<string, unknown>): EducationEntry
 }
 
 export function readTests(sections: Record<string, unknown>): TestEntry[] {
-  return asEntries(sections.standardized_tests, (text) => ({
+  return asEntries(readSection(sections, "tests"), (text) => ({
     id: newId(),
     test_type: text,
     overall_score: "",
@@ -115,11 +134,11 @@ export function readTests(sections: Record<string, unknown>): TestEntry[] {
 }
 
 export function readLanguages(sections: Record<string, unknown>): LanguageEntry[] {
-  return asEntries<LanguageEntry>(sections.languages, () => null);
+  return asEntries<LanguageEntry>(readSection(sections, "languages"), () => null);
 }
 
 export function readResearch(sections: Record<string, unknown>): ResearchEntry[] {
-  return asEntries(sections.research_experience, (text) => ({
+  return asEntries(readSection(sections, "research"), (text) => ({
     id: newId(),
     project_title: "",
     institution: "",
@@ -132,7 +151,7 @@ export function readResearch(sections: Record<string, unknown>): ResearchEntry[]
 }
 
 export function readHonors(sections: Record<string, unknown>): HonorEntry[] {
-  return asEntries(sections.honors_and_activities, (text) => ({
+  return asEntries(readSection(sections, "honors"), (text) => ({
     id: newId(),
     title: text,
     organisation: "",
@@ -143,7 +162,7 @@ export function readHonors(sections: Record<string, unknown>): HonorEntry[] {
 }
 
 export function readGoals(sections: Record<string, unknown>): GoalsSection {
-  const raw = sections.goals as Partial<GoalsSection> | undefined;
+  const raw = readSection(sections, "goals") as Partial<GoalsSection> | undefined;
   return {
     fields_of_study: raw?.fields_of_study ?? [],
     preferred_intake: raw?.preferred_intake ?? "",
@@ -153,7 +172,7 @@ export function readGoals(sections: Record<string, unknown>): GoalsSection {
 }
 
 export function readInterests(sections: Record<string, unknown>): InterestsSection {
-  const raw = sections.academic_interests;
+  const raw = readSection(sections, "interests");
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
     const value = raw as Record<string, unknown>;
     return {
@@ -194,29 +213,29 @@ export const proficiencyLevels = [
 export type SectionKey =
   | "goals"
   | "education"
-  | "academic_interests"
-  | "research_experience"
-  | "honors_and_activities"
-  | "standardized_tests"
+  | "interests"
+  | "research"
+  | "honors"
+  | "tests"
   | "languages";
 
 export const sectionLabels: Record<SectionKey, string> = {
   goals: "Goals",
   education: "Education",
-  academic_interests: "Academic interests",
-  research_experience: "Research experience",
-  honors_and_activities: "Honors and activities",
-  standardized_tests: "Standardized tests",
+  interests: "Academic interests",
+  research: "Research experience",
+  honors: "Honors and activities",
+  tests: "Standardized tests",
   languages: "Languages",
 };
 
 export const sectionOrder: SectionKey[] = [
   "goals",
   "education",
-  "academic_interests",
-  "research_experience",
-  "honors_and_activities",
-  "standardized_tests",
+  "interests",
+  "research",
+  "honors",
+  "tests",
   "languages",
 ];
 
@@ -257,18 +276,25 @@ export function draftToUpsert(
   draft: ProfileDraft,
   previousSections: Record<string, unknown> = {},
 ): S["AcademicProfileUpsert"] {
+  // Legacy duplicates are dropped, otherwise a saved profile would carry both
+  // `tests` and `standardized_tests` forever and readers could diverge.
+  const carried = Object.fromEntries(
+    Object.entries(previousSections).filter(
+      ([key]) => !Object.values(LEGACY_SECTION_KEYS).includes(key),
+    ),
+  );
   return {
     applicant_type: draft.applicant_type || null,
     intended_study_level: draft.intended_study_level || null,
     target_countries: draft.target_countries,
     sections: {
-      ...previousSections,
+      ...carried,
       goals: draft.goals,
       education: { entries: draft.education },
-      academic_interests: draft.interests,
-      research_experience: { entries: draft.research },
-      honors_and_activities: { entries: draft.honors },
-      standardized_tests: { entries: draft.tests },
+      interests: draft.interests,
+      research: { entries: draft.research },
+      honors: { entries: draft.honors },
+      tests: { entries: draft.tests },
       languages: { entries: draft.languages },
     },
     completion: computeCompletion(draft),
@@ -281,10 +307,10 @@ export function computeCompletion(draft: ProfileDraft): Record<string, boolean> 
       draft.applicant_type && draft.intended_study_level && draft.target_countries.length,
     ),
     education: draft.education.length > 0,
-    academic_interests: Boolean(draft.interests.summary.trim() || draft.interests.interest_tags.length),
-    research_experience: draft.research.length > 0,
-    honors_and_activities: draft.honors.length > 0,
-    standardized_tests: draft.tests.length > 0,
+    interests: Boolean(draft.interests.summary.trim() || draft.interests.interest_tags.length),
+    research: draft.research.length > 0,
+    honors: draft.honors.length > 0,
+    tests: draft.tests.length > 0,
     languages: draft.languages.length > 0,
   };
 }

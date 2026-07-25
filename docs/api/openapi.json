@@ -13977,6 +13977,11 @@
       },
       "AcademicProfileResponse": {
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "applicant_type": {
             "anyOf": [
               {
@@ -14010,16 +14015,7 @@
             "title": "Target Countries"
           },
           "sections": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/AcademicProfileSections"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
-              }
-            ],
-            "title": "Sections"
+            "$ref": "#/components/schemas/AcademicProfileSections"
           },
           "provenance": {
             "additionalProperties": true,
@@ -14027,16 +14023,11 @@
             "title": "Provenance"
           },
           "completion": {
-            "additionalProperties": {
-              "type": "boolean"
+            "items": {
+              "$ref": "#/components/schemas/ProfileCompletionSection"
             },
-            "type": "object",
+            "type": "array",
             "title": "Completion"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
           },
           "version": {
             "type": "integer",
@@ -14153,7 +14144,6 @@
             ]
           }
         },
-        "additionalProperties": true,
         "type": "object",
         "title": "AcademicProfileSections"
       },
@@ -14192,16 +14182,7 @@
             "title": "Target Countries"
           },
           "sections": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/AcademicProfileSections"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
-              }
-            ],
-            "title": "Sections"
+            "$ref": "#/components/schemas/AcademicProfileSections"
           },
           "provenance": {
             "additionalProperties": true,
@@ -14209,10 +14190,20 @@
             "title": "Provenance"
           },
           "completion": {
-            "additionalProperties": {
-              "type": "boolean"
-            },
-            "type": "object",
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProfileCompletionSection"
+                },
+                "type": "array"
+              }
+            ],
             "title": "Completion"
           }
         },
@@ -17523,6 +17514,66 @@
         ],
         "title": "DashboardApplicationItem"
       },
+      "DashboardDeadlineItem": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "application_title": {
+            "type": "string",
+            "title": "Application Title"
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Due At"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "application_deadline",
+              "requirement_due",
+              "task_due",
+              "reference_due"
+            ],
+            "title": "Kind"
+          },
+          "requirement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement Id"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "application_title",
+          "due_at",
+          "kind"
+        ],
+        "title": "DashboardDeadlineItem"
+      },
       "DashboardReadinessResponse": {
         "properties": {
           "items": {
@@ -17573,8 +17624,7 @@
           },
           "upcoming_deadlines": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/DashboardDeadlineItem"
             },
             "type": "array",
             "title": "Upcoming Deadlines"
@@ -17587,9 +17637,15 @@
             "type": "integer",
             "title": "Open Tasks"
           },
+          "tasks": {
+            "$ref": "#/components/schemas/DashboardTaskSummary"
+          },
           "profile_completion_percent": {
             "type": "integer",
             "title": "Profile Completion Percent"
+          },
+          "profile_completion": {
+            "$ref": "#/components/schemas/ProfileCompletionBreakdown"
           },
           "recommended_next_action": {
             "type": "string",
@@ -17602,10 +17658,40 @@
           "upcoming_deadlines",
           "missing_documents",
           "open_tasks",
+          "tasks",
           "profile_completion_percent",
+          "profile_completion",
           "recommended_next_action"
         ],
         "title": "DashboardResponse"
+      },
+      "DashboardTaskSummary": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "open": {
+            "type": "integer",
+            "title": "Open"
+          },
+          "completed": {
+            "type": "integer",
+            "title": "Completed"
+          },
+          "overdue": {
+            "type": "integer",
+            "title": "Overdue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "open",
+          "completed",
+          "overdue"
+        ],
+        "title": "DashboardTaskSummary"
       },
       "DlqRedriveRequest": {
         "properties": {
@@ -21007,6 +21093,55 @@
         ],
         "title": "PlatformCapability"
       },
+      "ProfileCompletionBreakdown": {
+        "properties": {
+          "percent": {
+            "type": "integer",
+            "title": "Percent"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileCompletionSection"
+            },
+            "type": "array",
+            "title": "Sections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "percent",
+          "sections"
+        ],
+        "title": "ProfileCompletionBreakdown"
+      },
+      "ProfileCompletionSection": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "complete": {
+            "type": "boolean",
+            "title": "Complete"
+          },
+          "weight": {
+            "type": "integer",
+            "title": "Weight"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "complete",
+          "weight"
+        ],
+        "title": "ProfileCompletionSection"
+      },
       "ProgrammeCreate": {
         "properties": {
           "institution_id": {
@@ -21473,6 +21608,112 @@
         "type": "object",
         "title": "ProgrammeUpdate"
       },
+      "QualityAnalysisClaimWarning": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "claim": {
+            "type": "string",
+            "title": "Claim"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity",
+            "default": "medium"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "suggested_evidence_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Evidence Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim",
+          "reason"
+        ],
+        "title": "QualityAnalysisClaimWarning"
+      },
+      "QualityAnalysisFinding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity",
+            "default": "medium"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "default": "general"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "suggestion": {
+            "type": "string",
+            "title": "Suggestion"
+          },
+          "excerpt": {
+            "type": "string",
+            "title": "Excerpt",
+            "default": ""
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QualityAnalysisLocation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "detail",
+          "suggestion"
+        ],
+        "title": "QualityAnalysisFinding"
+      },
       "QualityAnalysisListResponse": {
         "properties": {
           "items": {
@@ -21516,6 +21757,29 @@
         ],
         "title": "QualityAnalysisListResponse"
       },
+      "QualityAnalysisLocation": {
+        "properties": {
+          "paragraph": {
+            "type": "integer",
+            "title": "Paragraph"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "title": "End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "paragraph",
+          "start",
+          "end"
+        ],
+        "title": "QualityAnalysisLocation"
+      },
       "QualityAnalysisResponse": {
         "properties": {
           "id": {
@@ -21529,17 +21793,23 @@
             "title": "Document Id"
           },
           "scores": {
-            "additionalProperties": true,
-            "type": "object",
+            "items": {
+              "$ref": "#/components/schemas/QualityAnalysisScore"
+            },
+            "type": "array",
             "title": "Scores"
           },
           "findings": {
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/QualityAnalysisFinding"
+            },
             "type": "array",
             "title": "Findings"
           },
           "claim_warnings": {
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/QualityAnalysisClaimWarning"
+            },
             "type": "array",
             "title": "Claim Warnings"
           },
@@ -21559,6 +21829,34 @@
           "created_at"
         ],
         "title": "QualityAnalysisResponse"
+      },
+      "QualityAnalysisScore": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "max": {
+            "type": "integer",
+            "title": "Max",
+            "default": 100
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value"
+        ],
+        "title": "QualityAnalysisScore"
       },
       "RecommendationsResponse": {
         "properties": {
@@ -26383,6 +26681,28 @@
               }
             ],
             "title": "Application Id"
+          },
+          "application_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Title"
+          },
+          "application_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Stage"
           },
           "document_type": {
             "type": "string",

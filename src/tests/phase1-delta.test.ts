@@ -107,7 +107,7 @@ describe("Phase 1 delta helpers", () => {
     // Hardcoded counts, not a self-comparison: this guards against
     // openapi.json changing without `npm run api:generate` being rerun.
     expect(Object.keys(contract.paths)).toHaveLength(198);
-    expect(Object.keys(contract.components.schemas)).toHaveLength(241);
+    expect(Object.keys(contract.components.schemas)).toHaveLength(249);
     for (const path of Object.keys(contract.paths))
       expect(generated).toContain(`"${path}"`);
     for (const schema of Object.keys(contract.components.schemas))

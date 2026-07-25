@@ -2103,22 +2103,9 @@ th {
   gap: 0.5rem;
   color: var(--app-blue);
 }
-.writing-quality-extras {
-  display: grid;
-  gap: 0.2rem;
-  margin: 0;
-  font-size: 0.8rem;
-}
-.writing-quality-extras > div {
-  display: flex;
-  gap: 0.4rem;
-}
-.writing-quality-extras dt {
+.writing-quality-item p.writing-quality-meta {
+  font-size: 0.75rem;
   color: var(--app-muted);
-}
-.writing-quality-extras dd {
-  margin: 0;
-  color: var(--app-text);
 }
 .writing-quality-disclaimer {
   margin-right: auto;
@@ -7161,6 +7148,11 @@ select option {
   color: #fff;
   border: 1px solid rgb(255 255 255 / 55%);
   background: transparent;
+  /* Rendered as a <button> since it opens the explainer instead of navigating. */
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .dashboard-focus-secondary:hover {
@@ -8212,6 +8204,153 @@ select option {
 
 .guide-modal-phase .setup-step {
   padding-inline: 0;
+}
+
+.progress-explainer {
+  width: min(620px, 100%);
+}
+
+.progress-explainer-block + .progress-explainer-block {
+  padding-top: 1rem;
+  border-top: 1px solid var(--app-line);
+}
+
+.progress-explainer-block h3 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.35rem;
+  color: var(--app-ink);
+  font-size: 0.95rem;
+}
+
+.progress-explainer-block h3 strong {
+  color: var(--app-blue);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.progress-explainer-block > p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.progress-explainer-weights {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.6rem 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.progress-explainer-weights li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.83rem;
+  color: var(--app-muted);
+}
+
+.progress-explainer-weights li.is-done {
+  color: var(--app-ink);
+}
+
+.progress-explainer-weights svg {
+  width: 14px;
+  height: 14px;
+}
+
+.progress-explainer-weights li.is-done svg {
+  color: var(--app-green);
+}
+
+.progress-explainer-weights strong {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-explainer-sum {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-explainer-phase {
+  margin-top: 0.9rem;
+}
+
+.progress-explainer-phase h4 {
+  margin: 0 0 0.35rem;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.progress-explainer-phase ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress-explainer-phase li {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: var(--app-surface-subtle);
+}
+
+.progress-explainer-phase li > span {
+  display: inline-flex;
+  flex: none;
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+}
+
+.progress-explainer-phase li.is-done > span {
+  color: var(--app-green);
+}
+
+.progress-explainer-phase li svg {
+  width: 15px;
+  height: 15px;
+}
+
+.progress-explainer-phase li strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+
+.progress-explainer-phase li em {
+  flex: none;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.progress-explainer-phase li.is-done em {
+  color: var(--app-green);
+}
+
+.progress-explainer-phase li small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .dashboard-state {

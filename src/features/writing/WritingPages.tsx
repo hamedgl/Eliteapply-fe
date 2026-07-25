@@ -710,7 +710,10 @@ export function WritingEditor() {
           <h2>Application context</h2>
           <p>
             {q.data.application_id
-              ? `Linked application ${q.data.application_id.slice(0, 8)}`
+              ? (q.data.application_title ?? "Linked application") +
+                (q.data.application_stage
+                  ? ` · ${label(q.data.application_stage)}`
+                  : "")
               : "Standalone document"}
           </p>
           {q.data.application_id ? (

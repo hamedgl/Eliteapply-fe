@@ -273,7 +273,7 @@ export function AcademicProfilePage() {
               onChange={(value) => updateDraft({ education: value })}
             />
           ) : null}
-          {activeSection === "academic_interests" ? (
+          {activeSection === "interests" ? (
             <InterestsFields
               interests={draft.interests}
               onChange={(patch) =>
@@ -281,19 +281,19 @@ export function AcademicProfilePage() {
               }
             />
           ) : null}
-          {activeSection === "research_experience" ? (
+          {activeSection === "research" ? (
             <ResearchSection
               entries={draft.research}
               onChange={(value) => updateDraft({ research: value })}
             />
           ) : null}
-          {activeSection === "honors_and_activities" ? (
+          {activeSection === "honors" ? (
             <HonorsSection
               entries={draft.honors}
               onChange={(value) => updateDraft({ honors: value })}
             />
           ) : null}
-          {activeSection === "standardized_tests" ? (
+          {activeSection === "tests" ? (
             <TestsSection
               entries={draft.tests}
               onChange={(value) => updateDraft({ tests: value })}

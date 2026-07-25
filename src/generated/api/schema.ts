@@ -3598,29 +3598,24 @@ export interface components {
         };
         /** AcademicProfileResponse */
         AcademicProfileResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
             /** Applicant Type */
             applicant_type?: string | null;
             /** Intended Study Level */
             intended_study_level?: string | null;
             /** Target Countries */
             target_countries?: string[];
-            /** Sections */
-            sections?: components["schemas"]["AcademicProfileSections"] | {
-                [key: string]: unknown;
-            };
+            sections?: components["schemas"]["AcademicProfileSections"];
             /** Provenance */
             provenance?: {
                 [key: string]: unknown;
             };
             /** Completion */
-            completion?: {
-                [key: string]: boolean;
-            };
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
+            completion?: components["schemas"]["ProfileCompletionSection"][];
             /** Version */
             version: number;
             /**
@@ -3648,8 +3643,6 @@ export interface components {
             honors?: components["schemas"]["HonorSection"] | null;
             goals?: components["schemas"]["GoalsSection"] | null;
             interests?: components["schemas"]["InterestsSection"] | null;
-        } & {
-            [key: string]: unknown;
         };
         /** AcademicProfileUpsert */
         AcademicProfileUpsert: {
@@ -3659,10 +3652,7 @@ export interface components {
             intended_study_level?: string | null;
             /** Target Countries */
             target_countries?: string[];
-            /** Sections */
-            sections?: components["schemas"]["AcademicProfileSections"] | {
-                [key: string]: unknown;
-            };
+            sections?: components["schemas"]["AcademicProfileSections"];
             /** Provenance */
             provenance?: {
                 [key: string]: unknown;
@@ -3670,7 +3660,7 @@ export interface components {
             /** Completion */
             completion?: {
                 [key: string]: boolean;
-            };
+            } | components["schemas"]["ProfileCompletionSection"][];
         };
         /** AcademicProfileVersionResponse */
         AcademicProfileVersionResponse: {
@@ -4789,6 +4779,30 @@ export interface components {
             primary_missing_requirement?: string | null;
             recommended_action: components["schemas"]["DashboardRecommendedAction"];
         };
+        /** DashboardDeadlineItem */
+        DashboardDeadlineItem: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Application Title */
+            application_title: string;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "application_deadline" | "requirement_due" | "task_due" | "reference_due";
+            /** Requirement Id */
+            requirement_id?: string | null;
+            /** Task Id */
+            task_id?: string | null;
+        };
         /** DashboardReadinessResponse */
         DashboardReadinessResponse: {
             /** Items */
@@ -4810,17 +4824,28 @@ export interface components {
                 [key: string]: number;
             };
             /** Upcoming Deadlines */
-            upcoming_deadlines: {
-                [key: string]: unknown;
-            }[];
+            upcoming_deadlines: components["schemas"]["DashboardDeadlineItem"][];
             /** Missing Documents */
             missing_documents: number;
             /** Open Tasks */
             open_tasks: number;
+            tasks: components["schemas"]["DashboardTaskSummary"];
             /** Profile Completion Percent */
             profile_completion_percent: number;
+            profile_completion: components["schemas"]["ProfileCompletionBreakdown"];
             /** Recommended Next Action */
             recommended_next_action: string;
+        };
+        /** DashboardTaskSummary */
+        DashboardTaskSummary: {
+            /** Total */
+            total: number;
+            /** Open */
+            open: number;
+            /** Completed */
+            completed: number;
+            /** Overdue */
+            overdue: number;
         };
         /** DlqRedriveRequest */
         DlqRedriveRequest: {
@@ -6105,6 +6130,24 @@ export interface components {
             /** Product Boundary */
             product_boundary: string;
         };
+        /** ProfileCompletionBreakdown */
+        ProfileCompletionBreakdown: {
+            /** Percent */
+            percent: number;
+            /** Sections */
+            sections: components["schemas"]["ProfileCompletionSection"][];
+        };
+        /** ProfileCompletionSection */
+        ProfileCompletionSection: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Complete */
+            complete: boolean;
+            /** Weight */
+            weight: number;
+        };
         /** ProgrammeCreate */
         ProgrammeCreate: {
             /**
@@ -6222,6 +6265,57 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** QualityAnalysisClaimWarning */
+        QualityAnalysisClaimWarning: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /** Claim */
+            claim: string;
+            /**
+             * Severity
+             * @default medium
+             * @enum {string}
+             */
+            severity: "critical" | "high" | "medium" | "low" | "info";
+            /** Reason */
+            reason: string;
+            /** Suggested Evidence Type */
+            suggested_evidence_type?: string | null;
+        };
+        /** QualityAnalysisFinding */
+        QualityAnalysisFinding: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Severity
+             * @default medium
+             * @enum {string}
+             */
+            severity: "critical" | "high" | "medium" | "low" | "info";
+            /**
+             * Category
+             * @default general
+             */
+            category: string;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Suggestion */
+            suggestion: string;
+            /**
+             * Excerpt
+             * @default
+             */
+            excerpt: string;
+            location?: components["schemas"]["QualityAnalysisLocation"] | null;
+        };
         /** QualityAnalysisListResponse */
         QualityAnalysisListResponse: {
             /** Items */
@@ -6236,6 +6330,15 @@ export interface components {
             /** Total */
             total?: number | null;
         };
+        /** QualityAnalysisLocation */
+        QualityAnalysisLocation: {
+            /** Paragraph */
+            paragraph: number;
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+        };
         /** QualityAnalysisResponse */
         QualityAnalysisResponse: {
             /**
@@ -6249,18 +6352,30 @@ export interface components {
              */
             document_id: string;
             /** Scores */
-            scores: {
-                [key: string]: unknown;
-            };
+            scores: components["schemas"]["QualityAnalysisScore"][];
             /** Findings */
-            findings: unknown[];
+            findings: components["schemas"]["QualityAnalysisFinding"][];
             /** Claim Warnings */
-            claim_warnings: unknown[];
+            claim_warnings: components["schemas"]["QualityAnalysisClaimWarning"][];
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
+        };
+        /** QualityAnalysisScore */
+        QualityAnalysisScore: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: number;
+            /**
+             * Max
+             * @default 100
+             */
+            max: number;
         };
         /** RecommendationsResponse */
         RecommendationsResponse: {
@@ -7871,6 +7986,10 @@ export interface components {
             id: string;
             /** Application Id */
             application_id: string | null;
+            /** Application Title */
+            application_title?: string | null;
+            /** Application Stage */
+            application_stage?: string | null;
             /** Document Type */
             document_type: string;
             /** Cv Mode */

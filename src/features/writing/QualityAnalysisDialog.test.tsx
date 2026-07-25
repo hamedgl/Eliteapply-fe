@@ -4,52 +4,74 @@ import { QualityAnalysisDialog } from "./QualityAnalysisDialog";
 
 afterEach(cleanup);
 
-/** `scores`/`findings`/`claim_warnings` are untyped on the wire, so odd shapes must still read. */
 const analysis = {
   id: "00000000-0000-4000-8000-000000000201",
   document_id: "00000000-0000-4000-8000-000000000202",
   created_at: "2026-07-20T10:30:00Z",
-  scores: {
-    overall: 0.82,
-    clarity: { value: 7.5, max: 10 },
-    tone: "Consistent",
-  },
+  scores: [
+    { key: "overall", label: "Overall", value: 82, max: 100 },
+    { key: "clarity", label: "Clarity", value: 6, max: 10 },
+  ],
   findings: [
     {
-      title: "Opening is generic",
+      id: "00000000-0000-4000-8000-000000000203",
       severity: "high",
+      category: "opening_paragraph",
+      title: "Opening is generic",
       detail: "The first paragraph could describe any applicant.",
       suggestion: "Name the specific research group you want to join.",
       excerpt: "I am writing to express my strong interest",
-      paragraph: 1,
+      location: { paragraph: 1, start: 0, end: 42 },
     },
-    "Sentence length varies little.",
   ],
-  claim_warnings: [],
+  claim_warnings: [
+    {
+      id: "00000000-0000-4000-8000-000000000204",
+      claim: "I led a team of 15 researchers",
+      severity: "medium",
+      reason: "No supporting evidence is linked in your profile.",
+      suggested_evidence_type: "research_experience",
+    },
+  ],
 } as unknown as Parameters<typeof QualityAnalysisDialog>[0]["analysis"];
 
 describe("QualityAnalysisDialog", () => {
-  it("renders scores, findings and empty sections in readable form", () => {
+  it("renders scores, findings and claim warnings from the typed payload", () => {
     render(<QualityAnalysisDialog analysis={analysis} onClose={() => {}} />);
 
-    // 0.82 on a 0–1 scale and 7.5/10 both normalise to a percentage.
     expect(screen.getByLabelText("Overall score")).toHaveValue(82);
-    expect(screen.getByLabelText("Clarity score")).toHaveValue(75);
-    expect(screen.getByText("7.5 / 10")).toBeInTheDocument();
-    expect(screen.getByText("Consistent")).toBeInTheDocument();
+    // A non-100 max is normalised for the bar and printed as sent.
+    expect(screen.getByLabelText("Clarity score")).toHaveValue(60);
+    expect(screen.getByText("6 / 10")).toBeInTheDocument();
 
     expect(screen.getByText("Opening is generic")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
+    expect(screen.getByText("Opening Paragraph · Paragraph 1")).toBeInTheDocument();
     expect(
       screen.getByText("Name the specific research group you want to join."),
     ).toBeInTheDocument();
-    // Unrecognised keys are still shown rather than dropped.
-    expect(screen.getByText("Paragraph")).toBeInTheDocument();
-    // A plain string finding renders as its own item.
-    expect(screen.getByText("Sentence length varies little.")).toBeInTheDocument();
+
+    expect(screen.getByText("I led a team of 15 researchers")).toBeInTheDocument();
+    expect(
+      screen.getByText("Back this up with Research Experience."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Claim warnings (1)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows empty-state copy instead of blank sections", () => {
+    render(
+      <QualityAnalysisDialog
+        analysis={
+          { ...analysis, findings: [], claim_warnings: [] } as typeof analysis
+        }
+        onClose={() => {}}
+      />,
+    );
 
     expect(
-      screen.getByRole("heading", { name: "Findings (2)" }),
+      screen.getByText("No issues were flagged in this pass."),
     ).toBeInTheDocument();
     expect(
       screen.getByText("No claims needed evidence review."),

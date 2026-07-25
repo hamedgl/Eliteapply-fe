@@ -15,7 +15,11 @@ import { useState, type ComponentType, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import dashboardFocusIllustration from "../../assets/dashboard-focus-illustration.webp";
 import recommendationIllustration from "../../assets/recommendation-illustration.webp";
-import { platformApi, safeDashboard } from "../../lib/api/platform";
+import {
+  platformApi,
+  safeDashboard,
+  type DashboardDeadline,
+} from "../../lib/api/platform";
 import { documentsApi, profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
@@ -25,13 +29,17 @@ import {
   type CalendarEventTone,
 } from "../../components/ui/event-manager";
 import { ApplicationReadinessCard } from "./components/ApplicationReadinessCard";
+import { ProgressExplainerDialog } from "./components/ProgressExplainerDialog";
+import { readDraft, type SectionKey } from "../profile/model";
 
-type Deadline = Record<string, unknown>;
+type Deadline = DashboardDeadline;
 type SetupStatus = "done" | "todo" | "checking" | "unavailable";
 type SetupItem = {
   href: string;
   label: string;
   detail: string;
+  /** The rule that marks this step complete, shown in the progress explainer. */
+  explain: string;
   status: SetupStatus;
 };
 
@@ -86,6 +94,7 @@ export function DashboardPage() {
   const user = useSession((state) => state.user);
   const navigate = useNavigate();
   const [showAllSteps, setShowAllSteps] = useState(false);
+  const [showProgressExplainer, setShowProgressExplainer] = useState(false);
   const query = useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: async () => safeDashboard(await platformApi.dashboard()),
@@ -127,7 +136,6 @@ export function DashboardPage() {
   const dashboard = query.data;
   const deadlineEvents = dashboard.upcoming_deadlines
     .map(toDeadlineEvent)
-    .filter((event): event is CalendarEvent => Boolean(event))
     .sort(
       (a, b) =>
         new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
@@ -141,7 +149,19 @@ export function DashboardPage() {
   ).reduce((total, count) => total + Math.max(0, count), 0);
   const recommendation = getRecommendation(dashboard.recommended_next_action);
   const stageColors = assignStageColors(dashboard.applications_by_stage);
-  const profile = profileQuery.data;
+  const draft = readDraft(profileQuery.data ?? null);
+  /*
+   * The server now reports completion per profile section; the locally derived
+   * draft stays as the fallback for accounts served by an older backend.
+   */
+  const serverSections = new Map(
+    dashboard.profile_completion.sections.map((section) => [
+      section.key,
+      section.complete,
+    ]),
+  );
+  const sectionDone = (key: SectionKey, local: boolean) =>
+    serverSections.get(key) ?? local;
   const profileStatus = (done: boolean) =>
     getSetupStatus(profileQuery.isPending, profileQuery.isError, done);
   const documentStatus = getSetupStatus(
@@ -159,24 +179,34 @@ export function DashboardPage() {
         {
           label: "Add academic background",
           detail: "Add your education and achievements",
+          explain:
+            "Complete once the education section of your academic profile has at least one entry.",
           href: "/app/academic-profile",
-          status: profileStatus(hasContent(profile?.sections?.education)),
+          status: profileStatus(
+            sectionDone("education", draft.education.length > 0),
+          ),
         },
         {
           label: "Set your study direction",
           detail: "Define your target programs and goals",
+          explain:
+            "Needs applicant type, intended study level and at least one target country on your profile.",
           href: "/app/academic-profile",
           status: profileStatus(
-            Boolean(
-              profile?.applicant_type?.trim() &&
-                profile.intended_study_level?.trim() &&
-                profile.target_countries?.some((country) => country.trim()),
+            sectionDone(
+              "goals",
+              Boolean(
+                draft.applicant_type.trim() &&
+                  draft.intended_study_level.trim() &&
+                  draft.target_countries.some((country) => country.trim()),
+              ),
             ),
           ),
         },
         {
           label: "Add an application",
           detail: "Start your first application",
+          explain: "Complete as soon as you track one application.",
           href: "/app/applications",
           status: applicationCount > 0 ? "done" : "todo",
         },
@@ -188,27 +218,36 @@ export function DashboardPage() {
         {
           label: "Upload a supporting document",
           detail: "Keep transcripts and certificates ready",
+          explain: "Complete once you have at least one document in Documents.",
           href: "/app/documents",
           status: documentStatus,
         },
         {
           label: "Add academic interests",
           detail: "Note the fields you want to pursue",
+          explain:
+            "Complete once the academic interests section of your profile has an entry.",
           href: "/app/academic-profile",
           status: profileStatus(
-            hasContent(profile?.sections?.academic_interests),
+            sectionDone(
+              "interests",
+              Boolean(
+                draft.interests.summary.trim() ||
+                  draft.interests.interest_tags.length,
+              ),
+            ),
           ),
         },
         {
           label: "Add achievements or research",
           detail: "Add honors, tests or research experience",
+          explain:
+            "Any one of honours and activities, standardised tests or research experience completes this.",
           href: "/app/academic-profile",
           status: profileStatus(
-            [
-              "honors_and_activities",
-              "standardized_tests",
-              "research_experience",
-            ].some((key) => hasContent(profile?.sections?.[key])),
+            sectionDone("honors", draft.honors.length > 0) ||
+              sectionDone("tests", draft.tests.length > 0) ||
+              sectionDone("research", draft.research.length > 0),
           ),
         },
       ],
@@ -219,18 +258,24 @@ export function DashboardPage() {
         {
           label: "Record an upcoming deadline",
           detail: "Track when each application is due",
+          explain:
+            "Complete while at least one application has a deadline still ahead of it.",
           href: "/app/applications",
           status: dashboard.upcoming_deadlines.length > 0 ? "done" : "todo",
         },
         {
           label: "Plan your next application task",
           detail: "Turn requirements into trackable tasks",
+          explain:
+            "Complete once you have created at least one task, whether or not it is still open — finishing your tasks does not reopen this step.",
           href: "/app/applications",
-          status: dashboard.open_tasks > 0 ? "done" : "todo",
+          status: dashboard.tasks.total > 0 ? "done" : "todo",
         },
         {
           label: "Resolve document gaps",
           detail: "Match documents to what applications need",
+          explain:
+            "Complete when you have applications and none of them is missing a required document.",
           href: "/app/documents",
           status:
             applicationCount > 0 && dashboard.missing_documents === 0
@@ -252,11 +297,10 @@ export function DashboardPage() {
   const completedSetupItems = allSetupItems.filter(
     (item) => item.status === "done",
   ).length;
-  const profileReadinessPercent =
-    totalSetupItems > 0
-      ? Math.round((completedSetupItems / totalSetupItems) * 100)
-      : dashboard.profile_completion_percent;
-  const profileComplete = profileReadinessPercent >= 100;
+  // The ring reports the server's academic-profile score; the guide counts its
+  // own steps. Showing the step count as "profile progress" conflated the two.
+  const profilePercent = dashboard.profile_completion_percent; // already clamped by safeDashboard
+  const profileComplete = profilePercent >= 100;
   const setupProgressPending =
     profileQuery.isPending || documentsQuery.isPending;
   const setupProgressError = profileQuery.isError || documentsQuery.isError;
@@ -278,7 +322,7 @@ export function DashboardPage() {
       </header>
 
       <section className="dashboard-focus" aria-labelledby="profile-title">
-        <ProfileProgressRing percent={profileReadinessPercent} />
+        <ProfileProgressRing percent={profilePercent} />
         <div className="dashboard-focus-copy">
           <span>Next responsible action</span>
           <h2 id="profile-title">
@@ -296,9 +340,13 @@ export function DashboardPage() {
               {profileComplete ? "Review profile" : "Continue profile"}
               <ArrowRight aria-hidden="true" />
             </Link>
-            <Link className="dashboard-focus-secondary" to="/contact">
-              Learn more
-            </Link>
+            <button
+              type="button"
+              className="dashboard-focus-secondary"
+              onClick={() => setShowProgressExplainer(true)}
+            >
+              How is this measured?
+            </button>
           </div>
         </div>
         <div className="dashboard-focus-art" aria-hidden="true">
@@ -495,6 +543,23 @@ export function DashboardPage() {
         </section>
       </div>
 
+      {showProgressExplainer ? (
+        <ProgressExplainerDialog
+          profilePercent={profilePercent}
+          profileSections={dashboard.profile_completion.sections}
+          phases={setupPages.map((page) => ({
+            title: page.title,
+            steps: page.items.map((item) => ({
+              label: item.label,
+              explain: item.explain,
+              done: item.status === "done",
+              pending: item.status === "checking",
+            })),
+          }))}
+          onClose={() => setShowProgressExplainer(false)}
+        />
+      ) : null}
+
       {showAllSteps ? (
         <WorkspaceGuideModal
           pages={setupPages}
@@ -664,31 +729,25 @@ function ApplicationsDonut({
   );
 }
 
-function toDeadlineEvent(
-  deadline: Deadline,
-  index: number,
-): CalendarEvent | null {
-  const title =
-    readString(deadline, ["title", "application_title", "name"]) ||
-    `Application deadline ${index + 1}`;
-  const rawDate = readString(deadline, [
-    "deadline",
-    "deadline_at",
-    "due_at",
-    "date",
-  ]);
-  if (!rawDate || Number.isNaN(new Date(rawDate).getTime())) return null;
-  const applicationId = readString(deadline, ["application_id", "id"]);
+const DEADLINE_KIND_LABELS: Record<Deadline["kind"], string> = {
+  application_deadline: "Application deadline",
+  requirement_due: "Requirement due",
+  task_due: "Task due",
+  reference_due: "Reference due",
+};
+
+function toDeadlineEvent(deadline: Deadline, index: number): CalendarEvent {
   return {
-    id: `dashboard-deadline:${applicationId || index}`,
-    title,
-    startAt: rawDate,
+    id: `dashboard-deadline:${deadline.application_id || index}:${deadline.kind}`,
+    title: deadline.application_title,
+    description: DEADLINE_KIND_LABELS[deadline.kind] ?? "Deadline",
+    startAt: deadline.due_at,
     kind: "deadline",
-    tone: deadlineTone(rawDate),
+    tone: deadlineTone(deadline.due_at),
     allDay: true,
     source: {
-      href: applicationId
-        ? `/app/applications/${applicationId}`
+      href: deadline.application_id
+        ? `/app/applications/${deadline.application_id}`
         : "/app/applications",
     },
   };
@@ -719,9 +778,9 @@ function ProfileProgressRing({ percent }: { percent: number }) {
         />
       </svg>
       <div className="focus-ring-copy">
-        <span>Next step</span>
+        <span>Academic profile</span>
         <strong>{percent}%</strong>
-        <span>Profile progress</span>
+        <span>complete</span>
       </div>
     </div>
   );
@@ -834,14 +893,6 @@ function humanize(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function readString(record: Deadline, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return "";
-}
-
 function deadlineTone(value: string): CalendarEventTone {
   const days = (new Date(value).getTime() - Date.now()) / 86_400_000;
   if (days < 0) return "red";
@@ -857,12 +908,4 @@ function getSetupStatus(
   if (isPending) return "checking";
   if (isError) return "unavailable";
   return done ? "done" : "todo";
-}
-
-function hasContent(value: unknown): boolean {
-  if (typeof value === "string") return Boolean(value.trim());
-  if (Array.isArray(value)) return value.some(hasContent);
-  if (value && typeof value === "object")
-    return Object.values(value).some(hasContent);
-  return typeof value === "number" || value === true;
 }
