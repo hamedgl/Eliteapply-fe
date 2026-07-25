@@ -102,6 +102,16 @@ export const writingApi = {
       `/writing-studio/documents/${e(id)}/analyze`,
       { method: "POST" },
     ),
+  /** Server-side extraction: the file is scanned and parsed, never stored. */
+  import: (file: File, documentType?: string) => {
+    const body = new FormData();
+    body.append("file", file);
+    if (documentType) body.append("document_type", documentType);
+    return apiRequest<S["WritingImportResponse"]>("/writing-studio/imports", {
+      method: "POST",
+      body,
+    });
+  },
   analyses: (id: string, cursor?: string | null) =>
     apiRequest<S["QualityAnalysisListResponse"]>(
       `/writing-studio/documents/${e(id)}/analyses${qs({ cursor, limit: 25 })}`,

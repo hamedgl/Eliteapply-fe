@@ -7074,6 +7074,52 @@
         }
       }
     },
+    "/api/v1/writing-studio/imports": {
+      "post": {
+        "tags": [
+          "Academic Writing Studio"
+        ],
+        "summary": "Import Writing Document",
+        "operationId": "import_writing_document_api_v1_writing_studio_imports_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_writing_document_api_v1_writing_studio_imports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WritingImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/application-intelligence/imports": {
       "post": {
         "tags": [
@@ -16266,6 +16312,42 @@
         ],
         "title": "AuditEventResponse"
       },
+      "Body_import_writing_document_api_v1_writing_studio_imports_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_writing_document_api_v1_writing_studio_imports_post"
+      },
       "Body_upload_avatar_api_v1_users_me_avatar_post": {
         "properties": {
           "file": {
@@ -24495,6 +24577,17 @@
         ],
         "title": "SharedDocumentResponse"
       },
+      "SourceFormat": {
+        "type": "string",
+        "enum": [
+          "pdf",
+          "docx",
+          "doc",
+          "txt",
+          "md"
+        ],
+        "title": "SourceFormat"
+      },
       "StoryAIAssistRequest": {
         "properties": {
           "action": {
@@ -26957,6 +27050,50 @@
           "expected_version"
         ],
         "title": "WritingDocumentUpdate"
+      },
+      "WritingImportResponse": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "word_count": {
+            "type": "integer",
+            "title": "Word Count"
+          },
+          "character_count": {
+            "type": "integer",
+            "title": "Character Count"
+          },
+          "source_format": {
+            "$ref": "#/components/schemas/SourceFormat"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "text",
+          "word_count",
+          "character_count",
+          "source_format"
+        ],
+        "title": "WritingImportResponse"
       },
       "WritingPreviewResponse": {
         "properties": {

@@ -1655,6 +1655,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/writing-studio/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Writing Document */
+        post: operations["import_writing_document_api_v1_writing_studio_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/application-intelligence/imports": {
         parameters: {
             query?: never;
@@ -4342,6 +4359,15 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** Body_import_writing_document_api_v1_writing_studio_imports_post */
+        Body_import_writing_document_api_v1_writing_studio_imports_post: {
+            /** File */
+            file: string;
+            /** Document Type */
+            document_type?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /** Body_upload_avatar_api_v1_users_me_avatar_post */
         Body_upload_avatar_api_v1_users_me_avatar_post: {
@@ -7271,6 +7297,11 @@ export interface components {
             /** Character Count */
             character_count: number;
         };
+        /**
+         * SourceFormat
+         * @enum {string}
+         */
+        SourceFormat: "pdf" | "docx" | "doc" | "txt" | "md";
         /** StoryAIAssistRequest */
         StoryAIAssistRequest: {
             /**
@@ -8063,6 +8094,25 @@ export interface components {
             status?: ("draft" | "review" | "final" | "archived") | null;
             /** Revision Name */
             revision_name?: string | null;
+        };
+        /** WritingImportResponse */
+        WritingImportResponse: {
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+            /** Word Count */
+            word_count: number;
+            /** Character Count */
+            character_count: number;
+            source_format: components["schemas"]["SourceFormat"];
+            /**
+             * Truncated
+             * @default false
+             */
+            truncated: boolean;
+            /** Warnings */
+            warnings?: string[];
         };
         /** WritingPreviewResponse */
         WritingPreviewResponse: {
@@ -12142,6 +12192,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_writing_document_api_v1_writing_studio_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_writing_document_api_v1_writing_studio_imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WritingImportResponse"];
+                };
             };
             /** @description Validation Error */
             422: {

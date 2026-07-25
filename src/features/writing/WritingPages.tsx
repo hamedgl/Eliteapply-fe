@@ -40,6 +40,7 @@ import {
 } from "./generationProfileRequirement";
 import { TrixField } from "./TrixField";
 import { QualityAnalysisDialog } from "./QualityAnalysisDialog";
+import { NewWritingDialog } from "./NewWritingDialog";
 import { DocumentOutline } from "./DocumentOutline";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import {
@@ -53,18 +54,6 @@ import {
 } from "./documentHtml";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
-const types = [
-  "academic_cv",
-  "motivation_letter",
-  "statement_of_purpose",
-  "personal_statement",
-  "letter_of_intent",
-  "scholarship_essay",
-  "study_plan",
-  "research_interest",
-  "short_answer",
-  "custom_essay",
-] as const;
 const label = (x: string) =>
   x.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase());
 /**
@@ -88,9 +77,10 @@ const DEFAULT_GENERATION_DRAFT: Omit<
   operation: "generate_outline",
   instruction: "",
 };
-export function WritingLibrary() {
+export function WritingLibrary({ openCreate = false }: { openCreate?: boolean }) {
   const qc = useQueryClient();
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [creating, setCreating] = useState(openCreate);
   const q = useQuery({
     queryKey: ["writing", { includeArchived }],
     queryFn: () => writingApi.list(undefined, includeArchived),
@@ -113,10 +103,14 @@ export function WritingLibrary() {
             evidence.
           </p>
         </div>
-        <Link className="primary" to="/app/writing/new">
-          <FilePlus2 />
+        <button
+          type="button"
+          className="primary"
+          onClick={() => setCreating(true)}
+        >
+          <FilePlus2 aria-hidden="true" />
           New document
-        </Link>
+        </button>
       </header>
       <label className="writing-archive-filter">
         <input
@@ -164,184 +158,15 @@ export function WritingLibrary() {
           The document status could not be updated.
         </p>
       ) : null}
+      {creating ? (
+        <NewWritingDialog onClose={() => setCreating(false)} />
+      ) : null}
     </div>
   );
 }
+/** `/app/writing/new` predates the modal; it now opens the same dialog over the library. */
 export function NewWriting() {
-  const nav = useNavigate(),
-    qc = useQueryClient(),
-    [error, setError] = useState(""),
-    [documentType, setDocumentType] =
-      useState<(typeof types)[number]>("motivation_letter"),
-    [applicationType, setApplicationType] = useState("programme"),
-    [templateId, setTemplateId] = useState("");
-  const templates = useQuery({
-    queryKey: ["writing-templates", documentType, applicationType],
-    queryFn: () => writingApi.templates(documentType, applicationType),
-  });
-  const template = useQuery({
-    queryKey: ["writing-template", templateId],
-    queryFn: () => writingApi.template(templateId),
-    enabled: Boolean(templateId),
-  });
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const d = Object.fromEntries(new FormData(e.currentTarget));
-    try {
-      const x = await writingApi.create({
-        title: String(d.title),
-        document_type: documentType,
-        cv_mode:
-          documentType === "academic_cv"
-            ? (d.cv_mode as S["WritingDocumentCreate"]["cv_mode"])
-            : null,
-        prompt_text: String(d.prompt_text) || null,
-        word_limit: d.word_limit ? Number(d.word_limit) : null,
-        character_limit: d.character_limit ? Number(d.character_limit) : null,
-        template_id: templateId || null,
-        content: { text: "" },
-        target_requirements: {},
-        evidence_map: {},
-        theme: {},
-      });
-      qc.setQueryData(queryKeys.writingDocument(x.id), x);
-      for (const includeArchived of [false, true])
-        qc.setQueryData<S["WritingDocumentResponse"][]>(
-          ["writing", { includeArchived }],
-          (current) => [
-            x,
-            ...(current ?? []).filter((item) => item.id !== x.id),
-          ],
-        );
-      nav(`/app/writing/${x.id}`);
-    } catch (x) {
-      setError(x instanceof Error ? x.message : "Could not create document.");
-    }
-  }
-  return (
-    <div className="page">
-      <h1>New writing document</h1>
-      <form className="settings-form" onSubmit={submit}>
-        <label>
-          <span>Title</span>
-          <input
-            name="title"
-            required
-            minLength={2}
-            placeholder="e.g. Statement of Purpose — Oxford MSc"
-          />
-        </label>
-        <label>
-          <span>Application type</span>
-          <Select
-            ariaLabel="Application type"
-            value={applicationType}
-            onChange={(value) => setApplicationType(String(value))}
-            options={[
-              { value: "programme", label: "Programme" },
-              { value: "scholarship", label: "Scholarship" },
-              { value: "fellowship", label: "Fellowship" },
-              { value: "grant", label: "Grant" },
-            ]}
-          />
-        </label>
-        <label>
-          <span>Document type</span>
-          <Select
-            ariaLabel="Document type"
-            value={documentType}
-            onChange={(value) => {
-              setDocumentType(String(value) as typeof documentType);
-              setTemplateId("");
-            }}
-            options={types.map((value) => ({ value, label: label(value) }))}
-          />
-        </label>
-        {documentType === "academic_cv" ? (
-          <label>
-            <span>Academic CV mode</span>
-            <Select
-              ariaLabel="Academic CV mode"
-              name="cv_mode"
-              defaultValue="graduate"
-              options={[
-                { value: "graduate", label: "Graduate" },
-                { value: "scholarship", label: "Scholarship" },
-                { value: "research", label: "Research" },
-                { value: "phd", label: "PhD" },
-                { value: "undergraduate", label: "Undergraduate" },
-                { value: "internship", label: "Internship" },
-              ]}
-            />
-          </label>
-        ) : null}
-        <label>
-          <span>Template</span>
-          <Select
-            ariaLabel="Template"
-            value={templateId}
-            disabled={templates.isPending}
-            onChange={(value) => setTemplateId(String(value))}
-            options={[
-              { value: "", label: "Start without a template" },
-              ...(templates.data ?? []).map((item) => ({
-                value: item.id,
-                label: item.name,
-              })),
-            ]}
-          />
-        </label>
-        {template.data ? (
-          <section className="template-preview">
-            <strong>{template.data.name}</strong>
-            <p>{template.data.description}</p>
-            <ol>
-              {template.data.sections.map((section) => (
-                <li key={section.key}>
-                  {section.label}
-                  <small>{section.guidance}</small>
-                </li>
-              ))}
-            </ol>
-          </section>
-        ) : null}
-        <label>
-          <span>Prompt or question</span>
-          <textarea
-            name="prompt_text"
-            rows={4}
-            placeholder="Paste the essay prompt or question here..."
-          />
-        </label>
-        <div className="form-row-2">
-          <label>
-            <span>Word limit</span>
-            <input
-              name="word_limit"
-              type="number"
-              min={1}
-              max={20000}
-              placeholder="e.g. 500"
-            />
-          </label>
-          <label>
-            <span>Character limit</span>
-            <input
-              name="character_limit"
-              type="number"
-              min={1}
-              max={100000}
-              placeholder="e.g. 3000"
-            />
-          </label>
-        </div>
-        {error ? <p role="alert">{error}</p> : null}
-        <div className="form-actions">
-          <button className="primary">Create document</button>
-        </div>
-      </form>
-    </div>
-  );
+  return <WritingLibrary openCreate />;
 }
 /** Save state as a badge: unsaved edits, in-flight save, saved, or the failure reason. */
 function SaveState({ dirty, status }: { dirty: boolean; status: string }) {
