@@ -4,6 +4,7 @@ import {
   Copy,
   Eye,
   FilePlus2,
+  Gauge,
   History,
   MessageCircle,
   Share2,
@@ -34,6 +35,7 @@ import {
   type AcademicProfileRequirement,
 } from "./generationProfileRequirement";
 import { TrixField } from "./TrixField";
+import { QualityAnalysisDialog } from "./QualityAnalysisDialog";
 import {
   contentToHtml,
   countText,
@@ -366,7 +368,9 @@ export function WritingEditor() {
     [font, setFont] = useState<FontKey>(DEFAULT_FONT),
     [dirty, setDirty] = useState(false),
     [status, setStatus] = useState("Saved"),
-    [quality, setQuality] = useState<Record<string, unknown> | null>(null),
+    [quality, setQuality] = useState<S["QualityAnalysisResponse"] | null>(null),
+    [analyzing, setAnalyzing] = useState(false),
+    [analyzeError, setAnalyzeError] = useState(""),
     [activeRunId, setActiveRunId] = useState(""),
     [showPreview, setShowPreview] = useState(false),
     [showReview, setShowReview] = useState(false),
@@ -448,13 +452,16 @@ export function WritingEditor() {
     }
   }
   async function analyze() {
-    const r = await writingApi.analyze(id);
-    setQuality({
-      scores: r.scores,
-      findings: r.findings,
-      claims: r.claim_warnings,
-    });
-    void analyses.refetch();
+    setAnalyzing(true);
+    setAnalyzeError("");
+    try {
+      setQuality(await writingApi.analyze(id));
+      void analyses.refetch();
+    } catch {
+      setAnalyzeError("The analysis could not be completed. Try again.");
+    } finally {
+      setAnalyzing(false);
+    }
   }
   async function generate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -548,7 +555,10 @@ export function WritingEditor() {
             <MessageCircle />
             Review
           </button>
-          <button onClick={analyze}>Analyze quality</button>
+          <button onClick={analyze} disabled={analyzing}>
+            <Gauge />
+            {analyzing ? "Analyzing…" : "Analyze quality"}
+          </button>
           <button onClick={save} disabled={!dirty}>
             Save
           </button>
@@ -811,27 +821,16 @@ export function WritingEditor() {
               will verify entitlement again.
             </p>
           ) : null}
-          {quality ? (
-            <section className="quality">
-              <h2>Quality analysis</h2>
-              <ObjectView value={quality} />
-              <strong>Guidance only — not an admission guarantee.</strong>
-            </section>
+          {analyzeError ? (
+            <p className="form-error" role="alert">
+              {analyzeError}
+            </p>
           ) : null}
           {analyses.data?.items.length ? (
             <details>
               <summary>Analysis history ({analyses.data.items.length})</summary>
               {analyses.data.items.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() =>
-                    setQuality({
-                      scores: item.scores,
-                      findings: item.findings,
-                      claims: item.claim_warnings,
-                    })
-                  }
-                >
+                <button key={item.id} onClick={() => setQuality(item)}>
                   {new Intl.DateTimeFormat(undefined, {
                     dateStyle: "medium",
                     timeStyle: "short",
@@ -869,6 +868,12 @@ export function WritingEditor() {
       ) : null}
       {showReview ? (
         <WritingReview documentId={id} revisions={revisions.data ?? []} />
+      ) : null}
+      {quality ? (
+        <QualityAnalysisDialog
+          analysis={quality}
+          onClose={() => setQuality(null)}
+        />
       ) : null}
       {profileRequirement ? (
         <ConfirmationDialog
@@ -1197,30 +1202,4 @@ function WritingReview({
       </aside>
     </section>
   );
-}
-function ObjectView({ value }: { value: unknown }) {
-  if (Array.isArray(value))
-    return (
-      <ul>
-        {value.map((x, i) => (
-          <li key={i}>
-            <ObjectView value={x} />
-          </li>
-        ))}
-      </ul>
-    );
-  if (value && typeof value === "object")
-    return (
-      <dl>
-        {Object.entries(value as Record<string, unknown>).map(([k, v]) => (
-          <div key={k}>
-            <dt>{label(k)}</dt>
-            <dd>
-              <ObjectView value={v} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    );
-  return <>{String(value ?? "Not provided")}</>;
 }
