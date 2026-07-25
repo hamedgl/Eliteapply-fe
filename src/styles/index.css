@@ -1643,7 +1643,12 @@ th {
   height: 1rem;
   flex: none;
 }
-.writing-editor > header > div:last-child > button:has(> svg:only-child) {
+/*
+ * Icon-only buttons are marked explicitly: `svg:only-child` matches labelled
+ * buttons too, because a bare text label is not an element child — that squeezed
+ * "Preview"/"Review"/"Analyze quality" into 42px squares.
+ */
+.writing-editor > header > div:last-child > button.icon-only {
   width: 42px;
   padding: 0;
 }

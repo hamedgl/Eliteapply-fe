@@ -576,6 +576,7 @@ export function WritingEditor() {
             ]}
           />
           <button
+            className="icon-only"
             aria-label="Duplicate document"
             onClick={async () => {
               const next = await writingApi.duplicate(id, {
@@ -588,6 +589,7 @@ export function WritingEditor() {
             <Copy />
           </button>
           <button
+            className="icon-only"
             aria-label="Delete document"
             onClick={async () => {
               if (
