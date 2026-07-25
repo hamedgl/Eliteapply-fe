@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload, X } from "lucide-react";
+import { FileText, Upload, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { writingApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
@@ -32,10 +32,18 @@ const IMPORT_FILE_TYPES =
 /** Matches the server's own limit, so an oversized file fails before the upload. */
 const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 
+type Source = "blank" | "import";
+
+/**
+ * Rendered as a positioned div rather than a native `<dialog>`: `showModal()`
+ * puts the dialog in the top layer, where the Select's portalled popover —
+ * appended to `document.body` — paints underneath it and looks like a dropdown
+ * that does not open.
+ */
 export function NewWritingDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [source, setSource] = useState<Source>("blank");
   const [error, setError] = useState("");
   const [documentType, setDocumentType] =
     useState<(typeof types)[number]>("motivation_letter");
@@ -48,9 +56,12 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
   } | null>(null);
 
   useEffect(() => {
-    const node = dialogRef.current;
-    if (node && !node.open) node.showModal();
-  }, []);
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    addEventListener("keydown", close);
+    return () => removeEventListener("keydown", close);
+  }, [onClose]);
 
   const templates = useQuery({
     queryKey: ["writing-templates", documentType, applicationType],
@@ -73,7 +84,8 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
         return;
       }
       setImported({ name: file.name, result });
-      if (!title.trim()) setTitle(result.title || file.name.replace(/\.[^.]+$/, ""));
+      if (!title.trim())
+        setTitle(result.title || file.name.replace(/\.[^.]+$/, ""));
     },
     onError: (cause) =>
       setError(
@@ -105,9 +117,9 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
         character_limit: values.character_limit
           ? Number(values.character_limit)
           : null,
-        template_id: templateId || null,
+        template_id: source === "blank" ? templateId || null : null,
         // Imported text is stored as plain text; the editor converts it to blocks.
-        content: { text: imported?.result.text ?? "" },
+        content: { text: source === "import" ? (imported?.result.text ?? "") : "" },
         target_requirements: {},
         evidence_map: {},
         theme: {},
@@ -134,209 +146,259 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    if (source === "import" && !imported) {
+      setError("Choose a file to import, or switch to Blank or template.");
+      return;
+    }
     create.mutate(event.currentTarget);
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="apps-dialog writing-new-dialog"
-      aria-labelledby="new-writing-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-    >
-      <header>
-        <div>
-          <h2 id="new-writing-title">New writing document</h2>
-          <p className="apps-dialog-subtext">
-            Start from a template, a blank page, or a draft you already have.
-          </p>
-        </div>
-        <button type="button" onClick={onClose} aria-label="Close">
-          <X aria-hidden="true" />
-        </button>
-      </header>
-      <form className="settings-form" onSubmit={submit}>
-        <label>
-          <span>Title</span>
-          <input
-            name="title"
-            required
-            minLength={2}
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="e.g. Statement of Purpose — Oxford MSc"
-          />
-        </label>
-        <div className="form-row-2">
-          <label>
-            <span>Application type</span>
-            <Select
-              ariaLabel="Application type"
-              value={applicationType}
-              onChange={(value) => setApplicationType(String(value))}
-              options={[
-                { value: "programme", label: "Programme" },
-                { value: "scholarship", label: "Scholarship" },
-                { value: "fellowship", label: "Fellowship" },
-                { value: "grant", label: "Grant" },
-              ]}
-            />
-          </label>
-          <label>
-            <span>Document type</span>
-            <Select
-              ariaLabel="Document type"
-              value={documentType}
-              onChange={(value) => {
-                setDocumentType(String(value) as typeof documentType);
-                setTemplateId("");
+    <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="apps-dialog writing-new-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-writing-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="apps-dialog-header">
+          <div>
+            <h2 id="new-writing-title">New writing document</h2>
+            <p className="apps-dialog-subtext">
+              Start from a template, a blank page, or a draft you already have.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close">
+            <X aria-hidden="true" />
+          </button>
+        </header>
+
+        <nav className="detail-tabs" aria-label="Document source" role="tablist">
+          {(
+            [
+              { id: "blank", label: "Blank or template", icon: FileText },
+              { id: "import", label: "Import a file", icon: Upload },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={`new-writing-tab-${tab.id}`}
+              aria-selected={source === tab.id}
+              aria-controls={`new-writing-panel-${tab.id}`}
+              className={source === tab.id ? "active" : undefined}
+              onClick={() => {
+                setSource(tab.id);
+                setError("");
               }}
-              options={types.map((value) => ({ value, label: label(value) }))}
-            />
-          </label>
-        </div>
-        {documentType === "academic_cv" ? (
-          <label>
-            <span>Academic CV mode</span>
-            <Select
-              ariaLabel="Academic CV mode"
-              name="cv_mode"
-              defaultValue="graduate"
-              options={[
-                { value: "graduate", label: "Graduate" },
-                { value: "scholarship", label: "Scholarship" },
-                { value: "research", label: "Research" },
-                { value: "phd", label: "PhD" },
-                { value: "undergraduate", label: "Undergraduate" },
-                { value: "internship", label: "Internship" },
-              ]}
-            />
-          </label>
-        ) : null}
-        <label>
-          <span>Template</span>
-          <Select
-            ariaLabel="Template"
-            value={templateId}
-            disabled={templates.isPending}
-            onChange={(value) => setTemplateId(String(value))}
-            options={[
-              { value: "", label: "Start without a template" },
-              ...(templates.data ?? []).map((item) => ({
-                value: item.id,
-                label: item.name,
-              })),
-            ]}
-          />
-        </label>
-        {template.data ? (
-          <section className="template-preview">
-            <strong>{template.data.name}</strong>
-            <p>{template.data.description}</p>
-            <ol>
-              {template.data.sections.map((section) => (
-                <li key={section.key}>
-                  {section.label}
-                  <small>{section.guidance}</small>
-                </li>
-              ))}
-            </ol>
-          </section>
-        ) : null}
-        <div className="writing-import">
-          <label className="writing-import-drop">
-            <Upload aria-hidden="true" />
-            <span>
-              <strong>
-                {importFile.isPending
-                  ? "Reading your file…"
-                  : imported
-                    ? `Imported ${imported.name}`
-                    : "Import a draft"}
-              </strong>
-              <small>
-                {imported
-                  ? `${imported.result.word_count} words will open in the editor`
-                  : "PDF, Word, plain text or Markdown"}
-              </small>
-            </span>
-            <input
-              type="file"
-              accept={IMPORT_FILE_TYPES}
-              disabled={importFile.isPending}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) selectFile(file);
-                event.target.value = "";
-              }}
-            />
-          </label>
-          {imported ? (
-            <button type="button" onClick={() => setImported(null)}>
-              Remove
+            >
+              <tab.icon aria-hidden="true" />
+              {tab.label}
             </button>
+          ))}
+        </nav>
+
+        <form className="settings-form" onSubmit={submit}>
+          <label>
+            <span>Title</span>
+            <input
+              name="title"
+              required
+              minLength={2}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. Statement of Purpose — Oxford MSc"
+            />
+          </label>
+          <div className="form-row-2">
+            <label>
+              <span>Application type</span>
+              <Select
+                ariaLabel="Application type"
+                value={applicationType}
+                onChange={(value) => setApplicationType(String(value))}
+                options={[
+                  { value: "programme", label: "Programme" },
+                  { value: "scholarship", label: "Scholarship" },
+                  { value: "fellowship", label: "Fellowship" },
+                  { value: "grant", label: "Grant" },
+                ]}
+              />
+            </label>
+            <label>
+              <span>Document type</span>
+              <Select
+                ariaLabel="Document type"
+                value={documentType}
+                onChange={(value) => {
+                  setDocumentType(String(value) as typeof documentType);
+                  setTemplateId("");
+                }}
+                options={types.map((value) => ({ value, label: label(value) }))}
+              />
+            </label>
+          </div>
+          {documentType === "academic_cv" ? (
+            <label>
+              <span>Academic CV mode</span>
+              <Select
+                ariaLabel="Academic CV mode"
+                name="cv_mode"
+                defaultValue="graduate"
+                options={[
+                  { value: "graduate", label: "Graduate" },
+                  { value: "scholarship", label: "Scholarship" },
+                  { value: "research", label: "Research" },
+                  { value: "phd", label: "PhD" },
+                  { value: "undergraduate", label: "Undergraduate" },
+                  { value: "internship", label: "Internship" },
+                ]}
+              />
+            </label>
           ) : null}
-        </div>
-        {imported?.result.truncated ? (
-          <p className="apps-notice is-warning">
-            Only the first part of this file fits in one document — the rest was
-            left out.
-          </p>
-        ) : null}
-        {imported?.result.warnings?.length ? (
-          <ul className="writing-import-warnings">
-            {imported.result.warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        ) : null}
-        <label>
-          <span>Prompt or question</span>
-          <textarea
-            name="prompt_text"
-            rows={3}
-            placeholder="Paste the essay prompt or question here..."
-          />
-        </label>
-        <div className="form-row-2">
+
+          {source === "blank" ? (
+            <div
+              className="new-writing-panel"
+              role="tabpanel"
+              id="new-writing-panel-blank"
+              aria-labelledby="new-writing-tab-blank"
+            >
+              <label>
+                <span>Template</span>
+                <Select
+                  ariaLabel="Template"
+                  value={templateId}
+                  disabled={templates.isPending}
+                  onChange={(value) => setTemplateId(String(value))}
+                  options={[
+                    { value: "", label: "Start without a template" },
+                    ...(templates.data ?? []).map((item) => ({
+                      value: item.id,
+                      label: item.name,
+                    })),
+                  ]}
+                />
+              </label>
+              {template.data ? (
+                <section className="template-preview">
+                  <strong>{template.data.name}</strong>
+                  <p>{template.data.description}</p>
+                  <ol>
+                    {template.data.sections.map((section) => (
+                      <li key={section.key}>
+                        {section.label}
+                        <small>{section.guidance}</small>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : null}
+            </div>
+          ) : (
+            <div
+              className="new-writing-panel"
+              role="tabpanel"
+              id="new-writing-panel-import"
+              aria-labelledby="new-writing-tab-import"
+            >
+              <div className="writing-import">
+                <label className="writing-import-drop">
+                  <Upload aria-hidden="true" />
+                  <span>
+                    <strong>
+                      {importFile.isPending
+                        ? "Reading your file…"
+                        : imported
+                          ? `Imported ${imported.name}`
+                          : "Choose a file"}
+                    </strong>
+                    <small>
+                      {imported
+                        ? `${imported.result.word_count} words will open in the editor`
+                        : "PDF, Word, plain text or Markdown · up to 10 MB"}
+                    </small>
+                  </span>
+                  <input
+                    type="file"
+                    accept={IMPORT_FILE_TYPES}
+                    disabled={importFile.isPending}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) selectFile(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {imported ? (
+                  <button type="button" onClick={() => setImported(null)}>
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+              {imported?.result.truncated ? (
+                <p className="apps-notice is-warning">
+                  Only the first part of this file fits in one document — the
+                  rest was left out.
+                </p>
+              ) : null}
+              {imported?.result.warnings?.length ? (
+                <ul className="writing-import-warnings">
+                  {imported.result.warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          )}
+
           <label>
-            <span>Word limit</span>
-            <input
-              name="word_limit"
-              type="number"
-              min={1}
-              max={20000}
-              placeholder="e.g. 500"
+            <span>Prompt or question</span>
+            <textarea
+              name="prompt_text"
+              rows={3}
+              placeholder="Paste the essay prompt or question here..."
             />
           </label>
-          <label>
-            <span>Character limit</span>
-            <input
-              name="character_limit"
-              type="number"
-              min={1}
-              max={100000}
-              placeholder="e.g. 3000"
-            />
-          </label>
-        </div>
-        {error ? (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <div className="dialog-actions">
-          <button type="button" onClick={onClose} disabled={create.isPending}>
-            Cancel
-          </button>
-          <button className="primary" disabled={create.isPending}>
-            {create.isPending ? "Creating…" : "Create document"}
-          </button>
-        </div>
-      </form>
-    </dialog>
+          <div className="form-row-2">
+            <label>
+              <span>Word limit</span>
+              <input
+                name="word_limit"
+                type="number"
+                min={1}
+                max={20000}
+                placeholder="e.g. 500"
+              />
+            </label>
+            <label>
+              <span>Character limit</span>
+              <input
+                name="character_limit"
+                type="number"
+                min={1}
+                max={100000}
+                placeholder="e.g. 3000"
+              />
+            </label>
+          </div>
+          {error ? (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="dialog-actions">
+            <button type="button" onClick={onClose} disabled={create.isPending}>
+              Cancel
+            </button>
+            <button className="primary" disabled={create.isPending}>
+              {create.isPending ? "Creating…" : "Create document"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

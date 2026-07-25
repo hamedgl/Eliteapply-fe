@@ -37,8 +37,11 @@ function renderDialog() {
   );
 }
 
-const fileInput = (container: HTMLElement) =>
-  container.querySelector('input[type="file"]') as HTMLInputElement;
+/** The file input lives on its own tab, so every test opens it first. */
+async function openImportTab(container: HTMLElement) {
+  await userEvent.click(screen.getByRole("tab", { name: /Import a file/ }));
+  return container.querySelector('input[type="file"]') as HTMLInputElement;
+}
 
 const pdf = (name = "Oxford SOP.pdf", size = 2048) => {
   const file = new File(["%PDF-1.7"], name, { type: "application/pdf" });
@@ -59,7 +62,7 @@ describe("NewWritingDialog import", () => {
     });
     const { container } = renderDialog();
 
-    await userEvent.upload(fileInput(container), pdf());
+    await userEvent.upload(await openImportTab(container), pdf());
 
     await waitFor(() =>
       expect(screen.getByText("Imported Oxford SOP.pdf")).toBeInTheDocument(),
@@ -86,7 +89,7 @@ describe("NewWritingDialog import", () => {
     });
     const { container } = renderDialog();
 
-    await userEvent.upload(fileInput(container), pdf("Long draft.pdf"));
+    await userEvent.upload(await openImportTab(container), pdf("Long draft.pdf"));
 
     await waitFor(() =>
       expect(screen.getByText(/left out/)).toBeInTheDocument(),
@@ -110,7 +113,7 @@ describe("NewWritingDialog import", () => {
     });
     const { container } = renderDialog();
 
-    await userEvent.upload(fileInput(container), pdf("Scan.pdf"));
+    await userEvent.upload(await openImportTab(container), pdf("Scan.pdf"));
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(
@@ -119,11 +122,36 @@ describe("NewWritingDialog import", () => {
     );
   });
 
+  it("keeps template and import on separate tabs", async () => {
+    const { container } = renderDialog();
+
+    // Blank tab: template picker, no file input.
+    expect(screen.getByLabelText("Template")).toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+
+    await openImportTab(container);
+
+    expect(screen.queryByLabelText("Template")).not.toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).toBeInTheDocument();
+  });
+
+  it("will not create an empty document from the import tab", async () => {
+    const { container } = renderDialog();
+    await openImportTab(container);
+
+    await userEvent.type(screen.getByLabelText("Title"), "Draft");
+    await userEvent.click(screen.getByRole("button", { name: "Create document" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("Choose a file"),
+    );
+  });
+
   it("rejects a file over the size cap without uploading it", async () => {
     const { container } = renderDialog();
 
     await userEvent.upload(
-      fileInput(container),
+      await openImportTab(container),
       pdf("huge.pdf", 11 * 1024 * 1024),
     );
 
