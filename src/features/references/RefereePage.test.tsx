@@ -61,7 +61,7 @@ describe("RefereePage", () => {
     );
 
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Professor Example" } });
-    fireEvent.change(screen.getByLabelText("How long have you known the applicant?"), { target: { value: "Two years" } });
+    fireEvent.change(screen.getByLabelText(/How long have you known the applicant/), { target: { value: "Two years" } });
     fireEvent.change(screen.getByLabelText(/Potential conflict of interest/), { target: { value: "None" } });
     fireEvent.change(screen.getByLabelText("Signature name"), { target: { value: "Professor Example" } });
     fireEvent.click(screen.getByLabelText("I confirm the stated relationship."));
@@ -85,7 +85,7 @@ describe("RefereePage", () => {
   it("keeps AI polish as a reviewable suggestion before submission", async () => {
     const original = "I supervised this applicant during a demanding research project. ".repeat(2);
     const polished = "I supervised the applicant throughout a demanding research project. ".repeat(2);
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith("/polish")) return Response.json({ polished_content: polished });
       return Response.json({
@@ -121,9 +121,17 @@ describe("RefereePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue securely" }));
     const editor = await screen.findByLabelText("Final reference");
     fireEvent.change(editor, { target: { value: original } });
+    expect(screen.getByRole("button", { name: "Polish with AI" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/How long have you known the applicant/), {
+      target: { value: "Three years" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Polish with AI" }));
 
     expect(await screen.findByLabelText("Polished reference suggestion")).toHaveValue(polished);
+    const polishCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith("/polish"));
+    expect(JSON.parse(String(polishCall?.[1]?.body))).toMatchObject({
+      relationship_duration: "Three years",
+    });
     expect(editor).toHaveValue(original);
     fireEvent.click(screen.getByRole("button", { name: "Use suggestion" }));
     expect(editor).toHaveValue(polished);

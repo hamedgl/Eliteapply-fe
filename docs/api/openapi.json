@@ -15740,6 +15740,59 @@
         ],
         "title": "ApplicationExportResponse"
       },
+      "ApplicationLinkedResourceResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "reference",
+              "writing_document",
+              "story",
+              "interview",
+              "reminder"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "status",
+          "updated_at"
+        ],
+        "title": "ApplicationLinkedResourceResponse"
+      },
       "ApplicationListResponse": {
         "properties": {
           "items": {
@@ -16350,6 +16403,13 @@
             "type": "array",
             "title": "Document Links"
           },
+          "linked_resources": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationLinkedResourceResponse"
+            },
+            "type": "array",
+            "title": "Linked Resources"
+          },
           "history": {
             "items": {
               "$ref": "#/components/schemas/ActivityEventResponse"
@@ -16391,6 +16451,7 @@
           "requirements",
           "tasks",
           "document_links",
+          "linked_resources",
           "history",
           "readiness"
         ],
@@ -22153,11 +22214,18 @@
             "maxLength": 100000,
             "minLength": 50,
             "title": "Content"
+          },
+          "relationship_duration": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Relationship Duration"
           }
         },
         "type": "object",
         "required": [
-          "content"
+          "content",
+          "relationship_duration"
         ],
         "title": "RefereePolishRequest"
       },

@@ -355,7 +355,7 @@ const previewConnections = [
   [
     Users,
     "References",
-    "Track requests, due dates and follow-up without exposing confidential content.",
+    "Track requests, due dates and follow-up from one workspace.",
   ],
 ] as const;
 
@@ -685,7 +685,7 @@ export function LandingPage() {
           id="reference-tracking"
           label="Scholarship reference tracker"
           title="Track reference requirements before they become last-minute emergencies."
-          description="Keep the referee, requirement, request status, due date, follow-up state and supporting context visible without exposing confidential final content."
+          description="Keep the referee, requirement, request status, due date, follow-up state and supporting context visible in one place."
           points={[
             "Request and confirmation status",
             "Due dates and follow-up state",
@@ -2831,7 +2831,7 @@ function ReferencesCapabilityPreview() {
           >
             <span style={{ fontSize: "0.75rem", color: "var(--m-muted)" }}>
               {selectedRef.status === "Confirmed"
-                ? "✓ Reference is signed and uploaded confidentially."
+                ? "✓ Reference is confirmed and ready."
                 : selectedRef.status === "Follow-up due"
                   ? "⚠️ Overdue for follow-up message."
                   : "Request portal is active."}

@@ -153,7 +153,7 @@ export const featurePages: readonly FeaturePageConfig[] = [
       "Keep request and confirmation status visible",
       "Share relevant context without exposing unrelated application work",
       "Plan respectful follow-up around the real due date",
-      "Preserve confidentiality boundaries when a reference is private",
+      "Keep each request linked to the correct application and requirement",
     ],
     workflow: [
       ["Confirm the requirement", "Check the required referee type, format and submission route."],
@@ -165,12 +165,12 @@ export const featurePages: readonly FeaturePageConfig[] = [
       "Tracks reference requests and status",
       "Stores supporting context for the request",
       "Keeps due dates and follow-up visible",
-      "Supports confidential reference workflows",
+      "Supports referee-written and uploaded reference workflows",
     ],
     doesNot: [
       "Verify the truth of a reference",
       "Guarantee a referee will respond",
-      "Reveal confidential final content",
+      "Submit references directly to scholarship providers",
       "Replace the scholarship provider's submission system",
     ],
     guidePaths: [

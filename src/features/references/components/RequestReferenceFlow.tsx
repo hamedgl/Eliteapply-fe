@@ -35,8 +35,6 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
   const [studentDraft, setStudentDraft] = useState("");
   const [existingDocumentId, setExistingDocumentId] = useState("");
   const [destinations, setDestinations] = useState("");
-  const [confidential, setConfidential] = useState(false);
-  const [confidentialityAcknowledged, setConfidentialityAcknowledged] = useState(false);
 
   const documents = useQuery({
     queryKey: queryKeys.documents,
@@ -52,8 +50,8 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
         mutation_id: mutationId.current,
         application_id: applicationId,
         mode,
-        confidential,
-        confidentiality_acknowledged: confidentialityAcknowledged,
+        confidential: false,
+        confidentiality_acknowledged: false,
         referee_name: refereeName,
         referee_email: refereeEmail,
         referee_role: refereeRole,
@@ -87,13 +85,11 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
     Boolean(applicationId) &&
     (mode !== "student_draft" || studentDraft.trim().length >= 50) &&
     (mode !== "existing_upload" || Boolean(existingDocumentId)) &&
-    (!confidential || confidentialityAcknowledged) &&
     expiresInDaysValid;
   const canAdvance = [step1Valid, step2Valid, step3Valid, true][step];
 
-  const visibilityPreview = confidential
-    ? "The student will see request status and timeline, but not the final reference content."
-    : mode === "existing_upload"
+  const visibilityPreview =
+    mode === "existing_upload"
       ? "The student can already see the uploaded document — it's their own file."
       : "The student will be able to review the final reference content once submitted.";
 
@@ -254,20 +250,6 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               rows={2}
             />
           </label>
-          <label className="check">
-            <input type="checkbox" checked={confidential} onChange={(event) => setConfidential(event.target.checked)} />
-            This is a confidential reference.
-          </label>
-          {confidential ? (
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={confidentialityAcknowledged}
-                onChange={(event) => setConfidentialityAcknowledged(event.target.checked)}
-              />
-              I understand the final content may not be visible to me.
-            </label>
-          ) : null}
         </section>
       ) : null}
 
@@ -292,10 +274,6 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
             <div>
               <dt>Type</dt>
               <dd>{referenceTypeLabel(referenceType)}</dd>
-            </div>
-            <div>
-              <dt>Privacy mode</dt>
-              <dd>{confidential ? "Confidential" : "Visible to student"}</dd>
             </div>
             <div>
               <dt>Due</dt>

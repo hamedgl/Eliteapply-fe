@@ -64,6 +64,7 @@ const workspace = {
   requirements: [requirement],
   tasks: [task],
   document_links: [],
+  linked_resources: [],
   history: [],
   readiness: {
     application_id: applicationId,
@@ -230,6 +231,11 @@ describe("resolveWorkspaceTab", () => {
     expect(resolveWorkspaceTab("checklist")).toBe("requirements");
     expect(resolveWorkspaceTab("docs")).toBe("documents");
     expect(resolveWorkspaceTab("todos")).toBe("tasks");
+    expect(resolveWorkspaceTab("references")).toBe("linked");
+    expect(resolveWorkspaceTab("writing")).toBe("linked");
+    expect(resolveWorkspaceTab("stories")).toBe("linked");
+    expect(resolveWorkspaceTab("interviews")).toBe("linked");
+    expect(resolveWorkspaceTab("reminders")).toBe("linked");
     expect(resolveWorkspaceTab("details")).toBe("overview");
     expect(resolveWorkspaceTab("unknown_tab_name")).toBe("overview");
     expect(resolveWorkspaceTab(null)).toBe("overview");

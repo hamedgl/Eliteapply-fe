@@ -73,11 +73,13 @@ import type { components } from "../../generated/api/schema";
 import "../../styles/workspace.css";
 
 type S = components["schemas"];
+type LinkedResource = S["ApplicationLinkedResourceResponse"];
 export type Tab =
   | "overview"
   | "requirements"
   | "tasks"
   | "documents"
+  | "linked"
   | "eligibility"
   | "collaborators"
   | "activity";
@@ -87,6 +89,7 @@ export const TABS: Tab[] = [
   "requirements",
   "tasks",
   "documents",
+  "linked",
   "eligibility",
   "collaborators",
   "activity",
@@ -106,6 +109,13 @@ export const TAB_ALIASES: Record<string, Tab> = {
   files: "documents",
   attachment: "documents",
   attachments: "documents",
+  reference: "linked",
+  references: "linked",
+  writing: "linked",
+  stories: "linked",
+  interviews: "linked",
+  reminders: "linked",
+  resources: "linked",
   eligibility_check: "eligibility",
   recommendation: "eligibility",
   recommendations: "eligibility",
@@ -320,6 +330,7 @@ export function ApplicationWorkspace() {
       w.counts?.open_tasks ??
       w.tasks.filter((item) => !TASK_DONE.has(item.status)).length,
     documents: w.counts?.documents ?? w.document_links.length,
+    linked: w.counts?.linked_resources ?? w.linked_resources?.length ?? 0,
     collaborators: w.counts?.collaborators ?? collaboratorItems.length,
   };
   const openTab = (tab: Tab, additions?: Record<string, string>) => {
@@ -509,6 +520,9 @@ export function ApplicationWorkspace() {
             onToast={setToast}
           />
         ) : null}
+        {activeTab === "linked" ? (
+          <LinkedResourcesTab items={w.linked_resources ?? []} />
+        ) : null}
         {activeTab === "eligibility" ? (
           <EligibilityTab applicationId={id} onToast={setToast} />
         ) : null}
@@ -638,6 +652,7 @@ function OverviewTab({
   onOpen: (tab: Tab) => void;
 }) {
   const { application, requirements, tasks, document_links: links } = workspace;
+  const linkedResources = workspace.linked_resources ?? [];
   const needsAttention = requirements.filter(
     (item) => item.required && !REQUIREMENT_DONE.has(item.status),
   );
@@ -846,6 +861,36 @@ function OverviewTab({
             )}
           </section>
         </div>
+
+        <section className="detail-section">
+          <SectionHeading
+            title="Linked resources"
+            action={
+              <button type="button" onClick={() => onOpen("linked")}>
+                View all
+              </button>
+            }
+          />
+          {linkedResources.length ? (
+            <ul className="detail-compact-list">
+              {linkedResources.slice(0, 5).map((item) => (
+                <li key={`${item.kind}-${item.id}`}>
+                  {linkedResourceIcon(item.kind)}
+                  <span>
+                    <Link to={linkedResourceHref(item)}>{item.title}</Link>
+                    <small>
+                      {linkedResourceKindLabel(item.kind)} · {label(item.status)}
+                    </small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="detail-muted-copy">
+              No references, writing, stories, interviews or reminders are linked.
+            </p>
+          )}
+        </section>
       </div>
 
       <aside className="detail-readiness-panel">
@@ -923,6 +968,99 @@ function OverviewTab({
       </aside>
     </div>
   );
+}
+
+function LinkedResourcesTab({ items }: { items: LinkedResource[] }) {
+  return (
+    <section className="detail-section detail-resource-section">
+      <ResourceHeader
+        title="Linked resources"
+        description="References, writing, stories, interviews and reminders connected to this application."
+      />
+      <div className="detail-summary-chips">
+        {(
+          [
+            "reference",
+            "writing_document",
+            "story",
+            "interview",
+            "reminder",
+          ] as const
+        ).map((kind) => (
+          <SummaryChip
+            key={kind}
+            label={linkedResourceKindLabel(kind)}
+            value={items.filter((item) => item.kind === kind).length}
+          />
+        ))}
+      </div>
+      {items.length ? (
+        <div className="detail-data-list">
+          {items.map((item) => (
+            <article
+              className="detail-data-row"
+              key={`${item.kind}-${item.id}`}
+            >
+              <div className="detail-file-icon">
+                {linkedResourceIcon(item.kind)}
+              </div>
+              <div className="detail-row-main">
+                <div className="detail-row-title">
+                  <strong>{item.title}</strong>
+                  <StatusBadge tone="neutral">{label(item.status)}</StatusBadge>
+                </div>
+                <div className="detail-row-meta">
+                  <span>{linkedResourceKindLabel(item.kind)}</span>
+                  {item.detail ? <span>{item.detail}</span> : null}
+                  <span>{formatDate(item.updated_at)}</span>
+                </div>
+              </div>
+              <div className="detail-row-actions">
+                <Link to={linkedResourceHref(item)}>Open</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Link2}
+          heading="No linked resources yet"
+          description="References, writing, stories, interviews and reminders connected to this application will appear here."
+        />
+      )}
+    </section>
+  );
+}
+
+function linkedResourceKindLabel(kind: LinkedResource["kind"]) {
+  return {
+    reference: "References",
+    writing_document: "Writing",
+    story: "Stories",
+    interview: "Interviews",
+    reminder: "Reminders",
+  }[kind];
+}
+
+function linkedResourceHref(item: LinkedResource) {
+  return {
+    reference: `/app/references/${item.id}`,
+    writing_document: `/app/writing/${item.id}`,
+    story: `/app/stories?id=${item.id}`,
+    interview: `/app/interviews/${item.id}`,
+    reminder: "/app/reminders",
+  }[item.kind];
+}
+
+function linkedResourceIcon(kind: LinkedResource["kind"]) {
+  const Icon = {
+    reference: Users,
+    writing_document: FileText,
+    story: ListChecks,
+    interview: Users,
+    reminder: CalendarClock,
+  }[kind];
+  return <Icon aria-hidden="true" />;
 }
 
 function RequirementsTab({

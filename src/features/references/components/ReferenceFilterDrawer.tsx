@@ -99,7 +99,7 @@ export function ReferenceFilterDrawer({
               />
             </label>
             <label>
-              Confidentiality mode
+              Content source
               <Select
                 value={filters.visibility}
                 onChange={(val: any) =>
@@ -108,7 +108,6 @@ export function ReferenceFilterDrawer({
                 options={[
                   { value: "", label: "Any" },
                   { value: "student_authored", label: "Student can review" },
-                  { value: "referee_confidential", label: "Referee confidential" },
                   { value: "uploaded_document", label: "Uploaded official reference" },
                 ]}
               />

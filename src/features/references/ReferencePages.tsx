@@ -242,7 +242,7 @@ export function ReferencesPage() {
     <div className="page apps-page">
       <PageHeader
         title="Academic references"
-        description="Request, track and verify references while respecting referee confidentiality."
+        description="Request, track, verify and download academic references in one place."
         meta={`${filtered.length} reference${filtered.length === 1 ? "" : "s"}`}
         actions={
           <button type="button" className="primary" onClick={() => setRequesting(true)}>
@@ -659,6 +659,7 @@ export function RefereePage() {
   const [letter, setLetter] = useState("");
   const [polishSuggestion, setPolishSuggestion] = useState("");
   const [polishing, setPolishing] = useState(false);
+  const [relationshipDuration, setRelationshipDuration] = useState("");
 
   async function unlock() {
     if (unlocking) return;
@@ -689,11 +690,14 @@ export function RefereePage() {
   }
 
   async function polishLetter() {
-    if (polishing || letter.trim().length < 50) return;
+    if (polishing || letter.trim().length < 50 || !relationshipDuration.trim()) return;
     setPolishing(true);
     setError("");
     try {
-      const result = await referencesApi.refereePolish(token, code, { content: letter });
+      const result = await referencesApi.refereePolish(token, code, {
+        content: letter,
+        relationship_duration: relationshipDuration.trim(),
+      });
       setPolishSuggestion(result.polished_content);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "AI polish is unavailable. Your draft is unchanged.");
@@ -871,7 +875,16 @@ export function RefereePage() {
           </section>
           {decision === "approve" ? (
             <>
-              <label>How long have you known the applicant?<input name="relationship_duration" required /></label>
+              <label>
+                How long have you known the applicant?
+                <input
+                  name="relationship_duration"
+                  value={relationshipDuration}
+                  onChange={(event) => setRelationshipDuration(event.target.value)}
+                  required
+                />
+                <span className="field-help">Enter this before using AI polish so duration placeholders can be filled accurately.</span>
+              </label>
               {request.mode !== "existing_upload" ? (
                 <section className="reference-letter-editor" aria-labelledby="reference-letter-heading">
                   <div className="reference-letter-heading">
@@ -881,7 +894,15 @@ export function RefereePage() {
                       </h2>
                       <p>The final letter remains fully editable until you submit it.</p>
                     </div>
-                    <button type="button" onClick={polishLetter} disabled={polishing || letter.trim().length < 50}>
+                    <button
+                      type="button"
+                      onClick={polishLetter}
+                      disabled={
+                        polishing ||
+                        letter.trim().length < 50 ||
+                        !relationshipDuration.trim()
+                      }
+                    >
                       <Sparkles aria-hidden="true" />
                       {polishing ? "Polishing…" : "Polish with AI"}
                     </button>

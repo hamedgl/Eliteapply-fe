@@ -4212,6 +4212,30 @@ export interface components {
              */
             generated_at: string;
         };
+        /** ApplicationLinkedResourceResponse */
+        ApplicationLinkedResourceResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "reference" | "writing_document" | "story" | "interview" | "reminder";
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /** Detail */
+            detail?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** ApplicationListResponse */
         ApplicationListResponse: {
             /** Items */
@@ -4379,6 +4403,8 @@ export interface components {
             tasks: components["schemas"]["TaskResponse"][];
             /** Document Links */
             document_links: components["schemas"]["DocumentLinkResponse"][];
+            /** Linked Resources */
+            linked_resources: components["schemas"]["ApplicationLinkedResourceResponse"][];
             /** History */
             history: components["schemas"]["ActivityEventResponse"][];
             /** Counts */
@@ -6496,6 +6522,8 @@ export interface components {
         RefereePolishRequest: {
             /** Content */
             content: string;
+            /** Relationship Duration */
+            relationship_duration: string;
         };
         /** RefereePolishResponse */
         RefereePolishResponse: {
