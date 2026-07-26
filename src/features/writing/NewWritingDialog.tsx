@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, Upload, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { writingApi } from "../../lib/api/phase3";
+import { applicationsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { Select } from "../../components/ui/select";
+import { EntityCombobox } from "../../components/filters/EntityCombobox";
 import type { components } from "../../generated/api/schema";
 
 type S = components["schemas"];
@@ -50,6 +52,7 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
   const [applicationType, setApplicationType] = useState("programme");
   const [templateId, setTemplateId] = useState("");
   const [title, setTitle] = useState("");
+  const [application, setApplication] = useState({ id: "", name: "" });
   const [imported, setImported] = useState<{
     name: string;
     result: S["WritingImportResponse"];
@@ -106,6 +109,7 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
     mutationFn: (form: HTMLFormElement) => {
       const values = Object.fromEntries(new FormData(form));
       return writingApi.create({
+        application_id: application.id || null,
         title: title.trim(),
         document_type: documentType,
         cv_mode:
@@ -119,7 +123,9 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
           : null,
         template_id: source === "blank" ? templateId || null : null,
         // Imported text is stored as plain text; the editor converts it to blocks.
-        content: { text: source === "import" ? (imported?.result.text ?? "") : "" },
+        content: {
+          text: source === "import" ? (imported?.result.text ?? "") : "",
+        },
         target_requirements: {},
         evidence_map: {},
         theme: {},
@@ -174,7 +180,11 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
           </button>
         </header>
 
-        <nav className="detail-tabs" aria-label="Document source" role="tablist">
+        <nav
+          className="detail-tabs"
+          aria-label="Document source"
+          role="tablist"
+        >
           {(
             [
               { id: "blank", label: "Blank or template", icon: FileText },
@@ -212,11 +222,31 @@ export function NewWritingDialog({ onClose }: { onClose: () => void }) {
               placeholder="e.g. Statement of Purpose — Oxford MSc"
             />
           </label>
+          <EntityCombobox
+            queryKey={queryKeys.applications}
+            search={async (search) =>
+              (
+                await applicationsApi.list({
+                  search,
+                  limit: 10,
+                })
+              ).items.map((item) => ({
+                id: item.id,
+                name: item.title,
+                hint: label(item.stage),
+              }))
+            }
+            label="Application (optional)"
+            placeholder="Search your applications…"
+            value={application.id}
+            valueLabel={application.name}
+            onChange={(id, name) => setApplication({ id, name })}
+          />
           <div className="form-row-2">
             <label>
-              <span>Application type</span>
+              <span>Template category</span>
               <Select
-                ariaLabel="Application type"
+                ariaLabel="Template category"
                 value={applicationType}
                 onChange={(value) => setApplicationType(String(value))}
                 options={[

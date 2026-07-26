@@ -42,10 +42,14 @@ const interview = {
   interview_type: "scholarship_panel",
   mode: "chat",
   context_snapshot: {},
-  questions: [{ question: "Why are you the right candidate for this scholarship?" }],
+  questions: [
+    { question: "Why are you the right candidate for this scholarship?" },
+  ],
   status: "in_progress",
   current_question_index: 0,
-  current_question: { question: "Why are you the right candidate for this scholarship?" },
+  current_question: {
+    question: "Why are you the right candidate for this scholarship?",
+  },
   context_version_hash: "safe-hash",
   report: null,
   prompt_version: "v1",
@@ -67,17 +71,55 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith("/notifications/unread-count"))
       return route.fulfill({ json: { unread_count: 1 } });
     if (url.includes("/notifications?") && method === "GET")
-      return route.fulfill({ json: { items: [{ id: "00000000-0000-4000-8000-000000000040", category: "interview", notification_type: "interview_ready", title: "Your practice session is ready", body: "Continue with your next scholarship question.", data: { path: `/app/interviews/${interview.id}` }, mandatory: false, is_read: false, read_at: null, created_at: "2026-07-14T09:05:00Z" }], next_cursor: null, has_more: false } });
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: "00000000-0000-4000-8000-000000000040",
+              category: "interview",
+              notification_type: "interview_ready",
+              title: "Your practice session is ready",
+              body: "Continue with your next scholarship question.",
+              data: { path: `/app/interviews/${interview.id}` },
+              mandatory: false,
+              is_read: false,
+              read_at: null,
+              created_at: "2026-07-14T09:05:00Z",
+            },
+          ],
+          next_cursor: null,
+          has_more: false,
+        },
+      });
     if (url.endsWith("/notification-preferences"))
-      return route.fulfill({ json: { category_settings: { interview: { in_app: true, email: true }, security: { in_app: true, email: true } }, updated_at: "2026-07-14T09:00:00Z" } });
+      return route.fulfill({
+        json: {
+          category_settings: {
+            interview: { in_app: true, email: true },
+            security: { in_app: true, email: true },
+          },
+          updated_at: "2026-07-14T09:00:00Z",
+        },
+      });
     if (new URL(url).pathname.endsWith("/reminders") && method === "GET")
-      return route.fulfill({ json: { items: [], next_cursor: null, has_more: false } });
+      return route.fulfill({
+        json: { items: [], next_cursor: null, has_more: false },
+      });
     if (url.endsWith("/calendar-feed/token") && method === "POST")
-      return route.fulfill({ json: { feed_url: "https://calendar.example.test/private-feed.ics" } });
-    if (url.endsWith("/notifications/00000000-0000-4000-8000-000000000040/read"))
+      return route.fulfill({
+        json: { feed_url: "https://calendar.example.test/private-feed.ics" },
+      });
+    if (
+      url.endsWith("/notifications/00000000-0000-4000-8000-000000000040/read")
+    )
       return route.fulfill({ json: { is_read: true } });
-    if (new URL(url).pathname.endsWith("/academic-interviews") && method === "GET")
-      return route.fulfill({ json: { items: [interview], next_cursor: null, has_more: false } });
+    if (
+      new URL(url).pathname.endsWith("/academic-interviews") &&
+      method === "GET"
+    )
+      return route.fulfill({
+        json: { items: [interview], next_cursor: null, has_more: false },
+      });
     if (url.endsWith(`/academic-interviews/${interview.id}/turns`))
       return route.fulfill({ json: [] });
     if (url.endsWith(`/academic-interviews/${interview.id}`))
@@ -85,11 +127,19 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith(`/writing-studio/documents/${doc.id}/revisions`))
       return route.fulfill({ json: [] });
     if (url.includes(`/writing-studio/documents/${doc.id}/analyses`))
-      return route.fulfill({ json: { items: [], next_cursor: null, has_more: false } });
+      return route.fulfill({
+        json: { items: [], next_cursor: null, has_more: false },
+      });
     if (url.endsWith(`/writing-studio/documents/${doc.id}/generation-runs`))
       return route.fulfill({ json: [] });
     if (url.endsWith("/billing/entitlements"))
-      return route.fulfill({ json: { ai_tokens_used: 0, ai_tokens_limit: 100, purchased_tokens_remaining: 0 } });
+      return route.fulfill({
+        json: {
+          ai_tokens_used: 0,
+          ai_tokens_limit: 100,
+          purchased_tokens_remaining: 0,
+        },
+      });
     if (url.endsWith(`/writing-studio/documents/${doc.id}`) && method === "GET")
       return route.fulfill({ json: doc });
     if (
@@ -111,8 +161,19 @@ test("writing library and editor are responsive and save-state aware", async ({
   await expect(
     page.getByRole("heading", { name: "Writing Studio" }),
   ).toBeVisible();
+  await expect(page.getByLabel("Search documents")).toBeVisible();
+  await page.getByLabel("Search documents").fill("not in this library");
+  await expect(
+    page.getByRole("heading", { name: "No documents match these filters" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await page.getByRole("button", { name: /Link an application/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Link to an application" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
   await page.getByText(doc.title).click();
-  await expect(page.getByLabel("Document content")).toHaveValue(
+  await expect(page.getByLabel("Document content")).toContainText(
     /academic journey/,
   );
   await page.getByLabel("Document content").fill("Updated statement");
@@ -148,16 +209,14 @@ test("document preview opens as a responsive modal and closes with Escape", asyn
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.route(
-    `**/writing-studio/documents/${doc.id}/preview`,
-    (route) =>
-      route.fulfill({
-        json: {
-          html: "<p>Dear Admissions Committee,</p><p>My academic journey has prepared me for advanced study.</p>",
-          word_count: 229,
-          character_count: 1446,
-        },
-      }),
+  await page.route(`**/writing-studio/documents/${doc.id}/preview`, (route) =>
+    route.fulfill({
+      json: {
+        html: "<p>Dear Admissions Committee,</p><p>My academic journey has prepared me for advanced study.</p>",
+        word_count: 229,
+        character_count: 1446,
+      },
+    }),
   );
 
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -189,14 +248,35 @@ test("new writing survives an empty library cache and a failed completion refres
   page,
 }) => {
   const runId = "00000000-0000-4000-8000-000000000099";
+  const application = {
+    id: "00000000-0000-4000-8000-000000000091",
+    title: "Oxford MSc application",
+    stage: "preparing",
+  };
+  let createBody: Record<string, unknown> | null = null;
+  await page.route("**/api/v1/applications?**", (route) =>
+    route.fulfill({
+      json: { items: [application], next_cursor: null, has_more: false },
+    }),
+  );
   await page.route("**/api/v1/writing-studio/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     const method = route.request().method();
     if (path.endsWith("/templates")) return route.fulfill({ json: [] });
     if (path.endsWith("/documents") && method === "GET")
       return route.fulfill({ json: [] });
-    if (path.endsWith("/documents") && method === "POST")
-      return route.fulfill({ status: 201, json: doc });
+    if (path.endsWith("/documents") && method === "POST") {
+      createBody = route.request().postDataJSON();
+      return route.fulfill({
+        status: 201,
+        json: {
+          ...doc,
+          application_id: application.id,
+          application_title: application.title,
+          application_stage: application.stage,
+        },
+      });
+    }
     if (path.endsWith(`/documents/${doc.id}/generate`))
       return route.fulfill({
         status: 202,
@@ -211,9 +291,14 @@ test("new writing survives an empty library cache and a failed completion refres
 
   await page.goto("/app/writing");
   await expect(page.getByText("No writing documents yet")).toBeVisible();
-  await page.getByRole("link", { name: "New document" }).click();
-  await page.getByLabel("Title").fill(doc.title);
+  await page.getByRole("button", { name: "New document" }).click();
+  await page.getByRole("textbox", { name: /Title/ }).fill(doc.title);
+  await page.getByLabel("Application (optional)").click();
+  await page
+    .getByRole("option", { name: /Oxford MSc application/ })
+    .click();
   await page.getByRole("button", { name: "Create document" }).click();
+  expect(createBody).toMatchObject({ application_id: application.id });
   await expect(page.getByRole("heading", { name: doc.title })).toBeVisible();
 
   await page
@@ -267,26 +352,42 @@ test("public referee code stays out of the URL", async ({ page }) => {
   expect(page.url()).not.toContain("separate-code");
 });
 
-test("notification deep link opens a durable interview session", async ({ page }) => {
+test("notification deep link opens a durable interview session", async ({
+  page,
+}) => {
   const errors: string[] = [];
-  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
   await page.goto("/app/notifications");
-  await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Notifications" }),
+  ).toBeVisible();
   await expect(page.getByText("Your practice session is ready")).toBeVisible();
   await page.getByRole("button", { name: "Open related item" }).click();
   await expect(page).toHaveURL(new RegExp(`/app/interviews/${interview.id}$`));
-  await expect(page.getByRole("heading", { name: /scholarship panel practice/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /scholarship panel practice/i }),
+  ).toBeVisible();
   await expect(page.getByText("Why are you the right candidate")).toBeVisible();
-  await page.screenshot({ path: "/tmp/eliteapply-phase3-notification-interview.png", fullPage: true });
+  await page.screenshot({
+    path: "/tmp/eliteapply-phase3-notification-interview.png",
+    fullPage: true,
+  });
   expect(errors).toEqual([]);
 });
 
 test("interview history remains usable on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/app/interviews");
-  await expect(page.getByRole("heading", { name: "Interview practice" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Interview practice" }),
+  ).toBeVisible();
   await expect(page.getByText("scholarship panel")).toBeVisible();
-  await page.screenshot({ path: "/tmp/eliteapply-phase3-interviews-mobile.png", fullPage: true });
+  await page.screenshot({
+    path: "/tmp/eliteapply-phase3-interviews-mobile.png",
+    fullPage: true,
+  });
 });
 
 test("calendar combines reminders and deadlines across responsive views", async ({
@@ -341,14 +442,14 @@ test("calendar combines reminders and deadlines across responsive views", async 
     page.getByRole("button", { name: /Oxford scholarship/ }),
   ).toBeVisible();
   const todayMarker = await page
-    .locator(".event-manager-month-grid > .today .event-manager-day-heading > button")
+    .locator(
+      ".event-manager-month-grid > .today .event-manager-day-heading > button",
+    )
     .first()
     .boundingBox();
   expect(todayMarker).not.toBeNull();
   expect(Math.abs(todayMarker!.width - todayMarker!.height)).toBeLessThan(0.5);
-  await page
-    .getByRole("button", { name: /Submit final transcript/ })
-    .click();
+  await page.getByRole("button", { name: /Submit final transcript/ }).click();
   await expect(
     page.getByRole("heading", { name: "Edit reminder" }),
   ).toBeVisible();
@@ -409,29 +510,33 @@ test("calendar sync creates, copies, opens and revokes a private feed", async ({
 
   await page.goto("/app/reminders");
   await page.getByRole("button", { name: "Create calendar link" }).click();
-  await expect(page.getByText("Calendar subscription link created.")).toBeVisible();
+  await expect(
+    page.getByText("Calendar subscription link created."),
+  ).toBeVisible();
   await expect(page.getByText("••••••••.ics", { exact: false })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(secret);
-  await expect(page.getByRole("link", { name: "Open in calendar app" })).toHaveAttribute(
-    "href",
-    feedUrl.replace("https:", "webcal:"),
-  );
+  await expect(
+    page.getByRole("link", { name: "Open in calendar app" }),
+  ).toHaveAttribute("href", feedUrl.replace("https:", "webcal:"));
   const openIcs = page.getByRole("link", { name: "Open .ics feed" });
   await expect(openIcs).toHaveAttribute("href", feedUrl);
   await expect(openIcs).toHaveAttribute("rel", "noopener noreferrer");
-  await expect(page.getByRole("link", { name: "Download .ics" })).toHaveAttribute(
-    "download",
-    "eliteapply-calendar.ics",
-  );
+  await expect(
+    page.getByRole("link", { name: "Download .ics" }),
+  ).toHaveAttribute("download", "eliteapply-calendar.ics");
 
   await page.getByRole("button", { name: "Copy URL" }).click();
-  await expect.poll(() =>
-    page.evaluate(
-      () => (window as Window & { __copiedFeed?: string }).__copiedFeed,
-    ),
-  ).toBe(feedUrl);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as Window & { __copiedFeed?: string }).__copiedFeed,
+      ),
+    )
+    .toBe(feedUrl);
   await page.getByText("Set up Google Calendar").click();
-  await expect(page.getByText("Subscribe from web", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("Subscribe from web", { exact: false }),
+  ).toBeVisible();
   await page.screenshot({
     path: "/tmp/eliteapply-calendar-sync-desktop.png",
     fullPage: true,
@@ -444,14 +549,20 @@ test("calendar sync creates, copies, opens and revokes a private feed", async ({
   });
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Revoke calendar link" }).click();
-  await expect(page.getByText("The calendar link has been revoked.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create calendar link" })).toBeVisible();
+  await expect(
+    page.getByText("The calendar link has been revoked."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create calendar link" }),
+  ).toBeVisible();
   expect(creates).toBe(1);
   expect(revokes).toBe(1);
   expect(feedGets).toBe(0);
 });
 
-test("calendar sync shows a safe recoverable create error", async ({ page }) => {
+test("calendar sync shows a safe recoverable create error", async ({
+  page,
+}) => {
   await page.route("**/api/v1/calendar-feed/token", (route) =>
     route.fulfill({ status: 503, json: { detail: "calendar-secret" } }),
   );
