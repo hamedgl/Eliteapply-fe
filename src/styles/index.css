@@ -2270,6 +2270,42 @@ th {
   border-top: 1px solid var(--line);
   padding: 1rem;
 }
+.verify-envelope-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+.verify-download {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem 1rem;
+  border-top: 1px solid var(--line);
+}
+.verify-download h2,
+.verify-download p {
+  margin: 0;
+}
+.verify-download h2 {
+  font-size: 1.1rem;
+}
+.verify-download p {
+  color: var(--muted);
+}
+.verify-download > p[role="alert"] {
+  color: var(--danger);
+}
+@media (max-width: 560px) {
+  .verify div {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+  .verify-download {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
 .interview-session > section,
 .interview-session > article {
   border: 1px solid var(--line);

@@ -8939,6 +8939,50 @@
         }
       }
     },
+    "/api/v1/verify/academic-reference/{public_id}/download": {
+      "get": {
+        "tags": [
+          "Academic Engagement"
+        ],
+        "summary": "Verified Reference Download",
+        "operationId": "verified_reference_download_api_v1_verify_academic_reference__public_id__download_get",
+        "parameters": [
+          {
+            "name": "public_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Public Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/academic-interviews/{interview_id}": {
       "get": {
         "tags": [
@@ -22650,6 +22694,21 @@
             ],
             "title": "Approved At"
           },
+          "envelope_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Envelope Id"
+          },
+          "download_available": {
+            "type": "boolean",
+            "title": "Download Available"
+          },
           "disclaimer": {
             "type": "string",
             "title": "Disclaimer"
@@ -22662,6 +22721,8 @@
           "referee_role",
           "institution",
           "approved_at",
+          "envelope_id",
+          "download_available",
           "disclaimer"
         ],
         "title": "ReferenceVerificationResponse"

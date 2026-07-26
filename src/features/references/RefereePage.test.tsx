@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RefereePage } from "./ReferencePages";
+import { RefereePage, VerifyReference } from "./ReferencePages";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -126,5 +127,57 @@ describe("RefereePage", () => {
     expect(editor).toHaveValue(original);
     fireEvent.click(screen.getByRole("button", { name: "Use suggestion" }));
     expect(editor).toHaveValue(polished);
+  });
+});
+
+describe("VerifyReference", () => {
+  it("shows the envelope ID and downloads the PDF tied to the public record", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/download")) {
+        return new Response(new Blob(["verified PDF"], { type: "application/pdf" }), {
+          headers: { "content-type": "application/pdf" },
+        });
+      }
+      return Response.json({
+        public_id: "public-id",
+        status: "approved",
+        referee_role: "professor",
+        institution: "Example University",
+        approved_at: "2026-07-26T12:00:00Z",
+        envelope_id: "A".repeat(64),
+        download_available: true,
+        disclaimer: "Verification confirms the reference workflow.",
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:verified-reference");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={["/verify/academic-reference/public-id"]}>
+          <Routes>
+            <Route
+              path="/verify/academic-reference/:publicId"
+              element={<VerifyReference />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("A".repeat(64))).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Download verified reference PDF" }),
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/verify/academic-reference/public-id/download"),
+        expect.any(Object),
+      ),
+    );
   });
 });

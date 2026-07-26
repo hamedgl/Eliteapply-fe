@@ -939,6 +939,13 @@ export function VerifyReference() {
     q = useQuery({
       queryKey: ["verify", publicId],
       queryFn: () => referencesApi.verify(publicId),
+    }),
+    download = useMutation({
+      mutationFn: async () =>
+        downloadResponse(
+          await referencesApi.verifyDownload(publicId),
+          `reference-${publicId}.pdf`,
+        ),
     });
   return (
     <Public title="Academic reference verification">
@@ -947,32 +954,59 @@ export function VerifyReference() {
       ) : q.isError ? (
         <p>This reference could not be verified.</p>
       ) : (
-        <dl className="verify">
-          <div>
-            <dt>Status</dt>
-            <dd>{q.data.status}</dd>
-          </div>
-          <div>
-            <dt>Referee role</dt>
-            <dd>{q.data.referee_role}</dd>
-          </div>
-          <div>
-            <dt>Institution</dt>
-            <dd>{q.data.institution ?? "Not provided"}</dd>
-          </div>
-          <div>
-            <dt>Approved</dt>
-            <dd>
-              {q.data.approved_at
-                ? new Date(q.data.approved_at).toLocaleDateString()
-                : "Not approved"}
-            </dd>
-          </div>
-          <div>
-            <dt>What verification means</dt>
-            <dd>{q.data.disclaimer}</dd>
-          </div>
-        </dl>
+        <>
+          <dl className="verify">
+            <div>
+              <dt>Status</dt>
+              <dd>{q.data.status}</dd>
+            </div>
+            <div>
+              <dt>Referee role</dt>
+              <dd>{q.data.referee_role}</dd>
+            </div>
+            <div>
+              <dt>Institution</dt>
+              <dd>{q.data.institution ?? "Not provided"}</dd>
+            </div>
+            <div>
+              <dt>Approved</dt>
+              <dd>
+                {q.data.approved_at
+                  ? new Date(q.data.approved_at).toLocaleDateString()
+                  : "Not approved"}
+              </dd>
+            </div>
+            {q.data.envelope_id ? (
+              <div>
+                <dt>EliteApply envelope ID</dt>
+                <dd className="verify-envelope-id">{q.data.envelope_id}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt>What verification means</dt>
+              <dd>{q.data.disclaimer}</dd>
+            </div>
+          </dl>
+          {q.data.download_available ? (
+            <section className="verify-download" aria-labelledby="verified-download-title">
+              <div>
+                <h2 id="verified-download-title">Verified reference letter</h2>
+                <p>This PDF is tied to the envelope ID shown above.</p>
+              </div>
+              <button
+                className="primary"
+                type="button"
+                disabled={download.isPending}
+                onClick={() => download.mutate()}
+              >
+                {download.isPending ? "Preparing PDF…" : "Download verified reference PDF"}
+              </button>
+              {download.isError ? (
+                <p role="alert">The verified PDF could not be downloaded. Please try again.</p>
+              ) : null}
+            </section>
+          ) : null}
+        </>
       )}
     </Public>
   );

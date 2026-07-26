@@ -373,6 +373,11 @@ export const referencesApi = {
       `/verify/academic-reference/${e(id)}`,
       { public: true },
     ),
+  verifyDownload: (id: string) =>
+    apiRequest<Response>(`/verify/academic-reference/${e(id)}/download`, {
+      public: true,
+      raw: true,
+    }),
 };
 export const interviewsApi = {
   list: (cursor?: string | null) =>

@@ -2120,6 +2120,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/verify/academic-reference/{public_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verified Reference Download */
+        get: operations["verified_reference_download_api_v1_verify_academic_reference__public_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/academic-interviews/{interview_id}": {
         parameters: {
             query?: never;
@@ -6683,6 +6700,10 @@ export interface components {
             institution: string | null;
             /** Approved At */
             approved_at: string | null;
+            /** Envelope Id */
+            envelope_id: string | null;
+            /** Download Available */
+            download_available: boolean;
             /** Disclaimer */
             disclaimer: string;
         };
@@ -13362,6 +13383,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReferenceVerificationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verified_reference_download_api_v1_verify_academic_reference__public_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
             /** @description Validation Error */
