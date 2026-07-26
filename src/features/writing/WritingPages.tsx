@@ -579,7 +579,15 @@ function WritingApplicationDialog({
               application workspace.
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              onClose();
+            }}
+            onClick={onClose}
+            aria-label="Close"
+          >
             <X aria-hidden="true" />
           </button>
         </header>
@@ -618,6 +626,10 @@ function WritingApplicationDialog({
           <div className="dialog-actions">
             <button
               type="button"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onClose();
+              }}
               onClick={onClose}
               disabled={linkApplication.isPending}
             >

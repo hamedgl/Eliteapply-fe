@@ -157,6 +157,21 @@ test.beforeEach(async ({ page }) => {
 test("writing library and editor are responsive and save-state aware", async ({
   page,
 }) => {
+  await page.route("**/api/v1/applications?**", (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000090",
+            title: "Oxford MSc application",
+            stage: "preparing",
+          },
+        ],
+        next_cursor: null,
+        has_more: false,
+      },
+    }),
+  );
   await page.goto("/app/writing");
   await expect(
     page.getByRole("heading", { name: "Writing Studio" }),
@@ -171,8 +186,26 @@ test("writing library and editor are responsive and save-state aware", async ({
   await expect(
     page.getByRole("heading", { name: "Link to an application" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Close" }).click();
-  await page.getByText(doc.title).click();
+  const linkDialog = page.getByRole("dialog", {
+    name: "Link to an application",
+  });
+  await linkDialog.getByLabel("Application").click();
+  await expect(
+    linkDialog.getByRole("option", { name: /Oxford MSc application/ }),
+  ).toBeVisible();
+  expect(
+    await linkDialog.evaluate(
+      (element) => element.scrollHeight - element.clientHeight,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await expect(
+    linkDialog.getByRole("button", { name: "Link application" }),
+  ).toBeVisible();
+  await linkDialog
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
+  await expect(linkDialog).not.toBeVisible();
+  await page.getByRole("link", { name: doc.title }).click();
   await expect(page.getByLabel("Document content")).toContainText(
     /academic journey/,
   );

@@ -5058,6 +5058,11 @@ th {
   gap: 1rem;
 }
 
+.writing-link-dialog .apps-combobox-list {
+  position: static;
+  max-height: min(15rem, 36dvh);
+}
+
 .writing-link-dialog .dialog-actions {
   margin-top: 0.25rem;
 }
