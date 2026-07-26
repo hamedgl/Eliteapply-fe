@@ -491,6 +491,11 @@ export const intelligenceApi = {
       `/application-intelligence/applications/${enc(applicationId)}/eligibility/recalculate`,
       { method: "POST", body },
     ),
+  eligibilityRecommendations: (applicationId: string) =>
+    apiRequest<S["EligibilityRecommendationsResponse"]>(
+      `/application-intelligence/applications/${enc(applicationId)}/eligibility/recommendations`,
+      { method: "POST" },
+    ),
 };
 export async function uploadAcademicDocument(
   file: File,

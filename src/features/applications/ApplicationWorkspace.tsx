@@ -27,6 +27,7 @@ import {
   RefreshCw,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Unlink,
   UserPlus,
@@ -2065,6 +2066,11 @@ function EligibilityTab({
       ]);
     },
   });
+  const recommendations = useMutation({
+    mutationFn: () =>
+      intelligenceApi.eligibilityRecommendations(applicationId),
+    onSuccess: () => onToast("Recommendations are ready."),
+  });
   if (current.isPending) return <EligibilitySkeleton />;
   if (current.isError || !isEligibilityResponse(current.data))
     return (
@@ -2105,21 +2111,38 @@ function EligibilityTab({
   const findings = result.findings.map(normalizeFinding);
   const status = label(result.overall_status);
   const sources = result.data_sources;
+  const factors = result.factors ?? [];
   return (
     <section className="detail-section detail-resource-section eligibility-workspace">
       <ResourceHeader
         title="Eligibility review"
         description="Evidence-based preparation guidance, with the source and reasoning visible for every check."
         actions={
-          <button
-            type="button"
-            className="primary"
-            disabled={refresh.isPending}
-            onClick={() => refresh.mutate()}
-          >
-            <RefreshCw aria-hidden="true" />{" "}
-            {refresh.isPending ? "Refreshing analysis…" : "Refresh analysis"}
-          </button>
+          <>
+            <a className="detail-secondary-link" href="#eligibility-score-report">
+              <FileText aria-hidden="true" /> See report
+            </a>
+            <button
+              type="button"
+              className="detail-secondary-link"
+              disabled={recommendations.isPending}
+              onClick={() => recommendations.mutate()}
+            >
+              <Sparkles aria-hidden="true" />{" "}
+              {recommendations.isPending
+                ? "Preparing recommendations…"
+                : "Ask AI for recommendations"}
+            </button>
+            <button
+              type="button"
+              className="primary"
+              disabled={refresh.isPending}
+              onClick={() => refresh.mutate()}
+            >
+              <RefreshCw aria-hidden="true" />{" "}
+              {refresh.isPending ? "Refreshing analysis…" : "Refresh analysis"}
+            </button>
+          </>
         }
       />
       <div className="eligibility-summary-band">
@@ -2148,6 +2171,88 @@ function EligibilityTab({
       </div>
       <div className="eligibility-layout">
         <div className="eligibility-main">
+          <section
+            id="eligibility-score-report"
+            className="eligibility-factor-report"
+          >
+            <div className="eligibility-section-intro">
+              <div>
+                <h3>How this score is calculated</h3>
+                <p>
+                  The readiness score is the weighted result of the applicable
+                  preparation factors below. It is not an admission probability.
+                </p>
+              </div>
+              <strong>{result.readiness_score}/100</strong>
+            </div>
+            <div className="eligibility-factor-list">
+              {factors.map((factor) => (
+                <article key={factor.key}>
+                  <div>
+                    <strong>{factor.label}</strong>
+                    <span>{factor.score}/100</span>
+                  </div>
+                  <ProgressBar
+                    percent={factor.score}
+                    label={`${factor.label} score`}
+                  />
+                  <p>{factor.reason}</p>
+                  <small>
+                    Weight {factor.weight}%
+                    {factor.sources?.length
+                      ? ` · Sources: ${factor.sources.map(label).join(", ")}`
+                      : ""}
+                  </small>
+                </article>
+              ))}
+            </div>
+          </section>
+          {recommendations.data ? (
+            <section className="eligibility-ai-report" aria-live="polite">
+              <div className="eligibility-section-intro">
+                <div>
+                  <h3>
+                    <Sparkles aria-hidden="true" /> Recommended next steps
+                  </h3>
+                  <p>{recommendations.data.summary}</p>
+                </div>
+                <StatusBadge
+                  tone={
+                    recommendations.data.generated_by === "ai"
+                      ? "blue"
+                      : "neutral"
+                  }
+                >
+                  {recommendations.data.generated_by === "ai"
+                    ? "AI guidance"
+                    : "Report guidance"}
+                </StatusBadge>
+              </div>
+              <ol>
+                {recommendations.data.recommendations.map((item, index) => (
+                  <li key={`${item}-${index}`}>
+                    <CheckCircle2 aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ol>
+              <small>{recommendations.data.disclaimer}</small>
+            </section>
+          ) : recommendations.isPending ? (
+            <section
+              className="eligibility-ai-report eligibility-ai-loading"
+              role="status"
+            >
+              <Sparkles aria-hidden="true" />
+              <span>
+                Reviewing the saved factors and evidence. This may take a
+                moment.
+              </span>
+            </section>
+          ) : null}
+          {recommendations.error ? (
+            <InlineError message={readableError(recommendations.error)} />
+          ) : null}
           <section>
             <h3>Checks and evidence</h3>
             <div className="eligibility-checks">
@@ -2180,6 +2285,14 @@ function EligibilityTab({
                         value={item.nextAction}
                       />
                     </dl>
+                    {item.id === "official-criteria-missing" ? (
+                      <Link
+                        className="detail-secondary-link"
+                        to={`/app/applications/import?application_id=${encodeURIComponent(applicationId)}`}
+                      >
+                        Import official criteria
+                      </Link>
+                    ) : null}
                   </article>
                 ))
               ) : (
@@ -2239,7 +2352,15 @@ function EligibilityTab({
               {sources.length ? (
                 sources.map((source) => (
                   <li key={`${source.source}-${source.source_id ?? ""}`}>
-                    <CheckCircle2 aria-hidden="true" /> {source.label}
+                    <CheckCircle2 aria-hidden="true" />
+                    <span>
+                      {source.label}
+                      {source.last_updated_at ? (
+                        <small>
+                          Updated {formatDate(source.last_updated_at)}
+                        </small>
+                      ) : null}
+                    </span>
                   </li>
                 ))
               ) : (
@@ -2251,11 +2372,16 @@ function EligibilityTab({
             </ul>
           </section>
           <section>
-            <h3>Readiness components</h3>
-            {Object.entries(result.readiness_components).map(([key, value]) => (
-              <div className="eligibility-component" key={key}>
-                <span>{label(key)}</span>
-                <ProgressBar percent={Number(value) || 0} />
+            <h3>Factors used</h3>
+            {factors.map((factor) => (
+              <div className="eligibility-component" key={factor.key}>
+                <span>
+                  {factor.label} <small>{factor.score}%</small>
+                </span>
+                <ProgressBar
+                  percent={factor.score}
+                  label={`${factor.label} factor`}
+                />
               </div>
             ))}
           </section>
@@ -3912,6 +4038,7 @@ type BulkRequirementRow = {
   due: string;
 };
 type NormalFinding = {
+  id: string;
   title: string;
   status: string;
   evidence: string;
@@ -4114,6 +4241,7 @@ function normalizeFinding(value: unknown): NormalFinding {
       ? raw.evidence
       : "";
   return {
+    id: String(raw.id || ""),
     title: String(
       raw.checked || raw.criterion || raw.title || "Eligibility criterion",
     ),

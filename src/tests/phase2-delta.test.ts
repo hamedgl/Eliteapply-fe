@@ -32,18 +32,24 @@ describe("Phase 2 contract and security adapters", () => {
   });
 
   it("uses the explicit import retry and eligibility history endpoints", async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL) =>
-      Response.json({ items: [], next_cursor: null, has_more: false }),
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        Response.json({ items: [], next_cursor: null, has_more: false }),
     );
     vi.stubGlobal("fetch", fetchMock);
     await intelligenceApi.retryImport("import-id");
     await intelligenceApi.eligibilityHistory("application-id", "next");
+    await intelligenceApi.eligibilityRecommendations("application-id");
     expect(String(fetchMock.mock.calls[0][0])).toContain(
       "/application-intelligence/imports/import-id/retry",
     );
     expect(String(fetchMock.mock.calls[1][0])).toContain(
       "/eligibility/history?cursor=next",
     );
+    expect(String(fetchMock.mock.calls[2][0])).toContain(
+      "/applications/application-id/eligibility/recommendations",
+    );
+    expect(fetchMock.mock.calls[2][1]?.method).toBe("POST");
   });
 
   it("uses generation-run lifecycle endpoints", async () => {

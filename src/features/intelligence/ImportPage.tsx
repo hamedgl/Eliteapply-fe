@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Check, Link2, RefreshCw, Trash2, X } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
 import { intelligenceApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
@@ -27,6 +28,8 @@ const display = (value: unknown) =>
       : JSON.stringify(value);
 
 export function ImportPage() {
+  const [params] = useSearchParams();
+  const applicationId = params.get("application_id");
   const qc = useQueryClient(),
     mutationId = useRef(crypto.randomUUID()),
     [sourceType, setSourceType] = useState<"text" | "url" | "pdf_text">("url"),
@@ -76,6 +79,7 @@ export function ImportPage() {
     try {
       const result = await intelligenceApi.createImport({
         mutation_id: mutationId.current,
+        application_id: applicationId,
         source_type: sourceType,
         source_url: sourceType === "url" ? String(d.get("source_url")) : null,
         raw_source_text:
@@ -93,6 +97,11 @@ export function ImportPage() {
     <div className="page phase2-page import-page">
       <header className="page-heading">
         <div>
+          {applicationId ? (
+            <Link to={`/app/applications/${applicationId}/eligibility`}>
+              ← Return to eligibility report
+            </Link>
+          ) : null}
           <span className="eyebrow">Opportunity intelligence</span>
           <h1>Import an opportunity</h1>
           <p>

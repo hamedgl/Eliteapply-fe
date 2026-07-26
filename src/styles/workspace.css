@@ -593,6 +593,7 @@
   border: 1px solid var(--app-line);
   border-radius: 9999px;
   color: var(--app-text);
+  background: var(--app-surface);
   font-weight: 650;
 }
 
@@ -844,6 +845,110 @@
   margin-top: 1rem;
 }
 
+.eligibility-factor-report {
+  scroll-margin-top: 14rem;
+}
+
+.eligibility-section-intro,
+.eligibility-factor-list article > div:first-child {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eligibility-section-intro p,
+.eligibility-factor-list p,
+.eligibility-ai-report p {
+  margin: 0.3rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+
+.eligibility-section-intro > strong {
+  color: var(--app-ink);
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 1.5rem;
+}
+
+.eligibility-factor-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.eligibility-factor-list article {
+  padding: 0.8rem;
+  border-radius: 9px;
+  background: var(--app-surface-subtle);
+}
+
+.eligibility-factor-list article > div:first-child span,
+.eligibility-factor-list small,
+.eligibility-ai-report > small {
+  color: var(--app-muted);
+  font-size: 0.74rem;
+}
+
+.eligibility-factor-list .apps-progress-bar {
+  margin-top: 0.6rem;
+}
+
+.eligibility-ai-report {
+  border-color: color-mix(in srgb, var(--app-blue) 25%, var(--app-line)) !important;
+  background: color-mix(in srgb, var(--app-blue-soft) 35%, var(--app-surface));
+}
+
+.eligibility-ai-report h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.eligibility-ai-report h3 svg,
+.eligibility-ai-loading > svg {
+  width: 18px;
+  color: var(--app-blue);
+}
+
+.eligibility-ai-report ol {
+  margin: 0.9rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.eligibility-ai-report li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding-block: 0.75rem;
+}
+
+.eligibility-ai-report li + li {
+  border-top: 1px solid var(--app-line);
+}
+
+.eligibility-ai-report li > svg {
+  width: 17px;
+  color: var(--app-blue);
+}
+
+.eligibility-ai-report li > span {
+  display: block;
+  color: var(--app-ink);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.eligibility-ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 72px;
+}
+
 .eligibility-main > section,
 .eligibility-aside > section {
   padding: 1rem;
@@ -902,6 +1007,17 @@
   width: 17px;
   color: var(--app-blue);
   flex: none;
+}
+
+.eligibility-aside li span,
+.eligibility-aside li small {
+  display: block;
+}
+
+.eligibility-aside li small {
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+  font-size: 0.72rem;
 }
 
 .eligibility-component {
@@ -1344,6 +1460,9 @@
     position: static;
   }
   .detail-overview-split {
+    grid-template-columns: 1fr;
+  }
+  .eligibility-factor-list {
     grid-template-columns: 1fr;
   }
   .detail-data-row {

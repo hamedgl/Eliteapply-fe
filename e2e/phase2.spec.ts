@@ -615,3 +615,159 @@ test("board shows the backend reason when a move fails", async ({ page }) => {
     fullPage: false,
   });
 });
+
+test("eligibility explains its factors and returns recommendations", async ({
+  page,
+}, testInfo) => {
+  const applicationId = "00000000-0000-4000-8000-000000000013";
+  const eligibility = {
+    id: "00000000-0000-4000-8000-000000000041",
+    application_id: applicationId,
+    findings: [
+      {
+        id: "research",
+        status: "needs_review",
+        checked: "Relevant research experience",
+        evidence: [
+          {
+            source: "academic_profile",
+            summary: "Research experience appears in the confirmed profile.",
+            source_id: "00000000-0000-4000-8000-000000000051",
+          },
+        ],
+        reason: "Related evidence exists but still needs human confirmation.",
+        recommended_action: "Compare the evidence with the official criterion.",
+      },
+    ],
+    strengths: [],
+    risks: ["Relevant research experience"],
+    questions: ["Confirm the research evidence"],
+    readiness_score: 58,
+    readiness_components: {
+      profile: 75,
+      requirements: 50,
+      deadline_confirmed: 100,
+      eligibility_evidence: 50,
+    },
+    factors: [
+      {
+        key: "profile",
+        label: "Academic profile",
+        score: 75,
+        weight: 25,
+        reason: "Completion of the confirmed academic-profile sections.",
+        sources: ["academic_profile"],
+      },
+      {
+        key: "requirements",
+        label: "Application requirements",
+        score: 50,
+        weight: 25,
+        reason: "Required application items marked complete.",
+        sources: ["application_requirements"],
+      },
+      {
+        key: "deadline_confirmed",
+        label: "Deadline confirmed",
+        score: 100,
+        weight: 25,
+        reason: "Whether the application has a recorded deadline.",
+        sources: ["application"],
+      },
+      {
+        key: "eligibility_evidence",
+        label: "Eligibility evidence",
+        score: 50,
+        weight: 25,
+        reason: "Official criteria with matching confirmed profile evidence.",
+        sources: ["scholarship", "academic_profile"],
+      },
+    ],
+    overall_status: "needs_review",
+    trigger_source: "refresh",
+    data_sources: [
+      {
+        source: "scholarship",
+        label: "Linked scholarship eligibility criteria",
+        source_id: "00000000-0000-4000-8000-000000000032",
+        last_updated_at: "2026-07-20T00:00:00Z",
+      },
+      {
+        source: "academic_profile",
+        label: "Academic profile (75% complete)",
+        source_id: "00000000-0000-4000-8000-000000000051",
+        last_updated_at: "2026-07-24T00:00:00Z",
+      },
+    ],
+    important_changes: [],
+    disclaimer: "Preparation guidance only.",
+    created_at: "2026-07-26T01:39:00Z",
+    last_calculated_at: "2026-07-26T01:39:00Z",
+  };
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith(`/applications/${applicationId}/workspace`))
+      return route.fulfill({
+        json: {
+          application: app(applicationId, "MSc Computer Science", "preparing"),
+          requirements: [],
+          tasks: [],
+          document_links: [],
+          linked_resources: [],
+          history: [],
+          counts: {},
+          readiness: {
+            application_id: applicationId,
+            overall_state: "in_progress",
+            readiness_percent: 58,
+            blocking_issues: [],
+            warnings: [],
+            missing_required_documents: [],
+            incomplete_requirements: [],
+            unresolved_eligibility_issues: ["Relevant research experience"],
+            deadline_state: "safe",
+            recommended_next_actions: ["Review eligibility evidence"],
+          },
+        },
+      });
+    if (path.endsWith("/eligibility/history"))
+      return route.fulfill({
+        json: { items: [eligibility], next_cursor: null, has_more: false },
+      });
+    if (path.endsWith("/eligibility/recommendations"))
+      return route.fulfill({
+        json: {
+          summary: "Focus first on evidence that still needs confirmation.",
+          recommendations: [
+            "Compare the saved evidence with the provider wording.",
+          ],
+          generated_by: "ai",
+          generated_at: "2026-07-26T02:00:00Z",
+          disclaimer: "Verify every rule with the provider.",
+        },
+      });
+    if (path.endsWith("/eligibility"))
+      return route.fulfill({ json: eligibility });
+    return route.fallback();
+  });
+
+  await page.goto(`/app/applications/${applicationId}/eligibility`);
+  await expect(
+    page.getByRole("heading", { name: "How this score is calculated" }),
+  ).toBeVisible();
+  await expect(page.getByText("Linked scholarship eligibility criteria")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "See report" }),
+  ).toHaveAttribute("href", "#eligibility-score-report");
+  await page
+    .getByRole("button", { name: "Ask AI for recommendations" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Recommended next steps" }),
+  ).toBeVisible();
+  await expect(page.getByText("Compare the saved evidence with the provider wording.")).toBeVisible();
+  await page.screenshot({
+    path: `/tmp/eliteapply-eligibility-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+});
