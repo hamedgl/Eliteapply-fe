@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { Select } from "../../../components/ui/select";
 import { CountryCombobox } from "../../../components/filters/CountryCombobox";
 import { countryName } from "../../../lib/countries";
+import { TagInput } from "./TagInput";
 import {
   applicantTypes,
   studyLevels,
@@ -9,9 +10,6 @@ import {
   type GoalsSection,
   type InterestsSection,
 } from "../model";
-
-const parseTags = (value: string) =>
-  value.split(",").map((tag) => tag.trim()).filter(Boolean);
 
 export function GoalsFields({
   applicantType,
@@ -52,12 +50,18 @@ export function GoalsFields({
           options={studyLevels.map((item) => ({ value: item, label: item }))}
         />
       </label>
-      <div className="wide">
-        <span className="profile-field-label">Target countries</span>
+      <div className="wide profile-tag-field">
+        <CountryCombobox
+          label="Target countries"
+          value=""
+          onChange={(code) => {
+            if (code && !countries.includes(code)) onCountries([...countries, code]);
+          }}
+        />
         {countries.length ? (
-          <div className="profile-tag-row">
+          <ul className="profile-tag-row is-below">
             {countries.map((code) => (
-              <span className="apps-chip" key={code}>
+              <li className="apps-chip" key={code}>
                 {countryName(code) ?? code}
                 <button
                   type="button"
@@ -66,17 +70,14 @@ export function GoalsFields({
                 >
                   <X aria-hidden="true" />
                 </button>
-              </span>
+              </li>
             ))}
-          </div>
-        ) : null}
-        <CountryCombobox
-          label="Add a target country"
-          value=""
-          onChange={(code) => {
-            if (code && !countries.includes(code)) onCountries([...countries, code]);
-          }}
-        />
+          </ul>
+        ) : (
+          <p className="profile-field-hint">
+            Search and select each country you plan to apply to.
+          </p>
+        )}
       </div>
       <label>
         Preferred intake
@@ -95,14 +96,15 @@ export function GoalsFields({
           options={studyModes.map((item) => ({ value: item, label: item }))}
         />
       </label>
-      <label className="wide">
-        Fields of study
-        <input
-          value={goals.fields_of_study.join(", ")}
-          onChange={(event) => onGoals({ fields_of_study: parseTags(event.target.value) })}
-          placeholder="Public policy, Data science"
+      <div className="wide">
+        <TagInput
+          label="Fields of study"
+          hint="Press Enter or comma to add each field."
+          placeholder="Public policy"
+          values={goals.fields_of_study}
+          onChange={(fields_of_study) => onGoals({ fields_of_study })}
         />
-      </label>
+      </div>
       <label className="wide">
         Funding requirement
         <input
@@ -124,18 +126,19 @@ export function InterestsFields({
 }) {
   return (
     <div className="form-grid">
-      <label className="wide">
-        Interest tags
-        <input
-          value={interests.interest_tags.join(", ")}
-          onChange={(event) => onChange({ interest_tags: parseTags(event.target.value) })}
-          placeholder="Public policy, Machine learning, Comparative law"
+      <div className="wide">
+        <TagInput
+          label="Interest tags"
+          hint="Press Enter or comma to add each topic."
+          placeholder="Machine learning"
+          values={interests.interest_tags}
+          onChange={(interest_tags) => onChange({ interest_tags })}
         />
-      </label>
+      </div>
       <label className="wide">
         Summary
         <textarea
-          rows={4}
+          rows={6}
           value={interests.summary}
           onChange={(event) => onChange({ summary: event.target.value })}
           placeholder="What draws you to these areas, and what you want to explore next."

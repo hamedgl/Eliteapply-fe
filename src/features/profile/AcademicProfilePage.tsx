@@ -1,22 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { PageHeader } from "../../components/page/PageHeader";
 import { OverflowMenu } from "../../components/actions/OverflowMenu";
+import { StatusBadge } from "../../components/data-display/StatusBadge";
 import {
   CORE_SECTIONS,
   computeCompletion,
   draftToUpsert,
   readDraft,
+  sectionDescriptions,
   sectionLabels,
   sectionOrder,
   type ProfileDraft,
   type SectionKey,
 } from "./model";
-import { ProfileCompletionCard } from "./components/ProfileCompletionCard";
+import { ProfileSectionNav, sectionIcons } from "./components/ProfileSectionNav";
 import { DeleteProfileDialog } from "./components/DeleteProfileDialog";
 import { ImportProfileDialog } from "./components/ImportProfileDialog";
 import { GoalsFields, InterestsFields } from "./components/ProfileSections";
@@ -36,6 +45,8 @@ import {
 
 const AUTOSAVE_DELAY = 1200;
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 export function AcademicProfilePage() {
   const qc = useQueryClient();
   const location = useLocation();
@@ -44,16 +55,23 @@ export function AcademicProfilePage() {
   const navigationState = readAcademicProfileNavigationState(location.state);
   const returnTo = safeAppPath(navigationState?.returnTo);
   const requestedSection = params.get("section");
-  const [activeSection, setActiveSection] = useState<SectionKey>(() =>
-    sectionOrder.includes(requestedSection as SectionKey)
-      ? (requestedSection as SectionKey)
-      : "goals",
-  );
+  // The section lives in the URL so it survives a refresh and can be linked to.
+  const activeSection: SectionKey = sectionOrder.includes(
+    requestedSection as SectionKey,
+  )
+    ? (requestedSection as SectionKey)
+    : "goals";
+  const sectionLink = (key: SectionKey) => ({
+    to: `${location.pathname}?section=${key}`,
+    state: location.state,
+  });
+  const activeIndex = sectionOrder.indexOf(activeSection);
+  const previousSection = sectionOrder[activeIndex - 1];
+  const nextSection = sectionOrder[activeIndex + 1];
+
   const [showImport, setShowImport] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
   const dirtyRef = useRef(false);
 
@@ -174,24 +192,23 @@ export function AcademicProfilePage() {
     );
 
   const profile = query.data;
+  const SectionIcon = sectionIcons[activeSection];
+  const sectionDone = Boolean(completion[activeSection]);
 
   return (
-    <div className="page apps-page profile-page">
+    <div className="page apps-page">
       <PageHeader
         title="Academic profile"
         description="Keep your academic background, goals and achievements in one reusable profile."
         meta={
-          profile
-            ? `Version ${profile.version} · ${
-                saveStatus === "saving"
-                  ? "Saving…"
-                  : saveStatus === "error"
-                    ? "Save failed"
-                    : saveStatus === "saved"
-                      ? "Saved"
-                      : "Up to date"
-              }`
-            : "Not saved yet"
+          profile ? (
+            <span className="profile-header-meta">
+              <span>Version {profile.version}</span>
+              <SaveIndicator status={saveStatus} />
+            </span>
+          ) : (
+            "Not saved yet"
+          )
         }
         actions={
           <>
@@ -217,100 +234,139 @@ export function AcademicProfilePage() {
       />
 
       {save.isError ? (
-        <p className="form-error" role="alert">
-          We couldn’t save your academic profile. Your entries are still here;
-          retrying automatically.
-        </p>
+        <div className="profile-save-error" role="alert">
+          <AlertTriangle aria-hidden="true" />
+          <p>
+            We couldn’t save your academic profile. Your entries are safe on this
+            page — retry now, or keep editing and we’ll try again on your next
+            change.
+          </p>
+          <button type="button" onClick={() => save.mutate(draft)}>
+            Retry save
+          </button>
+        </div>
       ) : null}
 
       <div className="profile-layout">
-        <nav className="profile-section-nav" aria-label="Profile sections">
-          {sectionOrder.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={activeSection === key ? "selected" : ""}
-              aria-current={activeSection === key}
-              onClick={() => setActiveSection(key)}
-            >
-              {sectionLabels[key]}
-              <span
-                className={`profile-nav-dot${completion[key] ? " is-done" : ""}${!completion[key] && !CORE_SECTIONS.includes(key) ? " is-optional" : ""}`}
-              >
-                {completion[key]
-                  ? "Complete"
-                  : CORE_SECTIONS.includes(key)
-                    ? "Incomplete"
-                    : "Optional"}
-              </span>
-            </button>
-          ))}
-        </nav>
-
-        <main className="apps-card profile-section-panel">
-          <h2>{sectionLabels[activeSection]}</h2>
-          {activeSection === "goals" ? (
-            <GoalsFields
-              applicantType={draft.applicant_type}
-              studyLevel={draft.intended_study_level}
-              countries={draft.target_countries}
-              goals={draft.goals}
-              onApplicantType={(value) =>
-                updateDraft({ applicant_type: value })
-              }
-              onStudyLevel={(value) =>
-                updateDraft({ intended_study_level: value })
-              }
-              onCountries={(value) => updateDraft({ target_countries: value })}
-              onGoals={(patch) =>
-                updateDraft({ goals: { ...draft.goals, ...patch } })
-              }
-            />
-          ) : null}
-          {activeSection === "education" ? (
-            <EducationSection
-              entries={draft.education}
-              onChange={(value) => updateDraft({ education: value })}
-            />
-          ) : null}
-          {activeSection === "interests" ? (
-            <InterestsFields
-              interests={draft.interests}
-              onChange={(patch) =>
-                updateDraft({ interests: { ...draft.interests, ...patch } })
-              }
-            />
-          ) : null}
-          {activeSection === "research" ? (
-            <ResearchSection
-              entries={draft.research}
-              onChange={(value) => updateDraft({ research: value })}
-            />
-          ) : null}
-          {activeSection === "honors" ? (
-            <HonorsSection
-              entries={draft.honors}
-              onChange={(value) => updateDraft({ honors: value })}
-            />
-          ) : null}
-          {activeSection === "tests" ? (
-            <TestsSection
-              entries={draft.tests}
-              onChange={(value) => updateDraft({ tests: value })}
-            />
-          ) : null}
-          {activeSection === "languages" ? (
-            <LanguagesSection
-              entries={draft.languages}
-              onChange={(value) => updateDraft({ languages: value })}
-            />
-          ) : null}
-        </main>
-
-        <ProfileCompletionCard
+        <ProfileSectionNav
+          draft={draft}
           completion={completion}
+          activeSection={activeSection}
+          sectionLink={sectionLink}
           updatedAt={profile?.updated_at ?? null}
         />
+
+        <section
+          className="apps-card profile-section-panel"
+          aria-labelledby="profile-section-title"
+        >
+          <header className="profile-section-head">
+            <span className="profile-section-icon" aria-hidden="true">
+              <SectionIcon aria-hidden="true" />
+            </span>
+            <div>
+              <h2 id="profile-section-title">{sectionLabels[activeSection]}</h2>
+              <p>{sectionDescriptions[activeSection]}</p>
+            </div>
+            <StatusBadge
+              tone={sectionDone ? "green" : "grey"}
+              icon={sectionDone ? Check : undefined}
+            >
+              {sectionDone
+                ? "Complete"
+                : CORE_SECTIONS.includes(activeSection)
+                  ? "Needs details"
+                  : "Optional"}
+            </StatusBadge>
+          </header>
+
+          <div className="profile-section-body">
+            {activeSection === "goals" ? (
+              <GoalsFields
+                applicantType={draft.applicant_type}
+                studyLevel={draft.intended_study_level}
+                countries={draft.target_countries}
+                goals={draft.goals}
+                onApplicantType={(value) =>
+                  updateDraft({ applicant_type: value })
+                }
+                onStudyLevel={(value) =>
+                  updateDraft({ intended_study_level: value })
+                }
+                onCountries={(value) =>
+                  updateDraft({ target_countries: value })
+                }
+                onGoals={(patch) =>
+                  updateDraft({ goals: { ...draft.goals, ...patch } })
+                }
+              />
+            ) : null}
+            {activeSection === "education" ? (
+              <EducationSection
+                entries={draft.education}
+                onChange={(value) => updateDraft({ education: value })}
+              />
+            ) : null}
+            {activeSection === "interests" ? (
+              <InterestsFields
+                interests={draft.interests}
+                onChange={(patch) =>
+                  updateDraft({ interests: { ...draft.interests, ...patch } })
+                }
+              />
+            ) : null}
+            {activeSection === "research" ? (
+              <ResearchSection
+                entries={draft.research}
+                onChange={(value) => updateDraft({ research: value })}
+              />
+            ) : null}
+            {activeSection === "honors" ? (
+              <HonorsSection
+                entries={draft.honors}
+                onChange={(value) => updateDraft({ honors: value })}
+              />
+            ) : null}
+            {activeSection === "tests" ? (
+              <TestsSection
+                entries={draft.tests}
+                onChange={(value) => updateDraft({ tests: value })}
+              />
+            ) : null}
+            {activeSection === "languages" ? (
+              <LanguagesSection
+                entries={draft.languages}
+                onChange={(value) => updateDraft({ languages: value })}
+              />
+            ) : null}
+          </div>
+
+          <footer className="profile-section-foot">
+            <SaveIndicator status={saveStatus} live />
+            <div className="profile-section-steps">
+              {previousSection ? (
+                <Link
+                  className="profile-step-link"
+                  {...sectionLink(previousSection)}
+                  replace
+                >
+                  <ArrowLeft aria-hidden="true" />
+                  {sectionLabels[previousSection]}
+                </Link>
+              ) : null}
+              {nextSection ? (
+                <Link
+                  className="profile-step-link is-next"
+                  {...sectionLink(nextSection)}
+                  replace
+                >
+                  {sectionLabels[nextSection]}
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              ) : null}
+            </div>
+          </footer>
+        </section>
       </div>
 
       {showImport ? (
@@ -327,6 +383,44 @@ export function AcademicProfilePage() {
         />
       ) : null}
     </div>
+  );
+}
+
+const SAVE_COPY: Record<SaveStatus, string> = {
+  idle: "Up to date",
+  saving: "Saving your changes…",
+  saved: "All changes saved.",
+  error: "Save failed",
+};
+const SAVE_COPY_COMPACT: Record<SaveStatus, string> = {
+  idle: "Up to date",
+  saving: "Saving…",
+  saved: "Saved",
+  error: "Save failed",
+};
+
+/**
+ * Autosave state. It appears twice (header + panel footer), so only the footer
+ * is a live region — otherwise every save is announced twice — and the header
+ * uses the short wording so the same sentence isn't printed on screen twice.
+ */
+function SaveIndicator({ status, live }: { status: SaveStatus; live?: boolean }) {
+  const copy = live ? SAVE_COPY : SAVE_COPY_COMPACT;
+  return (
+    <span
+      className={`profile-save-state is-${status}`}
+      role={live ? "status" : undefined}
+      aria-hidden={live ? undefined : true}
+    >
+      {status === "saving" ? (
+        <Loader2 aria-hidden="true" className="profile-save-spinner" />
+      ) : status === "error" ? (
+        <AlertTriangle aria-hidden="true" />
+      ) : (
+        <Check aria-hidden="true" />
+      )}
+      {copy[status]}
+    </span>
   );
 }
 

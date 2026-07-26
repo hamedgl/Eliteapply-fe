@@ -229,6 +229,17 @@ export const sectionLabels: Record<SectionKey, string> = {
   languages: "Languages",
 };
 
+/** One-line "what goes here" shown under the section title in the editor panel. */
+export const sectionDescriptions: Record<SectionKey, string> = {
+  goals: "Where you want to study, at what level, and how it will be funded.",
+  education: "Every degree, diploma or programme you have taken or are taking.",
+  interests: "The topics you want to work on — used to tailor generated writing.",
+  research: "Projects, theses and lab work, with the question and the outcome.",
+  honors: "Awards, scholarships, leadership roles and volunteering.",
+  tests: "IELTS, TOEFL, GRE, SAT and any other standardized results.",
+  languages: "Languages you speak, with certifications and scores where you have them.",
+};
+
 export const sectionOrder: SectionKey[] = [
   "goals",
   "education",
@@ -313,6 +324,16 @@ export function computeCompletion(draft: ProfileDraft): Record<string, boolean> 
     tests: draft.tests.length > 0,
     languages: draft.languages.length > 0,
   };
+}
+
+/**
+ * Item count for the nav counters. Goals is a fixed field set rather than a
+ * list, so it has no meaningful count and reports 0 (no badge).
+ */
+export function sectionCount(draft: ProfileDraft, key: SectionKey): number {
+  if (key === "goals") return 0;
+  if (key === "interests") return draft.interests.interest_tags.length;
+  return draft[key].length;
 }
 
 export function profileCompletionPercent(completion: Record<string, boolean>) {

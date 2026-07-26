@@ -1,5 +1,7 @@
+import { Award, ClipboardCheck, GraduationCap, Languages, Microscope } from "lucide-react";
 import { CountryCombobox } from "../../../components/filters/CountryCombobox";
 import { Select } from "../../../components/ui/select";
+import { countryName } from "../../../lib/countries";
 import { RepeatableList } from "./RepeatableList";
 import {
   degreeLevels,
@@ -11,6 +13,20 @@ import {
   type ResearchEntry,
   type TestEntry,
 } from "../model";
+
+/** Collapsed-row metadata: joins the parts that are actually filled in. */
+const metaLine = (...parts: (string | null | undefined)[]) => {
+  const filled = parts.filter((part): part is string => Boolean(part && part.trim()));
+  return filled.length ? filled.join(" · ") : null;
+};
+
+/** "2019 – 2023", "2019 – present", or just one side when only one date is set. */
+const dateRange = (start: string, end: string) => {
+  const year = (value: string) => (value ? value.slice(0, 4) : "");
+  if (!start && !end) return null;
+  if (!start) return `Until ${year(end)}`;
+  return `${year(start)} – ${end ? year(end) : "present"}`;
+};
 
 export function EducationSection({
   entries,
@@ -24,7 +40,9 @@ export function EducationSection({
       entries={entries}
       onChange={onChange}
       addLabel="Add education"
-      emptyText="No education history added yet."
+      emptyIcon={GraduationCap}
+      emptyHeading="No education added yet"
+      emptyText="Add each degree or programme once and reuse it across every application."
       createEntry={() => ({
         id: newId(),
         institution: "",
@@ -41,6 +59,14 @@ export function EducationSection({
         entry.institution || entry.degree
           ? `${entry.degree || "Degree"}${entry.institution ? ` · ${entry.institution}` : ""}`
           : "New education entry"
+      }
+      renderMeta={(entry) =>
+        metaLine(
+          entry.field_of_study,
+          dateRange(entry.start_date, entry.end_date),
+          entry.grade ? `${entry.grade}${entry.grade_scale ? ` / ${entry.grade_scale}` : ""}` : "",
+          entry.country ? (countryName(entry.country) ?? entry.country) : "",
+        )
       }
       renderFields={(entry, update) => (
         <>
@@ -102,9 +128,18 @@ export function TestsSection({
       entries={entries}
       onChange={onChange}
       addLabel="Add test score"
-      emptyText="No standardized test scores added yet."
+      emptyIcon={ClipboardCheck}
+      emptyHeading="No test scores added yet"
+      emptyText="IELTS, TOEFL, GRE, SAT and similar results, with the dates they expire."
       createEntry={() => ({ id: newId(), test_type: "", overall_score: "", test_date: "", expiration_date: "" })}
       renderSummary={(entry) => entry.test_type || "New test score"}
+      renderMeta={(entry) =>
+        metaLine(
+          entry.overall_score ? `Score ${entry.overall_score}` : "",
+          entry.test_date ? `Taken ${entry.test_date.slice(0, 7)}` : "",
+          entry.expiration_date ? `Expires ${entry.expiration_date.slice(0, 7)}` : "",
+        )
+      }
       renderFields={(entry, update) => (
         <>
           <label>
@@ -141,9 +176,18 @@ export function LanguagesSection({
       entries={entries}
       onChange={onChange}
       addLabel="Add language"
-      emptyText="No languages added yet."
+      emptyIcon={Languages}
+      emptyHeading="No languages added yet"
+      emptyText="List the languages you work in, with certifications and scores where you have them."
       createEntry={() => ({ id: newId(), language: "", proficiency: "", certification: "", score: "", expiration_date: "" })}
       renderSummary={(entry) => entry.language || "New language"}
+      renderMeta={(entry) =>
+        metaLine(
+          entry.proficiency,
+          entry.certification,
+          entry.score ? `Score ${entry.score}` : "",
+        )
+      }
       renderFields={(entry, update) => (
         <>
           <label>
@@ -189,7 +233,9 @@ export function ResearchSection({
       entries={entries}
       onChange={onChange}
       addLabel="Add research experience"
-      emptyText="No research experience added yet."
+      emptyIcon={Microscope}
+      emptyHeading="No research experience added yet"
+      emptyText="Theses, lab work and projects — the question you asked and what came out of it."
       createEntry={() => ({
         id: newId(),
         project_title: "",
@@ -201,6 +247,13 @@ export function ResearchSection({
         outcome: "",
       })}
       renderSummary={(entry) => entry.project_title || "New research entry"}
+      renderMeta={(entry) =>
+        metaLine(
+          entry.institution,
+          entry.supervisor ? `With ${entry.supervisor}` : "",
+          dateRange(entry.start_date, entry.end_date),
+        )
+      }
       renderFields={(entry, update) => (
         <>
           <label className="wide">
@@ -249,9 +302,14 @@ export function HonorsSection({
       entries={entries}
       onChange={onChange}
       addLabel="Add honor or activity"
-      emptyText="No honors or activities added yet."
+      emptyIcon={Award}
+      emptyHeading="No honors or activities added yet"
+      emptyText="Awards, scholarships, leadership roles and volunteering all belong here."
       createEntry={() => ({ id: newId(), title: "", organisation: "", category: "", date: "", description: "" })}
       renderSummary={(entry) => entry.title || "New entry"}
+      renderMeta={(entry) =>
+        metaLine(entry.organisation, entry.category, entry.date ? entry.date.slice(0, 4) : "")
+      }
       renderFields={(entry, update) => (
         <>
           <label>

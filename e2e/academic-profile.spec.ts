@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -17,104 +17,137 @@ const user = {
   last_login_at: null,
 };
 
-test("new academic profiles handle a null response and become versioned after save", async ({
-  page,
-}) => {
-  const runtimeErrors: string[] = [];
-  let storedProfile: Record<string, unknown> | null = null;
-  let savedPayload: Record<string, unknown> | null = null;
-  let versionRequests = 0;
-
-  page.on("console", (message) => {
-    if (message.type() === "error") runtimeErrors.push(message.text());
-  });
-  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+/** Stubs auth + the academic-profile endpoints against an in-memory profile. */
+async function stubApi(page: Page) {
+  const state: {
+    profile: Record<string, unknown> | null;
+    savedPayload: Record<string, unknown> | null;
+  } = { profile: null, savedPayload: null };
 
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
     const method = route.request().method();
 
-    if (url.endsWith("/auth/refresh")) {
+    if (url.endsWith("/auth/refresh"))
       return route.fulfill({
         json: { access_token: "test", id_token: "test", expires_in: 3600 },
       });
-    }
     if (url.endsWith("/users/me")) return route.fulfill({ json: user });
-    if (url.endsWith("/platform/capabilities")) {
-      return route.fulfill({ json: [] });
-    }
-    if (url.endsWith("/academic-profile/versions")) {
-      versionRequests += 1;
-      return route.fulfill({ json: [] });
-    }
-    if (url.endsWith("/academic-profile") && method === "GET") {
-      return route.fulfill({ json: storedProfile });
-    }
+    if (url.endsWith("/platform/capabilities")) return route.fulfill({ json: [] });
+    if (url.endsWith("/academic-profile/versions")) return route.fulfill({ json: [] });
+    if (url.endsWith("/academic-profile") && method === "GET")
+      return route.fulfill({ json: state.profile });
     if (url.endsWith("/academic-profile") && method === "PUT") {
-      savedPayload = route.request().postDataJSON() as Record<string, unknown>;
-      storedProfile = {
+      state.savedPayload = route.request().postDataJSON() as Record<string, unknown>;
+      state.profile = {
         id: "00000000-0000-4000-8000-000000000020",
-        version: 1,
+        version: ((state.profile?.version as number) ?? 0) + 1,
         created_at: "2026-07-13T12:00:00Z",
         updated_at: "2026-07-13T12:00:00Z",
-        ...savedPayload,
-        completion: { direction: true, academic_evidence: false },
+        ...state.savedPayload,
       };
-      return route.fulfill({ json: storedProfile });
+      return route.fulfill({ json: state.profile });
     }
     return route.fulfill({ json: {} });
   });
 
+  return state;
+}
+
+test("academic profile autosaves, tracks completion and keeps the section in the URL", async ({
+  page,
+}) => {
+  const runtimeErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") runtimeErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+
+  const state = await stubApi(page);
+
   await page.goto("/app/academic-profile");
   await expect(
-    page.getByRole("heading", { name: "Academic Profile", level: 1 }),
+    page.getByRole("heading", { name: "Academic profile", level: 1 }),
   ).toBeVisible();
   await expect(page.getByText("Not saved yet")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Import profile" })).toHaveClass(
-    /secondary-action/,
-  );
-  await expect(
-    page.getByText("Your first version will appear here after you save."),
-  ).toBeVisible();
-  expect(versionRequests).toBe(0);
-  expect(runtimeErrors).toEqual([]);
+  await expect(page.getByRole("heading", { name: "Goals", level: 2 })).toBeVisible();
+  await expect(page.getByText("0 of 7 sections ready")).toBeVisible();
+
   await page.screenshot({
-    path: "/tmp/eliteapply-academic-profile-new.png",
+    path: "/tmp/eliteapply-academic-profile-empty.png",
     fullPage: true,
   });
 
-  await page.getByLabel("Applicant type").fill("International student");
-  await page.getByLabel("Intended study level").fill("Postgraduate");
-  await page.getByLabel("Target countries").fill("Portugal, United Kingdom");
-  await page
-    .getByLabel("education")
-    .fill("BSc Computer Science, completed with distinction.");
-  await page.getByRole("button", { name: "Save academic profile" }).click();
-
-  await expect(page.getByText("Academic profile saved.")).toBeVisible();
-  await expect(
-    page.getByText("Version 1", { exact: true }).first(),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Delete profile" })).toHaveClass(
-    /secondary-action danger/,
-  );
-  expect(savedPayload).toMatchObject({
-    applicant_type: "International student",
-    intended_study_level: "Postgraduate",
-    target_countries: ["Portugal", "United Kingdom"],
+  // Autosave fires on edit — there is no explicit save button.
+  await page.getByLabel("Fields of study").fill("Public policy");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("All changes saved.");
+  expect(state.savedPayload).toMatchObject({
+    sections: { goals: { fields_of_study: ["Public policy"] } },
   });
 
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.reload();
-  await expect(page.getByLabel("Applicant type")).toHaveValue(
-    "International student",
-  );
+  // Sections are links, so the section survives a reload.
+  const nav = page.getByRole("navigation", { name: "Profile sections" });
+  await nav.getByRole("link", { name: /^Education/ }).click();
+  await expect(page).toHaveURL(/section=education/);
   await expect(
-    page.getByText("Version 1", { exact: true }).first(),
+    page.getByRole("heading", { name: "No education added yet", level: 2 }),
   ).toBeVisible();
-  expect(runtimeErrors).toEqual([]);
+
+  await page.getByRole("button", { name: "Add education" }).click();
+  await page.getByLabel("Institution").fill("University of Lisbon");
+  await page.getByLabel("Field of study").fill("Public policy");
+  await expect(page.getByRole("status")).toHaveText("All changes saved.");
+
+  await page.getByLabel("Start date").fill("2021-09-01");
+  await page.getByLabel("End date (or expected)").fill("2025-06-30");
+  await expect(page.getByRole("status")).toHaveText("All changes saved.");
+
+  await page.reload();
+  await expect(page).toHaveURL(/section=education/);
+  await expect(page.getByText("University of Lisbon")).toBeVisible();
+  // Collapsed rows carry a metadata line so the list stays scannable.
+  await expect(page.getByText("Public policy · 2021 – 2025")).toBeVisible();
+  await expect(nav.getByRole("link", { name: /Education.*Complete/ })).toBeVisible();
+  await expect(page.getByText("1 of 7 sections ready")).toBeVisible();
+
   await page.screenshot({
-    path: "/tmp/eliteapply-academic-profile-saved-mobile.png",
+    path: "/tmp/eliteapply-academic-profile-education.png",
+    fullPage: true,
+  });
+
+  await page.getByRole("button", { name: /University of Lisbon/ }).click();
+  await expect(page.getByLabel("Institution")).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-academic-profile-expanded.png",
+    fullPage: true,
+  });
+
+  expect(runtimeErrors).toEqual([]);
+});
+
+test("academic profile stacks into one column on mobile", async ({ page }) => {
+  await stubApi(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app/academic-profile");
+  await expect(page.getByRole("heading", { name: "Goals", level: 2 })).toBeVisible();
+
+  const mobileNav = page.getByRole("navigation", { name: "Profile sections" });
+  const panel = page.getByRole("region", { name: "Goals" });
+  const navBox = await mobileNav.boundingBox();
+  const panelBox = await panel.boundingBox();
+  expect(navBox && panelBox && panelBox.y).toBeGreaterThan(
+    (navBox?.y ?? 0) + (navBox?.height ?? 0) - 1,
+  );
+
+  // The section strip scrolls inside itself; the page itself must not.
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  await page.screenshot({
+    path: "/tmp/eliteapply-academic-profile-mobile.png",
     fullPage: true,
   });
 });
