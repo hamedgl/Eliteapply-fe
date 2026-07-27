@@ -13,6 +13,41 @@ export const documentCategories = [
   "other",
 ] as const;
 
+/** MIME types the signed-upload endpoint accepts, keyed by file extension. */
+export const acceptedUploadTypes = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+} as const;
+
+export const uploadAccept = ".pdf,.docx,.jpg,.jpeg,.png";
+
+/**
+ * `DocumentCreate.size_bytes` caps at 26214400 in openapi.json. The signed-upload
+ * response also returns `max_size_bytes`, but only after a round-trip — checking
+ * here lets a bulk queue reject oversized files before wasting N uploads.
+ */
+export const maxUploadBytes = 26_214_400;
+
+/**
+ * Browsers report an empty or wrong `type` for some files (notably .docx from
+ * Explorer/Finder), which made otherwise-valid uploads fail. Fall back to the
+ * extension and re-wrap the File so the rest of the pipeline sees a real MIME.
+ */
+export function normalizeUploadFile(file: File): File | null {
+  const accepted: readonly string[] = Object.values(acceptedUploadTypes);
+  if (accepted.includes(file.type)) return file;
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const resolved = (acceptedUploadTypes as Record<string, string>)[extension];
+  if (!resolved) return null;
+  return new File([file], file.name, {
+    type: resolved,
+    lastModified: file.lastModified,
+  });
+}
+
 export const formatBytes = (bytes: number) =>
   bytes < 1_048_576
     ? `${(bytes / 1024).toFixed(0)} KB`

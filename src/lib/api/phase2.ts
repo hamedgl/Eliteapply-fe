@@ -505,6 +505,7 @@ export async function uploadAcademicDocument(
     displayName?: string;
     tags?: string[];
     expiresAt?: string | null;
+    onProgress?: (percent: number) => void;
   },
 ) {
   const allowed = [
@@ -527,6 +528,13 @@ export async function uploadAcademicDocument(
     contentType: file.type,
     maxSizeBytes: signed.max_size_bytes,
     signal,
+    onProgress: options?.onProgress
+      ? (progress) =>
+          options.onProgress?.(
+            progress.percent ??
+              (progress.total ? (progress.loaded / progress.total) * 100 : 0),
+          )
+      : undefined,
   });
   return documentsApi.register({
     category,

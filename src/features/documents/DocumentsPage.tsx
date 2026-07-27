@@ -51,7 +51,9 @@ export function DocumentsPage() {
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [uploading, setUploading] = useState(false);
+  /** null = dialog closed. An array (possibly empty) opens it, pre-seeded with dropped files. */
+  const [uploadSeed, setUploadSeed] = useState<File[] | null>(null);
+  const [pageDragOver, setPageDragOver] = useState(false);
   const [attaching, setAttaching] = useState<AcademicDocument | null>(null);
   const [deleting, setDeleting] = useState<AcademicDocument | null>(null);
   const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
@@ -176,13 +178,31 @@ export function DocumentsPage() {
     );
 
   return (
-    <div className="page">
+    <div
+      className={`page${pageDragOver ? " docs-page-dropping" : ""}`}
+      onDragOver={(event) => {
+        if (!event.dataTransfer.types.includes("Files")) return;
+        event.preventDefault();
+        setPageDragOver(true);
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node))
+          setPageDragOver(false);
+      }}
+      onDrop={(event) => {
+        if (!event.dataTransfer.types.includes("Files")) return;
+        event.preventDefault();
+        setPageDragOver(false);
+        // Materialise now — the DataTransfer is emptied once this handler returns.
+        setUploadSeed(Array.from(event.dataTransfer.files));
+      }}
+    >
       <PageHeader
         title="Academic Documents"
         description="Manage transcripts, certificates, recommendation letters, and test scores"
         actions={
-          <button className="primary" type="button" onClick={() => setUploading(true)}>
-            <Plus aria-hidden="true" /> Upload document
+          <button className="primary" type="button" onClick={() => setUploadSeed([])}>
+            <Plus aria-hidden="true" /> Upload documents
           </button>
         }
       />
@@ -318,10 +338,12 @@ export function DocumentsPage() {
           />
         </>
       ) : (
-        <OnboardingEmptyState onUpload={() => setUploading(true)} />
+        <OnboardingEmptyState onUpload={() => setUploadSeed([])} />
       )}
 
-      {uploading ? <UploadDialog onClose={() => setUploading(false)} /> : null}
+      {uploadSeed ? (
+        <UploadDialog initialFiles={uploadSeed} onClose={() => setUploadSeed(null)} />
+      ) : null}
       {attaching ? (
         <AttachToApplicationDialog document={attaching} onClose={() => setAttaching(null)} />
       ) : null}
