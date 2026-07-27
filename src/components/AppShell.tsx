@@ -388,7 +388,7 @@ export function AppShell() {
             aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
             aria-expanded={notifDropdownOpen}
           >
-            <Bell aria-hidden="true" />
+            <Bell aria-hidden="true" size={21} />
             {unread.data?.unread_count ? (
               <span>
                 {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
@@ -589,7 +589,7 @@ export function AppShell() {
                 aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
                 aria-expanded={notifDropdownOpen}
               >
-                <Bell aria-hidden="true" />
+                <Bell aria-hidden="true" size={21} />
                 {unread.data?.unread_count ? (
                   <span className="app-topbar-badge">
                     {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
