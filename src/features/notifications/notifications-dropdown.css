@@ -1,0 +1,200 @@
+/* Notifications dropdown — compact overlay version for topbar/mobile */
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: min(420px, calc(100vw - 2rem));
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-surface);
+  border: 1px solid var(--app-line-strong);
+  border-radius: var(--app-radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.notif-dropdown-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.notif-dropdown-head h3 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.notif-dropdown-mark-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  color: var(--app-blue);
+  transition: background 0.15s ease;
+}
+
+.notif-dropdown-mark-all:hover:not(:disabled) {
+  background: var(--app-blue-soft);
+}
+
+.notif-dropdown-mark-all:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notif-dropdown-loading,
+.notif-dropdown-error,
+.notif-dropdown-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1.5rem;
+  color: var(--app-muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.notif-dropdown-error button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-blue);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.notif-dropdown-empty {
+  padding: 3rem 1.5rem;
+}
+
+.notif-dropdown-list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.notif-dropdown-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  border: 0;
+  border-bottom: 1px solid var(--app-line);
+  background: transparent;
+  text-align: left;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.notif-dropdown-item:last-child {
+  border-bottom: 0;
+}
+
+.notif-dropdown-item:hover {
+  background: var(--app-surface-subtle);
+}
+
+.notif-dropdown-item.is-unread {
+  background: var(--app-blue-soft);
+}
+
+.notif-dropdown-item.is-unread:hover {
+  background: var(--app-blue-soft);
+  filter: brightness(0.98);
+}
+
+.notif-dropdown-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: var(--app-blue);
+  flex: none;
+}
+
+.notif-dropdown-item:not(.is-unread) .notif-dropdown-dot {
+  background: transparent;
+}
+
+.notif-dropdown-content {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.notif-dropdown-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.notif-dropdown-content h4 {
+  margin: 0.1rem 0 0;
+  color: var(--app-ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.notif-dropdown-item:not(.is-unread) .notif-dropdown-content h4 {
+  font-weight: 600;
+}
+
+.notif-dropdown-content p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notif-dropdown-time {
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+  font-size: 0.75rem;
+}
+
+.notif-dropdown-footer {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border: 0;
+  border-top: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+  color: var(--app-blue);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  transition: background 0.15s ease;
+}
+
+.notif-dropdown-footer:hover {
+  background: var(--app-blue-soft);
+}
+
+@media (max-width: 640px) {
+  .notif-dropdown {
+    width: calc(100vw - 1rem);
+    right: 0.5rem;
+  }
+}

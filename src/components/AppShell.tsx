@@ -36,6 +36,7 @@ import { useEntitlements } from "../lib/billing/provider";
 import { PromptDialogProvider } from "./PromptDialog";
 import { preloadAppRoute } from "../app/preload";
 import { ProgressBar } from "./data-display/ProgressBar";
+import { NotificationsDropdown } from "../features/notifications/NotificationsDropdown";
 import "../styles/workspace.css";
 
 const compactNumber = new Intl.NumberFormat(undefined, { notation: "compact" });
@@ -219,6 +220,10 @@ export function AppShell() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const notifButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileNotifButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarNotifButtonRef = useRef<HTMLAnchorElement>(null);
   const user = useSession((state) => state.user);
   const clear = useSession((state) => state.clear);
   const navigate = useNavigate();
@@ -374,20 +379,28 @@ export function AppShell() {
           <span aria-hidden="true">E</span>
           EliteApply
         </NavLink>
-        <NavLink
-          className="mobile-notifications"
-          to="/app/notifications"
-          onPointerEnter={() => prepareRoute("/app/notifications")}
-          onFocus={() => prepareRoute("/app/notifications")}
-          aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
-        >
-          <Bell aria-hidden="true" />
-          {unread.data?.unread_count ? (
-            <span>
-              {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
-            </span>
-          ) : null}
-        </NavLink>
+        <div style={{ position: "relative" }}>
+          <button
+            ref={mobileNotifButtonRef}
+            className="mobile-notifications"
+            type="button"
+            onClick={() => setNotifDropdownOpen((v) => !v)}
+            aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
+            aria-expanded={notifDropdownOpen}
+          >
+            <Bell aria-hidden="true" />
+            {unread.data?.unread_count ? (
+              <span>
+                {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
+              </span>
+            ) : null}
+          </button>
+          <NotificationsDropdown
+            open={notifDropdownOpen}
+            onClose={() => setNotifDropdownOpen(false)}
+            triggerRef={mobileNotifButtonRef}
+          />
+        </div>
         <button
           ref={menuButtonRef}
           className="mobile-menu"
@@ -450,6 +463,7 @@ export function AppShell() {
 
         <nav aria-label="Primary navigation">
           <NavLink
+            ref={sidebarNotifButtonRef}
             className="notification-shortcut"
             to="/app/notifications"
             title="Notifications"
@@ -566,20 +580,28 @@ export function AppShell() {
             <kbd>⌘K</kbd>
           </button>
           <div className="app-topbar-actions">
-            <NavLink
-              className="app-topbar-bell"
-              to="/app/notifications"
-              aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
-              onPointerEnter={() => prepareRoute("/app/notifications")}
-              onFocus={() => prepareRoute("/app/notifications")}
-            >
-              <Bell aria-hidden="true" />
-              {unread.data?.unread_count ? (
-                <span className="app-topbar-badge">
-                  {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
-                </span>
-              ) : null}
-            </NavLink>
+            <div style={{ position: "relative" }}>
+              <button
+                ref={notifButtonRef}
+                className="app-topbar-bell"
+                type="button"
+                onClick={() => setNotifDropdownOpen((v) => !v)}
+                aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
+                aria-expanded={notifDropdownOpen}
+              >
+                <Bell aria-hidden="true" />
+                {unread.data?.unread_count ? (
+                  <span className="app-topbar-badge">
+                    {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
+                  </span>
+                ) : null}
+              </button>
+              <NotificationsDropdown
+                open={notifDropdownOpen}
+                onClose={() => setNotifDropdownOpen(false)}
+                triggerRef={notifButtonRef}
+              />
+            </div>
             <div className="app-topbar-profile" ref={profileMenuRef}>
               <button
                 type="button"
