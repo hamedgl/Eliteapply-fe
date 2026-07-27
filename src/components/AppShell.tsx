@@ -471,7 +471,7 @@ export function AppShell() {
             onPointerEnter={() => prepareRoute("/app/notifications")}
             onFocus={() => prepareRoute("/app/notifications")}
           >
-            <Bell aria-hidden="true" />
+            <Bell aria-hidden="true" size={21} />
             <span>Notifications</span>
             {unread.data?.unread_count ? (
               <strong>
