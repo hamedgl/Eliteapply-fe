@@ -211,6 +211,55 @@
   color: var(--app-muted);
   font-size: 0.78rem;
 }
+.iv-count-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.iv-count {
+  position: relative;
+  display: grid;
+  min-width: 44px;
+  min-height: 40px;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  color: var(--app-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  place-items: center;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+.iv-count:hover {
+  border-color: var(--app-line-strong);
+  background: var(--app-surface-subtle);
+}
+.iv-count.is-selected {
+  color: var(--app-blue);
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+.iv-count input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.iv-count:has(input:focus-visible) {
+  outline: 3px solid var(--app-blue);
+  outline-offset: 2px;
+}
+.iv-count-hint {
+  margin-left: 0.35rem;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+
 .iv-custom-focus {
   display: grid;
   gap: 0.35rem;

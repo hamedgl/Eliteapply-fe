@@ -33,6 +33,9 @@ type S = components["schemas"];
 
 /** Mirrors AcademicInterviewCreate.custom_focus maxLength in the API schema. */
 const CUSTOM_FOCUS_MAX = 600;
+/** Mirrors AcademicInterviewCreate.question_count min/max/default. */
+const QUESTION_COUNTS = [3, 4, 5, 6, 7, 8];
+const DEFAULT_QUESTION_COUNT = 4;
 
 const modeIcons = { chat: MessageSquare, written: PenLine, voice: Mic2 } as const;
 const modeIcon = (mode: string) =>
@@ -141,6 +144,7 @@ export function NewInterviewPage() {
   const [applicationId, setApplicationId] = useState("");
   const [interviewType, setInterviewType] = useState<InterviewType>("graduate");
   const [customFocus, setCustomFocus] = useState("");
+  const [questionCount, setQuestionCount] = useState(DEFAULT_QUESTION_COUNT);
   const [mode, setMode] = useState<InterviewMode>("chat");
   const applications = useQuery({
     queryKey: queryKeys.applications,
@@ -184,6 +188,7 @@ export function NewInterviewPage() {
       application_id: applicationId,
       interview_type: interviewType,
       mode,
+      question_count: questionCount,
       // Only sent for custom sessions — the other types carry their own brief.
       ...(interviewType === "custom" ? { custom_focus: trimmedFocus } : {}),
     } satisfies S["AcademicInterviewCreate"]);
@@ -270,6 +275,30 @@ export function NewInterviewPage() {
               </span>
             </div>
           ) : null}
+        </fieldset>
+
+        <fieldset>
+          <legend>How many questions?</legend>
+          <div className="iv-count-row" role="radiogroup" aria-label="How many questions?">
+            {QUESTION_COUNTS.map((count) => (
+              <label
+                className={`iv-count${questionCount === count ? " is-selected" : ""}`}
+                key={count}
+              >
+                <input
+                  type="radio"
+                  name="question_count"
+                  value={count}
+                  checked={questionCount === count}
+                  onChange={() => setQuestionCount(count)}
+                />
+                {count}
+              </label>
+            ))}
+            <span className="iv-count-hint">
+              Roughly {questionCount * 3}–{questionCount * 5} minutes.
+            </span>
+          </div>
         </fieldset>
 
         <fieldset>

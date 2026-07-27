@@ -13961,6 +13961,14 @@
             "title": "Mode",
             "default": "chat"
           },
+          "question_count": {
+            "type": "integer",
+            "maximum": 8.0,
+            "minimum": 3.0,
+            "title": "Question Count",
+            "description": "How many questions this practice session should ask.",
+            "default": 4
+          },
           "custom_focus": {
             "anyOf": [
               {

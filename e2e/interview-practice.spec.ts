@@ -255,6 +255,28 @@ test("history and the new-session form render the session set-up", async ({ page
   await page.screenshot({ path: "/tmp/eliteapply-interview-new.png", fullPage: true });
 });
 
+test("the session length is chosen up front and sent with the request", async ({ page }) => {
+  const created: Record<string, unknown>[] = [];
+  await stubApi(page, {
+    session: interview(),
+    turns: [],
+    onCreate: (body) => created.push(body),
+  });
+
+  await page.goto("/app/interviews/new");
+  const lengths = page.getByRole("radiogroup", { name: "How many questions?" });
+  await expect(lengths.getByRole("radio", { name: "4" })).toBeChecked();
+  await expect(page.getByText("Roughly 12–20 minutes.")).toBeVisible();
+
+  await lengths.getByRole("radio", { name: "7" }).check();
+  await expect(page.getByText("Roughly 21–35 minutes.")).toBeVisible();
+  await page.screenshot({ path: "/tmp/eliteapply-interview-length.png", fullPage: true });
+
+  await page.getByRole("button", { name: "Start session" }).click();
+  expect(created).toHaveLength(1);
+  expect(created[0].question_count).toBe(7);
+});
+
 test("the finished report can be exported as a PDF", async ({ page }) => {
   await stubApi(page, {
     session: {

@@ -3598,6 +3598,12 @@ export interface components {
              */
             mode: "chat" | "voice" | "written";
             /**
+             * Question Count
+             * @description How many questions this practice session should ask.
+             * @default 4
+             */
+            question_count: number;
+            /**
              * Custom Focus
              * @description Candidate's own description of the interview to rehearse. Intended for interview_type=custom; treated as untrusted context, never as instructions.
              */
