@@ -115,6 +115,14 @@ async function stubApi(page: Page, fixture: Fixture) {
       });
     if (url.endsWith(`/academic-interviews/${INTERVIEW_ID}/turns`))
       return route.fulfill({ json: fixture.turns });
+    if (url.endsWith(`/academic-interviews/${INTERVIEW_ID}/report.pdf`))
+      return route.fulfill({
+        body: Buffer.from("%PDF-1.7 stub"),
+        contentType: "application/pdf",
+        headers: {
+          "content-disposition": `attachment; filename="interview-practice-report-${INTERVIEW_ID}.pdf"`,
+        },
+      });
     if (url.endsWith(`/academic-interviews/${INTERVIEW_ID}/report`))
       return route.fulfill({ json: report });
     if (url.endsWith(`/academic-interviews/${INTERVIEW_ID}/complete`) && method === "POST") {
@@ -245,6 +253,28 @@ test("history and the new-session form render the session set-up", async ({ page
   await page.getByRole("radio", { name: /PhD supervisor/ }).check();
   await expect(page.getByRole("radio", { name: /PhD supervisor/ })).toBeChecked();
   await page.screenshot({ path: "/tmp/eliteapply-interview-new.png", fullPage: true });
+});
+
+test("the finished report can be exported as a PDF", async ({ page }) => {
+  await stubApi(page, {
+    session: {
+      ...interview(),
+      status: "completed",
+      current_question: null,
+      current_question_index: QUESTIONS.length,
+    },
+    turns: [turn(0), turn(1)],
+  });
+
+  await page.goto(`/app/interviews/${INTERVIEW_ID}`);
+  await expect(page.getByRole("heading", { name: "Practice report" })).toBeVisible();
+
+  await page.screenshot({ path: "/tmp/eliteapply-interview-export.png", fullPage: true });
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download PDF" }).click();
+  expect((await download).suggestedFilename()).toBe(
+    `interview-practice-report-${INTERVIEW_ID}.pdf`,
+  );
 });
 
 test("a custom session requires a scenario description and sends it to the API", async ({

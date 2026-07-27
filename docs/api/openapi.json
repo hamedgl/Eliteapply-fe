@@ -9333,6 +9333,55 @@
         }
       }
     },
+    "/api/v1/academic-interviews/{interview_id}/report.pdf": {
+      "get": {
+        "tags": [
+          "Academic Engagement"
+        ],
+        "summary": "Interview Report Pdf",
+        "operationId": "interview_report_pdf_api_v1_academic_interviews__interview_id__report_pdf_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interview_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Interview Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/academic-interviews/{interview_id}/audio/upload-url": {
       "post": {
         "tags": [

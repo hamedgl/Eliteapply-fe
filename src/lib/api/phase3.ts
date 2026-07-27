@@ -410,6 +410,10 @@ export const interviewsApi = {
       `/academic-interviews/${e(id)}/cancel`,
       { method: "POST" },
     ),
+  reportPdf: (id: string) =>
+    apiRequest<Response>(`/academic-interviews/${e(id)}/report.pdf`, {
+      raw: true,
+    }),
   report: (id: string) =>
     apiRequest<S["InterviewReportResponse"]>(
       `/academic-interviews/${e(id)}/report`,

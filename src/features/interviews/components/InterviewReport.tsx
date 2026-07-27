@@ -1,4 +1,7 @@
-import { ArrowUpRight, Check, Target } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, Check, Download, Loader2, Target } from "lucide-react";
+import { interviewsApi } from "../../../lib/api/phase3";
+import { downloadResponse } from "../../../lib/api/download";
 import {
   scoreCategoryLabel,
   scoreTone,
@@ -7,6 +10,8 @@ import {
 } from "../model";
 import { numericScores, ScoreBars } from "./ScoreBars";
 import { InterviewWarnings } from "./InterviewWarnings";
+// `.iv-spin` / `.iv-form-error` are the shared bits, in interviews.css.
+import "../interviews.css";
 import "../interview-feedback.css";
 
 const asStrings = (value: unknown): string[] =>
@@ -15,6 +20,8 @@ const asStrings = (value: unknown): string[] =>
     : [];
 
 export function InterviewReportPanel({ report }: { report: Report }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
   const categories = numericScores(report.category_scores);
   const strengths = asStrings(report.strengths);
   const improvements = asStrings(report.improvement_areas);
@@ -23,6 +30,19 @@ export function InterviewReportPanel({ report }: { report: Report }) {
     ...warningList(report.contradictions ?? []),
     ...warningList(report.weak_claims ?? []),
   ];
+
+  async function downloadPdf() {
+    setDownloading(true);
+    setDownloadError("");
+    try {
+      const response = await interviewsApi.reportPdf(report.interview_id);
+      await downloadResponse(response, `interview-practice-report-${report.interview_id}.pdf`);
+    } catch {
+      setDownloadError("The PDF could not be prepared. Try again in a moment.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <section className="apps-card iv-report" aria-labelledby="iv-report-title">
@@ -36,6 +56,23 @@ export function InterviewReportPanel({ report }: { report: Report }) {
           <span>/ 100</span>
         </div>
       </header>
+
+      <div className="iv-report-export">
+        <button type="button" onClick={downloadPdf} disabled={downloading}>
+          {downloading ? (
+            <Loader2 aria-hidden="true" className="iv-spin" />
+          ) : (
+            <Download aria-hidden="true" />
+          )}
+          {downloading ? "Preparing PDF…" : "Download PDF"}
+        </button>
+        <span>Scores, coaching notes and the full transcript.</span>
+      </div>
+      {downloadError ? (
+        <p className="iv-form-error" role="alert">
+          {downloadError}
+        </p>
+      ) : null}
 
       <ScoreBars scores={categories} />
 
