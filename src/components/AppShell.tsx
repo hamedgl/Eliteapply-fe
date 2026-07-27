@@ -388,7 +388,7 @@ export function AppShell() {
             aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
             aria-expanded={notifDropdownOpen}
           >
-            <Bell aria-hidden="true" size={21} />
+            <Bell aria-hidden="true" size={20} />
             {unread.data?.unread_count ? (
               <span>
                 {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
@@ -471,7 +471,7 @@ export function AppShell() {
             onPointerEnter={() => prepareRoute("/app/notifications")}
             onFocus={() => prepareRoute("/app/notifications")}
           >
-            <Bell aria-hidden="true" size={21} />
+            <Bell aria-hidden="true" size={20} />
             <span>Notifications</span>
             {unread.data?.unread_count ? (
               <strong>
@@ -589,7 +589,7 @@ export function AppShell() {
                 aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
                 aria-expanded={notifDropdownOpen}
               >
-                <Bell aria-hidden="true" size={21} />
+                <Bell aria-hidden="true" size={20} />
                 {unread.data?.unread_count ? (
                   <span className="app-topbar-badge">
                     {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}

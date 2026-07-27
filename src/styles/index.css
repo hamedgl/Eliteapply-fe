@@ -7307,38 +7307,45 @@ th {
 
 .app-topbar-bell {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
-  color: var(--app-muted);
+  color: var(--app-ink-subtle, var(--app-muted));
   border-radius: 999px;
-  border: 0;
-  background: transparent;
+  border: 1px solid var(--app-line);
+  background: var(--app-surface);
   cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 .app-topbar-bell:hover {
   color: var(--app-ink);
+  border-color: var(--app-line-strong);
   background: var(--app-surface-subtle);
 }
 .app-topbar-bell svg {
-  width: 21px;
-  height: 21px;
+  width: 20px;
+  height: 20px;
+  flex: none;
 }
 .app-topbar-badge {
   position: absolute;
-  inset: 1px 1px auto auto;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 0.25rem;
-  display: grid;
-  place-items: center;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
   border: 2px solid var(--app-surface);
   border-radius: 999px;
   background: var(--app-blue);
   font-size: 0.65rem;
   font-weight: 700;
+  line-height: 1;
 }
 
 .app-topbar-profile {
