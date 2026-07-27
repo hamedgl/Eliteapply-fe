@@ -1,0 +1,185 @@
+/* Notifications page — additions on top of the shared workspace design system. */
+
+.notif-unread-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  color: var(--app-text);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.notif-unread-toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--app-blue);
+}
+
+.notif-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.notif-card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.15rem;
+}
+.notif-card.is-unread {
+  background: var(--app-blue-soft);
+}
+
+.notif-unread-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: var(--app-blue);
+  flex: none;
+}
+.notif-card:not(.is-unread) .notif-unread-dot {
+  background: transparent;
+}
+
+.notif-card-body {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+.notif-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.notif-card-time {
+  margin-left: auto;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+.notif-card-body h2 {
+  margin: 0.1rem 0 0;
+  color: var(--app-ink);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+.notif-card:not(.is-unread) .notif-card-body h2 {
+  font-weight: 600;
+}
+.notif-card-body p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.notif-card-action {
+  justify-self: start;
+  margin-top: 0.2rem;
+  padding: 0;
+  color: var(--app-blue);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.notif-card-action:hover {
+  text-decoration: underline;
+}
+
+.notif-load-more {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 1.5rem;
+  border: 1px dashed var(--app-line-strong);
+  border-radius: var(--app-radius-md);
+  background: transparent;
+  color: var(--app-muted);
+  font-weight: 600;
+}
+.notif-load-more:hover:not(:disabled) {
+  border-color: var(--app-blue);
+  color: var(--app-blue);
+}
+
+.notif-prefs-card {
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.5rem;
+}
+.notif-prefs-head h2 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 1.05rem;
+}
+.notif-prefs-head p {
+  margin: 0.35rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.85rem;
+}
+
+.notif-prefs-table {
+  display: grid;
+  gap: 0.15rem;
+}
+.notif-prefs-row {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem 5.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--app-line);
+}
+.notif-prefs-row:last-child {
+  border-bottom: 0;
+}
+.notif-prefs-row-head {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.notif-prefs-row-head span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.notif-prefs-row-head span:first-child {
+  justify-content: flex-start;
+}
+.notif-prefs-row-head svg {
+  width: 14px;
+  height: 14px;
+}
+.notif-prefs-row-label {
+  color: var(--app-ink);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.notif-prefs-check.check {
+  justify-content: center;
+}
+
+.notif-prefs-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+.notif-prefs-actions .inline-success {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .notif-card-time {
+    margin-left: 0;
+  }
+  .notif-prefs-row {
+    grid-template-columns: 1fr auto auto;
+    gap: 0.75rem;
+  }
+}
