@@ -211,6 +211,54 @@
   color: var(--app-muted);
   font-size: 0.78rem;
 }
+.iv-custom-focus {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--app-blue-soft);
+  border-radius: 10px;
+  background: var(--app-blue-soft);
+}
+.iv-custom-focus label {
+  color: var(--app-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.iv-custom-focus p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.iv-custom-focus textarea {
+  width: 100%;
+  min-height: 96px;
+  margin-top: 0.15rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--app-line-strong);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  color: var(--app-ink);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.iv-custom-focus textarea:focus-visible {
+  outline: none;
+  border-color: var(--app-blue);
+  box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
+}
+.iv-custom-focus-count {
+  justify-self: end;
+  color: var(--app-muted);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .iv-new-actions {
   display: flex;
   align-items: center;

@@ -48,6 +48,12 @@ export const statusTone = (value: string): BadgeTone =>
 
 export const isActive = (status: string) => !["completed", "cancelled"].includes(status);
 
+/** The candidate's own scenario description, snapshotted for custom sessions. */
+export function customFocus(interview: Interview): string | null {
+  const value = (interview.context_snapshot as Record<string, unknown>)?.custom_focus;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 /**
  * Questions are `unknown` in the schema (the service owns their shape). Returns
  * null rather than a placeholder: a missing question means "nothing left to

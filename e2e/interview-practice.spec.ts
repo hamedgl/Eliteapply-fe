@@ -85,6 +85,7 @@ type Fixture = {
   session: Record<string, unknown>;
   turns: unknown[];
   onAnswer?: (body: Record<string, unknown>) => void;
+  onCreate?: (body: Record<string, unknown>) => void;
 };
 
 async function stubApi(page: Page, fixture: Fixture) {
@@ -141,8 +142,13 @@ async function stubApi(page: Page, fixture: Fixture) {
     }
     if (url.endsWith(`/academic-interviews/${INTERVIEW_ID}`))
       return route.fulfill({ json: fixture.session });
-    if (new URL(url).pathname.endsWith("/academic-interviews"))
+    if (new URL(url).pathname.endsWith("/academic-interviews")) {
+      if (method === "POST") {
+        fixture.onCreate?.(route.request().postDataJSON() as Record<string, unknown>);
+        return route.fulfill({ json: fixture.session });
+      }
       return route.fulfill({ json: { items: [fixture.session], next_cursor: null, has_more: false } });
+    }
     return route.fulfill({ json: {} });
   });
 }
@@ -239,6 +245,62 @@ test("history and the new-session form render the session set-up", async ({ page
   await page.getByRole("radio", { name: /PhD supervisor/ }).check();
   await expect(page.getByRole("radio", { name: /PhD supervisor/ })).toBeChecked();
   await page.screenshot({ path: "/tmp/eliteapply-interview-new.png", fullPage: true });
+});
+
+test("a custom session requires a scenario description and sends it to the API", async ({
+  page,
+}) => {
+  const created: Record<string, unknown>[] = [];
+  await stubApi(page, {
+    session: interview(),
+    turns: [],
+    onCreate: (body) => created.push(body),
+  });
+
+  await page.goto("/app/interviews/new");
+  const start = page.getByRole("button", { name: "Start session" });
+  await expect(start).toBeEnabled();
+
+  // The box only exists for the custom type; the others carry their own brief.
+  await expect(page.getByLabel("Describe the interview")).toHaveCount(0);
+  await page.getByRole("radio", { name: /Custom/ }).check();
+
+  const box = page.getByLabel("Describe the interview");
+  await expect(box).toBeVisible();
+  await expect(start).toBeDisabled();
+
+  await box.fill("  A 20-minute teaching assistantship panel with two faculty members.  ");
+  await expect(start).toBeEnabled();
+  await page.screenshot({ path: "/tmp/eliteapply-interview-custom.png", fullPage: true });
+  await start.click();
+
+  expect(created).toHaveLength(1);
+  expect(created[0].interview_type).toBe("custom");
+  expect(created[0].custom_focus).toBe(
+    "A 20-minute teaching assistantship panel with two faculty members.",
+  );
+
+  // Switching back to a preset type drops the field from the payload entirely.
+  await page.goto("/app/interviews/new");
+  await page.getByRole("radio", { name: /PhD supervisor/ }).check();
+  await page.getByRole("button", { name: "Start session" }).click();
+  expect(created).toHaveLength(2);
+  expect(created[1]).not.toHaveProperty("custom_focus");
+});
+
+test("a custom session shows the scenario the candidate described", async ({ page }) => {
+  const brief = "A 20-minute teaching assistantship panel with two faculty members.";
+  await stubApi(page, {
+    session: {
+      ...interview(),
+      interview_type: "custom",
+      context_snapshot: { custom_focus: brief },
+    },
+    turns: [],
+  });
+  await page.goto(`/app/interviews/${INTERVIEW_ID}`);
+  await expect(page.getByRole("heading", { name: "Your scenario" })).toBeVisible();
+  await expect(page.getByText(brief)).toBeVisible();
 });
 
 test("the session view stacks on mobile without horizontal overflow", async ({ page }) => {

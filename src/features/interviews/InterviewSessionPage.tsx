@@ -22,6 +22,7 @@ import { VoiceAnswer } from "./components/VoiceAnswer";
 import {
   answeredCount,
   currentQuestion,
+  customFocus,
   interviewModeLabel,
   interviewTypeLabel,
   isActive,
@@ -148,6 +149,7 @@ export function InterviewPage() {
   // Active with nothing left to ask: the session finished but wasn't closed out.
   // Older sessions can be stuck here, so offer the one action that resolves it.
   const awaitingCompletion = active && !question;
+  const scenario = customFocus(interview);
   const trimmed = answer.trim();
   const overLimit = trimmed.length > ANSWER_MAX;
 
@@ -337,6 +339,13 @@ export function InterviewPage() {
                     : `${Math.max(total - answered, 0)} question${total - answered === 1 ? "" : "s"} left.`}
             </p>
           </div>
+
+          {scenario ? (
+            <div className="apps-card iv-scenario-card">
+              <h2>Your scenario</h2>
+              <p>{scenario}</p>
+            </div>
+          ) : null}
 
           {active ? (
             <div className="apps-card iv-actions-card">

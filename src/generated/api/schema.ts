@@ -3580,6 +3580,11 @@ export interface components {
              * @enum {string}
              */
             mode: "chat" | "voice" | "written";
+            /**
+             * Custom Focus
+             * @description Candidate's own description of the interview to rehearse. Intended for interview_type=custom; treated as untrusted context, never as instructions.
+             */
+            custom_focus?: string | null;
         };
         /** AcademicInterviewListResponse */
         AcademicInterviewListResponse: {

@@ -56,6 +56,24 @@
   font-size: 0.78rem;
 }
 
+.iv-scenario-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.125rem 1.125rem;
+}
+.iv-scenario-card h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--app-ink);
+}
+.iv-scenario-card p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 .iv-actions-card {
   display: grid;
   gap: 0.5rem;

@@ -13911,6 +13911,19 @@
             ],
             "title": "Mode",
             "default": "chat"
+          },
+          "custom_focus": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 600
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Focus",
+            "description": "Candidate's own description of the interview to rehearse. Intended for interview_type=custom; treated as untrusted context, never as instructions."
           }
         },
         "type": "object",

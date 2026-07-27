@@ -31,6 +31,9 @@ import "./interviews.css";
 
 type S = components["schemas"];
 
+/** Mirrors AcademicInterviewCreate.custom_focus maxLength in the API schema. */
+const CUSTOM_FOCUS_MAX = 600;
+
 const modeIcons = { chat: MessageSquare, written: PenLine, voice: Mic2 } as const;
 const modeIcon = (mode: string) =>
   modeIcons[mode as keyof typeof modeIcons] ?? MessageSquare;
@@ -137,6 +140,7 @@ export function NewInterviewPage() {
   const [error, setError] = useState("");
   const [applicationId, setApplicationId] = useState("");
   const [interviewType, setInterviewType] = useState<InterviewType>("graduate");
+  const [customFocus, setCustomFocus] = useState("");
   const [mode, setMode] = useState<InterviewMode>("chat");
   const applications = useQuery({
     queryKey: queryKeys.applications,
@@ -161,10 +165,17 @@ export function NewInterviewPage() {
     if (!applicationId && first) setApplicationId(first.id);
   }, [applications.data, applicationId]);
 
+  const trimmedFocus = customFocus.trim();
+  const needsFocus = interviewType === "custom" && !trimmedFocus;
+
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!applicationId) {
       setError("Select an application first.");
+      return;
+    }
+    if (needsFocus) {
+      setError("Describe the interview you want to rehearse.");
       return;
     }
     setError("");
@@ -173,6 +184,8 @@ export function NewInterviewPage() {
       application_id: applicationId,
       interview_type: interviewType,
       mode,
+      // Only sent for custom sessions — the other types carry their own brief.
+      ...(interviewType === "custom" ? { custom_focus: trimmedFocus } : {}),
     } satisfies S["AcademicInterviewCreate"]);
   }
 
@@ -234,6 +247,29 @@ export function NewInterviewPage() {
               </label>
             ))}
           </div>
+
+          {interviewType === "custom" ? (
+            <div className="iv-custom-focus">
+              <label htmlFor="iv-custom-focus">Describe the interview</label>
+              <p id="iv-custom-focus-hint">
+                Who is interviewing you, what they are assessing, and anything about the format.
+                This shapes both the questions and how your answers are judged.
+              </p>
+              <textarea
+                id="iv-custom-focus"
+                value={customFocus}
+                maxLength={CUSTOM_FOCUS_MAX}
+                rows={4}
+                required
+                aria-describedby="iv-custom-focus-hint"
+                placeholder="A 20-minute panel for a teaching assistantship. Two faculty members assess subject knowledge, how I would handle a struggling student, and my availability across the term."
+                onChange={(event) => setCustomFocus(event.target.value)}
+              />
+              <span className="iv-custom-focus-count">
+                {trimmedFocus.length} / {CUSTOM_FOCUS_MAX}
+              </span>
+            </div>
+          ) : null}
         </fieldset>
 
         <fieldset>
@@ -271,7 +307,10 @@ export function NewInterviewPage() {
         ) : null}
 
         <div className="iv-new-actions">
-          <button className="primary" disabled={create.isPending || !applicationId}>
+          <button
+            className="primary"
+            disabled={create.isPending || !applicationId || needsFocus}
+          >
             {create.isPending ? "Preparing session…" : "Start session"}
           </button>
           <p>Practice feedback never predicts or guarantees an admissions outcome.</p>
