@@ -7313,6 +7313,9 @@ th {
   height: 40px;
   color: var(--app-muted);
   border-radius: 999px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 .app-topbar-bell:hover {
   color: var(--app-ink);
@@ -18848,6 +18851,13 @@ body:has(.admin-shell) {
   align-items: center;
   justify-content: center;
   color: inherit;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.mobile-notifications svg {
+  width: 21px;
+  height: 21px;
 }
 .mobile-notifications span {
   position: absolute;
