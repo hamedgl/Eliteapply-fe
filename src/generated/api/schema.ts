@@ -3601,7 +3601,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Shared Comments */
+        get: operations["list_shared_comments_api_v1_share__token__comments_get"];
         put?: never;
         /** Add Shared Comment */
         post: operations["add_shared_comment_api_v1_share__token__comments_post"];
@@ -7621,6 +7622,32 @@ export interface components {
             /** Body */
             body: string;
         };
+        /**
+         * SharedCommentResponse
+         * @description Public projection of a comment.
+         *
+         *     Deliberately narrower than `WritingCommentResponse`: a share-link visitor is
+         *     unauthenticated, so internal identifiers (author_user_id, document_id,
+         *     revision_id, anchor offsets) never cross this boundary.
+         */
+        SharedCommentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Author Label */
+            author_label: string;
+            /** Body */
+            body: string;
+            /** Resolved */
+            resolved: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** SharedDocumentResponse */
         SharedDocumentResponse: {
             /** Title */
@@ -7633,6 +7660,15 @@ export interface components {
             word_count: number;
             /** Character Count */
             character_count: number;
+            /** Document Type */
+            document_type: string;
+            /** Expires At */
+            expires_at?: string | null;
+            /**
+             * Can Comment
+             * @default false
+             */
+            can_comment: boolean;
         };
         /**
          * SourceFormat
@@ -16675,6 +16711,39 @@ export interface operations {
             };
         };
     };
+    list_shared_comments_api_v1_share__token__comments_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Share-Passcode"?: string | null;
+            };
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedCommentResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_shared_comment_api_v1_share__token__comments_post: {
         parameters: {
             query?: never;
@@ -16698,7 +16767,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WritingCommentResponse"];
+                    "application/json": components["schemas"]["SharedCommentResponse"];
                 };
             };
             /** @description Validation Error */

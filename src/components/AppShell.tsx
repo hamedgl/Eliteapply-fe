@@ -181,7 +181,10 @@ export function AppShell() {
       if (
         event.key !== "Escape" ||
         event.defaultPrevented ||
-        (event.target as Element | null)?.closest('[aria-expanded="true"]')
+        (event.target as Element | null)?.closest('[aria-expanded="true"]') ||
+        // A native <dialog> on top handles its own Escape; closing the panel
+        // underneath it at the same time would dismiss two layers at once.
+        document.querySelector("dialog[open]")
       )
         return;
       const modal = Array.from(

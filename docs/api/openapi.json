@@ -14038,6 +14038,66 @@
       }
     },
     "/api/v1/share/{token}/comments": {
+      "get": {
+        "tags": [
+          "Writing Share Links"
+        ],
+        "summary": "List Shared Comments",
+        "operationId": "list_shared_comments_api_v1_share__token__comments_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          },
+          {
+            "name": "X-Share-Passcode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Share-Passcode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SharedCommentResponse"
+                  },
+                  "title": "Response List Shared Comments Api V1 Share  Token  Comments Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Writing Share Links"
@@ -14087,7 +14147,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WritingCommentResponse"
+                  "$ref": "#/components/schemas/SharedCommentResponse"
                 }
               }
             }
@@ -25525,6 +25585,42 @@
         ],
         "title": "SharedCommentCreate"
       },
+      "SharedCommentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "author_label": {
+            "type": "string",
+            "title": "Author Label"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "resolved": {
+            "type": "boolean",
+            "title": "Resolved"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author_label",
+          "body",
+          "resolved",
+          "created_at"
+        ],
+        "title": "SharedCommentResponse",
+        "description": "Public projection of a comment.\n\nDeliberately narrower than `WritingCommentResponse`: a share-link visitor is\nunauthenticated, so internal identifiers (author_user_id, document_id,\nrevision_id, anchor offsets) never cross this boundary."
+      },
       "SharedDocumentResponse": {
         "properties": {
           "title": {
@@ -25546,6 +25642,27 @@
           "character_count": {
             "type": "integer",
             "title": "Character Count"
+          },
+          "document_type": {
+            "type": "string",
+            "title": "Document Type"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "can_comment": {
+            "type": "boolean",
+            "title": "Can Comment",
+            "default": false
           }
         },
         "type": "object",
@@ -25554,7 +25671,8 @@
           "html",
           "scope",
           "word_count",
-          "character_count"
+          "character_count",
+          "document_type"
         ],
         "title": "SharedDocumentResponse"
       },

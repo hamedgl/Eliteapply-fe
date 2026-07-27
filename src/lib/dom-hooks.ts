@@ -18,6 +18,10 @@ export function useFocusTrap(
     focusable()[0]?.focus();
     const handler = (event: KeyboardEvent) => {
       if (event.key !== "Tab") return;
+      // A native modal dialog opened on top (a confirmation, say) owns focus via
+      // the browser's top layer. Cycling focus back into this container would
+      // pull the user out of that dialog.
+      if (document.querySelector("dialog[open]")) return;
       const items = focusable();
       if (!items.length) return;
       const first = items[0];

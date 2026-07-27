@@ -77,4 +77,6 @@ export const queryKeys = {
     ["admin", surface, filters] as const,
   globalSearch: (query: string, types: readonly string[] = []) =>
     ["global-search", query, [...types].sort().join(",")] as const,
+  sharedDocument: (token: string) => ["shared-document", token] as const,
+  sharedComments: (token: string) => ["shared-document", token, "comments"] as const,
 };

@@ -105,7 +105,7 @@ const AppShell = lazy(() =>
     })),
   ),
   SharedWriting = lazy(() =>
-    import("../features/collaboration/CollaborationRoutes").then((x) => ({
+    import("../features/writing/SharedWritingPage").then((x) => ({
       default: x.SharedWritingPage,
     })),
   ),

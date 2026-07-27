@@ -262,14 +262,21 @@ export const collaborationApi = {
       { method: "POST" },
     ),
 };
+/** Share-link endpoints — unauthenticated, gated by the token in the URL plus an
+ * optional passcode header. Never send the session token with these. */
 export const publicShareApi = {
   get: (token: string, passcode?: string) =>
     apiRequest<S["SharedDocumentResponse"]>(`/share/${e(token)}`, {
       public: true,
       headers: passcode ? { "X-Share-Passcode": passcode } : undefined,
     }),
+  comments: (token: string, passcode?: string) =>
+    apiRequest<S["SharedCommentResponse"][]>(`/share/${e(token)}/comments`, {
+      public: true,
+      headers: passcode ? { "X-Share-Passcode": passcode } : undefined,
+    }),
   comment: (token: string, body: S["SharedCommentCreate"], passcode?: string) =>
-    apiRequest<S["WritingCommentResponse"]>(`/share/${e(token)}/comments`, {
+    apiRequest<S["SharedCommentResponse"]>(`/share/${e(token)}/comments`, {
       method: "POST",
       body,
       public: true,

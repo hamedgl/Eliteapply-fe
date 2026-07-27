@@ -16,7 +16,6 @@ import {
   Loader2,
   MessageCircle,
   Search,
-  Share2,
   Sparkles,
   Trash2,
   Unlink,
@@ -31,7 +30,6 @@ import { downloadResponse } from "../../lib/api/download";
 import { billingApi } from "../../lib/api/billing";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { previewDocument } from "../../lib/safeHtml";
-import { usePromptDialog } from "../../components/PromptDialog";
 import { Select } from "../../components/ui/select";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
 import { OverflowMenu } from "../../components/actions/OverflowMenu";
@@ -49,6 +47,7 @@ import { TrixField } from "./TrixField";
 import { QualityAnalysisDialog } from "./QualityAnalysisDialog";
 import { NewWritingDialog } from "./NewWritingDialog";
 import { DocumentOutline } from "./DocumentOutline";
+import { WritingReviewDrawer } from "./WritingReviewDrawer";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import {
   contentToHtml,
@@ -57,12 +56,11 @@ import {
   DEFAULT_FONT,
   FONTS,
   mergeHtml,
+  label,
   type FontKey,
 } from "./documentHtml";
 import type { components } from "../../generated/api/schema";
 type S = components["schemas"];
-const label = (x: string) =>
-  x.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase());
 /**
  * The backend caps serialized `content` at 256 KiB and rejects it as a field
  * validation error, so a too-large document must not surface as a bare
@@ -1245,7 +1243,11 @@ export function WritingEditor() {
         </dialog>
       ) : null}
       {showReview ? (
-        <WritingReview documentId={id} revisions={revisions.data ?? []} />
+        <WritingReviewDrawer
+          documentId={id}
+          revisions={revisions.data ?? []}
+          onClose={() => setShowReview(false)}
+        />
       ) : null}
       {quality ? (
         <QualityAnalysisDialog
@@ -1351,233 +1353,6 @@ function GenerationStatus({
           {retrying ? "Retrying…" : "Retry as a new run"}
         </button>
       ) : null}
-    </section>
-  );
-}
-
-function WritingReview({
-  documentId,
-  revisions,
-}: {
-  documentId: string;
-  revisions: S["WritingRevisionResponse"][];
-}) {
-  const requestText = usePromptDialog();
-  const qc = useQueryClient(),
-    comments = useQuery({
-      queryKey: queryKeys.comments(documentId),
-      queryFn: () => writingApi.comments(documentId),
-    }),
-    shares = useQuery({
-      queryKey: queryKeys.shareLinks(documentId),
-      queryFn: () => writingApi.shareLinks(documentId),
-    }),
-    [createdUrl, setCreatedUrl] = useState("");
-  const refreshComments = () =>
-    qc.invalidateQueries({ queryKey: queryKeys.comments(documentId) });
-  const refreshShares = () =>
-    qc.invalidateQueries({ queryKey: queryKeys.shareLinks(documentId) });
-  return (
-    <section className="writing-review">
-      <div className="comments-panel">
-        <header>
-          <div>
-            <h2>Comments</h2>
-            <p>
-              {comments.data?.total ?? comments.data?.items.length ?? 0} total ·{" "}
-              {comments.data?.items.filter((x) => !x.resolved).length ?? 0}{" "}
-              unresolved
-            </p>
-          </div>
-        </header>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget,
-              data = new FormData(form),
-              start = data.get("anchor_start"),
-              end = data.get("anchor_end");
-            await writingApi.createComment(documentId, {
-              body: String(data.get("body")),
-              revision_id: String(data.get("revision_id")) || null,
-              anchor:
-                start !== "" && end !== ""
-                  ? { start: Number(start), end: Number(end) }
-                  : null,
-            });
-            form.reset();
-            void refreshComments();
-          }}
-        >
-          <label>
-            <span>General or anchored comment</span>
-            <textarea name="body" required maxLength={5000} rows={3} />
-          </label>
-          <label>
-            <span>Revision (optional)</span>
-            <Select
-              ariaLabel="Revision"
-              name="revision_id"
-              defaultValue=""
-              options={[
-                { value: "", label: "Current document" },
-                ...revisions.map((revision) => ({
-                  value: revision.id,
-                  label: `Revision ${revision.revision_number}`,
-                })),
-              ]}
-            />
-          </label>
-          <div className="comment-anchor">
-            <label>
-              <span>Anchor start (optional)</span>
-              <input name="anchor_start" type="number" min={0} />
-            </label>
-            <label>
-              <span>Anchor end (optional)</span>
-              <input name="anchor_end" type="number" min={0} />
-            </label>
-          </div>
-          <button className="primary">Add comment</button>
-        </form>
-        <ul>
-          {comments.data?.items.map((item) => (
-            <li className={item.resolved ? "resolved" : ""} key={item.id}>
-              <div>
-                <strong>{item.author_label}</strong>
-                <small>
-                  {item.anchor ? `Anchored · ` : "General · "}
-                  {new Intl.DateTimeFormat(undefined, {
-                    dateStyle: "medium",
-                  }).format(new Date(item.created_at))}
-                </small>
-              </div>
-              <p>{item.body}</p>
-              <div>
-                <button
-                  onClick={async () => {
-                    await writingApi.updateComment(item.id, {
-                      resolved: !item.resolved,
-                    });
-                    void refreshComments();
-                  }}
-                >
-                  {item.resolved ? "Reopen" : "Resolve"}
-                </button>
-                <button
-                  onClick={async () => {
-                    const body = (
-                      await requestText({
-                        title: "Edit comment",
-                        label: "Comment",
-                        initialValue: item.body,
-                        multiline: true,
-                        required: true,
-                      })
-                    )?.trim();
-                    if (body) {
-                      await writingApi.updateComment(item.id, { body });
-                      void refreshComments();
-                    }
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={async () => {
-                    if (confirm("Delete this comment?")) {
-                      await writingApi.deleteComment(item.id);
-                      void refreshComments();
-                    }
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <aside className="share-panel">
-        <header>
-          <Share2 />
-          <div>
-            <h2>Share links</h2>
-            <p>Create revocable view or comment access.</p>
-          </div>
-        </header>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget,
-              data = new FormData(form);
-            const created = await writingApi.createShareLink(documentId, {
-              scope: data.get("scope") as "view" | "comment",
-              passcode: String(data.get("passcode")) || null,
-              expires_at: data.get("expires_at")
-                ? new Date(String(data.get("expires_at"))).toISOString()
-                : null,
-            });
-            setCreatedUrl(created.share_url);
-            form.reset();
-            void refreshShares();
-          }}
-        >
-          <label>
-            <span>Scope</span>
-            <Select
-              ariaLabel="Scope"
-              name="scope"
-              defaultValue="view"
-              options={[
-                { value: "view", label: "View only" },
-                { value: "comment", label: "View and comment" },
-              ]}
-            />
-          </label>
-          <label>
-            <span>Passcode (optional)</span>
-            <input name="passcode" type="password" minLength={4} />
-          </label>
-          <label>
-            <span>Expiry (optional)</span>
-            <input name="expires_at" type="datetime-local" />
-          </label>
-          <button className="primary">Create secure link</button>
-        </form>
-        {createdUrl ? (
-          <div className="created-share">
-            <strong>New link</strong>
-            <button onClick={() => navigator.clipboard.writeText(createdUrl)}>
-              Copy link
-            </button>
-            <small>The token is never sent to analytics or logs.</small>
-          </div>
-        ) : null}
-        <ul>
-          {shares.data?.map((item) => (
-            <li key={item.id}>
-              <div>
-                <strong>{label(item.scope)}</strong>
-                <small>
-                  {item.has_passcode ? "Passcode protected" : "No passcode"} ·{" "}
-                  {item.access_count} opens
-                </small>
-              </div>
-              <button
-                onClick={async () => {
-                  if (confirm("Revoke this share link?")) {
-                    await writingApi.revokeShareLink(documentId, item.id);
-                    void refreshShares();
-                  }
-                }}
-              >
-                Revoke
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
     </section>
   );
 }

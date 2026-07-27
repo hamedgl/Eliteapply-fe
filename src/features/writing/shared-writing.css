@@ -1,0 +1,422 @@
+/* Public share-link view: read a Writing Studio document and leave feedback.
+   Uses the marketing/root tokens (--ink, --line, --blue …) because this page
+   renders outside .app-shell and its --app-* scope. */
+
+.shared-doc {
+  min-height: 100vh;
+  background: var(--soft);
+}
+
+.shared-doc-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem clamp(1rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.shared-doc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.shared-doc-brand > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  border-radius: 8px;
+  background: var(--blue);
+  font-size: 0.85rem;
+}
+
+.shared-doc-bar-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.shared-doc-bar-note svg {
+  width: 15px;
+  height: 15px;
+  color: var(--green);
+}
+
+.shared-doc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 1.5rem;
+  align-items: start;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 2.5rem) 4rem;
+}
+
+.shared-doc-paper {
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.shared-doc-head {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.shared-doc-head-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.shared-doc-head h1 {
+  margin: 0.75rem 0 0.5rem;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  line-height: 1.2;
+}
+
+.shared-doc-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.shared-doc-stats svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Document body renders inside a sandboxed frame that reports its own height,
+   so the page scrolls as one column instead of nesting a scroll area. */
+.shared-doc-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.shared-doc-rail {
+  position: sticky;
+  top: 5rem;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.shared-doc-rail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.shared-doc-rail-head svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 0.15rem;
+  flex: none;
+  color: var(--blue);
+}
+
+.shared-doc-rail-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.shared-doc-rail-head p {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.shared-doc-rail-status {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.shared-doc-rail-status svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shared-doc-rail-status p {
+  margin: 0;
+}
+
+.shared-doc-form {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.shared-doc-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.shared-doc-form :is(input, textarea) {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.shared-doc-form :is(input, textarea):focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.shared-doc-form textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.shared-doc-form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.shared-doc-form-foot small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.shared-doc-primary {
+  padding: 0.6rem 1.1rem;
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  background: var(--blue);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shared-doc-primary:hover:not(:disabled) {
+  background: #103eb7;
+}
+
+.shared-doc-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shared-doc-success,
+.shared-doc-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.shared-doc-success {
+  color: var(--green);
+}
+
+.shared-doc-error {
+  color: var(--danger);
+}
+
+.shared-doc-success svg {
+  width: 15px;
+  height: 15px;
+}
+
+.shared-doc-thread {
+  display: grid;
+  gap: 0.85rem;
+  max-height: 46vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.shared-doc-thread li {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--soft);
+}
+
+.shared-doc-thread li.is-resolved {
+  opacity: 0.7;
+}
+
+.shared-doc-thread-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.shared-doc-thread-head time {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.shared-doc-thread p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.shared-doc-gate {
+  display: grid;
+  place-items: center;
+  padding: clamp(2rem, 8vh, 6rem) 1rem;
+}
+
+.shared-doc-gate-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 0.75rem;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.shared-doc-gate-card > svg {
+  justify-self: center;
+  width: 26px;
+  height: 26px;
+  color: var(--blue);
+}
+
+.shared-doc-gate-card h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.shared-doc-gate-card > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.shared-doc-gate-card form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  text-align: start;
+}
+
+.shared-doc-gate-card label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.shared-doc-gate-card input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 0.95rem;
+}
+
+.shared-doc-notice {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: clamp(3rem, 12vh, 7rem) 1.5rem;
+  text-align: center;
+}
+
+.shared-doc-notice > svg {
+  width: 30px;
+  height: 30px;
+  color: var(--amber);
+}
+
+.shared-doc-notice h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.shared-doc-notice p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.shared-doc-spinner {
+  color: var(--blue);
+  animation: shared-doc-spin 900ms linear infinite;
+}
+
+@keyframes shared-doc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shared-doc-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+@media (max-width: 900px) {
+  .shared-doc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .shared-doc-rail {
+    position: static;
+  }
+}

@@ -1,0 +1,395 @@
+/* Writing Studio review drawer — comments and share links.
+   Builds on the shared .apps-drawer primitives in workspace.css. */
+
+.writing-review-drawer {
+  width: min(480px, 100%);
+  border-inline-start: 1px solid var(--app-line);
+}
+
+.writing-review-drawer .apps-drawer-header {
+  align-items: flex-start;
+}
+
+.writing-review-drawer .apps-drawer-header p {
+  margin: 0.2rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.writing-review-tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.writing-review-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  color: var(--app-muted);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.writing-review-tabs button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.writing-review-tabs button:hover {
+  color: var(--app-ink);
+}
+
+.writing-review-tabs button.is-active {
+  color: var(--app-blue);
+  border-color: var(--app-line);
+  background: var(--app-surface);
+}
+
+.writing-review-tabs button > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 0.3rem;
+  color: #fff;
+  border-radius: 999px;
+  background: var(--app-blue);
+  font-size: 0.68rem;
+}
+
+.writing-review-body {
+  gap: 1.1rem;
+  align-content: start;
+}
+
+.writing-review-composer {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-subtle);
+}
+
+.writing-review-composer label {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--app-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.writing-review-composer :is(textarea, input[type="password"], input[type="datetime-local"]) {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  color: var(--app-ink);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 400;
+}
+
+.writing-review-composer textarea {
+  resize: vertical;
+  min-height: 74px;
+  line-height: 1.5;
+}
+
+.writing-review-composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.writing-review-composer-foot small {
+  color: var(--app-muted);
+  font-size: 0.74rem;
+}
+
+.writing-review-primary {
+  padding: 0.5rem 0.95rem;
+  color: #fff;
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-blue);
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.writing-review-primary:hover:not(:disabled) {
+  background: var(--app-blue-hover);
+}
+
+.writing-review-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.writing-review-error {
+  margin: 0;
+  color: var(--app-red);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.writing-review-filters {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.writing-review-filters button {
+  padding: 0.28rem 0.7rem;
+  color: var(--app-muted);
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  background: var(--app-surface);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.writing-review-filters button.is-active {
+  color: var(--app-blue);
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+
+.writing-review-list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.writing-review-list li {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+
+.writing-review-list li.is-resolved {
+  background: var(--app-surface-subtle);
+}
+
+.writing-review-list li.is-resolved p {
+  color: var(--app-muted);
+}
+
+.writing-review-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.writing-review-item-head strong {
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+
+.writing-review-item-head time {
+  color: var(--app-muted);
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.writing-review-item-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.writing-review-item-tags:empty {
+  display: none;
+}
+
+.writing-review-list p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.writing-review-item-meta {
+  color: var(--app-muted);
+  font-size: 0.74rem;
+}
+
+.writing-review-item-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  padding-top: 0.2rem;
+}
+
+.writing-review-item-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.3rem 0.6rem;
+  color: var(--app-text);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.writing-review-item-actions button svg {
+  width: 13px;
+  height: 13px;
+}
+
+.writing-review-item-actions button:hover:not(:disabled) {
+  border-color: var(--app-line-strong);
+  background: var(--app-surface-subtle);
+}
+
+.writing-review-item-actions button.is-danger {
+  color: var(--app-red);
+}
+
+.writing-review-item-actions button.is-danger:hover {
+  background: var(--app-red-soft);
+}
+
+.writing-review-created {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--app-blue);
+  border-radius: var(--app-radius-md);
+  background: var(--app-blue-soft);
+}
+
+.writing-review-created-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--app-blue);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.writing-review-created-head svg {
+  width: 15px;
+  height: 15px;
+}
+
+.writing-review-created code {
+  padding: 0.5rem 0.6rem;
+  color: var(--app-ink);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.writing-review-copy {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  color: var(--app-blue);
+  border: 1px solid var(--app-blue);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.writing-review-copy svg {
+  width: 14px;
+  height: 14px;
+}
+
+.writing-review-copy:hover {
+  background: var(--app-blue-soft);
+}
+
+.writing-review-status {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.75rem 1rem;
+  color: var(--app-muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.writing-review-status p {
+  margin: 0;
+}
+
+.writing-review-status button {
+  padding: 0.4rem 0.85rem;
+  color: var(--app-blue);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.writing-review-skeleton {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.writing-review-skeleton span {
+  height: 84px;
+  border-radius: var(--app-radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--app-surface-subtle) 25%,
+    var(--app-blue-soft) 50%,
+    var(--app-surface-subtle) 75%
+  );
+  background-size: 220% 100%;
+  animation: writing-review-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes writing-review-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .writing-review-skeleton span {
+    animation: none;
+  }
+}

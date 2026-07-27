@@ -5370,8 +5370,7 @@ th {
 .import-layout > section,
 .recommendation-section,
 .import-review,
-.writing-preview,
-.writing-review {
+.writing-preview {
   border: 1px solid var(--line);
   background: #fff;
   padding: 1.35rem;
@@ -5379,15 +5378,13 @@ th {
 .discovery-layout section > header,
 .match-panel > header,
 .import-review > header,
-.writing-preview > header,
-.share-panel > header {
+.writing-preview > header {
   display: flex;
   gap: 0.8rem;
   align-items: flex-start;
   justify-content: space-between;
 }
-.discovery-layout header svg,
-.share-panel header > svg {
+.discovery-layout header svg {
   flex: 0 0 auto;
   color: var(--blue);
 }
@@ -5405,16 +5402,13 @@ th {
 }
 .saved-search-list,
 .import-history ul,
-.collaborator-list,
-.comments-panel ul,
-.share-panel ul {
+.collaborator-list {
   list-style: none;
   padding: 0;
   margin: 1rem 0 0;
 }
 .saved-search-list li,
-.collaborator-list li,
-.share-panel li {
+.collaborator-list li {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5423,8 +5417,7 @@ th {
   border-top: 1px solid var(--line);
 }
 .saved-search-list li > div,
-.collaborator-list li > div,
-.share-panel li > div {
+.collaborator-list li > div {
   display: grid;
   gap: 0.25rem;
 }
@@ -5635,8 +5628,7 @@ th {
   overflow: auto;
   padding: clamp(1rem, 3vw, 2rem);
 }
-.writing-preview-canvas iframe,
-.shared-writing iframe {
+.writing-preview-canvas iframe {
   width: 100%;
   min-height: 60vh;
   border: 1px solid var(--line);
@@ -5672,44 +5664,6 @@ th {
   to {
     transform: rotate(360deg);
   }
-}
-.writing-review {
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: 1.5rem;
-  border-top: 3px solid var(--blue);
-}
-.comments-panel form,
-.share-panel form {
-  display: grid;
-  gap: 0.8rem;
-  padding: 1rem 0;
-}
-.comment-anchor {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-.comments-panel li {
-  padding: 1rem 0;
-  border-top: 1px solid var(--line);
-}
-.comments-panel li.resolved {
-  opacity: 0.65;
-}
-.comments-panel li > div:first-child {
-  display: flex;
-  justify-content: space-between;
-}
-.comments-panel li > div:last-child {
-  display: flex;
-  gap: 0.5rem;
-}
-.created-share {
-  display: grid;
-  gap: 0.4rem;
-  padding: 0.8rem;
-  background: #edf3ff;
 }
 .story-list {
   display: grid;
@@ -5787,8 +5741,7 @@ th {
   gap: 1rem;
   margin: 1rem 0;
 }
-.public-state,
-.shared-writing {
+.public-state {
   min-height: 100vh;
   max-width: 1100px;
   margin: auto;
@@ -5799,41 +5752,13 @@ th {
   place-content: center;
   text-align: center;
 }
-.shared-writing > header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--line);
-}
-.shared-title {
-  padding: 3rem 0 1.5rem;
-}
-.shared-title h1 {
-  font-size: clamp(2.3rem, 6vw, 4.5rem);
-  margin: 0.5rem 0;
-}
-.share-passcode,
-.shared-comment {
-  max-width: 560px;
-  display: grid;
-  gap: 1rem;
-  margin: 10vh auto 2rem;
-  padding: 1.5rem;
-  border: 1px solid var(--line);
-}
-.share-status {
-  text-align: center;
-  color: var(--green);
-}
-
 @media (max-width: 900px) {
   .catalogue-controls,
   .story-filters {
     grid-template-columns: 1fr 1fr;
   }
   .discovery-layout,
-  .import-layout,
-  .writing-review {
+  .import-layout {
     grid-template-columns: 1fr;
   }
   .recommendation-list article {
