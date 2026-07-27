@@ -2308,18 +2308,6 @@ th {
     flex-direction: column;
   }
 }
-.interview-session > section,
-.interview-session > article {
-  border: 1px solid var(--line);
-  padding: 1.5rem;
-  margin-top: 1rem;
-}
-.interview-question {
-  font:
-    1.5rem "Source Serif 4",
-    serif;
-}
-.interview-session pre,
 .admin-launch pre {
   white-space: pre-wrap;
   background: var(--soft);

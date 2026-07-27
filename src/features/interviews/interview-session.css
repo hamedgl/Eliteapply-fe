@@ -1,0 +1,398 @@
+/* Interview session view — layout, transcript and answer composer.
+   Feedback and report styles live in interview-feedback.css. */
+
+/* ── Session layout ── */
+.iv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+.iv-thread {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.iv-rail {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.iv-progress-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem 1.125rem 1.125rem;
+}
+.iv-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.iv-progress-head h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--app-ink);
+}
+.iv-progress-head > span {
+  color: var(--app-ink);
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.iv-progress-head em {
+  color: var(--app-muted);
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 600;
+}
+.iv-progress-meta {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+
+.iv-actions-card {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem 1.125rem;
+}
+.iv-actions-card h2 {
+  margin: 0 0 0.2rem;
+  font-size: 0.9rem;
+  color: var(--app-ink);
+}
+.iv-actions-card > button {
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--app-line);
+  border-radius: 9999px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.iv-actions-card > button:hover:not(:disabled) {
+  border-color: var(--app-line-strong);
+  color: var(--app-blue);
+}
+.iv-actions-card > button.iv-danger-link {
+  border-color: transparent;
+  color: var(--app-red);
+}
+.iv-actions-card > button.iv-danger-link:hover:not(:disabled) {
+  border-color: var(--app-red);
+  color: var(--app-red);
+  background: var(--app-red-soft);
+}
+.iv-disclaimer {
+  margin: 0;
+  padding: 0 0.25rem;
+  color: var(--app-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+/* ── Transcript ── */
+.iv-transcript {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.iv-exchange {
+  display: grid;
+  gap: 0.5rem;
+}
+.iv-bubble {
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+.iv-bubble.is-question {
+  border-color: transparent;
+  background: var(--app-surface-subtle);
+}
+.iv-bubble.is-answer {
+  margin-left: 2rem;
+  border-color: color-mix(in srgb, var(--app-blue) 22%, var(--app-line));
+  background: var(--app-blue-soft);
+}
+.iv-bubble p {
+  margin: 0.3rem 0 0;
+  color: var(--app-ink);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.iv-bubble.is-question p {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 1.05rem;
+}
+.iv-bubble-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.iv-bubble.is-answer .iv-bubble-role {
+  color: var(--app-blue);
+}
+.iv-bubble-role svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Composer ── */
+.iv-composer {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+.iv-composer-question {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--app-line);
+}
+.iv-composer-question h2 {
+  margin: 0.4rem 0 0;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 1.35rem;
+  line-height: 1.35;
+  color: var(--app-ink);
+}
+.iv-composer form {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+}
+.iv-composer label {
+  color: var(--app-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.iv-composer textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--app-line-strong);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  color: var(--app-ink);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.iv-composer textarea:focus-visible {
+  outline: none;
+  border-color: var(--app-blue);
+  box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
+}
+.iv-composer textarea:disabled {
+  background: var(--app-surface-subtle);
+}
+.iv-composer-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.iv-count {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+.iv-count.is-over {
+  color: var(--app-red);
+  font-weight: 700;
+}
+.iv-composer-hint {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.iv-composer-foot .primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+.iv-composer-foot .primary svg {
+  width: 15px;
+  height: 15px;
+}
+
+.iv-finish-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+}
+.iv-finish-card > svg {
+  width: 34px;
+  height: 34px;
+  color: var(--app-green);
+}
+.iv-finish-card h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+  color: var(--app-ink);
+}
+.iv-finish-card p {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.88rem;
+}
+.iv-finish-card .primary {
+  margin-top: 0.75rem;
+}
+
+/* ── Voice ── */
+.iv-voice {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px dashed var(--app-line-strong);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-subtle);
+}
+.iv-voice-head h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--app-ink);
+}
+.iv-voice-head p {
+  margin: 0.2rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+.iv-voice-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.iv-record {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 1px solid var(--app-line-strong);
+  border-radius: 9999px;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.iv-record:hover:not(:disabled) {
+  border-color: var(--app-blue);
+  color: var(--app-blue);
+}
+.iv-record.is-recording {
+  border-color: var(--app-red);
+  color: var(--app-red);
+}
+.iv-record svg {
+  width: 15px;
+  height: 15px;
+}
+.iv-record-time {
+  font-variant-numeric: tabular-nums;
+}
+.iv-record-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--app-red);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.iv-record-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--app-red);
+  animation: iv-pulse 1.2s ease-in-out infinite;
+}
+@keyframes iv-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+.iv-voice-review {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+}
+.iv-voice-review audio {
+  width: 100%;
+}
+.iv-voice-review .primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.iv-voice-review .primary svg {
+  width: 15px;
+  height: 15px;
+}
+.iv-voice-status {
+  margin: 0;
+  color: var(--app-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.iv-voice-error {
+  margin: 0;
+  color: var(--app-red);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iv-record-dot {
+    animation: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .iv-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .iv-rail {
+    position: static;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .iv-disclaimer {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .iv-bubble.is-answer {
+    margin-left: 0;
+  }
+  .iv-composer {
+    padding: 1.1rem 1rem 1.25rem;
+  }
+  .iv-composer-question h2 {
+    font-size: 1.15rem;
+  }
+  .iv-composer-foot .primary {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+}

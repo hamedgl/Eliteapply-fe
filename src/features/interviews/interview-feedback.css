@@ -1,0 +1,299 @@
+/* Per-answer coach feedback and the end-of-session report. Shared by
+   InterviewFeedback and InterviewReport, which each import this file. */
+
+/* ── Per-turn feedback ── */
+.iv-feedback {
+  margin-left: 2rem;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+.iv-feedback > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--app-radius-md);
+  color: var(--app-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.iv-feedback > summary::-webkit-details-marker {
+  display: none;
+}
+.iv-feedback > summary:hover {
+  background: var(--app-surface-subtle);
+}
+.iv-feedback > summary svg {
+  width: 15px;
+  height: 15px;
+  color: var(--app-violet);
+}
+.iv-feedback-caret {
+  color: var(--app-muted) !important;
+  transition: transform 120ms ease;
+}
+.iv-feedback[open] .iv-feedback-caret {
+  transform: rotate(180deg);
+}
+.iv-score-chip {
+  margin-left: auto;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.iv-feedback-flag {
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  color: var(--app-amber);
+  background: var(--app-amber-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.iv-feedback-body {
+  display: grid;
+  gap: 1rem;
+  padding: 0.25rem 1.1rem 1.1rem;
+  border-top: 1px solid var(--app-line);
+}
+.iv-score-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.4rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.iv-feedback-body .iv-score-list {
+  margin-top: 0.6rem;
+}
+.iv-score-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+.iv-score-label {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.iv-score-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--app-grey-soft);
+  overflow: hidden;
+}
+.iv-score-fill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--app-green);
+}
+.iv-score-fill.is-amber {
+  background: var(--app-amber);
+}
+.iv-score-fill.is-red {
+  background: var(--app-red);
+}
+.iv-score-value {
+  color: var(--app-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.iv-feedback-block h4 {
+  margin: 0 0 0.35rem;
+  color: var(--app-ink);
+  font-size: 0.82rem;
+}
+.iv-feedback-block p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.iv-feedback-block ul {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--app-text);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.iv-feedback-block blockquote {
+  margin: 0;
+  padding: 0.75rem 0.95rem;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-violet-soft);
+  color: var(--app-ink);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.iv-warnings {
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--app-amber) 30%, var(--app-line));
+  border-radius: var(--app-radius-sm);
+  background: var(--app-amber-soft);
+}
+.iv-warnings h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  color: var(--app-amber);
+  font-size: 0.8rem;
+}
+.iv-warnings h4 svg {
+  width: 15px;
+  height: 15px;
+}
+.iv-warnings ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.iv-warnings li {
+  display: grid;
+  gap: 0.1rem;
+}
+.iv-warnings strong {
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+.iv-warnings span {
+  color: var(--app-text);
+  font-size: 0.78rem;
+}
+
+/* ── Report ── */
+.iv-report {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+.iv-report-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+.iv-report-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--app-ink);
+}
+.iv-report-head p {
+  max-width: 52ch;
+  margin: 0.25rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+.iv-report-score {
+  display: grid;
+  justify-items: center;
+  min-width: 88px;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--app-radius-md);
+  background: var(--app-green-soft);
+  color: var(--app-green);
+  flex: none;
+}
+.iv-report-score.is-amber {
+  background: var(--app-amber-soft);
+  color: var(--app-amber);
+}
+.iv-report-score.is-red {
+  background: var(--app-red-soft);
+  color: var(--app-red);
+}
+.iv-report-score strong {
+  font-size: 1.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.iv-report-score span {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.iv-report-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+.iv-report-columns h3,
+.iv-report-actions h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.4rem;
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+.iv-report-columns h3 svg,
+.iv-report-actions h3 svg {
+  width: 15px;
+  height: 15px;
+  color: var(--app-blue);
+}
+.iv-report-columns ul,
+.iv-report-actions ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--app-text);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.iv-report-actions {
+  padding: 1rem 1.1rem;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-subtle);
+}
+.iv-report-foot {
+  padding-top: 1rem;
+  border-top: 1px solid var(--app-line);
+}
+.iv-report-foot p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.iv-report-meta {
+  margin-top: 0.35rem !important;
+  font-size: 0.72rem !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iv-feedback-caret {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .iv-feedback {
+    margin-left: 0;
+  }
+  .iv-report {
+    padding: 1.1rem;
+  }
+  .iv-report-head {
+    flex-direction: column;
+  }
+  .iv-score-list li {
+    grid-template-columns: minmax(0, 1fr) 56px auto;
+  }
+}
