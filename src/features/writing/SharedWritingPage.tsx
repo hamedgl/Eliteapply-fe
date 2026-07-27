@@ -112,8 +112,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="shared-doc">
       <header className="shared-doc-bar">
-        <Link className="shared-doc-brand" to="/">
-          <span aria-hidden="true">E</span>
+        {/* `brand` carries the shared logo asset via its ::before rule — see the
+            "One transparent brand asset" block in styles/index.css. */}
+        <Link className="brand shared-doc-brand" to="/">
           EliteApply
         </Link>
         <span className="shared-doc-bar-note">

@@ -123,7 +123,12 @@ export function AppShell() {
   const accountMenuRef = useRef<HTMLElement>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  // Separate state per trigger: the mobile app bar and the topbar each mount
+  // their own dropdown. Sharing one flag mounted both at once, and the hidden
+  // one's outside-click handler closed the panel on pointerdown — unmounting
+  // the visible button before its click could fire.
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [mobileNotifDropdownOpen, setMobileNotifDropdownOpen] = useState(false);
   const notifButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNotifButtonRef = useRef<HTMLButtonElement>(null);
   const sidebarNotifButtonRef = useRef<HTMLAnchorElement>(null);
@@ -280,10 +285,10 @@ export function AppShell() {
             ref={mobileNotifButtonRef}
             className="mobile-notifications"
             type="button"
-            onClick={() => setNotifDropdownOpen((v) => !v)}
+            onClick={() => setMobileNotifDropdownOpen((v) => !v)}
             aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
             aria-haspopup="dialog"
-            aria-expanded={notifDropdownOpen}
+            aria-expanded={mobileNotifDropdownOpen}
           >
             <Bell aria-hidden="true" size={20} />
             {unread.data?.unread_count ? (
@@ -293,8 +298,8 @@ export function AppShell() {
             ) : null}
           </button>
           <NotificationsDropdown
-            open={notifDropdownOpen}
-            onClose={() => setNotifDropdownOpen(false)}
+            open={mobileNotifDropdownOpen}
+            onClose={() => setMobileNotifDropdownOpen(false)}
             triggerRef={mobileNotifButtonRef}
           />
         </div>

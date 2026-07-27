@@ -13,7 +13,7 @@ import { notificationsApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { safeNotificationPath } from "../../lib/navigation";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
-import { categoryLabel, categoryTone, groupByDay, relativeTime } from "./model";
+import { autoReadPlan, categoryLabel, categoryTone, groupByDay, relativeTime } from "./model";
 import "./notifications-dropdown.css";
 
 type Notification = components["schemas"]["NotificationResponse"];
@@ -21,6 +21,8 @@ type ListResponse = components["schemas"]["NotificationListResponse"];
 type UnreadCount = components["schemas"]["UnreadCountResponse"];
 
 const PREVIEW_LIMIT = 8;
+/** How long the panel stays open before what is on screen counts as seen. */
+const AUTO_READ_DELAY_MS = 1200;
 
 interface NotificationsDropdownProps {
   open: boolean;
@@ -37,6 +39,14 @@ export function NotificationsDropdown({
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [unreadOnly, setUnreadOnly] = useState(false);
+  /**
+   * Notifications that were unread when this panel opened. They keep their
+   * unread styling for the rest of the session even after auto-read marks them
+   * read on the server — otherwise the highlight would vanish under the reader
+   * mid-glance and they would lose track of what was new.
+   */
+  const [wasUnread, setWasUnread] = useState<Set<string>>(() => new Set());
+  const autoReadFired = useRef<Set<string>>(new Set());
 
   const list = useInfiniteQuery({
     queryKey: queryKeys.notifications(unreadOnly),
@@ -113,6 +123,34 @@ export function NotificationsDropdown({
   );
   const days = useMemo(() => groupByDay(items), [items]);
   const unread = unreadCount.data?.unread_count ?? 0;
+
+  useEffect(() => {
+    if (isOpen) return;
+    // A fresh open starts a fresh "what is new" snapshot.
+    setWasUnread(new Set());
+    autoReadFired.current = new Set();
+  }, [isOpen]);
+
+  useEffect(() => {
+    // Not on the Unread tab: clearing the very list the reader filtered to would
+    // empty it under them.
+    if (!isOpen || unreadOnly || !items.length) return;
+    const pending = items.filter((item) => !item.is_read).map((item) => item.id);
+    const fresh = pending.filter((id) => !autoReadFired.current.has(id));
+    if (!fresh.length) return;
+
+    setWasUnread((previous) => new Set([...previous, ...pending]));
+    const timer = window.setTimeout(() => {
+      for (const id of fresh) autoReadFired.current.add(id);
+      const plan = autoReadPlan(pending, unread);
+      if (plan.markAll) readAll.mutate();
+      else for (const id of plan.ids.filter((id) => fresh.includes(id))) read.mutate(id);
+    }, AUTO_READ_DELAY_MS);
+    return () => window.clearTimeout(timer);
+    // `read`/`readAll` are stable mutation objects; re-running on them would
+    // restart the timer on every settle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, items, unread, unreadOnly]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -256,7 +294,9 @@ export function NotificationsDropdown({
               {day.items.map((item) => (
                 <div
                   key={item.id}
-                  className={`notif-dropdown-row${item.is_read ? "" : " is-unread"}`}
+                  className={`notif-dropdown-row${
+                    item.is_read && !wasUnread.has(item.id) ? "" : " is-unread"
+                  }`}
                 >
                   <button
                     type="button"

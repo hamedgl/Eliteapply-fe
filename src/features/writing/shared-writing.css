@@ -20,24 +20,18 @@
   background: #fff;
 }
 
-.shared-doc-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
+/* Sized down from the marketing default; the logo itself comes from the shared
+   .brand::before rule so this page never draws its own placeholder mark. */
+.shared-doc-bar .shared-doc-brand {
+  gap: 0.5rem;
   color: var(--ink);
-  font-weight: 700;
+  font-size: 1.15rem;
   text-decoration: none;
 }
 
-.shared-doc-brand > span {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  color: #fff;
-  border-radius: 8px;
-  background: var(--blue);
-  font-size: 0.85rem;
+.shared-doc-bar .shared-doc-brand::before {
+  width: 2rem;
+  height: 2rem;
 }
 
 .shared-doc-bar-note {

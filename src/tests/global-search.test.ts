@@ -10,7 +10,7 @@ import {
   resultPath,
   type SearchResultItem,
 } from "../features/search/model";
-import { dayBucket, groupByDay } from "../features/notifications/model";
+import { autoReadPlan, dayBucket, groupByDay } from "../features/notifications/model";
 import { searchApi } from "../lib/api/phase3";
 
 function item(overrides: Partial<SearchResultItem> = {}): SearchResultItem {
@@ -158,5 +158,26 @@ describe("notification day grouping", () => {
     expect(groups.map((group) => group.label)).toEqual(["Today", "Yesterday"]);
     expect(groups[0].items).toHaveLength(2);
     expect(groups[1].items).toHaveLength(1);
+  });
+});
+
+describe("notification auto-read plan", () => {
+  it("collapses to one mark-all request when everything unread is on screen", () => {
+    expect(autoReadPlan(["a", "b", "c"], 3)).toEqual({ markAll: true, ids: [] });
+    // More on screen than the counter reports (a stale count) still means
+    // nothing is left behind, so mark-all is still correct.
+    expect(autoReadPlan(["a", "b", "c"], 2)).toEqual({ markAll: true, ids: [] });
+  });
+
+  it("marks only the visible rows when unread notifications remain below the fold", () => {
+    expect(autoReadPlan(["a", "b"], 9)).toEqual({ markAll: false, ids: ["a", "b"] });
+  });
+
+  it("does nothing when there is nothing unread on screen", () => {
+    expect(autoReadPlan([], 4)).toEqual({ markAll: false, ids: [] });
+  });
+
+  it("falls back to per-row marking when the unread count has not loaded yet", () => {
+    expect(autoReadPlan(["a"], 0)).toEqual({ markAll: false, ids: ["a"] });
   });
 });

@@ -87,3 +87,21 @@ export function groupByDay<T extends { created_at: string }>(items: T[], now = n
   }
   return buckets;
 }
+
+/**
+ * What to send when the reader has had the panel open long enough for the
+ * notifications on screen to count as seen.
+ *
+ * When everything unread is already on screen, one mark-all-read replaces one
+ * request per row; otherwise only the rows actually shown are marked, so
+ * notifications further down the list stay unread.
+ */
+export function autoReadPlan(
+  pendingIds: readonly string[],
+  totalUnread: number,
+): { markAll: boolean; ids: string[] } {
+  if (!pendingIds.length) return { markAll: false, ids: [] };
+  if (totalUnread > 0 && pendingIds.length >= totalUnread)
+    return { markAll: true, ids: [] };
+  return { markAll: false, ids: [...pendingIds] };
+}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -186,7 +187,12 @@ export function WritingReviewDrawer({
     if (next && next !== item.body) editComment.mutate({ id: item.id, text: next });
   }
 
-  return (
+  // Portalled out of `.writing-editor`: that page sets `.writing-editor button
+  // { border; background: #fff }`, which repainted every control in here —
+  // most visibly turning the primary "Create link" button into unreadable
+  // dark-on-blue. The target is `.app-shell` rather than <body> so the
+  // --app-* design tokens, which are scoped to it, still resolve.
+  return createPortal(
     <>
       <div
         className="apps-drawer-backdrop"
@@ -550,6 +556,7 @@ export function WritingReviewDrawer({
           <p>Anyone holding this link loses access immediately. Comments already left stay.</p>
         </ConfirmationDialog>
       ) : null}
-    </>
+    </>,
+    document.querySelector(".app-shell") ?? document.body,
   );
 }
