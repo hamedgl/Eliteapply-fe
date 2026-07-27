@@ -6,6 +6,7 @@ import { authApi } from "../../lib/api/auth";
 import { ApiError } from "../../lib/api/errors";
 import { productConfig } from "../../lib/config/product";
 import { PASSWORD_RULES } from "./passwordRules";
+import { OAuthButtons } from "./OAuthButtons";
 import "./auth-form.css";
 
 type Mode = "login" | "register" | "confirm" | "forgot";
@@ -23,6 +24,19 @@ const copy = {
   ],
 } as const;
 
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth_provider_denied: "Sign-in was cancelled.",
+  oauth_missing_code: "Sign-in didn’t complete. Please try again.",
+  oauth_invalid_state: "Your sign-in link expired. Please try again.",
+  oauth_provider_unavailable:
+    "We couldn’t reach that sign-in provider. Please try again shortly.",
+  oauth_not_configured: "That sign-in option isn’t available right now.",
+  oauth_unsupported_provider: "That sign-in option isn’t available right now.",
+  oauth_email_unverified:
+    "That account’s email isn’t verified with the provider yet. Verify it and try again.",
+  oauth_login_failed: "Something went wrong signing you in. Please try again.",
+};
+
 export function AuthPage({ mode }: { mode: Mode }) {
   const nav = useNavigate();
   const location = useLocation();
@@ -31,6 +45,15 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const oauthError = new URLSearchParams(location.search).get("error");
+    if (oauthError) {
+      setError(OAUTH_ERRORS[oauthError] ?? "Something went wrong. Please try again.");
+    }
+    // Only ever consumed once, on the redirect back from a failed OAuth attempt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,6 +138,12 @@ export function AuthPage({ mode }: { mode: Mode }) {
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </div>
+          {(mode === "login" || mode === "register") && (
+            <OAuthButtons
+              mode={mode}
+              returnTo={new URLSearchParams(location.search).get("returnTo")}
+            />
+          )}
           {mode === "register" && (
             <label>
               Full name

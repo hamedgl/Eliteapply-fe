@@ -29,6 +29,11 @@ const AppShell = lazy(() =>
       default: x.ResetPasswordPage,
     })),
   ),
+  OAuthCallbackPage = lazy(() =>
+    import("../features/auth/OAuthCallbackPage").then((x) => ({
+      default: x.OAuthCallbackPage,
+    })),
+  ),
   DashboardPage = lazy(() =>
     import("../features/dashboard/DashboardPage").then((x) => ({
       default: x.DashboardPage,
@@ -313,6 +318,7 @@ const router = createBrowserRouter([
   { path: "/confirm-email", element: <AuthPage mode="confirm" /> },
   { path: "/forgot-password", element: <AuthPage mode="forgot" /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
+  { path: "/auth/callback", element: <OAuthCallbackPage /> },
   { path: "/terms", element: <MarketingPage /> },
   { path: "/privacy", element: <MarketingPage /> },
   { path: "/accessibility", element: <MarketingPage /> },
