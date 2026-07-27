@@ -24,7 +24,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authApi } from "../lib/api/auth";
@@ -37,6 +37,7 @@ import { PromptDialogProvider } from "./PromptDialog";
 import { preloadAppRoute } from "../app/preload";
 import { ProgressBar } from "./data-display/ProgressBar";
 import { NotificationsDropdown } from "../features/notifications/NotificationsDropdown";
+import { GlobalSearch } from "../features/search/GlobalSearch";
 import "../styles/workspace.css";
 
 const compactNumber = new Intl.NumberFormat(undefined, { notation: "compact" });
@@ -112,103 +113,6 @@ function AccountMenuItems({
   );
 }
 
-/** Cmd/Ctrl+K quick switcher over the app's own navigation destinations. */
-function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
-
-  const filtered = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return paletteDestinations;
-    return paletteDestinations.filter(([, label]) => label.toLowerCase().includes(term));
-  }, [query]);
-
-  useEffect(() => {
-    if (!open) return;
-    setQuery("");
-    setActiveIndex(0);
-    const id = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(id);
-  }, [open]);
-
-  useEffect(() => setActiveIndex(0), [query]);
-
-  if (!open) return null;
-
-  function go(href: string) {
-    navigate(href);
-    onClose();
-  }
-
-  return (
-    <div
-      className="apps-dialog-backdrop command-palette-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        className="apps-dialog command-palette"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search anything"
-      >
-        <div className="command-palette-input">
-          <Search aria-hidden="true" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search anything…"
-            aria-label="Search anything"
-            onKeyDown={(event) => {
-              if (event.key === "ArrowDown") {
-                event.preventDefault();
-                setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
-              } else if (event.key === "ArrowUp") {
-                event.preventDefault();
-                setActiveIndex((i) => Math.max(i - 1, 0));
-              } else if (event.key === "Enter") {
-                event.preventDefault();
-                const item = filtered[activeIndex];
-                if (item) go(item[0]);
-              }
-            }}
-          />
-          <button type="button" aria-label="Close" onClick={onClose}>
-            <X aria-hidden="true" />
-          </button>
-        </div>
-        <ul className="command-palette-list" role="listbox" aria-label="Destinations">
-          {filtered.length ? (
-            filtered.map(([href, label, Icon], index) => (
-              <li key={href}>
-                <button
-                  type="button"
-                  className={index === activeIndex ? "is-active" : undefined}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onClick={() => go(href)}
-                  role="option"
-                  aria-selected={index === activeIndex}
-                >
-                  <Icon aria-hidden="true" /> {label}
-                </button>
-              </li>
-            ))
-          ) : (
-            <li className="command-palette-empty" role="status">
-              No matching pages.
-            </li>
-          )}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
 export function AppShell() {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(
@@ -219,7 +123,6 @@ export function AppShell() {
   const accountMenuRef = useRef<HTMLElement>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const [paletteOpen, setPaletteOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNotifButtonRef = useRef<HTMLButtonElement>(null);
@@ -231,16 +134,6 @@ export function AppShell() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   useDismiss([accountMenuRef], () => setAccountMenuOpen(false), accountMenuOpen);
   useDismiss([profileMenuRef], () => setProfileMenuOpen(false), profileMenuOpen);
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPaletteOpen((current) => !current);
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
   const unread = useQuery({
     queryKey: queryKeys.unreadNotifications,
     queryFn: notificationsApi.unreadCount,
@@ -386,6 +279,7 @@ export function AppShell() {
             type="button"
             onClick={() => setNotifDropdownOpen((v) => !v)}
             aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
+            aria-haspopup="dialog"
             aria-expanded={notifDropdownOpen}
           >
             <Bell aria-hidden="true" size={20} />
@@ -412,6 +306,7 @@ export function AppShell() {
         >
           <Menu aria-hidden="true" />
         </button>
+        <GlobalSearch destinations={paletteDestinations} placeholder="Search…" />
       </header>
 
       {open ? (
@@ -570,15 +465,7 @@ export function AppShell() {
 
       <main className="workspace" id="app-content" tabIndex={-1}>
         <header className="app-topbar">
-          <button
-            type="button"
-            className="app-topbar-search"
-            onClick={() => setPaletteOpen(true)}
-          >
-            <Search aria-hidden="true" />
-            <span>Search anything…</span>
-            <kbd>⌘K</kbd>
-          </button>
+          <GlobalSearch destinations={paletteDestinations} />
           <div className="app-topbar-actions">
             <div style={{ position: "relative" }}>
               <button
@@ -587,6 +474,7 @@ export function AppShell() {
                 type="button"
                 onClick={() => setNotifDropdownOpen((v) => !v)}
                 aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
+                aria-haspopup="dialog"
                 aria-expanded={notifDropdownOpen}
               >
                 <Bell aria-hidden="true" size={20} />
@@ -644,7 +532,6 @@ export function AppShell() {
           <Outlet />
         </PromptDialogProvider>
       </main>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }

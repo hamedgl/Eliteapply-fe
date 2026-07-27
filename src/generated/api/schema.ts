@@ -3176,6 +3176,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Global Search
+         * @description Search titles and body text across the signed-in user's whole workspace.
+         *
+         *     Queries shorter than two characters return no groups rather than an error, so
+         *     a search-as-you-type box can call this on every keystroke without special-casing
+         *     the first one.
+         */
+        get: operations["global_search_api_v1_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/register": {
         parameters: {
             query?: never;
@@ -5645,6 +5669,15 @@ export interface components {
             /** Completed At */
             completed_at: string | null;
         };
+        /** GlobalSearchResponse */
+        GlobalSearchResponse: {
+            /** Query */
+            query: string;
+            /** Groups */
+            groups: components["schemas"]["SearchGroup"][];
+            /** Total */
+            total: number;
+        };
         /** GoalsSection */
         GoalsSection: {
             /** Fields Of Study */
@@ -7455,6 +7488,51 @@ export interface components {
             raw_source?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** SearchGroup */
+        SearchGroup: {
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "application" | "document" | "writing_document" | "story" | "reference" | "reminder" | "institution" | "programme" | "scholarship";
+            /** Items */
+            items: components["schemas"]["SearchResultItem"][];
+            /**
+             * Has More
+             * @default false
+             */
+            has_more: boolean;
+        };
+        /**
+         * SearchResultItem
+         * @description One matched record.
+         *
+         *     Deliberately carries no client route — the API stays UI-agnostic and the
+         *     frontend maps `entity_type` + `entity_id` to its own routes, the same way
+         *     notification payloads are resolved client-side.
+         */
+        SearchResultItem: {
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "application" | "document" | "writing_document" | "story" | "reference" | "reminder" | "institution" | "programme" | "scholarship";
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle?: string | null;
+            /** Snippet */
+            snippet?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
         };
         /** SetPasswordRequest */
         SetPasswordRequest: {
@@ -15787,6 +15865,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SavedSearchRunResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    global_search_api_v1_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                /** @description Comma-separated entity types to restrict the search to. Known values: application, document, writing_document, story, reference, reminder, institution, programme, scholarship. Unknown values are ignored. */
+                types?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlobalSearchResponse"];
                 };
             };
             /** @description Validation Error */

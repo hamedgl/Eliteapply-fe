@@ -5,13 +5,13 @@
   top: calc(100% + 0.5rem);
   right: 0;
   width: min(420px, calc(100vw - 2rem));
-  max-height: 70vh;
+  max-height: min(70vh, 560px);
   display: flex;
   flex-direction: column;
   background: var(--app-surface);
   border: 1px solid var(--app-line-strong);
   border-radius: var(--app-radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 18px 44px rgba(16, 27, 59, 0.16);
   z-index: 100;
   overflow: hidden;
 }
@@ -20,64 +20,194 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+  gap: 0.75rem;
+  padding: 0.85rem 0.75rem 0.85rem 1.1rem;
   border-bottom: 1px solid var(--app-line);
 }
 
 .notif-dropdown-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0;
   color: var(--app-ink);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
-.notif-dropdown-mark-all {
-  display: flex;
+.notif-dropdown-count {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.35rem;
-  border-radius: var(--app-radius-sm);
-  background: transparent;
-  color: var(--app-blue);
-  transition: background 0.15s ease;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.35rem;
+  color: #fff;
+  border-radius: 999px;
+  background: var(--app-blue);
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
-.notif-dropdown-mark-all:hover:not(:disabled) {
+.notif-dropdown-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.notif-dropdown-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.5rem;
+  color: var(--app-blue);
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.notif-dropdown-action svg {
+  width: 15px;
+  height: 15px;
+}
+
+.notif-dropdown-action:hover:not(:disabled) {
   background: var(--app-blue-soft);
 }
 
-.notif-dropdown-mark-all:disabled {
+.notif-dropdown-action:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.notif-dropdown-loading,
-.notif-dropdown-error,
-.notif-dropdown-empty {
+.notif-dropdown-icon-button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: var(--app-muted);
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.notif-dropdown-icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.notif-dropdown-icon-button:hover {
+  color: var(--app-ink);
+  background: var(--app-surface-subtle);
+}
+
+.notif-dropdown-tabs {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.notif-dropdown-tabs button {
+  padding: 0.3rem 0.7rem;
+  color: var(--app-muted);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.notif-dropdown-tabs button:hover {
+  color: var(--app-ink);
+}
+
+.notif-dropdown-tabs button.is-active {
+  color: var(--app-blue);
+  border-color: var(--app-line);
+  background: var(--app-surface);
+}
+
+.notif-dropdown-status {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
   padding: 2.5rem 1.5rem;
   color: var(--app-muted);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   text-align: center;
 }
 
-.notif-dropdown-error button {
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: var(--app-radius-sm);
-  background: var(--app-blue);
-  color: white;
-  font-size: 0.85rem;
-  font-weight: 600;
+.notif-dropdown-status svg {
+  width: 20px;
+  height: 20px;
 }
 
-.notif-dropdown-empty {
-  padding: 3rem 1.5rem;
+.notif-dropdown-status p {
+  margin: 0;
+}
+
+.notif-dropdown-status button {
+  padding: 0.42rem 0.9rem;
+  color: var(--app-blue);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notif-dropdown-status button:hover {
+  border-color: var(--app-line-strong);
+  background: var(--app-surface-subtle);
+}
+
+.notif-dropdown-skeleton {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+}
+
+.notif-dropdown-skeleton span {
+  height: 56px;
+  border-radius: var(--app-radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--app-surface-subtle) 25%,
+    var(--app-blue-soft) 50%,
+    var(--app-surface-subtle) 75%
+  );
+  background-size: 220% 100%;
+  animation: notif-dropdown-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes notif-dropdown-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notif-dropdown-skeleton span {
+    animation: none;
+  }
 }
 
 .notif-dropdown-list {
@@ -86,54 +216,74 @@
   overscroll-behavior: contain;
 }
 
-.notif-dropdown-item {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  width: 100%;
-  padding: 0.9rem 1.25rem;
-  border: 0;
-  border-bottom: 1px solid var(--app-line);
-  background: transparent;
-  text-align: left;
-  transition: background 0.15s ease;
-  cursor: pointer;
+.notif-dropdown-day {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0.45rem 1.1rem 0.3rem;
+  color: var(--app-muted);
+  background: var(--app-surface);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
-.notif-dropdown-item:last-child {
+.notif-dropdown-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.notif-dropdown-row:last-child {
   border-bottom: 0;
 }
 
-.notif-dropdown-item:hover {
+.notif-dropdown-row:hover {
   background: var(--app-surface-subtle);
 }
 
-.notif-dropdown-item.is-unread {
+.notif-dropdown-row.is-unread {
   background: var(--app-blue-soft);
 }
 
-.notif-dropdown-item.is-unread:hover {
+.notif-dropdown-row.is-unread:hover {
   background: var(--app-blue-soft);
   filter: brightness(0.98);
 }
 
+.notif-dropdown-item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 0.6rem 0.75rem 1.1rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
 .notif-dropdown-dot {
   display: block;
-  width: 8px;
-  height: 8px;
-  margin-top: 0.4rem;
+  width: 7px;
+  height: 7px;
+  margin-top: 0.5rem;
   border-radius: 999px;
   background: var(--app-blue);
   flex: none;
 }
 
-.notif-dropdown-item:not(.is-unread) .notif-dropdown-dot {
+.notif-dropdown-row:not(.is-unread) .notif-dropdown-dot {
   background: transparent;
 }
 
 .notif-dropdown-content {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.25rem;
   min-width: 0;
   flex: 1;
 }
@@ -143,49 +293,87 @@
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
+  color: var(--app-muted);
+  font-size: 0.72rem;
 }
 
-.notif-dropdown-content h4 {
-  margin: 0.1rem 0 0;
+.notif-dropdown-title {
   color: var(--app-ink);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
-.notif-dropdown-item:not(.is-unread) .notif-dropdown-content h4 {
+.notif-dropdown-row:not(.is-unread) .notif-dropdown-title {
   font-weight: 600;
 }
 
-.notif-dropdown-content p {
-  margin: 0;
+.notif-dropdown-body {
   color: var(--app-text);
-  font-size: 0.82rem;
-  line-height: 1.4;
+  font-size: 0.81rem;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.notif-dropdown-time {
-  margin-top: 0.15rem;
+.notif-dropdown-chevron {
+  width: 16px;
+  height: 16px;
+  margin-top: 0.35rem;
+  flex: none;
   color: var(--app-muted);
-  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.notif-dropdown-row:hover .notif-dropdown-chevron,
+.notif-dropdown-item:focus-visible .notif-dropdown-chevron {
+  opacity: 1;
+}
+
+.notif-dropdown-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  flex: none;
+  color: var(--app-muted);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.notif-dropdown-mark svg {
+  width: 16px;
+  height: 16px;
+}
+
+.notif-dropdown-mark:hover {
+  color: var(--app-blue);
 }
 
 .notif-dropdown-footer {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
   width: 100%;
-  padding: 0.85rem 1.25rem;
+  padding: 0.8rem 1.1rem;
   border: 0;
   border-top: 1px solid var(--app-line);
   background: var(--app-surface-subtle);
   color: var(--app-blue);
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 700;
-  text-align: center;
-  transition: background 0.15s ease;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.notif-dropdown-footer svg {
+  width: 15px;
+  height: 15px;
 }
 
 .notif-dropdown-footer:hover {

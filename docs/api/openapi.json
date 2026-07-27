@@ -12786,6 +12786,86 @@
         }
       }
     },
+    "/api/v1/search": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Global Search",
+        "description": "Search titles and body text across the signed-in user's whole workspace.\n\nQueries shorter than two characters return no groups rather than an error, so\na search-as-you-type box can call this on every keystroke without special-casing\nthe first one.",
+        "operationId": "global_search_api_v1_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated entity types to restrict the search to. Known values: application, document, writing_document, story, reference, reminder, institution, programme, scholarship. Unknown values are ignored.",
+              "title": "Types"
+            },
+            "description": "Comma-separated entity types to restrict the search to. Known values: application, document, writing_document, story, reference, reminder, institution, programme, scholarship. Unknown values are ignored."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 5,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlobalSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
@@ -19857,6 +19937,32 @@
         ],
         "title": "GenerationRunResponse"
       },
+      "GlobalSearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/SearchGroup"
+            },
+            "type": "array",
+            "title": "Groups"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "groups",
+          "total"
+        ],
+        "title": "GlobalSearchResponse"
+      },
       "GoalsSection": {
         "properties": {
           "fields_of_study": {
@@ -25058,6 +25164,124 @@
         },
         "type": "object",
         "title": "ScholarshipUpdate"
+      },
+      "SearchGroup": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "enum": [
+              "application",
+              "document",
+              "writing_document",
+              "story",
+              "reference",
+              "reminder",
+              "institution",
+              "programme",
+              "scholarship"
+            ],
+            "title": "Entity Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResultItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "items"
+        ],
+        "title": "SearchGroup"
+      },
+      "SearchResultItem": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "enum": [
+              "application",
+              "document",
+              "writing_document",
+              "story",
+              "reference",
+              "reminder",
+              "institution",
+              "programme",
+              "scholarship"
+            ],
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snippet"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "entity_id",
+          "title"
+        ],
+        "title": "SearchResultItem",
+        "description": "One matched record.\n\nDeliberately carries no client route \u2014 the API stays UI-agnostic and the\nfrontend maps `entity_type` + `entity_id` to its own routes, the same way\nnotification payloads are resolved client-side."
       },
       "SetPasswordRequest": {
         "properties": {

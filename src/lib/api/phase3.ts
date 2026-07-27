@@ -457,6 +457,27 @@ export const notificationsApi = {
       { method: "PUT", body },
     ),
 };
+export const searchApi = {
+  /** Cross-workspace search behind the topbar box. `types` narrows the scope; an
+   * empty array searches everything. Pass the query's AbortSignal so superseded
+   * keystrokes cancel in flight. */
+  global: (
+    query: string,
+    options: {
+      types?: readonly string[];
+      limit?: number;
+      signal?: AbortSignal;
+    } = {},
+  ) =>
+    apiRequest<S["GlobalSearchResponse"]>(
+      `/search${qs({
+        q: query,
+        types: options.types?.length ? options.types.join(",") : undefined,
+        limit: options.limit,
+      })}`,
+      { signal: options.signal },
+    ),
+};
 export const remindersApi = {
   list: (
     filters: {

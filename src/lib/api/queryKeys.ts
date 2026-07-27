@@ -75,4 +75,6 @@ export const queryKeys = {
   reminders: (filters: object = {}) => ["reminders", filters] as const,
   admin: (surface: string, filters: object = {}) =>
     ["admin", surface, filters] as const,
+  globalSearch: (query: string, types: readonly string[] = []) =>
+    ["global-search", query, [...types].sort().join(",")] as const,
 };
