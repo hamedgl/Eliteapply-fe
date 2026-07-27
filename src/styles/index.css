@@ -7242,6 +7242,253 @@ th {
   display: none;
 }
 
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0 clamp(1.25rem, 3vw, 2.5rem);
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface);
+}
+
+.app-topbar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(420px, 100%);
+  height: 42px;
+  padding: 0 0.5rem 0 0.9rem;
+  color: var(--app-muted);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-subtle);
+  font-size: 0.85rem;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.app-topbar-search:hover {
+  border-color: var(--app-line-strong);
+}
+.app-topbar-search svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.app-topbar-search span {
+  flex: 1;
+  text-align: start;
+}
+.app-topbar-search kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 0.35rem;
+  color: var(--app-muted);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+  background: var(--app-surface);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.app-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex: none;
+}
+
+.app-topbar-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--app-muted);
+  border-radius: 999px;
+}
+.app-topbar-bell:hover {
+  color: var(--app-ink);
+  background: var(--app-surface-subtle);
+}
+.app-topbar-bell svg {
+  width: 21px;
+  height: 21px;
+}
+.app-topbar-badge {
+  position: absolute;
+  inset: 1px 1px auto auto;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 0.25rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border: 2px solid var(--app-surface);
+  border-radius: 999px;
+  background: var(--app-blue);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.app-topbar-profile {
+  position: relative;
+}
+.app-topbar-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  text-align: start;
+}
+.app-topbar-profile-trigger:hover {
+  border-color: var(--app-line);
+  background: var(--app-surface-subtle);
+}
+.app-topbar-profile-trigger > div {
+  min-width: 0;
+}
+.app-topbar-profile-trigger strong,
+.app-topbar-profile-trigger small {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.app-topbar-profile-trigger strong {
+  max-width: 11rem;
+  color: var(--app-ink);
+  font-size: 0.86rem;
+}
+.app-topbar-profile-trigger small {
+  max-width: 11rem;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.app-topbar-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--app-muted);
+  transition: transform 160ms ease;
+}
+.app-topbar-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.app-topbar-profile .sidebar-account-menu {
+  top: calc(100% + 0.5rem);
+  bottom: auto;
+  left: auto;
+  right: 0;
+  width: 15rem;
+}
+
+@media (max-width: 900px) {
+  .app-topbar {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .app-topbar-profile-trigger > div {
+    display: none;
+  }
+}
+
+.command-palette-backdrop {
+  align-items: flex-start;
+  padding-top: 14vh;
+}
+.command-palette {
+  width: min(560px, 100%);
+  padding: 0;
+  overflow: hidden;
+}
+.command-palette-input {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--app-line);
+}
+.command-palette-input svg:first-child {
+  width: 19px;
+  height: 19px;
+  color: var(--app-muted);
+  flex: none;
+}
+.command-palette-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--app-ink);
+  font-size: 0.95rem;
+  outline: none;
+}
+.command-palette-input > button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--app-muted);
+  border-radius: 6px;
+}
+.command-palette-input > button:hover {
+  color: var(--app-ink);
+  background: var(--app-surface-subtle);
+}
+.command-palette-list {
+  max-height: min(60vh, 420px);
+  margin: 0;
+  padding: 0.5rem;
+  overflow-y: auto;
+  list-style: none;
+}
+.command-palette-list button {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.7rem;
+  color: var(--app-text);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-align: start;
+}
+.command-palette-list button svg {
+  width: 17px;
+  height: 17px;
+  color: var(--app-muted);
+  flex: none;
+}
+.command-palette-list button.is-active {
+  color: var(--app-ink);
+  background: var(--app-blue-soft);
+}
+.command-palette-list button.is-active svg {
+  color: var(--app-blue);
+}
+.command-palette-empty {
+  padding: 1.5rem;
+  color: var(--app-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .sidebar-account {
   position: relative;
   padding: 1rem 0.45rem 0;

@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ChevronDown,
   Compass,
   CreditCard,
   FileText,
@@ -21,8 +22,9 @@ import {
   UserRound,
   Users,
   X,
+  type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authApi } from "../lib/api/auth";
@@ -38,7 +40,10 @@ import "../styles/workspace.css";
 
 const compactNumber = new Intl.NumberFormat(undefined, { notation: "compact" });
 
-const navigationGroups = [
+type NavItem = readonly [href: string, label: string, icon: LucideIcon];
+type NavGroup = { label: string; items: NavItem[] };
+
+const navigationGroups: NavGroup[] = [
   {
     label: "Workspace",
     items: [
@@ -64,7 +69,144 @@ const navigationGroups = [
     label: "Account",
     items: [["/app/settings/profile", "Settings", Settings]],
   },
-] as const;
+];
+
+const paletteDestinations: NavItem[] = navigationGroups.flatMap((group) => group.items);
+
+/** Shared menu content for both the sidebar footer and the topbar profile dropdown. */
+function AccountMenuItems({
+  onNavigate,
+  onLogout,
+  loggingOut,
+}: {
+  onNavigate: () => void;
+  onLogout: () => void;
+  loggingOut: boolean;
+}) {
+  return (
+    <ul className="sidebar-account-menu" role="menu">
+      <li role="none">
+        <NavLink to="/app/settings/profile" role="menuitem" onClick={onNavigate}>
+          <UserRound aria-hidden="true" /> Account
+        </NavLink>
+      </li>
+      <li role="none">
+        <NavLink to="/app/settings/billing" role="menuitem" onClick={onNavigate}>
+          <CreditCard aria-hidden="true" /> Billing
+        </NavLink>
+      </li>
+      <li role="none">
+        <NavLink to="/contact" role="menuitem" onClick={onNavigate}>
+          <LifeBuoy aria-hidden="true" /> Help
+        </NavLink>
+      </li>
+      <li className="sidebar-account-menu-divider" role="separator" />
+      <li role="none">
+        <button type="button" role="menuitem" onClick={onLogout} disabled={loggingOut}>
+          <LogOut aria-hidden="true" />
+          {loggingOut ? "Signing out…" : "Log out"}
+        </button>
+      </li>
+    </ul>
+  );
+}
+
+/** Cmd/Ctrl+K quick switcher over the app's own navigation destinations. */
+function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return paletteDestinations;
+    return paletteDestinations.filter(([, label]) => label.toLowerCase().includes(term));
+  }, [query]);
+
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    setActiveIndex(0);
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [open]);
+
+  useEffect(() => setActiveIndex(0), [query]);
+
+  if (!open) return null;
+
+  function go(href: string) {
+    navigate(href);
+    onClose();
+  }
+
+  return (
+    <div
+      className="apps-dialog-backdrop command-palette-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="apps-dialog command-palette"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search anything"
+      >
+        <div className="command-palette-input">
+          <Search aria-hidden="true" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search anything…"
+            aria-label="Search anything"
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+              } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setActiveIndex((i) => Math.max(i - 1, 0));
+              } else if (event.key === "Enter") {
+                event.preventDefault();
+                const item = filtered[activeIndex];
+                if (item) go(item[0]);
+              }
+            }}
+          />
+          <button type="button" aria-label="Close" onClick={onClose}>
+            <X aria-hidden="true" />
+          </button>
+        </div>
+        <ul className="command-palette-list" role="listbox" aria-label="Destinations">
+          {filtered.length ? (
+            filtered.map(([href, label, Icon], index) => (
+              <li key={href}>
+                <button
+                  type="button"
+                  className={index === activeIndex ? "is-active" : undefined}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => go(href)}
+                  role="option"
+                  aria-selected={index === activeIndex}
+                >
+                  <Icon aria-hidden="true" /> {label}
+                </button>
+              </li>
+            ))
+          ) : (
+            <li className="command-palette-empty" role="status">
+              No matching pages.
+            </li>
+          )}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
 export function AppShell() {
   const [open, setOpen] = useState(false);
@@ -74,12 +216,26 @@ export function AppShell() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLElement>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const user = useSession((state) => state.user);
   const clear = useSession((state) => state.clear);
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   useDismiss([accountMenuRef], () => setAccountMenuOpen(false), accountMenuOpen);
+  useDismiss([profileMenuRef], () => setProfileMenuOpen(false), profileMenuOpen);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((current) => !current);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
   const unread = useQuery({
     queryKey: queryKeys.unreadNotifications,
     queryFn: notificationsApi.unreadCount,
@@ -389,60 +545,84 @@ export function AppShell() {
             </div>
           </button>
           {accountMenuOpen ? (
-            <ul className="sidebar-account-menu" role="menu">
-              <li role="none">
-                <NavLink
-                  to="/app/settings/profile"
-                  role="menuitem"
-                  onClick={() => setAccountMenuOpen(false)}
-                  onPointerEnter={() => prepareRoute("/app/settings/profile")}
-                  onFocus={() => prepareRoute("/app/settings/profile")}
-                >
-                  <UserRound aria-hidden="true" /> Account
-                </NavLink>
-              </li>
-              <li role="none">
-                <NavLink
-                  to="/app/settings/billing"
-                  role="menuitem"
-                  onClick={() => setAccountMenuOpen(false)}
-                  onPointerEnter={() => prepareRoute("/app/settings/billing")}
-                  onFocus={() => prepareRoute("/app/settings/billing")}
-                >
-                  <CreditCard aria-hidden="true" /> Billing
-                </NavLink>
-              </li>
-              <li role="none">
-                <NavLink
-                  to="/contact"
-                  role="menuitem"
-                  onClick={() => setAccountMenuOpen(false)}
-                >
-                  <LifeBuoy aria-hidden="true" /> Help
-                </NavLink>
-              </li>
-              <li className="sidebar-account-menu-divider" role="separator" />
-              <li role="none">
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={logout}
-                  disabled={loggingOut}
-                >
-                  <LogOut aria-hidden="true" />
-                  {loggingOut ? "Signing out…" : "Log out"}
-                </button>
-              </li>
-            </ul>
+            <AccountMenuItems
+              onNavigate={() => setAccountMenuOpen(false)}
+              onLogout={logout}
+              loggingOut={loggingOut}
+            />
           ) : null}
         </footer>
       </aside>
 
       <main className="workspace" id="app-content" tabIndex={-1}>
+        <header className="app-topbar">
+          <button
+            type="button"
+            className="app-topbar-search"
+            onClick={() => setPaletteOpen(true)}
+          >
+            <Search aria-hidden="true" />
+            <span>Search anything…</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <div className="app-topbar-actions">
+            <NavLink
+              className="app-topbar-bell"
+              to="/app/notifications"
+              aria-label={`${unread.data?.unread_count ?? 0} unread notifications`}
+              onPointerEnter={() => prepareRoute("/app/notifications")}
+              onFocus={() => prepareRoute("/app/notifications")}
+            >
+              <Bell aria-hidden="true" />
+              {unread.data?.unread_count ? (
+                <span className="app-topbar-badge">
+                  {unread.data.unread_count > 99 ? "99+" : unread.data.unread_count}
+                </span>
+              ) : null}
+            </NavLink>
+            <div className="app-topbar-profile" ref={profileMenuRef}>
+              <button
+                type="button"
+                className="app-topbar-profile-trigger"
+                onClick={() => setProfileMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={profileMenuOpen}
+              >
+                <span className="account-avatar" aria-hidden="true">
+                  {avatarLabel}
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      onError={(event) => event.currentTarget.remove()}
+                    />
+                  ) : null}
+                </span>
+                <div>
+                  <strong title={displayName}>{displayName}</strong>
+                  <small title={user?.email ?? undefined}>{user?.email}</small>
+                </div>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`app-topbar-chevron${profileMenuOpen ? " is-open" : ""}`}
+                />
+              </button>
+              {profileMenuOpen ? (
+                <AccountMenuItems
+                  onNavigate={() => setProfileMenuOpen(false)}
+                  onLogout={logout}
+                  loggingOut={loggingOut}
+                />
+              ) : null}
+            </div>
+          </div>
+        </header>
         <PromptDialogProvider>
           <Outlet />
         </PromptDialogProvider>
       </main>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }
