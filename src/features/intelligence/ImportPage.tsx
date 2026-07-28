@@ -8,8 +8,10 @@ import {
 import { Check, Link2, RefreshCw, Trash2, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
+import { CountryCombobox } from "../../components/filters/CountryCombobox";
 import type { components } from "../../generated/api/schema";
 import { applicationsApi, intelligenceApi } from "../../lib/api/phase2";
+import { countryName } from "../../lib/countries";
 import { queryKeys } from "../../lib/api/queryKeys";
 
 type Import = components["schemas"]["OpportunityImportResponse"];
@@ -47,6 +49,27 @@ const confidencePercent = (value: unknown) => {
   if (typeof value !== "number" || Number.isNaN(value)) return null;
   return Math.round(Math.max(0, Math.min(1, value)) * 100);
 };
+const eligibilityDetailFields = [
+  "eligible_program_levels",
+  "eligible_nationalities",
+] as const;
+const programLevelOptions = [
+  "Foundation / pathway",
+  "Undergraduate / Bachelor's",
+  "Postgraduate / Master's",
+  "MBA",
+  "Doctoral / PhD",
+  "Non-degree / exchange",
+] as const;
+const listValue = (value: unknown) =>
+  Array.isArray(value)
+    ? value.map(String).filter(Boolean)
+    : typeof value === "string" && value.trim()
+      ? value
+          .split(/\r?\n|,/)
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
 const fieldOrder = [
   "name",
   "institution",
@@ -64,6 +87,8 @@ const fieldOrder = [
   "application_fee",
   "funding_amount",
   "scholarships",
+  "eligible_program_levels",
+  "eligible_nationalities",
   "eligibility_criteria",
   "required_documents",
   "essay_prompts",
@@ -482,8 +507,12 @@ function ImportReview({
     [showDelete, setShowDelete] = useState(false),
     fields = useMemo(
       () =>
-        Object.keys(item.extracted_fields)
-          .filter((key) => hasContent(item.extracted_fields[key]))
+        Object.keys({ ...item.extracted_fields, ...corrections })
+          .filter(
+            (key) =>
+              hasContent(item.extracted_fields[key]) ||
+              hasContent(corrections[key]),
+          )
           .sort((left, right) => {
             const leftIndex = fieldOrder.indexOf(left);
             const rightIndex = fieldOrder.indexOf(right);
@@ -492,16 +521,41 @@ function ImportReview({
               (rightIndex < 0 ? fieldOrder.length : rightIndex)
             );
           }),
-      [item.extracted_fields],
+      [corrections, item.extracted_fields],
     ),
     status = item.status.toLowerCase(),
     active = !terminal.has(status),
     empty = !hasExtractedContent(item),
     canRetry = status === "failed" || status === "extracted",
     lowConfidence = fields.filter((key) => {
+      if (!hasContent(item.extracted_fields[key])) return false;
       const score = confidencePercent(item.field_confidence[key]);
       return score == null || score < 60;
-    }).length;
+    }).length,
+    missingEligibilityDetails = eligibilityDetailFields.filter(
+      (key) => !hasContent(item.extracted_fields[key]),
+    ),
+    eligibilityDetailsChanged = eligibilityDetailFields.some(
+      (key) =>
+        display(corrections[key]) !==
+        display(item.user_corrections[key] ?? item.extracted_fields[key]),
+    );
+  const setEligibilityDetail = (
+    key: (typeof eligibilityDetailFields)[number],
+    value: string[],
+  ) =>
+    setCorrections((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  const selectedProgramLevels = listValue(
+    corrections.eligible_program_levels ??
+      item.extracted_fields.eligible_program_levels,
+  );
+  const selectedNationalities = listValue(
+    corrections.eligible_nationalities ??
+      item.extracted_fields.eligible_nationalities,
+  );
   async function confirmFields() {
     setConfirming(true);
     setConfirmError("");
@@ -629,6 +683,122 @@ function ImportReview({
           </div>
         </div>
       ) : null}
+      {missingEligibilityDetails.length &&
+      (status === "extracted" || status === "confirmed") ? (
+        <section
+          className="import-missing-details"
+          aria-labelledby="missing-eligibility-title"
+        >
+          <header>
+            <div>
+              <span className="eyebrow">Optional provider details</span>
+              <h3 id="missing-eligibility-title">
+                Help us complete eligibility
+              </h3>
+              <p>
+                These restrictions were not found in the source. Add only what
+                the provider explicitly states, or leave them blank.
+              </p>
+            </div>
+          </header>
+          <div className="import-eligibility-fields">
+            {missingEligibilityDetails.includes(
+              "eligible_program_levels",
+            ) ? (
+              <fieldset>
+                <legend>Eligible programme levels</legend>
+                <p>Select every level this opportunity accepts.</p>
+                <div className="import-choice-grid">
+                  {programLevelOptions.map((level) => (
+                    <label key={level}>
+                      <input
+                        type="checkbox"
+                        checked={selectedProgramLevels.includes(level)}
+                        onChange={(event) =>
+                          setEligibilityDetail(
+                            "eligible_program_levels",
+                            event.target.checked
+                              ? [...selectedProgramLevels, level]
+                              : selectedProgramLevels.filter(
+                                  (item) => item !== level,
+                                ),
+                          )
+                        }
+                      />
+                      <span>{level}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : null}
+            {missingEligibilityDetails.includes(
+              "eligible_nationalities",
+            ) ? (
+              <fieldset>
+                <legend>Eligible nationalities</legend>
+                <p>
+                  Mark it open to everyone, or add the nationalities named by
+                  the provider.
+                </p>
+                <label className="import-all-nationalities">
+                  <input
+                    type="checkbox"
+                    checked={selectedNationalities.includes(
+                      "All nationalities",
+                    )}
+                    onChange={(event) =>
+                      setEligibilityDetail(
+                        "eligible_nationalities",
+                        event.target.checked ? ["All nationalities"] : [],
+                      )
+                    }
+                  />
+                  <span>Open to all nationalities</span>
+                </label>
+                {!selectedNationalities.includes("All nationalities") ? (
+                  <>
+                    <CountryCombobox
+                      label="Add an eligible nationality"
+                      value=""
+                      onChange={(code) => {
+                        const name = countryName(code);
+                        if (name && !selectedNationalities.includes(name))
+                          setEligibilityDetail("eligible_nationalities", [
+                            ...selectedNationalities,
+                            name,
+                          ]);
+                      }}
+                    />
+                    {selectedNationalities.length ? (
+                      <ul className="import-answer-chips">
+                        {selectedNationalities.map((nationality) => (
+                          <li className="apps-chip" key={nationality}>
+                            {nationality}
+                            <button
+                              type="button"
+                              aria-label={`Remove ${nationality}`}
+                              onClick={() =>
+                                setEligibilityDetail(
+                                  "eligible_nationalities",
+                                  selectedNationalities.filter(
+                                    (item) => item !== nationality,
+                                  ),
+                                )
+                              }
+                            >
+                              <X aria-hidden="true" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </>
+                ) : null}
+              </fieldset>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
       {fields.length ? (
         <div className="extraction-fields">
           {fields.map((key) => {
@@ -723,6 +893,23 @@ function ImportReview({
           >
             <Check aria-hidden="true" />
             {confirming ? "Confirming…" : `Confirm ${fields.length} fields`}
+          </button>
+        </footer>
+      ) : null}
+      {status === "confirmed" && eligibilityDetailsChanged ? (
+        <footer className="import-review-footer">
+          <p>
+            Save these provider details and the eligibility report will
+            recalculate automatically.
+          </p>
+          <button
+            type="button"
+            className="primary"
+            disabled={confirming}
+            onClick={confirmFields}
+          >
+            <Check aria-hidden="true" />
+            {confirming ? "Saving…" : "Save eligibility details"}
           </button>
         </footer>
       ) : null}

@@ -5741,6 +5741,99 @@ th {
   color: var(--muted);
   font-size: 0.75rem;
 }
+.import-missing-details {
+  margin-top: 1.25rem;
+  padding: clamp(1rem, 2vw, 1.25rem);
+  border: 1px solid #b8caf4;
+  border-radius: 12px;
+  background: #f7f9ff;
+}
+.import-missing-details h3 {
+  margin: 0.25rem 0 0;
+}
+.import-missing-details header p,
+.import-missing-details fieldset > p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.import-eligibility-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.import-eligibility-fields fieldset {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.import-eligibility-fields legend {
+  padding: 0 0.25rem;
+  font-weight: 750;
+}
+.import-choice-grid {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+.import-choice-grid label,
+.import-all-nationalities {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.import-choice-grid label:has(input:checked),
+.import-all-nationalities:has(input:checked) {
+  border-color: #8aa9ef;
+  background: #edf3ff;
+  color: var(--blue);
+}
+.import-choice-grid input,
+.import-all-nationalities input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue);
+}
+.import-all-nationalities {
+  margin: 0.85rem 0;
+}
+.import-answer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.import-answer-chips button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  place-items: center;
+}
+.import-answer-chips button:hover {
+  color: var(--danger);
+  background: #fff;
+}
+.import-answer-chips button svg {
+  width: 12px;
+  height: 12px;
+}
 .extraction-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6105,6 +6198,9 @@ th {
     border-left: 0;
   }
   .extraction-fields {
+    grid-template-columns: 1fr;
+  }
+  .import-eligibility-fields {
     grid-template-columns: 1fr;
   }
   .extraction-fields .extraction-field-wide {

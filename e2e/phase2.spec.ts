@@ -253,12 +253,24 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
       return route.fulfill({ status: 202, json: extracted });
     }
     if (request.method() === "POST" && path.endsWith("/confirm")) {
-      expect(request.postDataJSON().corrections.required_documents).toEqual([
+      const body = request.postDataJSON();
+      expect(body.corrections.required_documents).toEqual([
         "Transcript",
         "Passport",
       ]);
+      expect(body.corrections.eligible_program_levels).toEqual([
+        "Postgraduate / Master's",
+      ]);
+      expect(body.corrections.eligible_nationalities).toEqual([
+        "All nationalities",
+      ]);
       return route.fulfill({
-        json: { ...extracted, status: "confirmed" },
+        json: {
+          ...extracted,
+          status: "confirmed",
+          user_corrections: body.corrections,
+          confirmed_fields: body.confirmed_fields,
+        },
       });
     }
     if (path.endsWith(`/${importId}`))
@@ -295,7 +307,9 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
   await expect(page.getByLabel(/Source-based trade-offs/)).toHaveValue(
     /Advantage — The source lists an industry placement/,
   );
-  await page.getByRole("button", { name: "Confirm 5 fields" }).click();
+  await page.getByLabel("Postgraduate / Master's").check();
+  await page.getByLabel("Open to all nationalities").check();
+  await page.getByRole("button", { name: "Confirm 7 fields" }).click();
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
   await page.screenshot({
     path: `/tmp/eliteapply-import-${testInfo.project.name}.png`,

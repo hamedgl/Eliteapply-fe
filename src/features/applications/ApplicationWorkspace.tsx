@@ -2317,6 +2317,16 @@ function EligibilityTab({
                         Import official criteria
                       </Link>
                     ) : null}
+                    {/eligible (programme|program) levels:|eligible nationalities:/i.test(
+                      item.title,
+                    ) ? (
+                      <Link
+                        className="detail-secondary-link"
+                        to="/app/academic-profile?section=goals"
+                      >
+                        Update your study level and nationality
+                      </Link>
+                    ) : null}
                   </article>
                 ))
               ) : (

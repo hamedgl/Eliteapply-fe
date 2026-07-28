@@ -61,6 +61,7 @@ export type HonorEntry = {
 
 export type GoalsSection = {
   fields_of_study: string[];
+  nationalities: string[];
   preferred_intake: string;
   study_mode: string;
   funding_requirement: string;
@@ -165,6 +166,7 @@ export function readGoals(sections: Record<string, unknown>): GoalsSection {
   const raw = readSection(sections, "goals") as Partial<GoalsSection> | undefined;
   return {
     fields_of_study: raw?.fields_of_study ?? [],
+    nationalities: raw?.nationalities ?? [],
     preferred_intake: raw?.preferred_intake ?? "",
     study_mode: raw?.study_mode ?? "",
     funding_requirement: raw?.funding_requirement ?? "",
@@ -192,6 +194,7 @@ export const applicantTypes = [
 ] as const;
 
 export const studyLevels = [
+  "Foundation / pathway",
   "Undergraduate",
   "Postgraduate (Master's)",
   "Doctoral (PhD)",
@@ -341,4 +344,3 @@ export function profileCompletionPercent(completion: Record<string, boolean>) {
   const done = keys.filter((key) => completion[key]).length;
   return Math.round((done / keys.length) * 100);
 }
-

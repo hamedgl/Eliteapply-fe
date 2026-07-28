@@ -79,6 +79,43 @@ export function GoalsFields({
           </p>
         )}
       </div>
+      <div className="wide profile-tag-field" id="profile-nationalities">
+        <CountryCombobox
+          label="Your nationality or citizenship"
+          value=""
+          onChange={(code) => {
+            const name = countryName(code);
+            if (name && !goals.nationalities.includes(name))
+              onGoals({ nationalities: [...goals.nationalities, name] });
+          }}
+        />
+        {goals.nationalities.length ? (
+          <ul className="profile-tag-row is-below">
+            {goals.nationalities.map((nationality) => (
+              <li className="apps-chip" key={nationality}>
+                {nationality}
+                <button
+                  type="button"
+                  aria-label={`Remove ${nationality}`}
+                  onClick={() =>
+                    onGoals({
+                      nationalities: goals.nationalities.filter(
+                        (item) => item !== nationality,
+                      ),
+                    })
+                  }
+                >
+                  <X aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="profile-field-hint">
+            Used only to check nationality-restricted opportunities.
+          </p>
+        )}
+      </div>
       <label>
         Preferred intake
         <input
