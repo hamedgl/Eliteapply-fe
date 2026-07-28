@@ -198,6 +198,73 @@ test("catalogue distinguishes canonical records and exposes discovery", async ({
   ).toBeVisible();
 });
 
+test("opportunity import exposes extracted fields and preserves list edits", async ({
+  page,
+}, testInfo) => {
+  const importId = "00000000-0000-4000-8000-000000000061";
+  const extracted = {
+    id: importId,
+    application_id: null,
+    source_type: "url",
+    source_url: "https://example.edu/programmes/msc-computer-science",
+    source_hash: "hash",
+    extraction_version: "opportunity-extraction.v2",
+    status: "extracted",
+    extracted_fields: {
+      institution: "Example University",
+      deadline: "2027-01-15",
+      required_documents: ["Transcript"],
+    },
+    field_confidence: {
+      institution: 0.96,
+      deadline: 0.88,
+      required_documents: 0.72,
+    },
+    user_corrections: {},
+    confirmed_fields: [],
+    retrieved_at: "2026-07-28T12:00:00Z",
+    verified_at: null,
+  };
+  await page.route(/\/api\/v1\/application-intelligence\/imports(?:\/.*)?(?:\?.*)?$/, async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (request.method() === "POST" && path.endsWith("/confirm")) {
+      expect(request.postDataJSON().corrections.required_documents).toEqual([
+        "Transcript",
+        "Passport",
+      ]);
+      return route.fulfill({
+        json: { ...extracted, status: "confirmed" },
+      });
+    }
+    if (path.endsWith(`/${importId}`))
+      return route.fulfill({ json: extracted });
+    return route.fulfill({
+      json: {
+        items: [extracted],
+        next_cursor: null,
+        has_more: false,
+        total: 1,
+      },
+    });
+  });
+
+  await page.goto("/app/applications/import");
+  await page.getByRole("button", { name: /Msc Computer Science/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Review extracted fields" }),
+  ).toBeVisible();
+  await page
+    .getByLabel(/Required Documents/)
+    .fill("Transcript\nPassport");
+  await page.getByRole("button", { name: "Confirm 3 fields" }).click();
+  await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: `/tmp/eliteapply-import-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+});
+
 test("public writing share is noindex and comment-capable", async ({
   page,
 }) => {
