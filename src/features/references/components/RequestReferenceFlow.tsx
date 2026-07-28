@@ -1,17 +1,38 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Loader2, RefreshCw, Sparkles, Upload } from "lucide-react";
 import { Select } from "../../../components/ui/select";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { applicationsApi, documentsApi } from "../../../lib/api/phase2";
-import { referencesApi, writingApi } from "../../../lib/api/phase3";
+import { documentText, referencesApi, writingApi } from "../../../lib/api/phase3";
 import { newMutationId } from "../../../lib/api/mutations";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { track } from "../../../lib/analytics/track";
+import { UploadDialog } from "../../documents/components/UploadDialog";
 import { referenceModes, methodLabel, referenceTypes, referenceTypeLabel } from "../model";
 
 const REFEREE_ROLES = ["professor", "supervisor", "teacher", "employer", "mentor"] as const;
 const STEPS = ["Method", "Referee details", "Request details", "Review & send"] as const;
+const GENERATION_DONE = ["completed", "complete", "succeeded", "success"];
+const GENERATION_STOPPED = [...GENERATION_DONE, "failed", "cancelled", "canceled"];
+
+async function waitForPolishedDraft(documentId: string, runId: string) {
+  for (let attempt = 0; attempt < 45; attempt += 1) {
+    const run = await writingApi.generationRun(runId);
+    const status = run.status.toLowerCase();
+    if (GENERATION_DONE.includes(status)) {
+      const document = await writingApi.get(documentId);
+      const text = documentText(document.content).trim();
+      if (!text) throw new Error("AI returned an empty draft. Your original is unchanged.");
+      return text;
+    }
+    if (GENERATION_STOPPED.includes(status)) {
+      throw new Error(run.failure_reason || "AI polish could not be completed. Your original is unchanged.");
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 1_000));
+  }
+  throw new Error("AI polish is taking too long. Your original is unchanged; try again.");
+}
 
 export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: string) => void }) {
   const qc = useQueryClient();
@@ -33,8 +54,9 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
   const [relationship, setRelationship] = useState("");
   const [context, setContext] = useState("");
   const [studentDraft, setStudentDraft] = useState("");
-  const [polishDocumentId, setPolishDocumentId] = useState("");
+  const [draftBeforePolish, setDraftBeforePolish] = useState("");
   const [existingDocumentId, setExistingDocumentId] = useState("");
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [destinations, setDestinations] = useState("");
   const studentDraftLength = studentDraft.trim().length;
 
@@ -81,8 +103,8 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
   });
 
   const preparePolish = useMutation({
-    mutationFn: () =>
-      writingApi.create({
+    mutationFn: async () => {
+      const created = await writingApi.create({
         application_id: applicationId || null,
         document_type: "custom_essay",
         title: `Reference draft${applicationName ? ` — ${applicationName}` : ""}`,
@@ -90,21 +112,26 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
         target_requirements: { purpose: "reference_draft" },
         evidence_map: {},
         theme: {},
-      }),
-    onSuccess: (created) => {
+      });
       qc.setQueryData(queryKeys.writingDocument(created.id), created);
-      setPolishDocumentId(created.id);
-      window.open(
-        `/app/writing/${created.id}`,
-        "_blank",
-        "noopener,noreferrer",
-      );
+      const run = await writingApi.generate(created.id, {
+        mutation_id: crypto.randomUUID(),
+        operation: "improve_paragraph",
+        instruction:
+          "Polish this academic reference draft for clarity and professionalism while preserving every factual claim.",
+        evidence_ids: [],
+      });
+      return waitForPolishedDraft(created.id, run.id);
+    },
+    onSuccess: (polished) => {
+      setDraftBeforePolish(studentDraft);
+      setStudentDraft(polished);
     },
     onError: (caught) =>
       setError(
         caught instanceof Error
           ? caught.message
-          : "Could not prepare the draft in Writing Studio.",
+          : "Could not polish the draft. Your original is unchanged.",
       ),
   });
 
@@ -142,11 +169,17 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
 
       {step === 0 ? (
         <section className="reference-request-step">
-          <h3>How should this reference be written?</h3>
+          <h3 className="reference-required-label">How should this reference be written?</h3>
           <div className="reference-method-options">
             {referenceModes.map((option) => (
               <label key={option} className={`reference-method-option${mode === option ? " is-selected" : ""}`}>
-                <input type="radio" name="mode" checked={mode === option} onChange={() => setMode(option)} />
+                <input
+                  type="radio"
+                  name="mode"
+                  checked={mode === option}
+                  onChange={() => setMode(option)}
+                  required
+                />
                 <span>{methodLabel(option)}</span>
               </label>
             ))}
@@ -159,11 +192,11 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
           <h3>Referee details</h3>
           <div className="form-grid">
             <label>
-              Full name
+              <span className="reference-required-label">Full name</span>
               <input value={refereeName} onChange={(event) => setRefereeName(event.target.value)} required />
             </label>
             <label>
-              Email
+              <span className="reference-required-label">Email</span>
               <input
                 type="email"
                 value={refereeEmail}
@@ -172,9 +205,10 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               />
             </label>
             <label>
-              Role
+              <span className="reference-required-label">Role</span>
               <Select
                 ariaLabel="Referee role"
+                required
                 value={refereeRole}
                 onChange={(val: any) =>
                   setRefereeRole((typeof val === "string" ? val : val?.target?.value) as (typeof REFEREE_ROLES)[number])
@@ -183,11 +217,15 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               />
             </label>
             <label>
-              Institution
+              <span>
+                Institution <span className="muted">(optional)</span>
+              </span>
               <input value={institution} onChange={(event) => setInstitution(event.target.value)} />
             </label>
             <label className="wide">
-              Department
+              <span>
+                Department <span className="muted">(optional)</span>
+              </span>
               <input value={department} onChange={(event) => setDepartment(event.target.value)} />
             </label>
           </div>
@@ -211,15 +249,15 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               onChange={(id, name) => {
                 setApplicationId(id);
                 setApplicationName(name);
-                setPolishDocumentId("");
               }}
             />
           </div>
           <div className="form-grid reference-request-grid">
             <label>
-              <span>Reference type</span>
+              <span className="reference-required-label">Reference type</span>
               <Select
                 ariaLabel="Reference type"
+                required
                 value={referenceType}
                 onChange={(val: any) =>
                   setReferenceType((typeof val === "string" ? val : val?.target?.value) as (typeof referenceTypes)[number])
@@ -245,7 +283,9 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
             </label>
           </div>
           <label>
-            Relationship to the referee
+            <span>
+              Relationship to the referee <span className="muted">(optional)</span>
+            </span>
             <input value={relationship} onChange={(event) => setRelationship(event.target.value)} />
           </label>
           <label>
@@ -257,18 +297,15 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
           {mode === "student_draft" ? (
             <div className="reference-draft-field">
               <div className="reference-draft-heading">
-                <label htmlFor="student-reference-draft">Student draft</label>
+                <label
+                  className="reference-required-label"
+                  htmlFor="student-reference-draft"
+                >
+                  Student draft
+                </label>
                 <button
                   type="button"
                   onClick={() => {
-                    if (polishDocumentId) {
-                      window.open(
-                        `/app/writing/${polishDocumentId}`,
-                        "_blank",
-                        "noopener,noreferrer",
-                      );
-                      return;
-                    }
                     setError("");
                     preparePolish.mutate();
                   }}
@@ -279,12 +316,12 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                   }
                   aria-describedby="student-reference-polish-help"
                 >
-                  <Sparkles aria-hidden="true" />
-                  {preparePolish.isPending
-                    ? "Preparing…"
-                    : polishDocumentId
-                      ? "Open in Writing Studio"
-                      : "Polish in Writing Studio"}
+                  {preparePolish.isPending ? (
+                    <Loader2 aria-hidden="true" className="apps-spin" />
+                  ) : (
+                    <Sparkles aria-hidden="true" />
+                  )}
+                  {preparePolish.isPending ? "Polishing…" : "Polish with AI"}
                 </button>
               </div>
               <textarea
@@ -292,7 +329,7 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                 value={studentDraft}
                 onChange={(event) => {
                   setStudentDraft(event.target.value);
-                  setPolishDocumentId("");
+                  setDraftBeforePolish("");
                 }}
                 minLength={50}
                 required
@@ -319,37 +356,64 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                 </strong>
               </div>
               <p id="student-reference-polish-help" className="field-help">
-                Opens a private Writing Studio copy, where you can use Improve
-                paragraph and review the suggestion without changing this form.
-                {polishDocumentId ? (
-                  <>
-                    {" "}
-                    <a
-                      href={`/app/writing/${polishDocumentId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open prepared draft
-                    </a>
-                  </>
+                AI edits the draft here. Review the result before sending.
+                {draftBeforePolish ? (
+                  <button
+                    type="button"
+                    className="reference-inline-action"
+                    onClick={() => {
+                      setStudentDraft(draftBeforePolish);
+                      setDraftBeforePolish("");
+                    }}
+                  >
+                    Undo AI polish
+                  </button>
                 ) : null}
               </p>
             </div>
           ) : null}
           {mode === "existing_upload" ? (
-            <label>
-              Existing document
+            <div className="reference-document-field">
+              <div className="reference-document-heading">
+                <span className="reference-required-label">Existing document</span>
+                <div className="reference-document-actions">
+                  <button type="button" onClick={() => setUploadOpen(true)}>
+                    <Upload aria-hidden="true" />
+                    Upload new
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void documents.refetch()}
+                    disabled={documents.isFetching}
+                  >
+                    <RefreshCw
+                      aria-hidden="true"
+                      className={documents.isFetching ? "apps-spin" : ""}
+                    />
+                    {documents.isFetching ? "Refreshing…" : "Refresh"}
+                  </button>
+                </div>
+              </div>
               <Select
                 ariaLabel="Existing document"
+                required
                 value={existingDocumentId}
                 placeholder="Select a document"
                 onChange={(val: any) => setExistingDocumentId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
                 options={cleanDocuments.map((document) => ({ value: document.id, label: document.display_name }))}
               />
-              {documents.isSuccess && !cleanDocuments.length ? (
-                <span className="muted">No security-cleared documents are available. Upload a document and wait for scanning to finish.</span>
-              ) : null}
-            </label>
+              <span className="field-help" role="status" aria-live="polite">
+                {documents.isPending
+                  ? "Loading documents…"
+                  : documents.isError
+                    ? "Documents could not be loaded. Refresh to try again."
+                    : cleanDocuments.length
+                      ? `${cleanDocuments.length} security-cleared document${cleanDocuments.length === 1 ? "" : "s"} available.`
+                      : documents.data?.length
+                        ? "Uploaded documents appear here after security scanning finishes."
+                        : "No documents yet. Upload one to continue."}
+              </span>
+            </div>
           ) : null}
           <label>
             <span>
@@ -440,6 +504,14 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
           </button>
         )}
       </div>
+      {uploadOpen ? (
+        <UploadDialog
+          onClose={() => {
+            setUploadOpen(false);
+            void documents.refetch();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

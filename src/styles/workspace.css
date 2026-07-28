@@ -3687,7 +3687,8 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
 }
 .reference-request-step > label,
 .reference-request-application,
-.reference-draft-field {
+.reference-draft-field,
+.reference-document-field {
   min-width: 0;
   display: grid;
   gap: 0.4rem;
@@ -3696,6 +3697,11 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   font-weight: 600;
 }
 .apps-combobox-label.is-required::after {
+  content: " *";
+  color: var(--app-red);
+  font-weight: 700;
+}
+.reference-required-label::after {
   content: " *";
   color: var(--app-red);
   font-weight: 700;
@@ -3761,8 +3767,36 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   margin: 0;
   line-height: 1.5;
 }
-.reference-draft-field > .field-help a {
+.reference-inline-action {
+  display: inline;
+  min-height: 0;
+  margin-left: 0.35rem;
+  padding: 0;
+  border: 0;
+  color: var(--app-blue);
+  background: transparent;
   font-weight: 700;
+}
+.reference-document-heading,
+.reference-document-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.reference-document-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.reference-document-actions button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.reference-document-actions svg {
+  width: 16px;
+  height: 16px;
 }
 .reference-review-draft {
   grid-column: 1 / -1;
@@ -3829,13 +3863,22 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
     grid-template-columns: 1fr;
   }
   .reference-draft-heading,
-  .reference-field-meta {
+  .reference-field-meta,
+  .reference-document-heading {
     align-items: stretch;
     flex-direction: column;
     gap: 0.5rem;
   }
   .reference-draft-heading > button {
     width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .reference-document-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reference-document-actions button {
     min-height: 44px;
     justify-content: center;
   }

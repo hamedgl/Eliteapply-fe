@@ -351,7 +351,7 @@ test("new writing survives an empty library cache and a failed completion refres
   await expect(page.getByText("Document unavailable")).toHaveCount(0);
 });
 
-test("student reference draft explains its minimum and prepares an AI polish copy", async ({
+test("student reference draft validates its minimum and applies AI polish inline", async ({
   page,
 }) => {
   const application = {
@@ -359,14 +359,11 @@ test("student reference draft explains its minimum and prepares an AI polish cop
     title: "Oxford MSc application",
   };
   let writingBody: Record<string, unknown> | null = null;
-
-  await page.addInitScript(() => {
-    window.open = ((url?: string | URL) => {
-      (window as typeof window & { __openedWritingUrl?: string }).__openedWritingUrl =
-        String(url ?? "");
-      return null;
-    }) as typeof window.open;
-  });
+  let generationBody: Record<string, unknown> | null = null;
+  const writingId = "00000000-0000-4000-8000-000000000072";
+  const runId = "00000000-0000-4000-8000-000000000073";
+  const polishedDraft =
+    "Professor Silva supervised my research into reliable distributed systems, where I demonstrated rigorous analysis and clear technical communication.";
   await page.route("**/api/v1/academic-references?**", (route) =>
     route.fulfill({
       json: { items: [], next_cursor: null, has_more: false },
@@ -383,7 +380,7 @@ test("student reference draft explains its minimum and prepares an AI polish cop
       status: 201,
       json: {
         ...doc,
-        id: "00000000-0000-4000-8000-000000000072",
+        id: writingId,
         application_id: application.id,
         application_title: application.title,
         document_type: "custom_essay",
@@ -392,6 +389,35 @@ test("student reference draft explains its minimum and prepares an AI polish cop
       },
     });
   });
+  await page.route(
+    `**/api/v1/writing-studio/documents/${writingId}/generate`,
+    async (route) => {
+      generationBody = route.request().postDataJSON();
+      return route.fulfill({
+        status: 202,
+        json: generationRun(runId, "queued"),
+      });
+    },
+  );
+  await page.route(
+    `**/api/v1/writing-studio/generation-runs/${runId}`,
+    (route) =>
+      route.fulfill({
+        json: generationRun(runId, "completed"),
+      }),
+  );
+  await page.route(
+    `**/api/v1/writing-studio/documents/${writingId}`,
+    (route) =>
+      route.fulfill({
+        json: {
+          ...doc,
+          id: writingId,
+          application_id: application.id,
+          content: { text: polishedDraft },
+        },
+      }),
+  );
 
   await page.setViewportSize({ width: 640, height: 900 });
   await page.goto("/app/references");
@@ -414,7 +440,7 @@ test("student reference draft explains its minimum and prepares an AI polish cop
   await draft.fill("a".repeat(49));
   await expect(drawer.getByText("49 / 50 minimum")).toBeVisible();
   await expect(
-    drawer.getByRole("button", { name: "Polish in Writing Studio" }),
+    drawer.getByRole("button", { name: "Polish with AI" }),
   ).toBeDisabled();
   await expect(
     drawer.getByRole("button", { name: "Continue" }),
@@ -424,7 +450,7 @@ test("student reference draft explains its minimum and prepares an AI polish cop
     "I worked with Professor Silva on a research project about reliable distributed systems.";
   await draft.fill(completeDraft);
   await expect(
-    drawer.getByRole("button", { name: "Polish in Writing Studio" }),
+    drawer.getByRole("button", { name: "Polish with AI" }),
   ).toBeEnabled();
 
   const referenceType = await drawer
@@ -434,24 +460,20 @@ test("student reference draft explains its minimum and prepares an AI polish cop
   expect(referenceType?.y).toBe(dueIn?.y);
 
   await drawer
-    .getByRole("button", { name: "Polish in Writing Studio" })
+    .getByRole("button", { name: "Polish with AI" })
     .click();
-  await expect(drawer.getByRole("link", { name: "Open prepared draft" })).toBeVisible();
+  await expect(draft).toHaveValue(polishedDraft);
+  await expect(drawer.getByRole("button", { name: "Undo AI polish" })).toBeVisible();
   expect(writingBody).toMatchObject({
     application_id: application.id,
     document_type: "custom_essay",
     content: { text: completeDraft },
   });
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          (
-            window as typeof window & { __openedWritingUrl?: string }
-          ).__openedWritingUrl,
-      ),
-    )
-    .toBe("/app/writing/00000000-0000-4000-8000-000000000072");
+  expect(generationBody).toMatchObject({
+    operation: "improve_paragraph",
+  });
+  await drawer.getByRole("button", { name: "Undo AI polish" }).click();
+  await expect(draft).toHaveValue(completeDraft);
 
   const overflow = await drawer.evaluate(
     (element) => element.scrollWidth - element.clientWidth,
@@ -476,6 +498,88 @@ test("student reference draft explains its minimum and prepares an AI polish cop
     path: "/tmp/eliteapply-reference-request-polish-mobile.png",
     animations: "disabled",
   });
+});
+
+test("existing reference upload can add and refresh security-cleared documents", async ({
+  page,
+}) => {
+  const application = {
+    id: "00000000-0000-4000-8000-000000000081",
+    title: "Oxford MSc application",
+  };
+  const uploadedDocument = {
+    id: "00000000-0000-4000-8000-000000000082",
+    category: "reference_letter",
+    display_name: "Professor Silva reference.pdf",
+    storage_key: "test/reference.pdf",
+    content_type: "application/pdf",
+    size_bytes: 2048,
+    malware_status: "clean",
+    created_at: "2026-07-28T12:00:00Z",
+  };
+  let availableDocuments: typeof uploadedDocument[] = [];
+  let documentRequests = 0;
+
+  await page.route("**/api/v1/academic-references?**", (route) =>
+    route.fulfill({
+      json: { items: [], next_cursor: null, has_more: false },
+    }),
+  );
+  await page.route("**/api/v1/applications?**", (route) =>
+    route.fulfill({
+      json: { items: [application], next_cursor: null, has_more: false },
+    }),
+  );
+  await page.route("**/api/v1/academic-documents", (route) => {
+    documentRequests += 1;
+    return route.fulfill({ json: availableDocuments });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app/references");
+  await page
+    .locator("header")
+    .getByRole("button", { name: "Request reference" })
+    .click();
+
+  const drawer = page.getByRole("dialog", { name: "Request reference" });
+  await drawer.getByRole("radio", { name: "Existing upload" }).check();
+  await drawer.getByRole("button", { name: "Continue" }).click();
+  await drawer.getByLabel("Full name").fill("Professor Ada Silva");
+  await drawer.getByLabel("Email").fill("ada@example.test");
+  await expect(
+    drawer.getByRole("button", { name: "Referee role" }),
+  ).toHaveAttribute("aria-required", "true");
+  await drawer.getByRole("button", { name: "Continue" }).click();
+
+  await drawer.getByLabel("Application").fill("Oxford");
+  await drawer.getByRole("option", { name: application.title }).click();
+  await expect(
+    drawer.getByRole("button", { name: "Reference type" }),
+  ).toHaveAttribute("aria-required", "true");
+  await expect(
+    drawer.getByRole("button", { name: "Existing document" }),
+  ).toHaveAttribute("aria-required", "true");
+
+  await drawer.getByRole("button", { name: "Upload new" }).click();
+  const uploadDialog = page.getByRole("dialog", { name: "Upload documents" });
+  await expect(uploadDialog).toBeVisible();
+
+  availableDocuments = [uploadedDocument];
+  await uploadDialog.getByRole("button", { name: "Close" }).click();
+  await expect.poll(() => documentRequests).toBeGreaterThan(1);
+  await drawer.getByRole("button", { name: "Existing document" }).click();
+  await page
+    .getByRole("option", { name: uploadedDocument.display_name })
+    .click();
+
+  const previousRequests = documentRequests;
+  await drawer.getByRole("button", { name: "Refresh" }).click();
+  await expect.poll(() => documentRequests).toBeGreaterThan(previousRequests);
+  await expect(drawer.getByText("1 security-cleared document available.")).toBeVisible();
+  expect(
+    await drawer.evaluate((element) => element.scrollWidth - element.clientWidth),
+  ).toBeLessThanOrEqual(0);
 });
 
 function generationRun(id: string, status: string) {
