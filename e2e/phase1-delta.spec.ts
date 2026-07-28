@@ -126,6 +126,58 @@ test.beforeEach(async ({ page }) => {
           usable_for_protected_workflows: true,
         },
       });
+    if (path.endsWith("/academic-documents/00000000-0000-4000-8000-000000000002/links"))
+      return route.fulfill({
+        json: {
+          document_id: "00000000-0000-4000-8000-000000000002",
+          linked_application_ids: ["00000000-0000-4000-8000-000000000010"],
+          link_count: 1,
+        },
+      });
+    if (path.endsWith("/academic-documents/00000000-0000-4000-8000-000000000002/versions"))
+      return route.fulfill({
+        json: [
+          {
+            id: "00000000-0000-4000-8000-000000000021",
+            document_id: "00000000-0000-4000-8000-000000000002",
+            version_number: 2,
+            storage_key: "academic/secure/file-v2.pdf",
+            content_type: "application/pdf",
+            size_bytes: 2048,
+            checksum_sha256: "def456",
+            created_at: "2026-07-28T00:00:00Z",
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000020",
+            document_id: "00000000-0000-4000-8000-000000000002",
+            version_number: 1,
+            storage_key: "academic/secure/file-v1.pdf",
+            content_type: "application/pdf",
+            size_bytes: 1024,
+            checksum_sha256: "abc123",
+            created_at: "2026-07-01T00:00:00Z",
+          },
+        ],
+      });
+    if (path.endsWith("/academic-documents/00000000-0000-4000-8000-000000000002/activity"))
+      return route.fulfill({
+        json: [
+          {
+            id: "00000000-0000-4000-8000-000000000031",
+            document_id: "00000000-0000-4000-8000-000000000002",
+            event_type: "version_replaced",
+            event_metadata: { version: 2 },
+            created_at: "2026-07-28T00:00:00Z",
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000030",
+            document_id: "00000000-0000-4000-8000-000000000002",
+            event_type: "document_created",
+            event_metadata: {},
+            created_at: "2026-07-01T00:00:00Z",
+          },
+        ],
+      });
     if (path.endsWith("/academic-documents/00000000-0000-4000-8000-000000000002"))
       return route.fulfill({
         json: {
@@ -134,13 +186,21 @@ test.beforeEach(async ({ page }) => {
           display_name: "Academic transcript.pdf",
           storage_key: "academic/secure/file.pdf",
           content_type: "application/pdf",
-          size_bytes: 1024,
-          tags: [],
+          size_bytes: 2048,
+          checksum_sha256: "def4567890abcdef",
+          tags: ["official", "2026"],
           malware_status: "clean",
           created_at: "2026-07-01T00:00:00Z",
+          updated_at: "2026-07-28T00:00:00Z",
           expires_at: null,
+          version: 2,
+          linked_application_ids: ["00000000-0000-4000-8000-000000000010"],
+          link_count: 1,
+          requires_action: false,
         },
       });
+    if (path.endsWith("/applications/00000000-0000-4000-8000-000000000010"))
+      return route.fulfill({ json: application(submitted ? "submitted" : "ready_to_submit") });
     return route.fulfill({ json: {} });
   });
 });
@@ -187,6 +247,47 @@ test("document detail waits for a successful security scan", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Academic transcript.pdf" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ready to use" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Download document" })).toBeEnabled();
+  await expect(page.getByRole("heading", { name: "Linked applications" })).toBeVisible();
+  await expect(page.getByText("MSc Human-Centred AI")).toBeVisible();
+  await expect(page.getByText("Version 2 · Current")).toBeVisible();
+  await expect(page.getByText("Version Replaced")).toBeVisible();
+  await expect(page.getByText("def4567890abcdef")).toBeVisible();
+
+  const refreshed = page.waitForResponse((response) =>
+    response.url().endsWith(
+      "/api/v1/academic-documents/00000000-0000-4000-8000-000000000002",
+    ),
+  );
+  await page.getByRole("button", { name: "Refresh" }).click();
+  await refreshed;
+
+  await page.getByRole("button", { name: "Version history" }).click();
+  await expect(page.getByRole("dialog", { name: "Version History" })).toBeVisible();
+  await page.getByRole("dialog", { name: "Version History" }).getByRole("button", { name: "Close" }).first().click();
+
+  expect(
+    await page
+      .locator(".document-detail-page")
+      .evaluate((element) => element.scrollWidth - element.clientWidth),
+  ).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-document-detail.png",
+    fullPage: true,
+    animations: "disabled",
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("heading", { name: "Document actions" }).scrollIntoViewIfNeeded();
+  expect(
+    await page
+      .locator(".document-detail-page")
+      .evaluate((element) => element.scrollWidth - element.clientWidth),
+  ).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-document-detail-mobile.png",
+    fullPage: true,
+    animations: "disabled",
+  });
 });
 
 test("workspace checks readiness immediately before submission", async ({ page }) => {

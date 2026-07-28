@@ -1,23 +1,28 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Activity,
   AlertTriangle,
+  ArrowLeft,
   CalendarClock,
   CheckCircle2,
-  FileStack,
-  Plus,
-  Search,
-  X,
-} from "lucide-react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import {
-  ArrowLeft,
+  ChevronRight,
   Download,
+  FileStack,
+  FileUp,
+  History,
+  Link2,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
   ShieldAlert,
   ShieldCheck,
   Trash2,
+  X,
 } from "lucide-react";
-import { documentsApi } from "../../lib/api/phase2";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { applicationsApi, documentsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { openSignedDownload } from "../../lib/api/signedTransport";
 import { Select } from "../../components/ui/select";
@@ -179,7 +184,7 @@ export function DocumentsPage() {
 
   return (
     <div
-      className={`page${pageDragOver ? " docs-page-dropping" : ""}`}
+      className={`page docs-page${pageDragOver ? " docs-page-dropping" : ""}`}
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes("Files")) return;
         event.preventDefault();
@@ -201,9 +206,23 @@ export function DocumentsPage() {
         title="Academic Documents"
         description="Manage transcripts, certificates, recommendation letters, and test scores"
         actions={
-          <button className="primary" type="button" onClick={() => setUploadSeed([])}>
-            <Plus aria-hidden="true" /> Upload documents
-          </button>
+          <>
+            <button
+              className="docs-refresh-button"
+              type="button"
+              onClick={() => void query.refetch()}
+              disabled={query.isFetching}
+            >
+              <RefreshCw
+                aria-hidden="true"
+                className={query.isFetching ? "apps-spin" : ""}
+              />
+              {query.isFetching ? "Refreshing…" : "Refresh"}
+            </button>
+            <button className="primary" type="button" onClick={() => setUploadSeed([])}>
+              <Plus aria-hidden="true" /> Upload documents
+            </button>
+          </>
         }
       />
 
@@ -398,6 +417,9 @@ export function DocumentsPage() {
 export function DocumentDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const [openPanel, setOpenPanel] = useState<
+    "attach" | "edit" | "replace" | "versions" | "activity" | "delete" | null
+  >(null);
   const query = useQuery({
     queryKey: queryKeys.document(id),
     queryFn: () => documentsApi.get(id),
@@ -415,10 +437,54 @@ export function DocumentDetailPage() {
         ? false
         : 2500,
   });
+  const links = useQuery({
+    queryKey: queryKeys.documentLinks(id),
+    queryFn: () => documentsApi.links(id),
+    enabled: Boolean(id),
+  });
+  const versions = useQuery({
+    queryKey: queryKeys.documentVersions(id),
+    queryFn: () => documentsApi.versions(id),
+    enabled: Boolean(id),
+  });
+  const activity = useQuery({
+    queryKey: queryKeys.documentActivity(id),
+    queryFn: () => documentsApi.activity(id),
+    enabled: Boolean(id),
+  });
+  const linkedApplicationIds =
+    links.data?.linked_application_ids ??
+    query.data?.linked_application_ids ??
+    [];
+  const linkedApplications = useQuery({
+    queryKey: [
+      ...queryKeys.documentLinks(id),
+      "applications",
+      ...linkedApplicationIds,
+    ],
+    queryFn: () =>
+      Promise.all(
+        linkedApplicationIds.map((applicationId) =>
+          applicationsApi.get(applicationId),
+        ),
+      ),
+    enabled: linkedApplicationIds.length > 0,
+  });
   const remove = useMutation({
     mutationFn: () => documentsApi.remove(id),
     onSuccess: () => navigate("/app/documents"),
   });
+
+  const refresh = () =>
+    void Promise.all([
+      query.refetch(),
+      scan.refetch(),
+      links.refetch(),
+      versions.refetch(),
+      activity.refetch(),
+      ...(linkedApplicationIds.length ? [linkedApplications.refetch()] : []),
+    ]);
+
   async function download() {
     if (!query.data || !scan.data?.usable_for_protected_workflows) return;
     openSignedDownload((await documentsApi.download(id)).download_url);
@@ -442,6 +508,19 @@ export function DocumentDetailPage() {
     scan.data?.malware_status.toLowerCase() ?? "",
   );
   const expiry = expiryInfo(document.expires_at);
+  const versionItems = Array.isArray(versions.data) ? versions.data : [];
+  const activityItems = Array.isArray(activity.data) ? activity.data : [];
+  const applicationItems = Array.isArray(linkedApplications.data)
+    ? linkedApplications.data
+    : [];
+  const refreshing =
+    query.isFetching ||
+    scan.isFetching ||
+    links.isFetching ||
+    versions.isFetching ||
+    activity.isFetching ||
+    linkedApplications.isFetching;
+
   return (
     <div className="page document-detail-page">
       <Link className="back" to="/app/documents">
@@ -450,9 +529,23 @@ export function DocumentDetailPage() {
       <PageHeader
         title={document.display_name}
         description={`${label(document.category)} · ${formatBytes(document.size_bytes)}`}
+        actions={
+          <button
+            type="button"
+            className="docs-refresh-button"
+            onClick={refresh}
+            disabled={refreshing}
+          >
+            <RefreshCw
+              aria-hidden="true"
+              className={refreshing ? "apps-spin" : ""}
+            />
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </button>
+        }
       />
       <section
-        className={`scan-panel ${usable ? "ready" : failed ? "failed" : "pending"}`}
+        className={`scan-panel docs-scan-panel ${usable ? "ready" : failed ? "failed" : "pending"}`}
       >
         {usable ? (
           <ShieldCheck aria-hidden="true" />
@@ -480,61 +573,282 @@ export function DocumentDetailPage() {
           </span>
         </div>
       </section>
-      <dl className="document-metadata">
-        <div>
-          <dt>Added</dt>
-          <dd>{formatDate(document.created_at)}</dd>
-        </div>
-        <div>
-          <dt>File type</dt>
-          <dd>{document.content_type}</dd>
-        </div>
-        <div>
-          <dt>Expiration</dt>
-          <dd>
-            <StatusBadge tone={expiry.urgency === "none" ? "grey" : expiry.urgency === "critical" ? "red" : expiry.urgency === "warn" ? "amber" : "neutral"}>
-              {expiry.text}
-            </StatusBadge>
-          </dd>
-        </div>
-        {document.tags?.length ? (
-          <div>
-            <dt>Tags</dt>
-            <dd>{document.tags.join(", ")}</dd>
+
+      <div className="docs-detail-layout">
+        <main className="docs-detail-main">
+          <section className="apps-card docs-detail-card" aria-labelledby="document-details-title">
+            <header>
+              <div>
+                <h2 id="document-details-title">Document details</h2>
+                <p>File metadata used across your application workspace.</p>
+              </div>
+              <StatusBadge tone="blue">Version {document.version ?? 1}</StatusBadge>
+            </header>
+            <dl className="docs-detail-facts">
+              <div>
+                <dt>Category</dt>
+                <dd>{label(document.category)}</dd>
+              </div>
+              <div>
+                <dt>File size</dt>
+                <dd>{formatBytes(document.size_bytes)}</dd>
+              </div>
+              <div>
+                <dt>File type</dt>
+                <dd>{document.content_type}</dd>
+              </div>
+              <div>
+                <dt>Added</dt>
+                <dd>{formatDate(document.created_at)}</dd>
+              </div>
+              <div>
+                <dt>Last updated</dt>
+                <dd>
+                  {document.updated_at
+                    ? formatDate(document.updated_at)
+                    : formatDate(document.created_at)}
+                </dd>
+              </div>
+              <div>
+                <dt>Expiration</dt>
+                <dd>
+                  <StatusBadge
+                    tone={
+                      expiry.urgency === "none"
+                        ? "grey"
+                        : expiry.urgency === "critical"
+                          ? "red"
+                          : expiry.urgency === "warn"
+                            ? "amber"
+                            : "neutral"
+                    }
+                  >
+                    {expiry.text}
+                  </StatusBadge>
+                </dd>
+              </div>
+              <div className="docs-detail-fact-wide">
+                <dt>Checksum</dt>
+                <dd
+                  className="docs-checksum"
+                  title={document.checksum_sha256 ?? undefined}
+                >
+                  {document.checksum_sha256 ?? "Not available"}
+                </dd>
+              </div>
+              <div className="docs-detail-fact-wide">
+                <dt>Tags</dt>
+                <dd className="docs-tag-list">
+                  {document.tags?.length
+                    ? document.tags.map((tag) => <span key={tag}>{tag}</span>)
+                    : "No tags"}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="apps-card docs-detail-card" aria-labelledby="document-links-title">
+            <header>
+              <div>
+                <h2 id="document-links-title">Linked applications</h2>
+                <p>Applications currently using this document as evidence.</p>
+              </div>
+              <button
+                type="button"
+                className="docs-card-action"
+                onClick={() => setOpenPanel("attach")}
+                disabled={!usable}
+              >
+                <Link2 aria-hidden="true" /> Attach
+              </button>
+            </header>
+            {links.isPending ||
+            (linkedApplicationIds.length > 0 && linkedApplications.isPending) ? (
+              <p className="docs-detail-loading" role="status">
+                Loading linked applications…
+              </p>
+            ) : links.isError ||
+              (linkedApplicationIds.length > 0 && linkedApplications.isError) ? (
+              <p className="form-error" role="alert">
+                Linked applications could not be loaded. Refresh to try again.
+              </p>
+            ) : applicationItems.length ? (
+              <ul className="docs-linked-applications">
+                {applicationItems.map((application) => (
+                  <li key={application.id}>
+                    <Link to={`/app/applications/${application.id}`}>
+                      <div>
+                        <strong>{application.title}</strong>
+                        <span>
+                          {label(application.stage)}
+                          {application.intake ? ` · ${application.intake}` : ""}
+                        </span>
+                      </div>
+                      <ChevronRight aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="docs-detail-empty">
+                <Link2 aria-hidden="true" />
+                <div>
+                  <strong>Not linked yet</strong>
+                  <p>Attach this document to reuse it in an application.</p>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <div className="docs-detail-history-grid">
+            <section className="apps-card docs-detail-card" aria-labelledby="document-versions-title">
+              <header>
+                <div>
+                  <h2 id="document-versions-title">Version history</h2>
+                  <p>{versionItems.length} recorded version{versionItems.length === 1 ? "" : "s"}</p>
+                </div>
+                <button
+                  type="button"
+                  className="docs-card-action"
+                  onClick={() => setOpenPanel("versions")}
+                >
+                  View all
+                </button>
+              </header>
+              {versions.isPending ? (
+                <p className="docs-detail-loading" role="status">Loading versions…</p>
+              ) : versionItems.length ? (
+                <ul className="docs-detail-timeline">
+                  {versionItems.slice(0, 3).map((version) => (
+                    <li key={version.id}>
+                      <span>v{version.version_number}</span>
+                      <div>
+                        <strong>
+                          Version {version.version_number}
+                          {version.version_number === document.version ? " · Current" : ""}
+                        </strong>
+                        <small>
+                          {formatBytes(version.size_bytes)} · {formatDate(version.created_at)}
+                        </small>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="docs-detail-empty-copy">No version history recorded yet.</p>
+              )}
+            </section>
+
+            <section className="apps-card docs-detail-card" aria-labelledby="document-activity-title">
+              <header>
+                <div>
+                  <h2 id="document-activity-title">Audit activity</h2>
+                  <p>{activityItems.length} recorded event{activityItems.length === 1 ? "" : "s"}</p>
+                </div>
+                <button
+                  type="button"
+                  className="docs-card-action"
+                  onClick={() => setOpenPanel("activity")}
+                >
+                  View all
+                </button>
+              </header>
+              {activity.isPending ? (
+                <p className="docs-detail-loading" role="status">Loading activity…</p>
+              ) : activityItems.length ? (
+                <ul className="docs-detail-timeline">
+                  {activityItems.slice(0, 3).map((event) => (
+                    <li key={event.id}>
+                      <span><Activity aria-hidden="true" /></span>
+                      <div>
+                        <strong>{label(event.event_type)}</strong>
+                        <small>{formatDate(event.created_at)}</small>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="docs-detail-empty-copy">No audit activity recorded yet.</p>
+              )}
+            </section>
           </div>
-        ) : null}
-      </dl>
-      <div className="document-actions">
-        <button
-          className="primary"
-          type="button"
-          onClick={download}
-          disabled={!usable}
-        >
-          <Download aria-hidden="true" /> Download document
-        </button>
-        <button
-          className="apps-danger-button"
-          type="button"
-          disabled={remove.isPending}
-          onClick={() => {
-            if (
-              confirm(
-                `Delete ${document.display_name} permanently? Existing application links may be affected.`,
-              )
-            )
-              remove.mutate();
-          }}
-        >
-          <Trash2 aria-hidden="true" />{" "}
-          {remove.isPending ? "Deleting…" : "Delete document"}
-        </button>
+        </main>
+
+        <aside className="apps-card docs-detail-actions" aria-labelledby="document-actions-title">
+          <div>
+            <h2 id="document-actions-title">Document actions</h2>
+            <p>Manage this file and where it is used.</p>
+          </div>
+          <button className="primary" type="button" onClick={download} disabled={!usable}>
+            <Download aria-hidden="true" /> Download document
+          </button>
+          <button type="button" onClick={() => setOpenPanel("attach")} disabled={!usable}>
+            <Link2 aria-hidden="true" /> Attach to application
+          </button>
+          <button type="button" onClick={() => setOpenPanel("replace")}>
+            <FileUp aria-hidden="true" /> Upload new version
+          </button>
+          <button type="button" onClick={() => setOpenPanel("edit")}>
+            <Pencil aria-hidden="true" /> Edit metadata
+          </button>
+          <button type="button" onClick={() => setOpenPanel("versions")}>
+            <History aria-hidden="true" /> Version history
+          </button>
+          <button type="button" onClick={() => setOpenPanel("activity")}>
+            <Activity aria-hidden="true" /> Audit log
+          </button>
+          <button
+            className="docs-delete-action"
+            type="button"
+            disabled={remove.isPending}
+            onClick={() => setOpenPanel("delete")}
+          >
+            <Trash2 aria-hidden="true" />
+            {remove.isPending ? "Deleting…" : "Delete document"}
+          </button>
+        </aside>
       </div>
+
       {remove.isError ? (
         <p className="form-error" role="alert">
           The document could not be deleted. It may still be linked to an
           application.
         </p>
+      ) : null}
+
+      {openPanel === "attach" ? (
+        <AttachToApplicationDialog
+          document={document}
+          onClose={() => setOpenPanel(null)}
+        />
+      ) : null}
+      <EditMetadataDialog
+        doc={openPanel === "edit" ? document : null}
+        open={openPanel === "edit"}
+        onClose={() => setOpenPanel(null)}
+      />
+      <ReplaceVersionDialog
+        doc={openPanel === "replace" ? document : null}
+        open={openPanel === "replace"}
+        onClose={() => setOpenPanel(null)}
+      />
+      <DocumentVersionsDrawer
+        doc={openPanel === "versions" ? document : null}
+        open={openPanel === "versions"}
+        onClose={() => setOpenPanel(null)}
+      />
+      <DocumentActivityDrawer
+        doc={openPanel === "activity" ? document : null}
+        open={openPanel === "activity"}
+        onClose={() => setOpenPanel(null)}
+      />
+      {openPanel === "delete" ? (
+        <DeleteDocumentDialog
+          document={document}
+          pending={remove.isPending}
+          onCancel={() => setOpenPanel(null)}
+          onConfirm={() => remove.mutate()}
+        />
       ) : null}
     </div>
   );

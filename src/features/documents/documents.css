@@ -1,5 +1,332 @@
 /* Documents page — additions on top of the shared workspace design system. */
 
+.docs-page > .apps-empty {
+  margin-top: 1.25rem;
+}
+
+.docs-refresh-button,
+.docs-card-action,
+.docs-detail-actions > button:not(.primary) {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.85rem;
+  color: var(--app-ink);
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition:
+    transform 150ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.docs-refresh-button:hover:not(:disabled),
+.docs-card-action:hover:not(:disabled),
+.docs-detail-actions > button:not(.primary):hover:not(:disabled) {
+  color: var(--app-blue);
+  border-color: var(--app-line-strong);
+  background: var(--app-blue-soft);
+}
+.docs-refresh-button:active:not(:disabled),
+.docs-card-action:active:not(:disabled),
+.docs-detail-actions > button:not(.primary):active:not(:disabled) {
+  transform: scale(0.97);
+}
+.docs-refresh-button svg,
+.docs-card-action svg,
+.docs-detail-actions button svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.document-detail-page .apps-header {
+  margin-top: 1rem;
+}
+.document-detail-page .apps-header > div:first-child {
+  min-width: 0;
+}
+.document-detail-page .apps-header h1 {
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.docs-scan-panel {
+  padding: 1.1rem 1.2rem;
+}
+.docs-scan-panel > svg {
+  width: 22px;
+  height: 22px;
+}
+.docs-scan-panel h2 {
+  margin-bottom: 0.35rem;
+  font-size: 1.05rem;
+}
+.docs-scan-panel p {
+  margin-bottom: 0.55rem;
+  font-size: 0.86rem;
+}
+.docs-scan-panel span {
+  color: var(--app-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.docs-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 19rem);
+  align-items: start;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.docs-detail-main {
+  min-width: 0;
+  display: grid;
+  gap: 1rem;
+}
+.docs-detail-card {
+  min-width: 0;
+  padding: 1.2rem;
+}
+.docs-detail-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--app-line);
+}
+.docs-detail-card > header h2,
+.docs-detail-actions h2 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+.docs-detail-card > header p,
+.docs-detail-actions > div:first-child p {
+  margin: 0.25rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.docs-detail-card > header .apps-stage-pill {
+  width: fit-content;
+  align-self: flex-start;
+}
+.docs-card-action {
+  min-height: 40px;
+  padding-block: 0.5rem;
+  flex: none;
+}
+
+.docs-detail-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+.docs-detail-facts > div {
+  min-width: 0;
+  padding: 0.9rem 0.75rem 0.25rem 0;
+}
+.docs-detail-facts dt {
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+.docs-detail-facts dd {
+  margin: 0.25rem 0 0;
+  color: var(--app-ink);
+  font-size: 0.84rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.docs-detail-facts .docs-detail-fact-wide {
+  grid-column: span 3;
+}
+.docs-checksum {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--app-muted) !important;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.docs-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  color: var(--app-muted) !important;
+  font-weight: 500 !important;
+}
+.docs-tag-list span {
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  color: var(--app-blue);
+  background: var(--app-blue-soft);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.docs-detail-loading,
+.docs-detail-empty-copy,
+.docs-detail-card > .form-error {
+  margin: 1rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+.docs-detail-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-subtle);
+}
+.docs-detail-empty > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--app-muted);
+  flex: none;
+}
+.docs-detail-empty strong,
+.docs-detail-empty p {
+  display: block;
+  margin: 0;
+}
+.docs-detail-empty p {
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+}
+.docs-linked-applications {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-linked-applications a {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--app-radius-sm);
+  color: inherit;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+.docs-linked-applications a:hover {
+  color: var(--app-blue);
+  background: var(--app-surface-subtle);
+}
+.docs-linked-applications strong,
+.docs-linked-applications span {
+  display: block;
+}
+.docs-linked-applications span {
+  margin-top: 0.15rem;
+  color: var(--app-muted);
+  font-size: 0.76rem;
+}
+.docs-linked-applications svg {
+  width: 17px;
+  height: 17px;
+  color: var(--app-muted);
+  flex: none;
+}
+
+.docs-detail-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.docs-detail-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-detail-timeline li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 48px;
+  padding: 0.45rem 0;
+}
+.docs-detail-timeline li + li {
+  border-top: 1px solid var(--app-line);
+}
+.docs-detail-timeline li > span {
+  min-width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding-inline: 0.35rem;
+  border-radius: 8px;
+  color: var(--app-blue);
+  background: var(--app-blue-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.docs-detail-timeline li > span svg {
+  width: 14px;
+  height: 14px;
+}
+.docs-detail-timeline strong,
+.docs-detail-timeline small {
+  display: block;
+}
+.docs-detail-timeline strong {
+  color: var(--app-ink);
+  font-size: 0.8rem;
+}
+.docs-detail-timeline small {
+  margin-top: 0.1rem;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+}
+
+.docs-detail-actions {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+}
+.docs-detail-actions > div:first-child {
+  padding-bottom: 0.55rem;
+}
+.docs-detail-actions > button {
+  width: 100%;
+  min-height: 44px;
+}
+.docs-detail-actions .primary {
+  justify-content: center;
+  border-radius: var(--app-radius-sm);
+}
+.docs-detail-actions .docs-delete-action {
+  margin-top: 0.35rem;
+  color: var(--app-red);
+  border-color: color-mix(in srgb, var(--app-red) 30%, var(--app-line));
+}
+.docs-detail-actions .docs-delete-action:hover:not(:disabled) {
+  color: var(--app-red);
+  border-color: var(--app-red);
+  background: var(--app-red-soft);
+}
+
 .docs-file-cell {
   display: flex;
   align-items: flex-start;
@@ -349,4 +676,54 @@
   background: var(--app-surface-subtle);
   color: var(--app-text);
   font-size: 0.72rem;
+}
+
+@media (max-width: 900px) {
+  .docs-detail-layout {
+    grid-template-columns: 1fr;
+  }
+  .docs-detail-actions {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .docs-detail-actions > div:first-child,
+  .docs-detail-actions .docs-delete-action {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .docs-page .apps-header-actions,
+  .docs-page .apps-header-actions > button,
+  .document-detail-page .apps-header-actions,
+  .document-detail-page .apps-header-actions > button {
+    width: 100%;
+  }
+  .docs-scan-panel {
+    padding: 1rem;
+  }
+  .docs-detail-card {
+    padding: 1rem;
+  }
+  .docs-detail-card > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .docs-card-action {
+    width: 100%;
+  }
+  .docs-detail-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .docs-detail-facts .docs-detail-fact-wide {
+    grid-column: span 2;
+  }
+  .docs-detail-history-grid,
+  .docs-detail-actions {
+    grid-template-columns: 1fr;
+  }
+  .docs-detail-actions > div:first-child,
+  .docs-detail-actions .docs-delete-action {
+    grid-column: auto;
+  }
 }
