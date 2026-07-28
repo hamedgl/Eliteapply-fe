@@ -3767,16 +3767,6 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   margin: 0;
   line-height: 1.5;
 }
-.reference-inline-action {
-  display: inline;
-  min-height: 0;
-  margin-left: 0.35rem;
-  padding: 0;
-  border: 0;
-  color: var(--app-blue);
-  background: transparent;
-  font-weight: 700;
-}
 .reference-document-heading,
 .reference-document-actions {
   display: flex;

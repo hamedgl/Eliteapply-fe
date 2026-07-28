@@ -345,6 +345,11 @@ export const referencesApi = {
     apiRequest<Response>(`/academic-references/${e(id)}/download`, {
       raw: true,
     }),
+  polishDraft: (body: S["ReferenceDraftPolishRequest"]) =>
+    apiRequest<S["RefereePolishResponse"]>("/academic-references/polish", {
+      method: "POST",
+      body,
+    }),
   refereeGet: (token: string, code: string) =>
     apiRequest<S["RefereeRequestResponse"]>(
       `/referee/academic-reference/${e(token)}`,

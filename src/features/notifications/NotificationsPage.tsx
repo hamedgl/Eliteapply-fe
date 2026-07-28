@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Bell, BellOff, CheckCheck, Lock, Mail, MonitorSmartphone } from "lucide-react";
+import { ArrowRight, Bell, BellOff, Check, CheckCheck, Lock, Mail, MonitorSmartphone } from "lucide-react";
 import { notificationsApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { safeNotificationPath } from "../../lib/navigation";
@@ -9,7 +9,7 @@ import { PageHeader } from "../../components/page/PageHeader";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
-import { categoryLabel, categoryTone, notificationCategories, relativeTime } from "./model";
+import { categoryLabel, categoryTone, groupByDay, notificationCategories, relativeTime } from "./model";
 import "../../styles/workspace.css";
 import "./notifications.css";
 
@@ -47,6 +47,7 @@ export function NotificationsPage() {
   });
 
   const items = list.data?.pages.flatMap((page) => page.items) ?? [];
+  const groups = groupByDay(items);
 
   async function open(item: (typeof items)[number]) {
     if (!item.is_read) await read.mutateAsync(item.id);
@@ -96,7 +97,7 @@ export function NotificationsPage() {
     );
 
   return (
-    <div className="page">
+    <div className="page notif-page">
       <PageHeader
         title="Notifications"
         description="Important activity across your application workspace."
@@ -105,8 +106,10 @@ export function NotificationsPage() {
             type="button"
             onClick={() => readAll.mutate()}
             disabled={readAll.isPending || !unreadCount.data?.unread_count}
+            className="notif-mark-all"
           >
-            <CheckCheck aria-hidden="true" /> Mark all read
+            <CheckCheck aria-hidden="true" />
+            {readAll.isPending ? "Marking…" : "Mark all read"}
           </button>
         }
       />
@@ -119,68 +122,114 @@ export function NotificationsPage() {
             value: unreadCount.data?.unread_count ?? 0,
             attention: Boolean(unreadCount.data?.unread_count),
             icon: Bell,
+            onClick: () => setUnreadOnly(true),
           },
           {
             key: "total",
-            label: "Loaded",
+            label: "In view",
             value: items.length,
             icon: MonitorSmartphone,
+            onClick: () => setUnreadOnly(false),
           },
         ]}
       />
 
-      <div className="apps-card apps-toolbar">
-        <label className="apps-quick-filter notif-unread-toggle">
-          <input
-            type="checkbox"
-            checked={unreadOnly}
-            onChange={(event) => setUnreadOnly(event.target.checked)}
-          />
-          Unread only
-        </label>
-      </div>
+      <section className="notif-activity" aria-labelledby="notif-activity-title">
+        <header className="notif-activity-head">
+          <div>
+            <h2 id="notif-activity-title">Recent activity</h2>
+            <p>
+              {items.length
+                ? `${items.length} notification${items.length === 1 ? "" : "s"} in view`
+                : unreadOnly
+                  ? "Unread notifications"
+                  : "All notifications"}
+            </p>
+          </div>
+          <div className="notif-filter" role="group" aria-label="Filter notifications">
+            <button type="button" aria-pressed={!unreadOnly} onClick={() => setUnreadOnly(false)}>
+              All
+            </button>
+            <button type="button" aria-pressed={unreadOnly} onClick={() => setUnreadOnly(true)}>
+              Unread
+              {unreadCount.data?.unread_count ? (
+                <span>{unreadCount.data.unread_count}</span>
+              ) : null}
+            </button>
+          </div>
+        </header>
 
-      {items.length ? (
-        <div className="notif-list">
-          {items.map((item) => {
-            const path = safeNotificationPath(item.data);
-            return (
-              <article
-                key={item.id}
-                className={`apps-card notif-card${item.is_read ? "" : " is-unread"}`}
-              >
-                <span className="notif-unread-dot" aria-hidden="true" />
-                <div className="notif-card-body">
-                  <div className="notif-card-meta">
-                    <StatusBadge tone={categoryTone(item.category)}>
-                      {categoryLabel(item.category)}
-                    </StatusBadge>
-                    {item.mandatory ? (
-                      <StatusBadge tone="grey" icon={Lock}>
-                        Required
-                      </StatusBadge>
-                    ) : null}
-                    <time dateTime={item.created_at} className="notif-card-time">
-                      {relativeTime(item.created_at)}
-                    </time>
-                  </div>
-                  <h2>{item.title}</h2>
-                  <p>{item.body}</p>
-                  <button type="button" className="notif-card-action" onClick={() => open(item)}>
-                    {path ? "Open related item" : item.is_read ? "Read" : "Mark as read"}
-                  </button>
+        {items.length ? (
+          <div className="notif-list">
+            {groups.map((group) => (
+              <section className="notif-day" key={group.label} aria-label={group.label}>
+                <h3>{group.label}</h3>
+                <div>
+                  {group.items.map((item) => {
+                    const path = safeNotificationPath(item.data);
+                    return (
+                      <article
+                        key={item.id}
+                        className={`apps-card notif-card${item.is_read ? "" : " is-unread"}`}
+                      >
+                        <span className="notif-unread-dot" aria-hidden="true" />
+                        <div className="notif-card-body">
+                          <div className="notif-card-meta">
+                            <StatusBadge tone={categoryTone(item.category)}>
+                              {categoryLabel(item.category)}
+                            </StatusBadge>
+                            {item.mandatory ? (
+                              <StatusBadge tone="grey" icon={Lock}>
+                                Required
+                              </StatusBadge>
+                            ) : null}
+                            <time dateTime={item.created_at} className="notif-card-time">
+                              {relativeTime(item.created_at)}
+                            </time>
+                          </div>
+                          <h2>{item.title}</h2>
+                          <p>{item.body}</p>
+                        </div>
+                        {path || !item.is_read ? (
+                          <button
+                            type="button"
+                            className="notif-card-action"
+                            onClick={() => open(item)}
+                          >
+                            {path ? (
+                              <>
+                                View details <ArrowRight aria-hidden="true" />
+                              </>
+                            ) : (
+                              <>
+                                <Check aria-hidden="true" /> Mark as read
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="notif-read-state">
+                            <Check aria-hidden="true" /> Read
+                          </span>
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <EmptyState
-          icon={BellOff}
-          heading="You’re all caught up"
-          description="New application, reference, writing, and account updates will appear here."
-        />
-      )}
+              </section>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={BellOff}
+            heading={unreadOnly ? "No unread notifications" : "You’re all caught up"}
+            description={
+              unreadOnly
+                ? "Everything has been read. Switch to All to review earlier activity."
+                : "New application, reference, writing, and account updates will appear here."
+            }
+          />
+        )}
+      </section>
 
       {list.hasNextPage ? (
         <button

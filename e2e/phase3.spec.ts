@@ -358,10 +358,7 @@ test("student reference draft validates its minimum and applies AI polish inline
     id: "00000000-0000-4000-8000-000000000071",
     title: "Oxford MSc application",
   };
-  let writingBody: Record<string, unknown> | null = null;
-  let generationBody: Record<string, unknown> | null = null;
-  const writingId = "00000000-0000-4000-8000-000000000072";
-  const runId = "00000000-0000-4000-8000-000000000073";
+  let polishBody: Record<string, unknown> | null = null;
   const polishedDraft =
     "Professor Silva supervised my research into reliable distributed systems, where I demonstrated rigorous analysis and clear technical communication.";
   await page.route("**/api/v1/academic-references?**", (route) =>
@@ -374,50 +371,12 @@ test("student reference draft validates its minimum and applies AI polish inline
       json: { items: [application], next_cursor: null, has_more: false },
     }),
   );
-  await page.route("**/api/v1/writing-studio/documents", async (route) => {
-    writingBody = route.request().postDataJSON();
+  await page.route("**/api/v1/academic-references/polish", async (route) => {
+    polishBody = route.request().postDataJSON();
     return route.fulfill({
-      status: 201,
-      json: {
-        ...doc,
-        id: writingId,
-        application_id: application.id,
-        application_title: application.title,
-        document_type: "custom_essay",
-        title: `Reference draft — ${application.title}`,
-        content: (writingBody as { content?: unknown }).content,
-      },
+      json: { polished_content: polishedDraft },
     });
   });
-  await page.route(
-    `**/api/v1/writing-studio/documents/${writingId}/generate`,
-    async (route) => {
-      generationBody = route.request().postDataJSON();
-      return route.fulfill({
-        status: 202,
-        json: generationRun(runId, "queued"),
-      });
-    },
-  );
-  await page.route(
-    `**/api/v1/writing-studio/generation-runs/${runId}`,
-    (route) =>
-      route.fulfill({
-        json: generationRun(runId, "completed"),
-      }),
-  );
-  await page.route(
-    `**/api/v1/writing-studio/documents/${writingId}`,
-    (route) =>
-      route.fulfill({
-        json: {
-          ...doc,
-          id: writingId,
-          application_id: application.id,
-          content: { text: polishedDraft },
-        },
-      }),
-  );
 
   await page.setViewportSize({ width: 640, height: 900 });
   await page.goto("/app/references");
@@ -462,18 +421,12 @@ test("student reference draft validates its minimum and applies AI polish inline
   await drawer
     .getByRole("button", { name: "Polish with AI" })
     .click();
-  await expect(draft).toHaveValue(polishedDraft);
-  await expect(drawer.getByRole("button", { name: "Undo AI polish" })).toBeVisible();
-  expect(writingBody).toMatchObject({
-    application_id: application.id,
-    document_type: "custom_essay",
-    content: { text: completeDraft },
-  });
-  expect(generationBody).toMatchObject({
-    operation: "improve_paragraph",
-  });
-  await drawer.getByRole("button", { name: "Undo AI polish" }).click();
+  const suggestion = drawer.getByLabel("Polished reference suggestion");
+  await expect(suggestion).toHaveValue(polishedDraft);
   await expect(draft).toHaveValue(completeDraft);
+  expect(polishBody).toEqual({ content: completeDraft });
+  await drawer.getByRole("button", { name: "Use suggestion" }).click();
+  await expect(draft).toHaveValue(polishedDraft);
 
   const overflow = await drawer.evaluate(
     (element) => element.scrollWidth - element.clientWidth,
@@ -618,7 +571,7 @@ test("public referee code stays out of the URL", async ({ page }) => {
 
 test("notification deep link opens a durable interview session", async ({
   page,
-}) => {
+}, testInfo) => {
   const errors: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
@@ -628,7 +581,15 @@ test("notification deep link opens a durable interview session", async ({
     page.getByRole("heading", { name: "Notifications" }),
   ).toBeVisible();
   await expect(page.getByText("Your practice session is ready")).toBeVisible();
-  await page.getByRole("button", { name: "Open related item" }).click();
+  const viewDetails = page.getByRole("button", { name: "View details" });
+  const viewDetailsBox = await viewDetails.boundingBox();
+  expect(viewDetailsBox?.height).toBeGreaterThanOrEqual(44);
+  await page.screenshot({
+    path: `/tmp/eliteapply-notifications-${testInfo.project.name}.png`,
+    fullPage: true,
+    animations: "disabled",
+  });
+  await viewDetails.click();
   await expect(page).toHaveURL(new RegExp(`/app/interviews/${interview.id}$`));
   await expect(
     page.getByRole("heading", { name: /scholarship panel practice/i }),

@@ -1880,6 +1880,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/academic-references/polish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Polish Reference Draft */
+        post: operations["polish_reference_draft_api_v1_academic_references_polish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/academic-interviews": {
         parameters: {
             query?: never;
@@ -6790,6 +6807,11 @@ export interface components {
              * Format: uuid
              */
             application_id: string;
+        };
+        /** ReferenceDraftPolishRequest */
+        ReferenceDraftPolishRequest: {
+            /** Content */
+            content: string;
         };
         /** ReferenceEventListResponse */
         ReferenceEventListResponse: {
@@ -13106,6 +13128,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcademicReferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    polish_reference_draft_api_v1_academic_references_polish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceDraftPolishRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefereePolishResponse"];
                 };
             };
             /** @description Validation Error */

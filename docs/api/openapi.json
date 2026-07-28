@@ -7994,6 +7994,52 @@
         }
       }
     },
+    "/api/v1/academic-references/polish": {
+      "post": {
+        "tags": [
+          "Academic Engagement"
+        ],
+        "summary": "Polish Reference Draft",
+        "operationId": "polish_reference_draft_api_v1_academic_references_polish_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceDraftPolishRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefereePolishResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/academic-interviews": {
       "get": {
         "tags": [
@@ -23113,6 +23159,21 @@
           "application_id"
         ],
         "title": "ReferenceAttachRequest"
+      },
+      "ReferenceDraftPolishRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 100000,
+            "minLength": 50,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "ReferenceDraftPolishRequest"
       },
       "ReferenceEventListResponse": {
         "properties": {

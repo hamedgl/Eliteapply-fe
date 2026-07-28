@@ -4,7 +4,7 @@ import { Check, Loader2, RefreshCw, Sparkles, Upload } from "lucide-react";
 import { Select } from "../../../components/ui/select";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { applicationsApi, documentsApi } from "../../../lib/api/phase2";
-import { documentText, referencesApi, writingApi } from "../../../lib/api/phase3";
+import { referencesApi } from "../../../lib/api/phase3";
 import { newMutationId } from "../../../lib/api/mutations";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { track } from "../../../lib/analytics/track";
@@ -13,26 +13,6 @@ import { referenceModes, methodLabel, referenceTypes, referenceTypeLabel } from 
 
 const REFEREE_ROLES = ["professor", "supervisor", "teacher", "employer", "mentor"] as const;
 const STEPS = ["Method", "Referee details", "Request details", "Review & send"] as const;
-const GENERATION_DONE = ["completed", "complete", "succeeded", "success"];
-const GENERATION_STOPPED = [...GENERATION_DONE, "failed", "cancelled", "canceled"];
-
-async function waitForPolishedDraft(documentId: string, runId: string) {
-  for (let attempt = 0; attempt < 45; attempt += 1) {
-    const run = await writingApi.generationRun(runId);
-    const status = run.status.toLowerCase();
-    if (GENERATION_DONE.includes(status)) {
-      const document = await writingApi.get(documentId);
-      const text = documentText(document.content).trim();
-      if (!text) throw new Error("AI returned an empty draft. Your original is unchanged.");
-      return text;
-    }
-    if (GENERATION_STOPPED.includes(status)) {
-      throw new Error(run.failure_reason || "AI polish could not be completed. Your original is unchanged.");
-    }
-    await new Promise((resolve) => window.setTimeout(resolve, 1_000));
-  }
-  throw new Error("AI polish is taking too long. Your original is unchanged; try again.");
-}
 
 export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: string) => void }) {
   const qc = useQueryClient();
@@ -54,7 +34,7 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
   const [relationship, setRelationship] = useState("");
   const [context, setContext] = useState("");
   const [studentDraft, setStudentDraft] = useState("");
-  const [draftBeforePolish, setDraftBeforePolish] = useState("");
+  const [polishSuggestion, setPolishSuggestion] = useState("");
   const [existingDocumentId, setExistingDocumentId] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [destinations, setDestinations] = useState("");
@@ -102,30 +82,10 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Could not create the invitation."),
   });
 
-  const preparePolish = useMutation({
-    mutationFn: async () => {
-      const created = await writingApi.create({
-        application_id: applicationId || null,
-        document_type: "custom_essay",
-        title: `Reference draft${applicationName ? ` — ${applicationName}` : ""}`,
-        content: { text: studentDraft.trim() },
-        target_requirements: { purpose: "reference_draft" },
-        evidence_map: {},
-        theme: {},
-      });
-      qc.setQueryData(queryKeys.writingDocument(created.id), created);
-      const run = await writingApi.generate(created.id, {
-        mutation_id: crypto.randomUUID(),
-        operation: "improve_paragraph",
-        instruction:
-          "Polish this academic reference draft for clarity and professionalism while preserving every factual claim.",
-        evidence_ids: [],
-      });
-      return waitForPolishedDraft(created.id, run.id);
-    },
-    onSuccess: (polished) => {
-      setDraftBeforePolish(studentDraft);
-      setStudentDraft(polished);
+  const polish = useMutation({
+    mutationFn: () => referencesApi.polishDraft({ content: studentDraft.trim() }),
+    onSuccess: ({ polished_content }) => {
+      setPolishSuggestion(polished_content);
     },
     onError: (caught) =>
       setError(
@@ -307,21 +267,21 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                   type="button"
                   onClick={() => {
                     setError("");
-                    preparePolish.mutate();
+                    polish.mutate();
                   }}
                   disabled={
                     studentDraftLength < 50 ||
                     !applicationId ||
-                    preparePolish.isPending
+                    polish.isPending
                   }
                   aria-describedby="student-reference-polish-help"
                 >
-                  {preparePolish.isPending ? (
+                  {polish.isPending ? (
                     <Loader2 aria-hidden="true" className="apps-spin" />
                   ) : (
                     <Sparkles aria-hidden="true" />
                   )}
-                  {preparePolish.isPending ? "Polishing…" : "Polish with AI"}
+                  {polish.isPending ? "Polishing…" : "Polish with AI"}
                 </button>
               </div>
               <textarea
@@ -329,12 +289,12 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                 value={studentDraft}
                 onChange={(event) => {
                   setStudentDraft(event.target.value);
-                  setDraftBeforePolish("");
+                  setPolishSuggestion("");
                 }}
                 minLength={50}
                 required
                 rows={6}
-                disabled={preparePolish.isPending}
+                disabled={polish.isPending}
                 aria-describedby="student-reference-draft-help student-reference-draft-count"
                 aria-invalid={studentDraftLength > 0 && studentDraftLength < 50}
               />
@@ -356,20 +316,38 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                 </strong>
               </div>
               <p id="student-reference-polish-help" className="field-help">
-                AI edits the draft here. Review the result before sending.
-                {draftBeforePolish ? (
-                  <button
-                    type="button"
-                    className="reference-inline-action"
-                    onClick={() => {
-                      setStudentDraft(draftBeforePolish);
-                      setDraftBeforePolish("");
-                    }}
-                  >
-                    Undo AI polish
-                  </button>
-                ) : null}
+                AI polish improves clarity and grammar without intentionally
+                adding facts. Nothing changes until you use the suggestion.
               </p>
+              {polishSuggestion ? (
+                <div className="reference-polish-suggestion" aria-live="polite">
+                  <div>
+                    <strong>Polished suggestion</strong>
+                    <span>Review it carefully for factual accuracy.</span>
+                  </div>
+                  <textarea
+                    value={polishSuggestion}
+                    readOnly
+                    rows={6}
+                    aria-label="Polished reference suggestion"
+                  />
+                  <div>
+                    <button type="button" onClick={() => setPolishSuggestion("")}>
+                      Keep my draft
+                    </button>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => {
+                        setStudentDraft(polishSuggestion);
+                        setPolishSuggestion("");
+                      }}
+                    >
+                      Use suggestion
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
           {mode === "existing_upload" ? (
