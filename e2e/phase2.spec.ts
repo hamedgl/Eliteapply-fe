@@ -215,11 +215,18 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
       institution: "Example University",
       deadline: "2027-01-15",
       required_documents: ["Transcript"],
+      description: "A research-led programme with an industry placement.",
+      trade_offs: [
+        "Advantage — The source lists an industry placement.",
+        "Consideration — Published tuition should be checked before applying.",
+      ],
     },
     field_confidence: {
       institution: 0.96,
       deadline: 0.88,
       required_documents: 0.72,
+      description: 0.9,
+      trade_offs: 0.75,
     },
     user_corrections: {},
     confirmed_fields: [],
@@ -271,7 +278,10 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
   await page
     .getByLabel(/Required Documents/)
     .fill("Transcript\nPassport");
-  await page.getByRole("button", { name: "Confirm 3 fields" }).click();
+  await expect(page.getByLabel(/Source-based trade-offs/)).toHaveValue(
+    /Advantage — The source lists an industry placement/,
+  );
+  await page.getByRole("button", { name: "Confirm 5 fields" }).click();
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
   await page.screenshot({
     path: `/tmp/eliteapply-import-${testInfo.project.name}.png`,

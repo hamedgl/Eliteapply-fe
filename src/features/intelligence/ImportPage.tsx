@@ -47,8 +47,58 @@ const confidencePercent = (value: unknown) => {
   if (typeof value !== "number" || Number.isNaN(value)) return null;
   return Math.round(Math.max(0, Math.min(1, value)) * 100);
 };
+const fieldOrder = [
+  "name",
+  "institution",
+  "source_scope",
+  "institution_type",
+  "location",
+  "country",
+  "degree_level",
+  "field_of_study",
+  "duration",
+  "intake",
+  "deadline",
+  "tuition",
+  "cost_of_living",
+  "application_fee",
+  "funding_amount",
+  "scholarships",
+  "eligibility_criteria",
+  "required_documents",
+  "essay_prompts",
+  "reference_requirements",
+  "study_features",
+  "average_decision_time",
+  "top_disciplines",
+  "description",
+  "trade_offs",
+  "notes",
+];
+const multilineFields = new Set(["description", "trade_offs", "notes"]);
 const fieldLabel = (key: string) =>
-  key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  key === "trade_offs"
+    ? "Source-based trade-offs"
+    : key === "source_scope"
+      ? "Source scope"
+      : key
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const correctionValue = (original: unknown, value: string) => {
+  if (Array.isArray(original))
+    return value
+      .split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  if (original && typeof original === "object") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};
 const sourceSummary = (item: Import) => {
   if (item.source_type === "pdf_text")
     return { title: "PDF import", detail: "Uploaded document" };
@@ -382,9 +432,16 @@ function ImportReview({
     [showDelete, setShowDelete] = useState(false),
     fields = useMemo(
       () =>
-        Object.keys(item.extracted_fields).filter((key) =>
-          hasContent(item.extracted_fields[key]),
-        ),
+        Object.keys(item.extracted_fields)
+          .filter((key) => hasContent(item.extracted_fields[key]))
+          .sort((left, right) => {
+            const leftIndex = fieldOrder.indexOf(left);
+            const rightIndex = fieldOrder.indexOf(right);
+            return (
+              (leftIndex < 0 ? fieldOrder.length : leftIndex) -
+              (rightIndex < 0 ? fieldOrder.length : rightIndex)
+            );
+          }),
       [item.extracted_fields],
     ),
     status = item.status.toLowerCase(),
@@ -535,9 +592,10 @@ function ImportReview({
             const isStructured =
               Array.isArray(original) ||
               (original != null && typeof original === "object");
+            const useTextarea = isStructured || multilineFields.has(key);
             return (
               <label
-                className={isStructured ? "extraction-field-wide" : ""}
+                className={useTextarea ? "extraction-field-wide" : ""}
                 key={key}
               >
                 <span className="extraction-field-heading">
@@ -550,20 +608,15 @@ function ImportReview({
                     {score == null ? "Not scored" : `${score}% confidence`}
                   </small>
                 </span>
-                {isStructured ? (
+                {useTextarea ? (
                   <textarea
-                    rows={4}
+                    rows={key === "description" ? 7 : 5}
                     value={display(value)}
                     placeholder="No value extracted"
                     onChange={(e) =>
                       setCorrections((old) => ({
                         ...old,
-                        [key]: Array.isArray(original)
-                          ? e.target.value
-                              .split("\n")
-                              .map((entry) => entry.trim())
-                              .filter(Boolean)
-                          : e.target.value,
+                        [key]: correctionValue(original, e.target.value),
                       }))
                     }
                   />
@@ -581,6 +634,12 @@ function ImportReview({
                 )}
                 {Array.isArray(original) ? (
                   <small>Use one item per line.</small>
+                ) : null}
+                {key === "trade_offs" ? (
+                  <small>
+                    AI can extend these comparison points, but every item must
+                    stay grounded in source facts. Review before relying on it.
+                  </small>
                 ) : null}
               </label>
             );
