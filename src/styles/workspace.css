@@ -16,8 +16,8 @@
 
 .detail-application-header {
   position: sticky;
-  top: 0;
-  z-index: 20;
+  top: var(--app-navigation-height);
+  z-index: var(--app-z-page-sticky);
   margin: -0.5rem -0.75rem 0;
   padding: 0.75rem;
   border-bottom: 1px solid var(--app-line);
@@ -188,7 +188,7 @@
 
 .detail-tabs {
   position: sticky;
-  top: 151px;
+  top: calc(var(--app-navigation-height) + 151px);
   z-index: 19;
   display: flex;
   gap: 0.15rem;
@@ -472,7 +472,7 @@
 
 .detail-readiness-panel {
   position: sticky;
-  top: 218px;
+  top: calc(var(--app-navigation-height) + 218px);
   padding: 1.1rem;
 }
 
@@ -1457,10 +1457,10 @@
     flex: 1;
   }
   .detail-tabs {
-    top: 212px;
+    top: calc(var(--app-navigation-height) + 212px);
   }
   .detail-readiness-panel {
-    top: 278px;
+    top: calc(var(--app-navigation-height) + 278px);
   }
 }
 
@@ -1469,7 +1469,7 @@
     position: static;
   }
   .detail-tabs {
-    top: 0;
+    top: var(--app-navigation-height);
   }
   .detail-overview-grid,
   .eligibility-layout,
@@ -2184,7 +2184,7 @@
 }
 .apps-combobox-list {
   position: absolute;
-  z-index: 10;
+  z-index: var(--app-z-popover);
   inset-inline: 0;
   top: calc(100% + 0.35rem);
   max-height: 240px;
@@ -2370,7 +2370,7 @@
 }
 .apps-row-menu-list {
   position: fixed;
-  z-index: 10;
+  z-index: var(--app-z-popover);
   width: 190px;
   max-height: min(320px, calc(100vh - 16px));
   overflow-y: auto;
@@ -2601,7 +2601,7 @@
 }
 .apps-readiness-popover {
   position: absolute;
-  z-index: 10;
+  z-index: var(--app-z-popover);
   top: calc(100% + 0.4rem);
   left: 0;
   width: 240px;

@@ -112,6 +112,18 @@ test.beforeEach(async ({ page }) => {
       return route.fulfill({
         json: {
           application: application(submitted ? "submitted" : "ready_to_submit"),
+          readiness: {
+            application_id: "00000000-0000-4000-8000-000000000010",
+            overall_state: "ready",
+            readiness_percent: 100,
+            blocking_issues: [],
+            warnings: [],
+            missing_required_documents: [],
+            incomplete_requirements: [],
+            unresolved_eligibility_issues: [],
+            deadline_state: "upcoming",
+            recommended_next_actions: ["Review the final submission"],
+          },
           requirements: [],
           tasks: [],
           document_links: [],
@@ -295,6 +307,47 @@ test("workspace checks readiness immediately before submission", async ({ page }
   await expect(page.getByRole("progressbar")).toHaveAttribute("value", "100");
   await page.getByRole("button", { name: "Mark submitted" }).click();
   await expect(page.getByText(/Programme · Submitted/)).toBeVisible();
+});
+
+test("workspace navigation and menus stay above sticky page content", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 500 });
+  await page.goto("/app/applications/00000000-0000-4000-8000-000000000010");
+  await page
+    .locator(".detail-page")
+    .evaluate((element) => (element.style.minHeight = "1400px"));
+  await page.evaluate(() => window.scrollTo(0, 700));
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+  const topbar = page.locator(".app-topbar");
+  const pageHeader = page.locator(".detail-application-header");
+  const [topbarBox, pageHeaderBox] = await Promise.all([
+    topbar.boundingBox(),
+    pageHeader.boundingBox(),
+  ]);
+  expect(topbarBox).not.toBeNull();
+  expect(pageHeaderBox).not.toBeNull();
+  expect(topbarBox!.y).toBeGreaterThanOrEqual(-1);
+  expect(pageHeaderBox!.y).toBeGreaterThanOrEqual(
+    topbarBox!.y + topbarBox!.height - 1,
+  );
+
+  await page
+    .getByRole("button", { name: "More actions for MSc Human-Centred AI" })
+    .click();
+  const menu = page.locator(".apps-row-menu-list");
+  await expect(
+    menu.getByRole("menuitem", { name: "Edit application" }),
+  ).toBeVisible();
+  await expect(
+    menu.getByRole("menuitem", { name: "Delete" }),
+  ).toBeVisible();
+  const [menuLayer, headerLayer] = await Promise.all([
+    menu.evaluate((element) => Number(getComputedStyle(element).zIndex)),
+    pageHeader.evaluate((element) => Number(getComputedStyle(element).zIndex)),
+  ]);
+  expect(menuLayer).toBeGreaterThan(headerLayer);
 });
 
 function application(stage: string) {
