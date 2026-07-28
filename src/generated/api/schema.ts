@@ -1690,6 +1690,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/application-intelligence/imports/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload a PDF and queue opportunity extraction */
+        post: operations["create_pdf_import_api_v1_application_intelligence_imports_pdf_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/application-intelligence/imports/{import_id}": {
         parameters: {
             query?: never;
@@ -4574,6 +4591,18 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post */
+        Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post: {
+            /**
+             * Mutation Id
+             * Format: uuid
+             */
+            mutation_id: string;
+            /** Application Id */
+            application_id?: string | null;
+            /** File */
+            file: string;
         };
         /** Body_import_writing_document_api_v1_writing_studio_imports_post */
         Body_import_writing_document_api_v1_writing_studio_imports_post: {
@@ -12674,6 +12703,39 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["OpportunityImportCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunityImportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_pdf_import_api_v1_application_intelligence_imports_pdf_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post"];
             };
         };
         responses: {

@@ -202,6 +202,7 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
   page,
 }, testInfo) => {
   const importId = "00000000-0000-4000-8000-000000000061";
+  let pdfUploadSeen = false;
   const extracted = {
     id: importId,
     application_id: null,
@@ -228,6 +229,12 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
   await page.route(/\/api\/v1\/application-intelligence\/imports(?:\/.*)?(?:\?.*)?$/, async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (request.method() === "POST" && path.endsWith("/pdf")) {
+      pdfUploadSeen = true;
+      expect(request.headers()["content-type"]).toContain("multipart/form-data");
+      expect(request.postData()).toContain('filename="programme.pdf"');
+      return route.fulfill({ status: 202, json: extracted });
+    }
     if (request.method() === "POST" && path.endsWith("/confirm")) {
       expect(request.postDataJSON().corrections.required_documents).toEqual([
         "Transcript",
@@ -250,7 +257,14 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
   });
 
   await page.goto("/app/applications/import");
-  await page.getByRole("button", { name: /Msc Computer Science/ }).click();
+  await page.getByLabel("Source type").selectOption("pdf_text");
+  await page.getByLabel("PDF file").setInputFiles({
+    name: "programme.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 test opportunity"),
+  });
+  await page.getByRole("button", { name: "Start extraction" }).click();
+  await expect.poll(() => pdfUploadSeen).toBe(true);
   await expect(
     page.getByRole("heading", { name: "Review extracted fields" }),
   ).toBeVisible();

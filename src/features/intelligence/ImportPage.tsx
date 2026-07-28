@@ -50,6 +50,8 @@ const confidencePercent = (value: unknown) => {
 const fieldLabel = (key: string) =>
   key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 const sourceSummary = (item: Import) => {
+  if (item.source_type === "pdf_text")
+    return { title: "PDF import", detail: "Uploaded document" };
   if (!item.source_url)
     return {
       title: `${fieldLabel(item.source_type)} import`,
@@ -128,14 +130,34 @@ export function ImportPage() {
     setSubmitting(true);
     const d = new FormData(e.currentTarget);
     try {
-      const result = await intelligenceApi.createImport({
-        mutation_id: mutationId.current,
-        application_id: applicationId,
-        source_type: sourceType,
-        source_url: sourceType === "url" ? String(d.get("source_url")) : null,
-        raw_source_text:
-          sourceType === "url" ? null : String(d.get("raw_source_text")),
-      });
+      const id = mutationId.current;
+      const file = d.get("source_file");
+      if (sourceType === "pdf_text" && !(file instanceof File && file.size))
+        throw new Error("Choose a PDF to import.");
+      if (
+        sourceType === "pdf_text" &&
+        file instanceof File &&
+        file.size > 10 * 1024 * 1024
+      )
+        throw new Error("PDF files must be 10 MB or smaller.");
+      const result =
+        sourceType === "pdf_text"
+          ? await intelligenceApi.createPdfImport(
+              file as File,
+              id,
+              applicationId,
+            )
+          : await intelligenceApi.createImport({
+              mutation_id: id,
+              application_id: applicationId,
+              source_type: sourceType,
+              source_url:
+                sourceType === "url" ? String(d.get("source_url")) : null,
+              raw_source_text:
+                sourceType === "text"
+                  ? String(d.get("raw_source_text"))
+                  : null,
+            });
       setSelected(result.id);
       mutationId.current = crypto.randomUUID();
       void qc.invalidateQueries({ queryKey: queryKeys.imports });
@@ -167,8 +189,8 @@ export function ImportPage() {
         <section className="import-create">
           <h2>New import</h2>
           <p>
-            Add a public programme page or paste its details. AI will extract
-            the facts for you to verify.
+            Add a public programme page, upload a PDF or paste its details. AI
+            will extract the facts for you to verify.
           </p>
           <form className="settings-form" onSubmit={submit}>
             <label>
@@ -183,7 +205,7 @@ export function ImportPage() {
               >
                 <option value="url">Web page URL</option>
                 <option value="text">Pasted text</option>
-                <option value="pdf_text">Text extracted from a PDF</option>
+                <option value="pdf_text">PDF document</option>
               </select>
             </label>
             {sourceType === "url" ? (
@@ -198,6 +220,21 @@ export function ImportPage() {
                 <small>
                   Use the exact public page that contains deadlines,
                   requirements and fees.
+                </small>
+              </label>
+            ) : sourceType === "pdf_text" ? (
+              <label>
+                <span>PDF file</span>
+                <input
+                  className="import-pdf-input"
+                  name="source_file"
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  required
+                />
+                <small>
+                  Text-based PDF · up to 10 MB. The file is checked and read
+                  securely on the server.
                 </small>
               </label>
             ) : (

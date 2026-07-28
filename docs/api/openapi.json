@@ -7232,6 +7232,52 @@
         }
       }
     },
+    "/api/v1/application-intelligence/imports/pdf": {
+      "post": {
+        "tags": [
+          "Application Intelligence"
+        ],
+        "summary": "Upload a PDF and queue opportunity extraction",
+        "operationId": "create_pdf_import_api_v1_application_intelligence_imports_pdf_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunityImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/application-intelligence/imports/{import_id}": {
       "get": {
         "tags": [
@@ -16992,6 +17038,38 @@
           "created_at"
         ],
         "title": "AuditEventResponse"
+      },
+      "Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post": {
+        "properties": {
+          "mutation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutation Id"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mutation_id",
+          "file"
+        ],
+        "title": "Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post"
       },
       "Body_import_writing_document_api_v1_writing_studio_imports_post": {
         "properties": {

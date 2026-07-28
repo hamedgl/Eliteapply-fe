@@ -441,6 +441,20 @@ export const intelligenceApi = {
       "/application-intelligence/imports",
       { method: "POST", body },
     ),
+  createPdfImport: (
+    file: File,
+    mutationId: string,
+    applicationId?: string | null,
+  ) => {
+    const body = new FormData();
+    body.append("file", file);
+    body.append("mutation_id", mutationId);
+    if (applicationId) body.append("application_id", applicationId);
+    return apiRequest<S["OpportunityImportResponse"]>(
+      "/application-intelligence/imports/pdf",
+      { method: "POST", body, idempotencyKey: mutationId },
+    );
+  },
   getImport: (id: string, signal?: AbortSignal) =>
     apiRequest<S["OpportunityImportResponse"]>(
       `/application-intelligence/imports/${enc(id)}`,

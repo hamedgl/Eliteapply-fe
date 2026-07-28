@@ -5561,6 +5561,22 @@ th {
   font-weight: 400;
   line-height: 1.45;
 }
+.import-create .import-pdf-input {
+  min-height: 54px;
+  padding: 0.4rem;
+}
+.import-pdf-input::file-selector-button {
+  min-height: 40px;
+  margin-right: 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 0;
+  border-radius: 6px;
+  background: #edf3ff;
+  color: var(--blue);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 .import-create .settings-form .primary {
   min-height: 44px;
 }
