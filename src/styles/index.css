@@ -5710,6 +5710,9 @@ th {
   color: var(--muted);
   line-height: 1.5;
 }
+.import-progress .primary {
+  margin-top: 0.75rem;
+}
 .import-empty-result {
   display: block;
   border-color: #f0c4a4;

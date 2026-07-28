@@ -486,6 +486,26 @@ function ImportReview({
           </div>
         </div>
       ) : null}
+      {status === "confirmed" && !item.application_id ? (
+        <div className="import-progress" role="status">
+          <Link2 aria-hidden="true" />
+          <div>
+            <strong>Confirmed, but not added to applications</strong>
+            <p>
+              This import was not linked to an existing application. Create
+              one now using the confirmed details.
+            </p>
+            <button
+              type="button"
+              className="primary"
+              disabled={confirming}
+              onClick={confirmFields}
+            >
+              {confirming ? "Adding…" : "Add to applications"}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {!active && fields.length ? (
         <div className="import-review-summary" aria-label="Extraction summary">
           <div>
