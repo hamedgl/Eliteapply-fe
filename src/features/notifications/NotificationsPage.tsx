@@ -101,6 +101,16 @@ export function NotificationsPage() {
       <PageHeader
         title="Notifications"
         description="Important activity across your application workspace."
+        onRefresh={() =>
+          void Promise.all([
+            list.refetch(),
+            unreadCount.refetch(),
+            preferences.refetch(),
+          ])
+        }
+        refreshing={
+          list.isFetching || unreadCount.isFetching || preferences.isFetching
+        }
         actions={
           <button
             type="button"

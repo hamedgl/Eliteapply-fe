@@ -31,6 +31,7 @@ import {
 import { ApplicationReadinessCard } from "./components/ApplicationReadinessCard";
 import { ProgressExplainerDialog } from "./components/ProgressExplainerDialog";
 import { readDraft, type SectionKey } from "../profile/model";
+import { PageRefreshButton } from "../../components/page/PageHeader";
 
 type Deadline = DashboardDeadline;
 type SetupStatus = "done" | "todo" | "checking" | "unavailable";
@@ -322,9 +323,25 @@ export function DashboardPage() {
             one place.
           </p>
         </div>
-        <Link className="primary dashboard-add" to="/app/applications">
-          <Plus aria-hidden="true" /> Add application
-        </Link>
+        <div className="apps-header-actions">
+          <PageRefreshButton
+            onRefresh={() =>
+              void Promise.all([
+                query.refetch(),
+                profileQuery.refetch(),
+                documentsQuery.refetch(),
+              ])
+            }
+            refreshing={
+              query.isFetching ||
+              profileQuery.isFetching ||
+              documentsQuery.isFetching
+            }
+          />
+          <Link className="primary dashboard-add" to="/app/applications">
+            <Plus aria-hidden="true" /> Add application
+          </Link>
+        </div>
       </header>
 
       <section className="dashboard-focus" aria-labelledby="profile-title">

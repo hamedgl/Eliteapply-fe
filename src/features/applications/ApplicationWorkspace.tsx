@@ -56,6 +56,7 @@ import { EmptyState } from "../../components/data-display/EmptyState";
 import { ProgressBar } from "../../components/data-display/ProgressBar";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { Select } from "../../components/ui/select";
+import { PageRefreshButton } from "../../components/page/PageHeader";
 import { useFocusTrap } from "./hooks";
 import { DuplicateApplication } from "./components/ApplicationDialogs";
 import {
@@ -366,6 +367,10 @@ export function ApplicationWorkspace() {
             <ArrowLeft aria-hidden="true" /> Back to applications
           </Link>
           <div className="detail-header-actions">
+            <PageRefreshButton
+              onRefresh={() => void refreshWorkspace()}
+              refreshing={workspace.isFetching}
+            />
             <button
               type="button"
               className="primary"
@@ -739,6 +744,12 @@ function OverviewTab({
               value={formatDateTime(application.updated_at)}
             />
           </dl>
+          {application.notes ? (
+            <div className="detail-application-notes">
+              <h3>Notes</h3>
+              <p>{application.notes}</p>
+            </div>
+          ) : null}
         </section>
 
         <section className="detail-next-action">

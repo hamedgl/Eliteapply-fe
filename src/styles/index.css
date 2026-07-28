@@ -5691,6 +5691,19 @@ th {
   flex: 0 0 auto;
   color: var(--blue);
 }
+.import-complete {
+  border-color: var(--app-green);
+  background: var(--app-green-soft);
+}
+.import-complete > svg {
+  color: var(--app-green);
+}
+.import-complete a {
+  display: inline-block;
+  margin-top: 0.65rem;
+  color: var(--blue);
+  font-weight: 750;
+}
 .import-progress p,
 .import-empty-result p {
   margin: 0.3rem 0 0;

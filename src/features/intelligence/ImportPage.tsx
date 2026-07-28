@@ -346,6 +346,16 @@ export function ImportPage() {
           onConfirmed={(item) => {
             qc.setQueryData(queryKeys.opportunityImport(item.id), item);
             void qc.invalidateQueries({ queryKey: queryKeys.imports });
+            if (item.application_id)
+              void Promise.all([
+                qc.invalidateQueries({
+                  queryKey: queryKeys.application(item.application_id),
+                }),
+                qc.invalidateQueries({
+                  queryKey: queryKeys.workspace(item.application_id),
+                }),
+                qc.invalidateQueries({ queryKey: queryKeys.applications }),
+              ]);
           }}
         />
       ) : null}
@@ -458,6 +468,21 @@ function ImportReview({
               The page is being read and analysed. This view updates
               automatically.
             </p>
+          </div>
+        </div>
+      ) : null}
+      {status === "confirmed" && item.application_id ? (
+        <div className="import-progress import-complete" role="status">
+          <Check aria-hidden="true" />
+          <div>
+            <strong>Added to application</strong>
+            <p>
+              Confirmed details, notes and document requirements are now
+              available in the application workspace.
+            </p>
+            <Link to={`/app/applications/${item.application_id}`}>
+              View application
+            </Link>
           </div>
         </div>
       ) : null}

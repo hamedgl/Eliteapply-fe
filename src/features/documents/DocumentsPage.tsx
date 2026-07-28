@@ -14,7 +14,6 @@ import {
   Link2,
   Pencil,
   Plus,
-  RefreshCw,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -205,24 +204,12 @@ export function DocumentsPage() {
       <PageHeader
         title="Academic Documents"
         description="Manage transcripts, certificates, recommendation letters, and test scores"
+        onRefresh={() => void query.refetch()}
+        refreshing={query.isFetching}
         actions={
-          <>
-            <button
-              className="docs-refresh-button"
-              type="button"
-              onClick={() => void query.refetch()}
-              disabled={query.isFetching}
-            >
-              <RefreshCw
-                aria-hidden="true"
-                className={query.isFetching ? "apps-spin" : ""}
-              />
-              {query.isFetching ? "Refreshing…" : "Refresh"}
-            </button>
-            <button className="primary" type="button" onClick={() => setUploadSeed([])}>
-              <Plus aria-hidden="true" /> Upload documents
-            </button>
-          </>
+          <button className="primary" type="button" onClick={() => setUploadSeed([])}>
+            <Plus aria-hidden="true" /> Upload documents
+          </button>
         }
       />
 
@@ -529,20 +516,8 @@ export function DocumentDetailPage() {
       <PageHeader
         title={document.display_name}
         description={`${label(document.category)} · ${formatBytes(document.size_bytes)}`}
-        actions={
-          <button
-            type="button"
-            className="docs-refresh-button"
-            onClick={refresh}
-            disabled={refreshing}
-          >
-            <RefreshCw
-              aria-hidden="true"
-              className={refreshing ? "apps-spin" : ""}
-            />
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </button>
-        }
+        onRefresh={refresh}
+        refreshing={refreshing}
       />
       <section
         className={`scan-panel docs-scan-panel ${usable ? "ready" : failed ? "failed" : "pending"}`}

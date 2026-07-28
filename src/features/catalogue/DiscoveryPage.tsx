@@ -131,6 +131,18 @@ export function DiscoveryPage() {
         eyebrow="Opportunity intelligence"
         title="Saved searches & matches"
         description="Track new opportunities and review recommendations based on your academic profile."
+        onRefresh={() =>
+          void Promise.all([
+            saved.refetch(),
+            recommendations.refetch(),
+            profile.refetch(),
+          ])
+        }
+        refreshing={
+          saved.isFetching ||
+          recommendations.isFetching ||
+          profile.isFetching
+        }
         actions={
           <Link className="apps-icon-button" to="/app/catalogue" aria-label="Browse catalogue" title="Browse catalogue">
             <Search aria-hidden="true" />

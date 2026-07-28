@@ -138,6 +138,8 @@ export function StoriesPage() {
         eyebrow="Writing evidence"
         title="Story & evidence bank"
         description="Capture reusable achievements and experiences for essays, interviews and applications."
+        onRefresh={() => void q.refetch()}
+        refreshing={q.isFetching}
         actions={
           <button className="primary" type="button" onClick={() => setEditing("new")}>
             <Plus aria-hidden="true" /> Add story

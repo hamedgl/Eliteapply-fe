@@ -525,6 +525,8 @@ export function ApplicationsPage() {
       <PageHeader
         title="Applications"
         description="Manage deadlines, requirements, documents and submission progress."
+        onRefresh={() => void activeQuery.refetch()}
+        refreshing={activeQuery.isFetching}
         meta={
           resultCount !== null
             ? `${resultCount} application${resultCount === 1 ? "" : "s"}`

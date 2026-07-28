@@ -198,6 +198,20 @@ export function RemindersPage() {
       <PageHeader
         title="Reminders"
         description="Stay ahead of application deadlines, reference follow-ups and important tasks."
+        onRefresh={() =>
+          void Promise.all([
+            list.refetch(),
+            statsQuery.refetch(),
+            calendarReminders.refetch(),
+            calendarApplications.refetch(),
+          ])
+        }
+        refreshing={
+          list.isFetching ||
+          statsQuery.isFetching ||
+          calendarReminders.isFetching ||
+          calendarApplications.isFetching
+        }
         actions={
           <button className="primary" type="button" onClick={() => setEditing("new")}>
             <Plus aria-hidden="true" /> Create reminder

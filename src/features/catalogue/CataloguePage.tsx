@@ -113,6 +113,8 @@ export function CataloguePage() {
         eyebrow="Discovery"
         title="Academic catalogue"
         description="Discover verified institutions, programmes and scholarships, then add the most relevant opportunities to your workspace."
+        onRefresh={() => void q.refetch()}
+        refreshing={q.isFetching}
         actions={
           <Link className="apps-icon-button" to="/app/discovery" aria-label="Saved searches & matches" title="Saved searches & matches">
             <Search aria-hidden="true" />
@@ -336,6 +338,8 @@ function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
             ? "Shared catalogue record with source provenance."
             : "Private record visible only within your account."
         }
+        onRefresh={() => void q.refetch()}
+        refreshing={q.isFetching}
       />
       <dl className="document-metadata">
         <div>

@@ -49,6 +49,7 @@ import { NewWritingDialog } from "./NewWritingDialog";
 import { DocumentOutline } from "./DocumentOutline";
 import { WritingReviewDrawer } from "./WritingReviewDrawer";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
+import { PageRefreshButton } from "../../components/page/PageHeader";
 import {
   contentToHtml,
   countText,
@@ -195,14 +196,20 @@ export function WritingLibrary({
             evidence.
           </p>
         </div>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => setCreating(true)}
-        >
-          <FilePlus2 aria-hidden="true" />
-          New document
-        </button>
+        <div className="apps-header-actions">
+          <PageRefreshButton
+            onRefresh={() => void q.refetch()}
+            refreshing={q.isFetching}
+          />
+          <button
+            type="button"
+            className="primary"
+            onClick={() => setCreating(true)}
+          >
+            <FilePlus2 aria-hidden="true" />
+            New document
+          </button>
+        </div>
       </header>
       {!q.isPending && !q.isError && documents.length ? (
         <section className="writing-summary" aria-label="Document summary">

@@ -161,6 +161,16 @@ export function InterviewPage() {
       <PageHeader
         title={`${interviewTypeLabel(interview.interview_type)} practice`}
         description={`${interviewModeLabel(interview.mode)} · started ${relativeTime(interview.created_at)}`}
+        onRefresh={() =>
+          void Promise.all([
+            session.refetch(),
+            turns.refetch(),
+            ...(interview.status === "completed" ? [report.refetch()] : []),
+          ])
+        }
+        refreshing={
+          session.isFetching || turns.isFetching || report.isFetching
+        }
         actions={<StatusBadge tone={statusTone(interview.status)}>{statusLabel(interview.status)}</StatusBadge>}
       />
 

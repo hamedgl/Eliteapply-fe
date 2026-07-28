@@ -244,6 +244,8 @@ export function ReferencesPage() {
         title="Academic references"
         description="Request, track, verify and download academic references in one place."
         meta={`${filtered.length} reference${filtered.length === 1 ? "" : "s"}`}
+        onRefresh={() => void query.refetch()}
+        refreshing={query.isFetching}
         actions={
           <button type="button" className="primary" onClick={() => setRequesting(true)}>
             <Plus aria-hidden="true" /> Request reference

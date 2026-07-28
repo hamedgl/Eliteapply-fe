@@ -57,6 +57,8 @@ export function InterviewsPage() {
         title="Interview practice"
         description="Rehearse the interview, get structured feedback on every answer, and build confidence over time."
         meta={items.length ? `${items.length} session${items.length === 1 ? "" : "s"}` : undefined}
+        onRefresh={() => void history.refetch()}
+        refreshing={history.isFetching}
         actions={
           <Link className="primary" to="/app/interviews/new">
             <Plus aria-hidden="true" /> New session
@@ -204,6 +206,8 @@ export function NewInterviewPage() {
       <PageHeader
         title="New practice session"
         description="Pick the interview you want to rehearse. EliteApply generates the questions from this application and your academic profile."
+        onRefresh={() => void applications.refetch()}
+        refreshing={applications.isFetching}
       />
 
       <form className="apps-card iv-new-form" onSubmit={submit}>

@@ -331,6 +331,26 @@
   overflow-wrap: anywhere;
 }
 
+.detail-application-notes {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  background: var(--app-soft);
+}
+.detail-application-notes h3 {
+  margin: 0 0 0.45rem;
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+.detail-application-notes p {
+  margin: 0;
+  color: var(--app-text);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .detail-next-action {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
