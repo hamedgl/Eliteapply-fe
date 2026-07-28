@@ -351,6 +351,133 @@ test("new writing survives an empty library cache and a failed completion refres
   await expect(page.getByText("Document unavailable")).toHaveCount(0);
 });
 
+test("student reference draft explains its minimum and prepares an AI polish copy", async ({
+  page,
+}) => {
+  const application = {
+    id: "00000000-0000-4000-8000-000000000071",
+    title: "Oxford MSc application",
+  };
+  let writingBody: Record<string, unknown> | null = null;
+
+  await page.addInitScript(() => {
+    window.open = ((url?: string | URL) => {
+      (window as typeof window & { __openedWritingUrl?: string }).__openedWritingUrl =
+        String(url ?? "");
+      return null;
+    }) as typeof window.open;
+  });
+  await page.route("**/api/v1/academic-references?**", (route) =>
+    route.fulfill({
+      json: { items: [], next_cursor: null, has_more: false },
+    }),
+  );
+  await page.route("**/api/v1/applications?**", (route) =>
+    route.fulfill({
+      json: { items: [application], next_cursor: null, has_more: false },
+    }),
+  );
+  await page.route("**/api/v1/writing-studio/documents", async (route) => {
+    writingBody = route.request().postDataJSON();
+    return route.fulfill({
+      status: 201,
+      json: {
+        ...doc,
+        id: "00000000-0000-4000-8000-000000000072",
+        application_id: application.id,
+        application_title: application.title,
+        document_type: "custom_essay",
+        title: `Reference draft — ${application.title}`,
+        content: (writingBody as { content?: unknown }).content,
+      },
+    });
+  });
+
+  await page.setViewportSize({ width: 640, height: 900 });
+  await page.goto("/app/references");
+  await page
+    .locator("header")
+    .getByRole("button", { name: "Request reference" })
+    .click();
+
+  const drawer = page.getByRole("dialog", { name: "Request reference" });
+  await drawer.getByRole("radio", { name: "Student draft" }).check();
+  await drawer.getByRole("button", { name: "Continue" }).click();
+  await drawer.getByLabel("Full name").fill("Professor Ada Silva");
+  await drawer.getByLabel("Email").fill("ada@example.test");
+  await drawer.getByRole("button", { name: "Continue" }).click();
+
+  await drawer.getByLabel("Application").fill("Oxford");
+  await drawer.getByRole("option", { name: application.title }).click();
+
+  const draft = drawer.getByLabel("Student draft");
+  await draft.fill("a".repeat(49));
+  await expect(drawer.getByText("49 / 50 minimum")).toBeVisible();
+  await expect(
+    drawer.getByRole("button", { name: "Polish in Writing Studio" }),
+  ).toBeDisabled();
+  await expect(
+    drawer.getByRole("button", { name: "Continue" }),
+  ).toBeDisabled();
+
+  const completeDraft =
+    "I worked with Professor Silva on a research project about reliable distributed systems.";
+  await draft.fill(completeDraft);
+  await expect(
+    drawer.getByRole("button", { name: "Polish in Writing Studio" }),
+  ).toBeEnabled();
+
+  const referenceType = await drawer
+    .getByRole("button", { name: "Reference type" })
+    .boundingBox();
+  const dueIn = await drawer.getByLabel("Due in").boundingBox();
+  expect(referenceType?.y).toBe(dueIn?.y);
+
+  await drawer
+    .getByRole("button", { name: "Polish in Writing Studio" })
+    .click();
+  await expect(drawer.getByRole("link", { name: "Open prepared draft" })).toBeVisible();
+  expect(writingBody).toMatchObject({
+    application_id: application.id,
+    document_type: "custom_essay",
+    content: { text: completeDraft },
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & { __openedWritingUrl?: string }
+          ).__openedWritingUrl,
+      ),
+    )
+    .toBe("/app/writing/00000000-0000-4000-8000-000000000072");
+
+  const overflow = await drawer.evaluate(
+    (element) => element.scrollWidth - element.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-reference-request-polish.png",
+    animations: "disabled",
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await draft.scrollIntoViewIfNeeded();
+  const mobilePolish = drawer.locator(".reference-draft-heading > button");
+  const mobilePolishBox = await mobilePolish.boundingBox();
+  expect(mobilePolishBox?.height).toBeGreaterThanOrEqual(44);
+  expect(
+    await drawer.evaluate(
+      (element) => element.scrollWidth - element.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-reference-request-polish-mobile.png",
+    animations: "disabled",
+  });
+});
+
 function generationRun(id: string, status: string) {
   return {
     id,

@@ -380,7 +380,7 @@ function RequestFlowDrawer({ onClose, onCreated }: { onClose: () => void; onCrea
   return (
     <div className="apps-drawer-backdrop" role="presentation" onClick={onClose}>
       <section
-        className="apps-drawer apps-drawer-wide"
+        className="apps-drawer apps-drawer-wide reference-request-drawer"
         role="dialog"
         aria-modal="true"
         aria-labelledby="request-reference-title"

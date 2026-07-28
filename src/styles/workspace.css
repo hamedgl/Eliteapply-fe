@@ -3372,6 +3372,7 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   max-width: 760px;
 }
 .reference-request-flow {
+  width: 100%;
   max-width: 640px;
 }
 .reference-detail {
@@ -3677,12 +3678,99 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
 }
 .reference-request-step {
   display: grid;
-  gap: 0.85rem;
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 .reference-request-step h3 {
   margin: 0;
   font-size: 1rem;
+}
+.reference-request-step > label,
+.reference-request-application,
+.reference-draft-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--app-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.apps-combobox-label.is-required::after {
+  content: " *";
+  color: var(--app-red);
+  font-weight: 700;
+}
+.reference-request-step > label > :is(input, textarea),
+.reference-request-grid input {
+  width: 100%;
+}
+.reference-request-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.reference-request-grid > label {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+.reference-request-grid .field-help {
+  min-height: 1.1rem;
+}
+.reference-draft-heading,
+.reference-field-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.reference-draft-heading > button {
+  min-height: 40px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.reference-draft-heading > button svg {
+  width: 16px;
+  height: 16px;
+}
+.reference-field-meta {
+  align-items: flex-start;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+.reference-field-meta > span {
+  max-width: 42ch;
+}
+.reference-field-meta strong {
+  flex: none;
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.reference-field-meta strong.is-short {
+  color: var(--app-red);
+}
+.reference-draft-field > .field-help {
+  margin: 0;
+  line-height: 1.5;
+}
+.reference-draft-field > .field-help a {
+  font-weight: 700;
+}
+.reference-review-draft {
+  grid-column: 1 / -1;
+}
+.reference-review-draft dd {
+  max-height: 10rem;
+  overflow-y: auto;
+  white-space: pre-wrap;
 }
 .reference-method-options {
   display: grid;
@@ -3712,5 +3800,46 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
 @media (max-width: 720px) {
   .apps-drawer-wide {
     width: 100%;
+  }
+  .reference-request-steps {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+  }
+  .reference-request-steps li {
+    flex: none;
+  }
+}
+
+.reference-request-drawer {
+  width: min(640px, 100%);
+}
+
+@media (max-width: 560px) {
+  .reference-request-drawer .apps-drawer-header,
+  .reference-request-drawer .apps-drawer-body {
+    padding-inline: 1rem;
+  }
+  .reference-request-drawer .apps-drawer-header button {
+    width: 44px;
+    height: 44px;
+  }
+  .reference-request-grid {
+    grid-template-columns: 1fr;
+  }
+  .reference-draft-heading,
+  .reference-field-meta {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .reference-draft-heading > button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .reference-request-nav > button {
+    min-height: 44px;
   }
 }

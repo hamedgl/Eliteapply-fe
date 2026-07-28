@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { Select } from "../../../components/ui/select";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { applicationsApi, documentsApi } from "../../../lib/api/phase2";
-import { referencesApi } from "../../../lib/api/phase3";
+import { referencesApi, writingApi } from "../../../lib/api/phase3";
 import { newMutationId } from "../../../lib/api/mutations";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { track } from "../../../lib/analytics/track";
@@ -33,8 +33,10 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
   const [relationship, setRelationship] = useState("");
   const [context, setContext] = useState("");
   const [studentDraft, setStudentDraft] = useState("");
+  const [polishDocumentId, setPolishDocumentId] = useState("");
   const [existingDocumentId, setExistingDocumentId] = useState("");
   const [destinations, setDestinations] = useState("");
+  const studentDraftLength = studentDraft.trim().length;
 
   const documents = useQuery({
     queryKey: queryKeys.documents,
@@ -78,12 +80,40 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Could not create the invitation."),
   });
 
+  const preparePolish = useMutation({
+    mutationFn: () =>
+      writingApi.create({
+        application_id: applicationId || null,
+        document_type: "custom_essay",
+        title: `Reference draft${applicationName ? ` — ${applicationName}` : ""}`,
+        content: { text: studentDraft.trim() },
+        target_requirements: { purpose: "reference_draft" },
+        evidence_map: {},
+        theme: {},
+      }),
+    onSuccess: (created) => {
+      qc.setQueryData(queryKeys.writingDocument(created.id), created);
+      setPolishDocumentId(created.id);
+      window.open(
+        `/app/writing/${created.id}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    },
+    onError: (caught) =>
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not prepare the draft in Writing Studio.",
+      ),
+  });
+
   const step1Valid = Boolean(mode);
   const step2Valid = refereeName.trim().length >= 2 && /\S+@\S+\.\S+/.test(refereeEmail);
   const expiresInDaysValid = !expiresInDays || (Number(expiresInDays) >= 3 && Number(expiresInDays) <= 60);
   const step3Valid =
     Boolean(applicationId) &&
-    (mode !== "student_draft" || studentDraft.trim().length >= 50) &&
+    (mode !== "student_draft" || studentDraftLength >= 50) &&
     (mode !== "existing_upload" || Boolean(existingDocumentId)) &&
     expiresInDaysValid;
   const canAdvance = [step1Valid, step2Valid, step3Valid, true][step];
@@ -144,6 +174,7 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
             <label>
               Role
               <Select
+                ariaLabel="Referee role"
                 value={refereeRole}
                 onChange={(val: any) =>
                   setRefereeRole((typeof val === "string" ? val : val?.target?.value) as (typeof REFEREE_ROLES)[number])
@@ -166,8 +197,7 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
       {step === 2 ? (
         <section className="reference-request-step">
           <h3>Request details</h3>
-          <label>
-            Application
+          <div className="reference-request-application">
             <EntityCombobox
               queryKey={queryKeys.applications}
               search={async (search) =>
@@ -175,18 +205,21 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               }
               label="Application"
               placeholder="Search your applications…"
+              required
               value={applicationId}
               valueLabel={applicationName}
               onChange={(id, name) => {
                 setApplicationId(id);
                 setApplicationName(name);
+                setPolishDocumentId("");
               }}
             />
-          </label>
-          <div className="form-grid">
+          </div>
+          <div className="form-grid reference-request-grid">
             <label>
-              Reference type
+              <span>Reference type</span>
               <Select
+                ariaLabel="Reference type"
                 value={referenceType}
                 onChange={(val: any) =>
                   setReferenceType((typeof val === "string" ? val : val?.target?.value) as (typeof referenceTypes)[number])
@@ -195,7 +228,7 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               />
             </label>
             <label>
-              Due in <span className="muted">(3–60 days, optional — defaults to 14)</span>
+              <span>Due in</span>
               <input
                 type="number"
                 min={3}
@@ -203,7 +236,11 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                 value={expiresInDays}
                 onChange={(event) => setExpiresInDays(event.target.value)}
                 placeholder="14"
+                aria-describedby="reference-due-help"
               />
+              <span id="reference-due-help" className="field-help">
+                Optional · 3–60 days · defaults to 14
+              </span>
               {!expiresInDaysValid ? <span className="form-error">Must be between 3 and 60 days.</span> : null}
             </label>
           </div>
@@ -212,25 +249,98 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
             <input value={relationship} onChange={(event) => setRelationship(event.target.value)} />
           </label>
           <label>
-            Guidance for the referee <span className="muted">(optional)</span>
+            <span>
+              Guidance for the referee <span className="muted">(optional)</span>
+            </span>
             <textarea value={context} onChange={(event) => setContext(event.target.value)} rows={3} />
           </label>
           {mode === "student_draft" ? (
-            <label>
-              Student draft
+            <div className="reference-draft-field">
+              <div className="reference-draft-heading">
+                <label htmlFor="student-reference-draft">Student draft</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (polishDocumentId) {
+                      window.open(
+                        `/app/writing/${polishDocumentId}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                      return;
+                    }
+                    setError("");
+                    preparePolish.mutate();
+                  }}
+                  disabled={
+                    studentDraftLength < 50 ||
+                    !applicationId ||
+                    preparePolish.isPending
+                  }
+                  aria-describedby="student-reference-polish-help"
+                >
+                  <Sparkles aria-hidden="true" />
+                  {preparePolish.isPending
+                    ? "Preparing…"
+                    : polishDocumentId
+                      ? "Open in Writing Studio"
+                      : "Polish in Writing Studio"}
+                </button>
+              </div>
               <textarea
+                id="student-reference-draft"
                 value={studentDraft}
-                onChange={(event) => setStudentDraft(event.target.value)}
+                onChange={(event) => {
+                  setStudentDraft(event.target.value);
+                  setPolishDocumentId("");
+                }}
                 minLength={50}
                 required
-                rows={8}
+                rows={6}
+                disabled={preparePolish.isPending}
+                aria-describedby="student-reference-draft-help student-reference-draft-count"
+                aria-invalid={studentDraftLength > 0 && studentDraftLength < 50}
               />
-            </label>
+              <div className="reference-field-meta">
+                <span id="student-reference-draft-help">
+                  Write at least 50 characters so your referee has enough context
+                  to review.
+                </span>
+                <strong
+                  id="student-reference-draft-count"
+                  className={
+                    studentDraftLength > 0 && studentDraftLength < 50
+                      ? "is-short"
+                      : ""
+                  }
+                  aria-live="polite"
+                >
+                  {studentDraftLength} / 50 minimum
+                </strong>
+              </div>
+              <p id="student-reference-polish-help" className="field-help">
+                Opens a private Writing Studio copy, where you can use Improve
+                paragraph and review the suggestion without changing this form.
+                {polishDocumentId ? (
+                  <>
+                    {" "}
+                    <a
+                      href={`/app/writing/${polishDocumentId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open prepared draft
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            </div>
           ) : null}
           {mode === "existing_upload" ? (
             <label>
               Existing document
               <Select
+                ariaLabel="Existing document"
                 value={existingDocumentId}
                 placeholder="Select a document"
                 onChange={(val: any) => setExistingDocumentId(typeof val === "string" ? val : (val?.target?.value ?? ""))}
@@ -242,7 +352,10 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
             </label>
           ) : null}
           <label>
-            Destinations <span className="muted">(one per line, optional)</span>
+            <span>
+              Destinations{" "}
+              <span className="muted">(one per line, optional)</span>
+            </span>
             <textarea
               value={destinations}
               onChange={(event) => setDestinations(event.target.value)}
@@ -295,6 +408,12 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
               <div>
                 <dt>Guidance</dt>
                 <dd>{context.trim()}</dd>
+              </div>
+            ) : null}
+            {mode === "student_draft" ? (
+              <div className="reference-review-draft">
+                <dt>Student draft</dt>
+                <dd>{studentDraft.trim()}</dd>
               </div>
             ) : null}
           </dl>

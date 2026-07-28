@@ -447,6 +447,23 @@
 }
 
 @media (max-width: 640px) {
+  .mobile-appbar .global-search-field {
+    height: 44px;
+  }
+
+  .mobile-appbar .global-search-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .mobile-appbar .global-search-entry input {
+    font-size: 0.95rem;
+  }
+
+  .mobile-appbar .global-search-kbd {
+    display: none;
+  }
+
   .global-search-footer {
     display: none;
   }

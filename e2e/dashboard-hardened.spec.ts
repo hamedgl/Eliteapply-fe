@@ -79,6 +79,50 @@ test("dashboard turns empty backend state into clear next actions", async ({
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test("mobile dashboard keeps the progress gauge and drawer contained", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/app/dashboard");
+
+  const ring = page.getByRole("progressbar", {
+    name: "Academic profile completion",
+  });
+  const title = page.getByRole("heading", {
+    name: "Build your academic profile",
+  });
+  const [ringBox, titleBox] = await Promise.all([
+    ring.boundingBox(),
+    title.boundingBox(),
+  ]);
+  expect(ringBox).not.toBeNull();
+  expect(titleBox).not.toBeNull();
+  expect(ringBox!.x + ringBox!.width).toBeLessThanOrEqual(titleBox!.x);
+
+  const focusActions = page.locator(".dashboard-focus-actions > *");
+  await expect(focusActions).toHaveCount(2);
+  for (const action of await focusActions.all()) {
+    const box = await action.boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  const drawer = page.getByRole("dialog", {
+    name: "Application navigation",
+  });
+  const drawerBox = await drawer.boundingBox();
+  expect(drawerBox).not.toBeNull();
+  expect(drawerBox!.width).toBeLessThanOrEqual(272);
+  await expect(
+    drawer.getByRole("link", { name: "Interview Practice" }),
+  ).toBeVisible();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
 test("upcoming deadlines use an interactive compact calendar", async ({
   page,
 }) => {

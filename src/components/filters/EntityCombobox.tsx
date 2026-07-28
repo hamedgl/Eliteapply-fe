@@ -18,6 +18,7 @@ export function EntityCombobox({
   value,
   valueLabel,
   onChange,
+  required = false,
 }: {
   queryKey: readonly unknown[];
   search: (query: string, signal?: AbortSignal) => Promise<EntityOption[]>;
@@ -26,6 +27,7 @@ export function EntityCombobox({
   value: string;
   valueLabel: string;
   onChange: (id: string, name: string) => void;
+  required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -52,7 +54,10 @@ export function EntityCombobox({
 
   return (
     <div className="apps-combobox" ref={rootRef}>
-      <label className="apps-combobox-label" htmlFor={`${listId}-input`}>
+      <label
+        className={`apps-combobox-label${required ? " is-required" : ""}`}
+        htmlFor={`${listId}-input`}
+      >
         {fieldLabel}
       </label>
       <div className="apps-combobox-control">
@@ -63,6 +68,8 @@ export function EntityCombobox({
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
+          aria-required={required}
+          required={required}
           aria-activedescendant={
             open && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined
           }
