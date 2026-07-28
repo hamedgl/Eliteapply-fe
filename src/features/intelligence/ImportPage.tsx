@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -9,7 +9,7 @@ import { Check, Link2, RefreshCw, Trash2, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
 import type { components } from "../../generated/api/schema";
-import { intelligenceApi } from "../../lib/api/phase2";
+import { applicationsApi, intelligenceApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 
 type Import = components["schemas"]["OpportunityImportResponse"];
@@ -137,6 +137,20 @@ export function ImportPage() {
     [selected, setSelected] = useState<string | null>(null),
     [error, setError] = useState(""),
     [submitting, setSubmitting] = useState(false);
+  const sourceInitialised = useRef(false);
+  const linkedImportSelected = useRef(false);
+  const linkedApplication = useQuery({
+    queryKey: applicationId
+      ? queryKeys.application(applicationId)
+      : ["application", "none"],
+    queryFn: ({ signal }) => applicationsApi.get(applicationId!, signal),
+    enabled: Boolean(applicationId),
+  });
+  useEffect(() => {
+    if (!linkedApplication.data || sourceInitialised.current) return;
+    sourceInitialised.current = true;
+    setSourceType(linkedApplication.data.source_url ? "url" : "text");
+  }, [linkedApplication.data]);
   const history = useInfiniteQuery({
     queryKey: queryKeys.imports,
     initialPageParam: null as string | null,
@@ -218,6 +232,14 @@ export function ImportPage() {
     }
   }
   const items = history.data?.pages.flatMap((page) => page.items) ?? [];
+  useEffect(() => {
+    if (!applicationId || linkedImportSelected.current) return;
+    const linked = items.find((item) => item.application_id === applicationId);
+    if (linked) {
+      linkedImportSelected.current = true;
+      setSelected(linked.id);
+    }
+  }, [applicationId, items]);
   return (
     <div className="page phase2-page import-page">
       <header className="page-heading">
@@ -242,6 +264,21 @@ export function ImportPage() {
             Add a public programme page, upload a PDF or paste its details. AI
             will extract the facts for you to verify.
           </p>
+          {linkedApplication.data ? (
+            <div className="import-progress import-source-context">
+              <Check aria-hidden="true" />
+              <div>
+                <strong>
+                  Rechecking criteria for {linkedApplication.data.title}
+                </strong>
+                <p>
+                  The saved official source is prefilled below. Confirmed
+                  criteria will update this application&apos;s eligibility
+                  report.
+                </p>
+              </div>
+            </div>
+          ) : null}
           <form className="settings-form" onSubmit={submit}>
             <label>
               <span>Source type</span>
@@ -262,10 +299,12 @@ export function ImportPage() {
               <label>
                 <span>Source URL</span>
                 <input
+                  key={linkedApplication.data?.source_url ?? "new-source"}
                   name="source_url"
                   type="url"
                   required
                   placeholder="https://…"
+                  defaultValue={linkedApplication.data?.source_url ?? ""}
                 />
                 <small>
                   Use the exact public page that contains deadlines,
@@ -291,11 +330,13 @@ export function ImportPage() {
               <label>
                 <span>Source text</span>
                 <textarea
+                  key={linkedApplication.data?.notes ?? "new-source-text"}
                   name="raw_source_text"
                   minLength={20}
                   maxLength={200000}
                   required
                   rows={8}
+                  defaultValue={linkedApplication.data?.notes ?? ""}
                   placeholder="Paste the programme description, requirements, deadlines and fees…"
                 />
               </label>

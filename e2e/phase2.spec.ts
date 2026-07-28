@@ -201,11 +201,12 @@ test("catalogue distinguishes canonical records and exposes discovery", async ({
 test("opportunity import exposes extracted fields and preserves list edits", async ({
   page,
 }, testInfo) => {
+  const applicationId = "00000000-0000-4000-8000-000000000060";
   const importId = "00000000-0000-4000-8000-000000000061";
   let pdfUploadSeen = false;
   const extracted = {
     id: importId,
-    application_id: null,
+    application_id: applicationId,
     source_type: "url",
     source_url: "https://example.edu/programmes/msc-computer-science",
     source_hash: "hash",
@@ -233,6 +234,15 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
     retrieved_at: "2026-07-28T12:00:00Z",
     verified_at: null,
   };
+  await page.route(`**/api/v1/applications/${applicationId}`, (route) =>
+    route.fulfill({
+      json: {
+        ...app(applicationId, "MSc Computer Science", "researching"),
+        source_url: extracted.source_url,
+        notes: "Eligibility Criteria:\n- Minimum GPA 3.5",
+      },
+    }),
+  );
   await page.route(/\/api\/v1\/application-intelligence\/imports(?:\/.*)?(?:\?.*)?$/, async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -263,7 +273,11 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
     });
   });
 
-  await page.goto("/app/applications/import");
+  await page.goto(`/app/applications/import?application_id=${applicationId}`);
+  await expect(page.getByLabel("Source URL")).toHaveValue(extracted.source_url);
+  await expect(
+    page.getByText("Rechecking criteria for MSc Computer Science"),
+  ).toBeVisible();
   await page.getByLabel("Source type").selectOption("pdf_text");
   await page.getByLabel("PDF file").setInputFiles({
     name: "programme.pdf",
