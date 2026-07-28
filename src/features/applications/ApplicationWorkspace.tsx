@@ -2052,6 +2052,7 @@ function EligibilityTab({
   onToast: (message: string) => void;
 }) {
   const qc = useQueryClient();
+  const upgradedMissingAnalysis = useRef(false);
   const current = useQuery({
     queryKey: queryKeys.eligibility(applicationId),
     queryFn: () => intelligenceApi.currentEligibility(applicationId),
@@ -2082,6 +2083,18 @@ function EligibilityTab({
       intelligenceApi.eligibilityRecommendations(applicationId),
     onSuccess: () => onToast("Recommendations are ready."),
   });
+  useEffect(() => {
+    if (
+      upgradedMissingAnalysis.current ||
+      !isEligibilityResponse(current.data) ||
+      !current.data.findings.some(
+        (finding) => finding.id === "official-criteria-missing",
+      )
+    )
+      return;
+    upgradedMissingAnalysis.current = true;
+    refresh.mutate();
+  }, [current.data, refresh]);
   if (current.isPending) return <EligibilitySkeleton />;
   if (current.isError || !isEligibilityResponse(current.data))
     return (

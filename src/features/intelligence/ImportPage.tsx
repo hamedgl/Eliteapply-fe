@@ -445,6 +445,15 @@ export function ImportPage() {
                 qc.invalidateQueries({
                   queryKey: queryKeys.workspace(item.application_id),
                 }),
+                qc.invalidateQueries({
+                  queryKey: queryKeys.eligibility(item.application_id),
+                }),
+                qc.invalidateQueries({
+                  queryKey: queryKeys.eligibilityHistory(item.application_id),
+                }),
+                qc.invalidateQueries({
+                  queryKey: queryKeys.readiness(item.application_id),
+                }),
                 qc.invalidateQueries({ queryKey: queryKeys.applications }),
               ]);
           }}
