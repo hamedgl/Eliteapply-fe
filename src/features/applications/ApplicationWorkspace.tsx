@@ -2103,15 +2103,23 @@ function EligibilityTab({
           title="Eligibility"
           description="Review evidence used to support application preparation."
           actions={
-            <button
-              type="button"
-              className="primary"
-              disabled={refresh.isPending}
-              onClick={() => refresh.mutate()}
-            >
-              <ShieldCheck aria-hidden="true" />{" "}
-              {refresh.isPending ? "Analysing…" : "Refresh analysis"}
-            </button>
+            <>
+              <Link
+                className="detail-secondary-link"
+                to={`/app/applications/import?application_id=${encodeURIComponent(applicationId)}#missing-eligibility-details`}
+              >
+                <FilePlus2 aria-hidden="true" /> Add missing data
+              </Link>
+              <button
+                type="button"
+                className="primary"
+                disabled={refresh.isPending}
+                onClick={() => refresh.mutate()}
+              >
+                <ShieldCheck aria-hidden="true" />{" "}
+                {refresh.isPending ? "Analysing…" : "Refresh analysis"}
+              </button>
+            </>
           }
         />
         <EmptyState
@@ -2143,6 +2151,12 @@ function EligibilityTab({
         description="Evidence-based preparation guidance, with the source and reasoning visible for every check."
         actions={
           <>
+            <Link
+              className="detail-secondary-link"
+              to={`/app/applications/import?application_id=${encodeURIComponent(applicationId)}#missing-eligibility-details`}
+            >
+              <FilePlus2 aria-hidden="true" /> Add missing data
+            </Link>
             <a className="detail-secondary-link" href="#eligibility-score-report">
               <FileText aria-hidden="true" /> See report
             </a>

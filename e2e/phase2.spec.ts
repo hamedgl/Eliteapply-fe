@@ -285,11 +285,14 @@ test("opportunity import exposes extracted fields and preserves list edits", asy
     });
   });
 
-  await page.goto(`/app/applications/import?application_id=${applicationId}`);
+  await page.goto(
+    `/app/applications/import?application_id=${applicationId}#missing-eligibility-details`,
+  );
   await expect(page.getByLabel("Source URL")).toHaveValue(extracted.source_url);
   await expect(
     page.getByText("Rechecking criteria for MSc Computer Science"),
   ).toBeVisible();
+  await expect(page.locator("#missing-eligibility-details")).toBeFocused();
   await page.getByLabel("Source type").selectOption("pdf_text");
   await page.getByLabel("PDF file").setInputFiles({
     name: "programme.pdf",
@@ -878,6 +881,10 @@ test("eligibility explains its factors and returns recommendations", async ({
   await expect(
     page.getByRole("link", { name: "See report" }),
   ).toHaveAttribute("href", "#eligibility-score-report");
+  await expect(page.getByRole("link", { name: "Add missing data" })).toHaveAttribute(
+    "href",
+    `/app/applications/import?application_id=${applicationId}#missing-eligibility-details`,
+  );
   await page
     .getByRole("button", { name: "Ask AI for recommendations" })
     .click();

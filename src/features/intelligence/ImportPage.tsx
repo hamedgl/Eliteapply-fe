@@ -556,6 +556,15 @@ function ImportReview({
     corrections.eligible_nationalities ??
       item.extracted_fields.eligible_nationalities,
   );
+  useEffect(() => {
+    if (
+      window.location.hash !== "#missing-eligibility-details"
+    )
+      return;
+    const panel = document.getElementById("missing-eligibility-details");
+    panel?.focus({ preventScroll: true });
+    panel?.scrollIntoView({ block: "start" });
+  }, [missingEligibilityDetails.length]);
   async function confirmFields() {
     setConfirming(true);
     setConfirmError("");
@@ -686,6 +695,8 @@ function ImportReview({
       {missingEligibilityDetails.length &&
       (status === "extracted" || status === "confirmed") ? (
         <section
+          id="missing-eligibility-details"
+          tabIndex={-1}
           className="import-missing-details"
           aria-labelledby="missing-eligibility-title"
         >
@@ -800,7 +811,15 @@ function ImportReview({
         </section>
       ) : null}
       {fields.length ? (
-        <div className="extraction-fields">
+        <div
+          className="extraction-fields"
+          id={
+            missingEligibilityDetails.length
+              ? undefined
+              : "missing-eligibility-details"
+          }
+          tabIndex={missingEligibilityDetails.length ? undefined : -1}
+        >
           {fields.map((key) => {
             const value =
               key in corrections
