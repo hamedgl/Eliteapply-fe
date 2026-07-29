@@ -1,12 +1,29 @@
 {
   "name": "eliteapply",
   "main": "workers/entry.js",
-  "compatibility_date": "2026-07-01",
+  "compatibility_date": "2026-07-28",
+  "vars": {
+    "API_BASE_URL": "https://api.eliteapply.net/api/v1",
+    "R2_ACCOUNT_ID": "3b5a2df90ebfd26744fbe618f02765a0",
+    "R2_BUCKET_NAME": "eliteapply-avatars",
+    "R2_JURISDICTION": "eu",
+  },
+  "r2_buckets": [
+    {
+      "binding": "AVATARS",
+      "bucket_name": "eliteapply-avatars",
+      "jurisdiction": "eu",
+    },
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
-    "run_worker_first": true
-  }
+    "run_worker_first": true,
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+  },
 }

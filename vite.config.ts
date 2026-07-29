@@ -8,6 +8,10 @@ const API_TARGET = process.env.VITE_API_PROXY_TARGET ?? "https://api.eliteapply.
 // sends them to api.eliteapply.net (cross-site) and every reload lost the session.
 // Proxying keeps the API same-origin in dev, exactly like production.
 const apiProxy: Record<string, ProxyOptions> = {
+  "/api/avatar": {
+    target: "https://eliteapply.net",
+    changeOrigin: true,
+  },
   "/api": {
     target: API_TARGET,
     changeOrigin: true,

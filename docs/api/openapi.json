@@ -13861,6 +13861,52 @@
         }
       }
     },
+    "/api/v1/users/me/avatar/complete": {
+      "post": {
+        "tags": [
+          "User Profiles"
+        ],
+        "summary": "Finalize a profile photo uploaded directly to R2",
+        "operationId": "complete_avatar_upload_api_v1_users_me_avatar_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvatarCompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/me/avatar": {
       "post": {
         "tags": [
@@ -17038,6 +17084,21 @@
           "created_at"
         ],
         "title": "AuditEventResponse"
+      },
+      "AvatarCompleteRequest": {
+        "properties": {
+          "storage_key": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Storage Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "storage_key"
+        ],
+        "title": "AvatarCompleteRequest"
       },
       "Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post": {
         "properties": {

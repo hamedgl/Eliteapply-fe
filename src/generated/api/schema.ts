@@ -3542,6 +3542,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/avatar/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalize a profile photo uploaded directly to R2 */
+        post: operations["complete_avatar_upload_api_v1_users_me_avatar_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/avatar": {
         parameters: {
             query?: never;
@@ -4591,6 +4608,11 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AvatarCompleteRequest */
+        AvatarCompleteRequest: {
+            /** Storage Key */
+            storage_key: string;
         };
         /** Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post */
         Body_create_pdf_import_api_v1_application_intelligence_imports_pdf_post: {
@@ -16624,6 +16646,39 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_avatar_upload_api_v1_users_me_avatar_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvatarCompleteRequest"];
             };
         };
         responses: {
