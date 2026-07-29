@@ -255,6 +255,49 @@ test("writing library and editor are responsive and save-state aware", async ({
   ).toBeLessThanOrEqual(0);
 });
 
+test("PDF export saves the latest editor content before downloading", async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  await page.route(
+    `**/writing-studio/documents/${doc.id}`,
+    async (route) => {
+      if (route.request().method() !== "PATCH") return route.fallback();
+      requests.push("save");
+      return route.fulfill({
+        json: {
+          ...doc,
+          version: 2,
+          content: route.request().postDataJSON().content,
+        },
+      });
+    },
+  );
+  await page.route(
+    `**/writing-studio/documents/${doc.id}/export.pdf`,
+    (route) => {
+      requests.push("export");
+      return route.fulfill({
+        body: "%PDF-1.7 formatted statement",
+        contentType: "application/pdf",
+        headers: {
+          "content-disposition": 'attachment; filename="formatted-statement.pdf"',
+        },
+      });
+    },
+  );
+
+  await page.goto(`/app/writing/${doc.id}`);
+  await page.getByLabel("Document content").fill("The latest statement.");
+  await page.getByLabel("Export").click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("option", { name: "PDF" }).click();
+
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  expect((await download).suggestedFilename()).toBe("formatted-statement.pdf");
+  expect(requests).toEqual(["save", "export"]);
+});
+
 test("document preview opens as a responsive modal and closes with Escape", async ({
   page,
 }) => {

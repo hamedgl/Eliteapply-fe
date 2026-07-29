@@ -1,10 +1,28 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import "trix";
+// Trix does not publish TypeScript declarations.
+// @ts-expect-error -- the runtime module exposes the documented config object.
+import Trix from "trix";
 import "trix/dist/trix.css";
 import type { FontKey } from "./documentHtml";
 
+Trix.config.textAttributes.textColor ??= {
+  styleProperty: "color",
+  inheritable: true,
+};
+Trix.config.textAttributes.highlightColor ??= {
+  styleProperty: "backgroundColor",
+  inheritable: true,
+};
+
+type TrixEditor = {
+  activateAttribute(name: string, value?: string | boolean): void;
+  deactivateAttribute(name: string): void;
+  loadHTML(html: string): void;
+  recordUndoEntry(label: string): void;
+};
+
 type TrixEditorElement = HTMLElement & {
-  editor?: { loadHTML(html: string): void };
+  editor?: TrixEditor;
 };
 
 declare module "react" {
@@ -53,6 +71,16 @@ export function TrixField({
   // Kept in a ref so a new inline callback each render does not re-bind listeners.
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+
+  const applyColour = (attribute: string, value?: string) => {
+    const editorEl = editorRef.current;
+    const editor = editorEl?.editor;
+    if (!editor) return;
+    editor.recordUndoEntry("Change colour");
+    if (value) editor.activateAttribute(attribute, value);
+    else editor.deactivateAttribute(attribute);
+    editorEl.focus();
+  };
 
   useEffect(() => {
     const editorEl = editorRef.current;
@@ -105,6 +133,45 @@ export function TrixField({
     <div className="writing-trix" data-font={font}>
       <div className="writing-trix-bar">
         <trix-toolbar id={toolbarId} />
+        <div className="writing-colour-tools" aria-label="Text colours">
+          <label className="writing-colour-control" title="Text colour">
+            <span aria-hidden="true">A</span>
+            <input
+              type="color"
+              defaultValue="#172033"
+              aria-label="Text colour"
+              onChange={(event) =>
+                applyColour("textColor", event.currentTarget.value)
+              }
+            />
+          </label>
+          <label className="writing-colour-control" title="Highlight colour">
+            <span aria-hidden="true" className="writing-highlight-symbol">
+              A
+            </span>
+            <input
+              type="color"
+              defaultValue="#fff1a8"
+              aria-label="Highlight colour"
+              onChange={(event) =>
+                applyColour("highlightColor", event.currentTarget.value)
+              }
+            />
+          </label>
+          <button
+            type="button"
+            className="writing-colour-clear"
+            aria-label="Clear text and highlight colours"
+            title="Clear text and highlight colours"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              applyColour("textColor");
+              applyColour("highlightColor");
+            }}
+          >
+            Clear
+          </button>
+        </div>
         {toolbarExtra ? (
           <div className="writing-trix-bar-extra">{toolbarExtra}</div>
         ) : null}

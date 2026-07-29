@@ -722,7 +722,12 @@ export function WritingEditor() {
   const [text, setText] = useState(""),
     [font, setFont] = useState<FontKey>(DEFAULT_FONT),
     [dirty, setDirty] = useState(false),
+    [saving, setSaving] = useState(false),
     [status, setStatus] = useState("Saved"),
+    [exporting, setExporting] = useState<"txt" | "docx" | "pdf" | null>(
+      null,
+    ),
+    [exportError, setExportError] = useState(""),
     [quality, setQuality] = useState<S["QualityAnalysisResponse"] | null>(null),
     [analyzing, setAnalyzing] = useState(false),
     [analyzeError, setAnalyzeError] = useState(""),
@@ -794,21 +799,34 @@ export function WritingEditor() {
       ]);
     }
   }, [activeRun.data?.status, id, qc]);
+  const textRef = useRef(text);
+  const fontRef = useRef(font);
+  textRef.current = text;
+  fontRef.current = font;
   const counts = useMemo(() => countText(text), [text]);
   async function save() {
-    if (!q.data) return;
+    if (!q.data) return false;
+    const savedText = text;
+    const savedFont = font;
+    setSaving(true);
     setStatus("Saving…");
     try {
       const next = await writingApi.update(id, {
         expected_version: q.data.version,
-        content: mergeHtml(q.data.content, text, font),
+        content: mergeHtml(q.data.content, savedText, savedFont),
         revision_name: "Manual save",
       });
       qc.setQueryData(["writing", id], next);
-      setDirty(false);
-      setStatus("Saved");
+      const fullySaved =
+        textRef.current === savedText && fontRef.current === savedFont;
+      setDirty(!fullySaved);
+      setStatus(fullySaved ? "Saved" : "Unsaved");
+      return fullySaved;
     } catch (x) {
       setStatus(saveFailureMessage(x));
+      return false;
+    } finally {
+      setSaving(false);
     }
   }
   async function analyze() {
@@ -871,10 +889,26 @@ export function WritingEditor() {
     nav(academicProfileEducationPath(), { state });
   }
   async function download(format: "txt" | "docx" | "pdf") {
-    await downloadResponse(
-      await writingApi.export(id, format),
-      `${q.data?.title ?? "eliteapply"}.${format}`,
-    );
+    setExporting(format);
+    setExportError("");
+    try {
+      if (dirty && !(await save())) {
+        setExportError(
+          "The latest changes could not be saved, so the export was not downloaded.",
+        );
+        return;
+      }
+      await downloadResponse(
+        await writingApi.export(id, format),
+        `${q.data?.title ?? "eliteapply"}.${format}`,
+      );
+    } catch {
+      setExportError(
+        `The ${format.toUpperCase()} export could not be prepared. Try again.`,
+      );
+    } finally {
+      setExporting(null);
+    }
   }
   if (q.isPending) return <div className="page">Loading editor…</div>;
   if (!q.data)
@@ -926,17 +960,25 @@ export function WritingEditor() {
             <Gauge />
             {analyzing ? "Analyzing…" : "Analyze quality"}
           </button>
-          <button onClick={save} disabled={!dirty}>
-            Save
+          <button onClick={() => void save()} disabled={!dirty || saving}>
+            {saving ? "Saving…" : "Save"}
           </button>
           <Select
             ariaLabel="Export"
             value=""
+            disabled={Boolean(exporting) || saving}
             onChange={(value) =>
-              value && download(String(value) as "txt" | "docx" | "pdf")
+              value &&
+              void download(String(value) as "txt" | "docx" | "pdf")
             }
             options={[
-              { value: "", label: "Export", disabled: true },
+              {
+                value: "",
+                label: exporting
+                  ? `Exporting ${exporting.toUpperCase()}…`
+                  : "Export",
+                disabled: true,
+              },
               { value: "txt", label: "TXT" },
               { value: "docx", label: "DOCX" },
               { value: "pdf", label: "PDF" },
@@ -976,6 +1018,11 @@ export function WritingEditor() {
           The latest version could not be loaded. Your open document is still
           available; try saving or refreshing again when the connection
           recovers.
+        </p>
+      ) : null}
+      {exportError ? (
+        <p className="form-error writing-sync-error" role="alert">
+          {exportError}
         </p>
       ) : null}
       <div className="editor-grid">

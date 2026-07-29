@@ -8,7 +8,8 @@ import { documentText } from "../../lib/api/phase3";
 const HTML_FORMAT = "html";
 
 /** Tags Trix itself emits. Deliberately narrow: anything else is treated as plain text. */
-const TRIX_TAG = /<(?:div|h1|blockquote|pre|ul|ol|li|br|strong|em|del|a)\b/i;
+const TRIX_TAG =
+  /<(?:div|h1|blockquote|pre|ul|ol|li|br|strong|em|del|a|span)\b/i;
 
 /** Closing tags that represent a line break once the markup is stripped. */
 const BLOCK_BOUNDARY =

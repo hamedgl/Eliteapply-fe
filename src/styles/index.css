@@ -2033,6 +2033,72 @@ th {
 .writing-trix-bar .trix-button-group--file-tools {
   display: none;
 }
+.writing-colour-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: none;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--line);
+}
+.writing-colour-control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 7px;
+  color: var(--app-ink);
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.writing-colour-control:hover {
+  background: #edf2fa;
+}
+.writing-colour-control input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.writing-colour-control::after {
+  content: "";
+  position: absolute;
+  right: 0.35rem;
+  bottom: 0.25rem;
+  left: 0.35rem;
+  height: 3px;
+  border-radius: 2px;
+  background: #2456d3;
+}
+.writing-colour-control:has(.writing-highlight-symbol)::after {
+  height: 0.45rem;
+  background: #fff1a8;
+}
+.writing-colour-control:focus-within {
+  outline: 2px solid var(--app-blue);
+  outline-offset: 1px;
+}
+.writing-colour-tools .writing-colour-clear {
+  min-height: 2.25rem;
+  padding: 0 0.45rem;
+  border: 0;
+  background: transparent;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.writing-colour-tools .writing-colour-clear:hover {
+  background: #edf2fa;
+  color: var(--app-ink);
+}
 .writing-trix-bar-extra {
   flex: none;
 }
@@ -2085,10 +2151,23 @@ th {
   margin: 1.4rem 0 0.6rem;
 }
 .writing-trix trix-editor blockquote {
+  position: relative;
   margin: 0.9rem 0;
-  padding-left: 1rem;
-  border-left: 3px solid var(--app-line-strong);
+  padding: 0.9rem 1rem 0.9rem 2.6rem;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface-subtle);
   color: var(--app-text);
+}
+.writing-trix trix-editor blockquote::before {
+  content: "“";
+  position: absolute;
+  top: 0.15rem;
+  left: 0.7rem;
+  color: var(--app-blue);
+  font-family: Georgia, serif;
+  font-size: 2.25rem;
+  line-height: 1;
 }
 .writing-trix trix-editor pre {
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -5216,6 +5295,13 @@ th {
 
   .writing-trix-bar-extra .custom-select-container {
     width: 100%;
+  }
+
+  .writing-colour-tools {
+    justify-content: flex-start;
+    padding: 0.35rem 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 
   .writing-trix trix-editor {
