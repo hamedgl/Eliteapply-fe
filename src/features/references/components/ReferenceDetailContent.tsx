@@ -158,7 +158,7 @@ export function ReferenceDetailContent({
           <p className="apps-dialog-subtext">
             <CheckCircle2 aria-hidden="true" />
             {reference.status === "approved"
-              ? "The referee reviewed and confirmed the uploaded document. Use Download verified document to open your file."
+              ? "The referee reviewed and confirmed the uploaded document. Download verified document gives you the letter as a PDF with the EliteApply verification page appended."
               : "Waiting for the referee to review the uploaded document."}
           </p>
         ) : reference.confidential ? (

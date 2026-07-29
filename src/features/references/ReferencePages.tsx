@@ -11,7 +11,6 @@ import { useSlashFocus } from "../applications/hooks";
 import { useFocusTrap } from "../../lib/dom-hooks";
 import { referencesApi } from "../../lib/api/phase3";
 import { downloadResponse } from "../../lib/api/download";
-import { documentsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { openSignedDownload } from "../../lib/api/signedTransport";
 import {
@@ -37,11 +36,9 @@ import { RequestReferenceFlow } from "./components/RequestReferenceFlow";
 import type { ReferenceActionKind } from "./components/ReferenceActionMenu";
 import "../../styles/workspace.css";
 
+/** Every mode downloads through the same endpoint: the API returns the letter (or, for
+ *  existing_upload, the uploaded document) with the verification page appended. */
 async function downloadReference(reference: Reference) {
-  if (reference.mode === "existing_upload" && reference.existing_document_id) {
-    openSignedDownload((await documentsApi.download(reference.existing_document_id)).download_url);
-    return;
-  }
   await downloadResponse(
     await referencesApi.download(reference.id),
     `reference-${reference.public_id}.pdf`,
