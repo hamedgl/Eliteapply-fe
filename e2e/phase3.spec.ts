@@ -211,8 +211,28 @@ test("writing library and editor are responsive and save-state aware", async ({
   );
   await page.getByLabel("Document content").fill("Updated statement");
   await expect(page.getByText("Unsaved")).toBeVisible();
+  const canvas = page.locator(".writing-trix");
+  const [canvasBox, editorMainBox] = await Promise.all([
+    canvas.boundingBox(),
+    page.locator(".editor-grid > main").boundingBox(),
+  ]);
+  expect(canvasBox?.width).toBeGreaterThan(540);
+  expect(
+    Math.abs(
+      canvasBox!.x +
+        canvasBox!.width / 2 -
+        (editorMainBox!.x + editorMainBox!.width / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+  await expect(canvas).toHaveCSS("border-color", "rgb(138, 169, 234)");
   await page.screenshot({
     path: "/tmp/eliteapply-phase3-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 2048, height: 1000 });
+  expect((await canvas.boundingBox())?.width).toBeGreaterThanOrEqual(860);
+  await page.screenshot({
+    path: "/tmp/eliteapply-writing-editor-wide.png",
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
