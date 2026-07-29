@@ -11,6 +11,7 @@ import { billingApi, newMutationId } from "../../lib/api/billing";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useEntitlements } from "../../lib/billing/provider";
 import { preloadAppRoute } from "../../app/preload";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 
 const number = new Intl.NumberFormat();
 const date = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -119,7 +120,10 @@ export function BillingPage() {
   return (
     <div className="page settings billing-page">
       <header>
-        <h1>Billing & usage</h1>
+        <div className="workspace-page-inline-heading">
+          <h1>Billing & usage</h1>
+          <WorkspacePageGuideButton />
+        </div>
         <SettingsNav />
       </header>
 

@@ -39,6 +39,7 @@ import { ApplicationReadinessCard } from "./components/ApplicationReadinessCard"
 import { ProgressExplainerDialog } from "./components/ProgressExplainerDialog";
 import { readDraft, type SectionKey } from "../profile/model";
 import { PageRefreshButton } from "../../components/page/PageHeader";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 
 type Deadline = DashboardDeadline;
 type SetupStatus = "done" | "todo" | "checking" | "unavailable";
@@ -461,6 +462,7 @@ export function DashboardPage() {
               interviewsQuery.isFetching
             }
           />
+          <WorkspacePageGuideButton />
           <Link className="primary dashboard-add" to="/app/applications">
             <Plus aria-hidden="true" /> Add application
           </Link>

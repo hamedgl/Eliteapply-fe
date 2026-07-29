@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
+import { WorkspacePageGuideButton } from "../AppShell";
 
 export function PageRefreshButton({
   onRefresh,
@@ -48,14 +49,13 @@ export function PageHeader({
         {description ? <p>{description}</p> : null}
         {meta ? <span className="apps-header-count">{meta}</span> : null}
       </div>
-      {actions || onRefresh ? (
-        <div className="apps-header-actions">
-          {onRefresh ? (
-            <PageRefreshButton onRefresh={onRefresh} refreshing={refreshing} />
-          ) : null}
-          {actions}
-        </div>
-      ) : null}
+      <div className="apps-header-actions">
+        {onRefresh ? (
+          <PageRefreshButton onRefresh={onRefresh} refreshing={refreshing} />
+        ) : null}
+        <WorkspacePageGuideButton />
+        {actions}
+      </div>
     </header>
   );
 }

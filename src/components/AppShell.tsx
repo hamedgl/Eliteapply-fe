@@ -25,7 +25,13 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   NavLink,
@@ -86,6 +92,28 @@ export type WorkspacePageGuide = {
   intro: string;
   tips: readonly [string, string];
 };
+
+const WorkspacePageGuideContext = createContext<{
+  guide: WorkspacePageGuide;
+  open: () => void;
+} | null>(null);
+
+export function WorkspacePageGuideButton() {
+  const context = useContext(WorkspacePageGuideContext);
+  if (!context) return null;
+
+  return (
+    <button
+      className="apps-icon-button workspace-page-guide-button"
+      type="button"
+      onClick={context.open}
+      aria-label={`About this page: ${context.guide.title}`}
+      title="About this page"
+    >
+      <Info aria-hidden="true" />
+    </button>
+  );
+}
 
 const pageGuide = (
   title: string,
@@ -621,15 +649,6 @@ export function AppShell() {
           />
         </div>
         <button
-          className="mobile-guide-button"
-          type="button"
-          onClick={() => setPageGuideOpen(true)}
-          aria-label={`About this page: ${pageGuide.title}`}
-          title="About this page"
-        >
-          <Info aria-hidden="true" />
-        </button>
-        <button
           ref={menuButtonRef}
           className="mobile-menu"
           type="button"
@@ -801,15 +820,6 @@ export function AppShell() {
         <header className="app-topbar">
           <GlobalSearch destinations={paletteDestinations} />
           <div className="app-topbar-actions">
-            <button
-              className="app-topbar-bell"
-              type="button"
-              onClick={() => setPageGuideOpen(true)}
-              aria-label={`About this page: ${pageGuide.title}`}
-              title="About this page"
-            >
-              <Info aria-hidden="true" />
-            </button>
             <div style={{ position: "relative" }}>
               <button
                 ref={notifButtonRef}
@@ -871,9 +881,13 @@ export function AppShell() {
             </div>
           </div>
         </header>
-        <PromptDialogProvider>
-          <Outlet />
-        </PromptDialogProvider>
+        <WorkspacePageGuideContext.Provider
+          value={{ guide: pageGuide, open: () => setPageGuideOpen(true) }}
+        >
+          <PromptDialogProvider>
+            <Outlet />
+          </PromptDialogProvider>
+        </WorkspacePageGuideContext.Provider>
       </main>
       {pageGuideOpen ? (
         <WorkspacePageGuideDialog

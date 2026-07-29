@@ -5,6 +5,7 @@ import { Plus, Sparkles, X } from "lucide-react";
 import { Select } from "../../components/ui/select";
 import { ApiError } from "../../lib/api/errors";
 import { PageHeader } from "../../components/page/PageHeader";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 import { ActiveFilterChips } from "../applications/components/ActiveFilterChips";
 import { useSlashFocus } from "../applications/hooks";
 import { useFocusTrap } from "../../lib/dom-hooks";
@@ -565,9 +566,12 @@ export function ReferenceDetail() {
 
   return (
     <div className="page reference-detail-page">
-      <Link to="/app/references" className="apps-inline-link">
-        ← References
-      </Link>
+      <div className="workspace-page-inline-heading">
+        <Link to="/app/references" className="apps-inline-link">
+          ← References
+        </Link>
+        <WorkspacePageGuideButton />
+      </div>
       {notice ? (
         <p className="inline-success" role="status">
           {notice}
@@ -633,10 +637,15 @@ export function NewReference() {
   const nav = useNavigate();
   return (
     <div className="page">
-      <Link to="/app/references" className="apps-inline-link">
-        ← References
-      </Link>
-      <h1>Request reference</h1>
+      <div className="workspace-page-inline-heading">
+        <div>
+          <Link to="/app/references" className="apps-inline-link">
+            ← References
+          </Link>
+          <h1>Request reference</h1>
+        </div>
+        <WorkspacePageGuideButton />
+      </div>
       <RequestReferenceFlow onCreated={(id) => nav(`/app/references/${id}`)} />
     </div>
   );

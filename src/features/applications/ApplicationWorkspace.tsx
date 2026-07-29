@@ -57,6 +57,7 @@ import { ProgressBar } from "../../components/data-display/ProgressBar";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { Select } from "../../components/ui/select";
 import { PageRefreshButton } from "../../components/page/PageHeader";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 import { useFocusTrap } from "./hooks";
 import { DuplicateApplication } from "./components/ApplicationDialogs";
 import {
@@ -371,6 +372,7 @@ export function ApplicationWorkspace() {
               onRefresh={() => void refreshWorkspace()}
               refreshing={workspace.isFetching}
             />
+            <WorkspacePageGuideButton />
             <button
               type="button"
               className="primary"
@@ -3816,9 +3818,12 @@ function ReadOnlyCollaboratorWorkspace({
   return (
     <div className="page apps-page detail-page">
       <header className="detail-application-header">
-        <Link to="/app/applications" className="detail-back-link">
-          <ArrowLeft aria-hidden="true" /> Back to applications
-        </Link>
+        <div className="detail-header-topline">
+          <Link to="/app/applications" className="detail-back-link">
+            <ArrowLeft aria-hidden="true" /> Back to applications
+          </Link>
+          <WorkspacePageGuideButton />
+        </div>
         <div className="detail-title-line">
           <h1>{view.application.title}</h1>
           <StatusBadge tone="blue">{label(view.role)}</StatusBadge>

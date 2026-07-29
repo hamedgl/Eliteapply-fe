@@ -1675,6 +1675,12 @@
   gap: 0.5rem;
   flex: none;
 }
+.workspace-page-inline-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
 .apps-icon-button {
   display: inline-flex;
   align-items: center;

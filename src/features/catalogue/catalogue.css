@@ -149,9 +149,4 @@
   .catalogue-tabs button {
     flex: 1;
   }
-
-  .catalogue-add-private {
-    width: 100%;
-    justify-content: center;
-  }
 }

@@ -47,6 +47,11 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith("/academic-documents")) {
       return route.fulfill({ json: [] });
     }
+    if (url.includes("/catalogue/")) {
+      return route.fulfill({
+        json: { items: [], has_more: false, next_cursor: null, total: 0 },
+      });
+    }
     return route.fulfill({ json: {} });
   });
 });
@@ -96,6 +101,9 @@ test("stage colours explain themselves and every workspace page has help", async
   const overview = page
     .locator(".dashboard-surface")
     .filter({ hasText: "Applications overview" });
+  await overview.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  );
   await overview.getByRole("button", { name: "Researching 3" }).hover();
   await expect(overview.getByRole("status")).toContainText(
     "You are still deciding whether this opportunity is worth pursuing.",
@@ -114,6 +122,13 @@ test("stage colours explain themselves and every workspace page has help", async
   await expect(overview.getByRole("status")).toContainText(
     "You are working on the requirements and supporting material.",
   );
+  await page.mouse.move(
+    donutBox!.x + donutBox!.width * 0.5,
+    donutBox!.y + donutBox!.height * 0.89,
+  );
+  await expect(overview.getByRole("status")).toContainText(
+    "You are still deciding whether this opportunity is worth pursuing.",
+  );
   await preparingSegment.focus();
   await page.screenshot({
     path: "/tmp/eliteapply-stage-details.png",
@@ -124,6 +139,16 @@ test("stage colours explain themselves and every workspace page has help", async
   const help = page.getByRole("button", {
     name: "About this page: Dashboard",
   });
+  await expect(
+    page
+      .locator(".dashboard-header .apps-header-actions")
+      .getByRole("button", { name: "About this page: Dashboard" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".app-topbar, .mobile-appbar")
+      .getByRole("button", { name: "About this page: Dashboard" }),
+  ).toHaveCount(0);
   await help.click();
   const guide = page.getByRole("dialog", { name: "About Dashboard" });
   await expect(guide).toContainText(
@@ -137,7 +162,32 @@ test("stage colours explain themselves and every workspace page has help", async
   await page.keyboard.press("Escape");
   await expect(guide).toBeHidden();
 
+  await page.goto("/app/catalogue");
+  const catalogueActions = page.locator(
+    ".catalogue-page > .apps-header .apps-header-actions",
+  );
+  await expect(
+    catalogueActions.getByRole("button", {
+      name: "About this page: Academic catalogue",
+    }),
+  ).toBeVisible();
+  await expect(
+    catalogueActions.getByRole("button", {
+      name: "Add private institution",
+    }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/eliteapply-catalogue-guide-trigger.png",
+    animations: "disabled",
+  });
   await page.setViewportSize({ width: 320, height: 700 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+
+  await page.goto("/app/dashboard");
   const mobileHelp = page.getByRole("button", {
     name: "About this page: Dashboard",
   });

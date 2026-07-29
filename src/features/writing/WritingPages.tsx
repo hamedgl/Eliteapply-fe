@@ -50,6 +50,7 @@ import { DocumentOutline } from "./DocumentOutline";
 import { WritingReviewDrawer } from "./WritingReviewDrawer";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { PageRefreshButton } from "../../components/page/PageHeader";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 import {
   contentToHtml,
   countText,
@@ -201,6 +202,7 @@ export function WritingLibrary({
             onRefresh={() => void q.refetch()}
             refreshing={q.isFetching}
           />
+          <WorkspacePageGuideButton />
           <button
             type="button"
             className="primary"
@@ -911,6 +913,7 @@ export function WritingEditor() {
           </p>
         </div>
         <div>
+          <WorkspacePageGuideButton />
           <button onClick={() => setShowPreview((value) => !value)}>
             <Eye />
             Preview

@@ -116,9 +116,18 @@ export function CataloguePage() {
         onRefresh={() => void q.refetch()}
         refreshing={q.isFetching}
         actions={
-          <Link className="apps-icon-button" to="/app/discovery" aria-label="Saved searches & matches" title="Saved searches & matches">
-            <Search aria-hidden="true" />
-          </Link>
+          <>
+            <Link className="apps-icon-button" to="/app/discovery" aria-label="Saved searches & matches" title="Saved searches & matches">
+              <Search aria-hidden="true" />
+            </Link>
+            <button
+              className="primary catalogue-add-private"
+              type="button"
+              onClick={() => setCreating(true)}
+            >
+              <Plus aria-hidden="true" /> {addPrivateLabel}
+            </button>
+          </>
         }
       />
 
@@ -138,13 +147,6 @@ export function CataloguePage() {
             </button>
           ))}
         </nav>
-        <button
-          className="primary catalogue-add-private"
-          type="button"
-          onClick={() => setCreating(true)}
-        >
-          <Plus aria-hidden="true" /> {addPrivateLabel}
-        </button>
       </div>
 
       <div className="apps-card apps-toolbar">

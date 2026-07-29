@@ -13,6 +13,7 @@ import type { components } from "../../generated/api/schema";
 import { applicationsApi, intelligenceApi } from "../../lib/api/phase2";
 import { countryName } from "../../lib/countries";
 import { queryKeys } from "../../lib/api/queryKeys";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 
 type Import = components["schemas"]["OpportunityImportResponse"];
 const terminal = new Set([
@@ -280,6 +281,9 @@ export function ImportPage() {
             Bring in a web page or pasted source, then review each extracted
             field before it enters your application.
           </p>
+        </div>
+        <div className="apps-header-actions">
+          <WorkspacePageGuideButton />
         </div>
       </header>
       <div className="import-layout">

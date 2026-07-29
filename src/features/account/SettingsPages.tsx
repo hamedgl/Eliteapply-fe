@@ -7,6 +7,7 @@ import { authApi } from "../../lib/api/auth";
 import { productConfig } from "../../lib/config/product";
 import { downloadResponse } from "../../lib/api/download";
 import { preloadAppRoute } from "../../app/preload";
+import { WorkspacePageGuideButton } from "../../components/AppShell";
 
 type Status = { text: string; tone: "success" | "error" | "pending" } | null;
 
@@ -521,7 +522,10 @@ function Settings({
   return (
     <div className="page settings">
       <header className="settings-heading">
-        <h1>Settings</h1>
+        <div className="workspace-page-inline-heading">
+          <h1>Settings</h1>
+          <WorkspacePageGuideButton />
+        </div>
         <p>{description}</p>
         <nav aria-label="Settings">
           {settingsTabs.map((tab) => (
