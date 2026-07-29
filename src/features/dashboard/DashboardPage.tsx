@@ -63,6 +63,25 @@ const STAGE_COLORS = [
   "#e34948",
 ];
 
+const STAGE_DESCRIPTIONS: Record<string, string> = {
+  researching: "You are still deciding whether this opportunity is worth pursuing.",
+  shortlisted: "You saved this opportunity and plan to assess it next.",
+  preparing: "You are working on the requirements and supporting material.",
+  waiting_for_documents: "Progress is paused until the required documents are ready.",
+  waiting_for_reference: "Progress is paused until a referee responds.",
+  ready_to_submit: "The application is ready for a final check and submission.",
+  submitted: "You sent the application.",
+  under_review: "The institution is reviewing the application.",
+  interview: "The application has moved to the interview stage.",
+  waitlisted: "The institution placed the application on a waitlist.",
+  offered: "You received an offer.",
+  awarded: "The scholarship, grant or place was awarded.",
+  rejected: "The application was not accepted.",
+  withdrawn: "You chose to withdraw the application.",
+  expired: "The deadline passed before submission.",
+  archived: "You moved this application out of the active workspace.",
+};
+
 function assignStageColors(stages: Record<string, number>) {
   const colors = new Map<string, string>();
   Object.keys(stages).forEach((stage, index) => {
@@ -106,6 +125,7 @@ export function DashboardPage() {
   const [selectedPhaseIndex, setSelectedPhaseIndex] = useState<number | null>(
     null,
   );
+  const [activeDonutStage, setActiveDonutStage] = useState<string | null>(null);
   const query = useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: async () => safeDashboard(await platformApi.dashboard()),
@@ -498,26 +518,74 @@ export function DashboardPage() {
                   stages={dashboard.applications_by_stage}
                   total={applicationCount}
                   colors={stageColors}
+                  activeStage={activeDonutStage}
+                  onStageChange={setActiveDonutStage}
                 />
                 <div className="dashboard-donut-copy">
                   <strong>{applicationCount}</strong>
                   <span>Total</span>
                 </div>
               </div>
-              <ul className="dashboard-legend">
-                {Object.entries(dashboard.applications_by_stage)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([stage, count]) => (
-                    <li key={stage}>
-                      <i
-                        style={{ background: stageColors.get(stage) }}
-                        aria-hidden="true"
-                      />
-                      <span>{humanize(stage)}</span>
-                      <strong>{count}</strong>
-                    </li>
-                  ))}
-              </ul>
+              <div className="dashboard-stage-panel">
+                <ul className="dashboard-legend">
+                  {Object.entries(dashboard.applications_by_stage)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([stage, count]) => (
+                      <li key={stage}>
+                        <button
+                          type="button"
+                          className={
+                            activeDonutStage === stage ? "is-active" : undefined
+                          }
+                          aria-pressed={activeDonutStage === stage}
+                          onClick={() => setActiveDonutStage(stage)}
+                          onFocus={() => setActiveDonutStage(stage)}
+                          onBlur={() => setActiveDonutStage(null)}
+                          onMouseEnter={() => setActiveDonutStage(stage)}
+                          onMouseLeave={() => setActiveDonutStage(null)}
+                        >
+                          <i
+                            style={{ background: stageColors.get(stage) }}
+                            aria-hidden="true"
+                          />
+                          <span>{humanize(stage)}</span>
+                          <strong>{count}</strong>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+                <div
+                  className={`dashboard-stage-detail ${
+                    activeDonutStage ? "is-active" : "is-hint"
+                  }`}
+                  id="application-stage-detail"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {activeDonutStage &&
+                  dashboard.applications_by_stage[activeDonutStage] !==
+                    undefined ? (
+                    <>
+                      <div>
+                        <i
+                          style={{
+                            background: stageColors.get(activeDonutStage),
+                          }}
+                          aria-hidden="true"
+                        />
+                        <strong>{humanize(activeDonutStage)}</strong>
+                        <span>
+                          {dashboard.applications_by_stage[activeDonutStage]} of{" "}
+                          {applicationCount}
+                        </span>
+                      </div>
+                      <p>{stageDescription(activeDonutStage)}</p>
+                    </>
+                  ) : (
+                    <p>Hover, tap or focus a colour to see what its stage means.</p>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             <EmptyState
@@ -867,16 +935,26 @@ function ApplicationsDonut({
   stages,
   total,
   colors,
+  activeStage,
+  onStageChange,
 }: {
   stages: Record<string, number>;
   total: number;
   colors: Map<string, string>;
+  activeStage: string | null;
+  onStageChange: (stage: string | null) => void;
 }) {
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
   let drawn = 0;
   return (
-    <svg viewBox="0 0 132 132" width={132} height={132} aria-hidden="true">
+    <svg
+      viewBox="0 0 132 132"
+      width={132}
+      height={132}
+      role="group"
+      aria-label="Application stages"
+    >
       <circle className="donut-track" cx={66} cy={66} r={radius} />
       {Object.entries(stages).map(([stage, count]) => {
         const fraction = total > 0 ? count / total : 0;
@@ -886,17 +964,47 @@ function ApplicationsDonut({
         return (
           <circle
             key={stage}
-            className="donut-segment"
+            className={`donut-segment${
+              activeStage === stage
+                ? " is-active"
+                : activeStage
+                  ? " is-muted"
+                  : ""
+            }`}
             cx={66}
             cy={66}
             r={radius}
+            role="button"
+            tabIndex={0}
+            aria-label={`${humanize(stage)}, ${count} ${
+              count === 1 ? "application" : "applications"
+            }. ${stageDescription(stage)}`}
+            aria-pressed={activeStage === stage}
+            aria-describedby="application-stage-detail"
             stroke={colors.get(stage)}
             strokeDasharray={`${dash} ${circumference - dash}`}
             strokeDashoffset={offset}
+            onClick={() => onStageChange(stage)}
+            onFocus={() => onStageChange(stage)}
+            onBlur={() => onStageChange(null)}
+            onMouseEnter={() => onStageChange(stage)}
+            onMouseLeave={() => onStageChange(null)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              onStageChange(stage);
+            }}
           />
         );
       })}
     </svg>
+  );
+}
+
+function stageDescription(stage: string) {
+  return (
+    STAGE_DESCRIPTIONS[stage] ??
+    `These applications are marked as ${humanize(stage).toLocaleLowerCase()}.`
   );
 }
 

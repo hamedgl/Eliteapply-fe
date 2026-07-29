@@ -6,6 +6,7 @@ import {
   FileText,
   FolderKanban,
   GraduationCap,
+  Info,
   LayoutDashboard,
   Library,
   LifeBuoy,
@@ -26,7 +27,12 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { authApi } from "../lib/api/auth";
 import { useSession } from "../lib/auth/session";
 import { notificationsApi } from "../lib/api/phase3";
@@ -75,6 +81,274 @@ const navigationGroups: NavGroup[] = [
 
 const paletteDestinations: NavItem[] = navigationGroups.flatMap((group) => group.items);
 
+export type WorkspacePageGuide = {
+  title: string;
+  intro: string;
+  tips: readonly [string, string];
+};
+
+const pageGuide = (
+  title: string,
+  intro: string,
+  first: string,
+  second: string,
+): WorkspacePageGuide => ({ title, intro, tips: [first, second] });
+
+const workspacePageGuides: ReadonlyArray<{
+  match: RegExp;
+  guide: WorkspacePageGuide;
+}> = [
+  {
+    match: /^\/app\/(?:dashboard|onboarding)$/,
+    guide: pageGuide(
+      "Dashboard",
+      "This page gives you a quick read on your whole workspace.",
+      "Check deadlines and application readiness before you plan your work.",
+      "Use the recommended next step when you are unsure where to start.",
+    ),
+  },
+  {
+    match: /^\/app\/applications\/import$/,
+    guide: pageGuide(
+      "Import an opportunity",
+      "Bring an opportunity into your workspace from a web page or file.",
+      "Check the source and extracted details before you confirm the import.",
+      "Fix anything that looks wrong before creating the application.",
+    ),
+  },
+  {
+    match: /^\/app\/applications\/[^/]+(?:\/.*)?$/,
+    guide: pageGuide(
+      "Application workspace",
+      "Everything for one application lives on this page.",
+      "Turn the requirements into tasks, then add due dates where they matter.",
+      "Link the documents, writing and references you plan to submit.",
+    ),
+  },
+  {
+    match: /^\/app\/applications$/,
+    guide: pageGuide(
+      "Applications",
+      "Keep every scholarship, programme, fellowship or grant you are considering in one list.",
+      "Add the deadline as soon as you know it.",
+      "Open an application to manage its requirements and supporting work.",
+    ),
+  },
+  {
+    match: /^\/app\/academic-profile$/,
+    guide: pageGuide(
+      "Academic profile",
+      "Save your education, goals and achievements here so you can reuse them.",
+      "Complete the core details first, then add evidence that strengthens your applications.",
+      "Review the profile when your plans or academic record change.",
+    ),
+  },
+  {
+    match: /^\/app\/documents\/[^/]+$/,
+    guide: pageGuide(
+      "Document details",
+      "Use this page to check one file and where it is used.",
+      "Review the file details and linked applications before replacing it.",
+      "Use versions and activity when you need to trace a change.",
+    ),
+  },
+  {
+    match: /^\/app\/documents$/,
+    guide: pageGuide(
+      "Documents",
+      "Keep transcripts, certificates and other supporting files here.",
+      "Use clear names so you can find the right file near a deadline.",
+      "Link each document to the applications that need it.",
+    ),
+  },
+  {
+    match: /^\/app\/catalogue\/[^/]+\/[^/]+$/,
+    guide: pageGuide(
+      "Catalogue record",
+      "This page shows the details saved for one institution, programme or scholarship.",
+      "Check the source and eligibility details before you act on the record.",
+      "Create an application when you decide to pursue the opportunity.",
+    ),
+  },
+  {
+    match: /^\/app\/catalogue$/,
+    guide: pageGuide(
+      "Academic catalogue",
+      "Browse institutions, programmes and scholarships from one place.",
+      "Use filters to narrow the list to what fits your plans.",
+      "Open a record before adding it to your applications.",
+    ),
+  },
+  {
+    match: /^\/app\/discovery$/,
+    guide: pageGuide(
+      "Saved searches",
+      "Keep useful catalogue searches here and return to their matches later.",
+      "Name a search after the goal it serves so it is easy to recognise.",
+      "Update the filters when your study plans change.",
+    ),
+  },
+  {
+    match: /^\/app\/writing\/new$/,
+    guide: pageGuide(
+      "New writing document",
+      "Start a statement, essay, study plan or academic CV here.",
+      "Choose the document type and application before you begin.",
+      "Add the prompt and word limit when the application provides them.",
+    ),
+  },
+  {
+    match: /^\/app\/writing\/[^/]+$/,
+    guide: pageGuide(
+      "Writing document",
+      "Write and revise one application document on this page.",
+      "Keep the prompt and limit visible while you edit.",
+      "Use comments and review tools before you mark the document final.",
+    ),
+  },
+  {
+    match: /^\/app\/writing$/,
+    guide: pageGuide(
+      "Writing Studio",
+      "Keep your statements, essays, study plans and academic CVs here.",
+      "Link each document to its application so the context stays clear.",
+      "Open unfinished work from the library instead of creating another copy.",
+    ),
+  },
+  {
+    match: /^\/app\/stories$/,
+    guide: pageGuide(
+      "Story Bank",
+      "Save examples from your experience so you can reuse them in writing and interviews.",
+      "Record what happened, what you did and what changed.",
+      "Link a story when it supports a document or application.",
+    ),
+  },
+  {
+    match: /^\/app\/references\/new$/,
+    guide: pageGuide(
+      "New reference request",
+      "Set up a reference request and give the referee enough context to respond.",
+      "Check the name, email and due date before you send anything.",
+      "Attach the request to the application that needs it.",
+    ),
+  },
+  {
+    match: /^\/app\/references\/[^/]+$/,
+    guide: pageGuide(
+      "Reference details",
+      "Check one reference request, its status and recent activity here.",
+      "Send a reminder only when the referee still has time to respond.",
+      "Confirm the right applications are attached before the deadline.",
+    ),
+  },
+  {
+    match: /^\/app\/references$/,
+    guide: pageGuide(
+      "References",
+      "Track your reference requests and submitted letters here.",
+      "Watch the due dates and status before you send a reminder.",
+      "Attach each reference to the applications that will use it.",
+    ),
+  },
+  {
+    match: /^\/app\/interviews\/new$/,
+    guide: pageGuide(
+      "New practice session",
+      "Choose an application and the kind of interview you want to practise.",
+      "Pick a short session when you want a quick rehearsal.",
+      "Use a clear focus if there is a topic you need to work on.",
+    ),
+  },
+  {
+    match: /^\/app\/interviews\/[^/]+$/,
+    guide: pageGuide(
+      "Practice session",
+      "Answer each question here and review the feedback before moving on.",
+      "Take a moment to improve the answer instead of rushing through the session.",
+      "Finish the session when you are ready to review the full report.",
+    ),
+  },
+  {
+    match: /^\/app\/interviews$/,
+    guide: pageGuide(
+      "Interview practice",
+      "Rehearse application interviews and return to earlier feedback here.",
+      "Open an unfinished session if you want to keep going.",
+      "Start a new session when you need a different focus or application.",
+    ),
+  },
+  {
+    match: /^\/app\/notifications$/,
+    guide: pageGuide(
+      "Notifications",
+      "This page collects updates from across your workspace.",
+      "Open an item to go to the work it refers to.",
+      "Mark older items as read once you have dealt with them.",
+    ),
+  },
+  {
+    match: /^\/app\/reminders$/,
+    guide: pageGuide(
+      "Reminders",
+      "Plan follow-ups and time-sensitive work without changing the original deadline.",
+      "Use the calendar when dates are easier to compare visually.",
+      "Snooze a reminder only when you have chosen a better time.",
+    ),
+  },
+  {
+    match: /^\/app\/settings\/profile$/,
+    guide: pageGuide(
+      "Profile settings",
+      "Change the account details people see around your workspace.",
+      "Use a name and photo you are comfortable showing in shared views.",
+      "Save contact changes before leaving the page.",
+    ),
+  },
+  {
+    match: /^\/app\/settings\/security$/,
+    guide: pageGuide(
+      "Security settings",
+      "Change your password here.",
+      "Use a password you do not use on another account.",
+      "Keep the current password nearby because you will need it to save the change.",
+    ),
+  },
+  {
+    match: /^\/app\/settings\/privacy$/,
+    guide: pageGuide(
+      "Privacy and data",
+      "Download your data, choose email preferences or delete your account here.",
+      "Download an export before deletion if you need a copy of your work.",
+      "Read the confirmation carefully because account deletion cannot be undone.",
+    ),
+  },
+  {
+    match: /^\/app\/settings\/billing(?:\/.*)?$/,
+    guide: pageGuide(
+      "Billing and usage",
+      "Check your plan, AI usage and purchase history here.",
+      "Review your current allowance before starting a large generation task.",
+      "Use the subscription controls when you need to change or cancel a paid plan.",
+    ),
+  },
+];
+
+const defaultWorkspacePageGuide = pageGuide(
+  "Workspace",
+  "Use this page for the work shown in its heading.",
+  "Check the page actions before opening another section.",
+  "Use the main navigation when you need to switch tasks.",
+);
+
+export function getWorkspacePageGuide(pathname: string) {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return (
+    workspacePageGuides.find(({ match }) => match.test(path))?.guide ??
+    defaultWorkspacePageGuide
+  );
+}
+
 /** Shared menu content for both the sidebar footer and the topbar profile dropdown. */
 function AccountMenuItems({
   onNavigate,
@@ -113,6 +387,46 @@ function AccountMenuItems({
   );
 }
 
+function WorkspacePageGuideDialog({
+  guide,
+  onClose,
+}: {
+  guide: WorkspacePageGuide;
+  onClose: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="apps-dialog workspace-page-guide-dialog"
+      aria-labelledby="workspace-page-guide-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <header className="apps-dialog-header">
+        <h2 id="workspace-page-guide-title">About {guide.title}</h2>
+        <button type="button" onClick={onClose} aria-label="Close guide">
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      <p className="workspace-page-guide-intro">{guide.intro}</p>
+      <ol className="workspace-page-guide-steps">
+        {guide.tips.map((tip) => (
+          <li key={tip}>{tip}</li>
+        ))}
+      </ol>
+    </dialog>
+  );
+}
+
 export function AppShell() {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(
@@ -129,11 +443,13 @@ export function AppShell() {
   // the visible button before its click could fire.
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [mobileNotifDropdownOpen, setMobileNotifDropdownOpen] = useState(false);
+  const [pageGuideOpen, setPageGuideOpen] = useState(false);
   const notifButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNotifButtonRef = useRef<HTMLButtonElement>(null);
   const sidebarNotifButtonRef = useRef<HTMLAnchorElement>(null);
   const user = useSession((state) => state.user);
   const clear = useSession((state) => state.clear);
+  const location = useLocation();
   const navigate = useNavigate();
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -268,6 +584,7 @@ export function AppShell() {
   const avatarLabel = (user?.full_name || user?.email || "EA")
     .slice(0, 1)
     .toUpperCase();
+  const pageGuide = getWorkspacePageGuide(location.pathname);
 
   return (
     <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
@@ -303,6 +620,15 @@ export function AppShell() {
             triggerRef={mobileNotifButtonRef}
           />
         </div>
+        <button
+          className="mobile-guide-button"
+          type="button"
+          onClick={() => setPageGuideOpen(true)}
+          aria-label={`About this page: ${pageGuide.title}`}
+          title="About this page"
+        >
+          <Info aria-hidden="true" />
+        </button>
         <button
           ref={menuButtonRef}
           className="mobile-menu"
@@ -475,6 +801,15 @@ export function AppShell() {
         <header className="app-topbar">
           <GlobalSearch destinations={paletteDestinations} />
           <div className="app-topbar-actions">
+            <button
+              className="app-topbar-bell"
+              type="button"
+              onClick={() => setPageGuideOpen(true)}
+              aria-label={`About this page: ${pageGuide.title}`}
+              title="About this page"
+            >
+              <Info aria-hidden="true" />
+            </button>
             <div style={{ position: "relative" }}>
               <button
                 ref={notifButtonRef}
@@ -540,6 +875,12 @@ export function AppShell() {
           <Outlet />
         </PromptDialogProvider>
       </main>
+      {pageGuideOpen ? (
+        <WorkspacePageGuideDialog
+          guide={pageGuide}
+          onClose={() => setPageGuideOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

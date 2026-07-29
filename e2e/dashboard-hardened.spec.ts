@@ -79,6 +79,87 @@ test("dashboard turns empty backend state into clear next actions", async ({
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test("stage colours explain themselves and every workspace page has help", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/dashboard", (route) =>
+    route.fulfill({
+      json: {
+        ...dashboard,
+        applications_by_stage: { researching: 3, preparing: 1 },
+      },
+    }),
+  );
+
+  await page.goto("/app/dashboard");
+
+  const overview = page
+    .locator(".dashboard-surface")
+    .filter({ hasText: "Applications overview" });
+  await overview.getByRole("button", { name: "Researching 3" }).hover();
+  await expect(overview.getByRole("status")).toContainText(
+    "You are still deciding whether this opportunity is worth pursuing.",
+  );
+  await expect(overview.getByRole("status")).toContainText("3 of 4");
+
+  const preparingSegment = overview.locator(
+    '.donut-segment[aria-label^="Preparing, 1 application"]',
+  );
+  const donutBox = await overview.locator(".dashboard-donut svg").boundingBox();
+  expect(donutBox).not.toBeNull();
+  await page.mouse.move(
+    donutBox!.x + donutBox!.width * 0.22,
+    donutBox!.y + donutBox!.height * 0.22,
+  );
+  await expect(overview.getByRole("status")).toContainText(
+    "You are working on the requirements and supporting material.",
+  );
+  await preparingSegment.focus();
+  await page.screenshot({
+    path: "/tmp/eliteapply-stage-details.png",
+    fullPage: true,
+    animations: "disabled",
+  });
+
+  const help = page.getByRole("button", {
+    name: "About this page: Dashboard",
+  });
+  await help.click();
+  const guide = page.getByRole("dialog", { name: "About Dashboard" });
+  await expect(guide).toContainText(
+    "This page gives you a quick read on your whole workspace.",
+  );
+  await expect(guide.getByRole("listitem")).toHaveCount(2);
+  await page.screenshot({
+    path: "/tmp/eliteapply-page-guide.png",
+    animations: "disabled",
+  });
+  await page.keyboard.press("Escape");
+  await expect(guide).toBeHidden();
+
+  await page.setViewportSize({ width: 320, height: 700 });
+  const mobileHelp = page.getByRole("button", {
+    name: "About this page: Dashboard",
+  });
+  const size = await mobileHelp.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+  expect(size.width).toBeGreaterThanOrEqual(44);
+  expect(size.height).toBeGreaterThanOrEqual(44);
+  await mobileHelp.click();
+  await expect(page.getByRole("dialog", { name: "About Dashboard" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "/tmp/eliteapply-page-guide-mobile.png",
+    animations: "disabled",
+  });
+});
+
 test("mobile dashboard keeps the progress gauge and drawer contained", async ({
   page,
 }) => {
