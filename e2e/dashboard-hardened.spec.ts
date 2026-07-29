@@ -245,14 +245,33 @@ test("workspace guide uses real saved data and keeps three actions per page", as
       ],
     }),
   );
+  await page.route("**/api/v1/writing-studio/documents*", (route) =>
+    route.fulfill({
+      json: [{ id: "writing-1", status: "draft" }],
+    }),
+  );
+  await page.route("**/api/v1/academic-references*", (route) =>
+    route.fulfill({
+      json: { items: [{ id: "reference-1", status: "invited" }] },
+    }),
+  );
+  await page.route("**/api/v1/academic-interviews*", (route) =>
+    route.fulfill({
+      json: { items: [{ id: "interview-1", status: "completed" }] },
+    }),
+  );
 
   await page.goto("/app/dashboard");
 
   const guide = page.getByRole("region", { name: "Workspace guide" });
-  await expect(guide.getByText("4/9 complete")).toBeVisible();
+  await expect(guide.getByText("8/12 complete")).toBeVisible();
+  await expect(
+    guide.getByRole("heading", { name: "Strengthen your evidence" }),
+  ).toBeVisible();
+  await guide.getByRole("button", { name: "Previous" }).click();
   await expect(
     guide.getByRole("link", {
-      name: "Add academic background, Complete",
+      name: "Add academic background, Completed",
     }),
   ).toHaveAttribute("href", "/app/academic-profile");
   await expect(
@@ -271,7 +290,7 @@ test("workspace guide uses real saved data and keeps three actions per page", as
   await expect(guide.getByRole("link")).toHaveCount(3);
   await expect(
     guide.getByRole("link", {
-      name: "Upload a supporting document, Complete",
+      name: "Upload a supporting document, Completed",
     }),
   ).toHaveAttribute("href", "/app/documents");
 
@@ -281,9 +300,35 @@ test("workspace guide uses real saved data and keeps three actions per page", as
   ).toBeVisible();
   await expect(guide.getByRole("link")).toHaveCount(3);
   await expect(
-    guide.getByRole("link", { name: "Resolve document gaps, To do" }),
+    guide.getByRole("link", { name: "Resolve document gaps, Start" }),
   ).toHaveAttribute("href", "/app/documents");
+
+  await guide.getByRole("button", { name: "Next" }).click();
+  await expect(
+    guide.getByRole("heading", { name: "Develop your submission" }),
+  ).toBeVisible();
+  await expect(guide.getByRole("link")).toHaveCount(3);
+  await expect(
+    guide.getByRole("link", {
+      name: "Draft an application response, Completed",
+    }),
+  ).toHaveAttribute("href", "/app/writing");
+  await expect(
+    guide.getByRole("link", { name: "Request a reference, Completed" }),
+  ).toHaveAttribute("href", "/app/references");
+  await expect(
+    guide.getByRole("link", {
+      name: "Complete an interview practice, Completed",
+    }),
+  ).toHaveAttribute("href", "/app/interviews");
   await expect(guide.getByRole("button", { name: "Next" })).toBeDisabled();
+
+  const viewAll = guide.getByRole("button", { name: "View all steps" });
+  await viewAll.click();
+  const allSteps = page.getByRole("dialog", { name: "Workspace guide" });
+  await expect(allSteps.getByRole("link")).toHaveCount(12);
+  await page.keyboard.press("Escape");
+  await expect(allSteps).toBeHidden();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
@@ -296,7 +341,7 @@ test("workspace guide stays touch-safe at 320px", async ({ page }) => {
   await page.goto("/app/dashboard");
 
   const guide = page.getByRole("region", { name: "Workspace guide" });
-  await expect(guide.getByText("0/9 complete")).toBeVisible();
+  await expect(guide.getByText("0/12 complete")).toBeVisible();
   await expect(guide.getByRole("link")).toHaveCount(3);
 
   const next = guide.getByRole("button", { name: "Next" });
@@ -308,6 +353,21 @@ test("workspace guide stays touch-safe at 320px", async ({ page }) => {
   expect(nextSize.height).toBeGreaterThanOrEqual(44);
   await next.click();
   await expect(guide.getByRole("link")).toHaveCount(3);
+  await next.click();
+  await next.click();
+  await expect(
+    guide.getByRole("link", {
+      name: "Draft an application response, Start",
+    }),
+  ).toHaveAttribute("href", "/app/writing/new");
+  await expect(
+    guide.getByRole("link", { name: "Request a reference, Start" }),
+  ).toHaveAttribute("href", "/app/references/new");
+  await expect(
+    guide.getByRole("link", {
+      name: "Complete an interview practice, Start",
+    }),
+  ).toHaveAttribute("href", "/app/interviews/new");
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,

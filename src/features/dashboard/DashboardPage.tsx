@@ -11,7 +11,13 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useState, type ComponentType, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import dashboardFocusIllustration from "../../assets/dashboard-focus-illustration.webp";
 import recommendationIllustration from "../../assets/recommendation-illustration.webp";
@@ -21,6 +27,7 @@ import {
   type DashboardDeadline,
 } from "../../lib/api/platform";
 import { documentsApi, profileApi } from "../../lib/api/phase2";
+import { interviewsApi, referencesApi, writingApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
 import {
@@ -96,6 +103,9 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [showAllSteps, setShowAllSteps] = useState(false);
   const [showProgressExplainer, setShowProgressExplainer] = useState(false);
+  const [selectedPhaseIndex, setSelectedPhaseIndex] = useState<number | null>(
+    null,
+  );
   const query = useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: async () => safeDashboard(await platformApi.dashboard()),
@@ -107,6 +117,18 @@ export function DashboardPage() {
   const documentsQuery = useQuery({
     queryKey: queryKeys.documents,
     queryFn: documentsApi.list,
+  });
+  const writingQuery = useQuery({
+    queryKey: [...queryKeys.writing, "workspace-guide"],
+    queryFn: () => writingApi.list(),
+  });
+  const referencesQuery = useQuery({
+    queryKey: [...queryKeys.references(), "workspace-guide"],
+    queryFn: () => referencesApi.list(),
+  });
+  const interviewsQuery = useQuery({
+    queryKey: [...queryKeys.interviews, "workspace-guide"],
+    queryFn: () => interviewsApi.list(),
   });
 
   if (query.isPending) return <DashboardSkeleton />;
@@ -172,6 +194,24 @@ export function DashboardPage() {
   );
   const hasLinkedDocument = (documentsQuery.data ?? []).some(
     (item) => (item.link_count ?? item.linked_application_ids?.length ?? 0) > 0,
+  );
+  const writingDocuments = Array.isArray(writingQuery.data)
+    ? writingQuery.data
+    : [];
+  const references = Array.isArray(referencesQuery.data?.items)
+    ? referencesQuery.data.items
+    : [];
+  const interviews = Array.isArray(interviewsQuery.data?.items)
+    ? interviewsQuery.data.items
+    : [];
+  const activeReferences = references.filter(
+    (item) => item.status !== "cancelled" && item.status !== "revoked",
+  );
+  const unfinishedInterview = interviews.find(
+    (item) => item.status !== "completed" && item.status !== "cancelled",
+  );
+  const hasCompletedInterview = interviews.some(
+    (item) => item.status === "completed" || Boolean(item.completed_at),
   );
   const setupPages: Array<{
     title: string;
@@ -291,6 +331,53 @@ export function DashboardPage() {
         },
       ],
     },
+    {
+      title: "Develop your submission",
+      items: [
+        {
+          label: "Draft an application response",
+          detail: "Start a statement, essay or study plan",
+          explain:
+            "Complete once you have at least one active document in Writing Studio.",
+          href: writingDocuments.length ? "/app/writing" : "/app/writing/new",
+          status: getSetupStatus(
+            writingQuery.isPending,
+            writingQuery.isError,
+            writingDocuments.length > 0,
+          ),
+        },
+        {
+          label: "Request a reference",
+          detail: "Give your referee time before the deadline",
+          explain:
+            "Complete while you have at least one reference request that has not been cancelled or revoked.",
+          href: activeReferences.length
+            ? "/app/references"
+            : "/app/references/new",
+          status: getSetupStatus(
+            referencesQuery.isPending,
+            referencesQuery.isError,
+            activeReferences.length > 0,
+          ),
+        },
+        {
+          label: "Complete an interview practice",
+          detail: "Rehearse answers and review your feedback",
+          explain:
+            "Complete once you finish at least one interview practice session.",
+          href: hasCompletedInterview
+            ? "/app/interviews"
+            : unfinishedInterview
+              ? `/app/interviews/${unfinishedInterview.id}`
+              : "/app/interviews/new",
+          status: getSetupStatus(
+            interviewsQuery.isPending,
+            interviewsQuery.isError,
+            hasCompletedInterview,
+          ),
+        },
+      ],
+    },
   ];
   const activePhaseIndex = (() => {
     const index = setupPages.findIndex((page) =>
@@ -298,7 +385,8 @@ export function DashboardPage() {
     );
     return index === -1 ? setupPages.length - 1 : index;
   })();
-  const setupPage = setupPages[activePhaseIndex];
+  const visiblePhaseIndex = selectedPhaseIndex ?? activePhaseIndex;
+  const setupPage = setupPages[visiblePhaseIndex];
   const allSetupItems = setupPages.flatMap((page) => page.items);
   const totalSetupItems = allSetupItems.length;
   const completedSetupItems = allSetupItems.filter(
@@ -309,8 +397,17 @@ export function DashboardPage() {
   const profilePercent = dashboard.profile_completion_percent; // already clamped by safeDashboard
   const profileComplete = profilePercent >= 100;
   const setupProgressPending =
-    profileQuery.isPending || documentsQuery.isPending;
-  const setupProgressError = profileQuery.isError || documentsQuery.isError;
+    profileQuery.isPending ||
+    documentsQuery.isPending ||
+    writingQuery.isPending ||
+    referencesQuery.isPending ||
+    interviewsQuery.isPending;
+  const setupProgressError =
+    profileQuery.isError ||
+    documentsQuery.isError ||
+    writingQuery.isError ||
+    referencesQuery.isError ||
+    interviewsQuery.isError;
 
   return (
     <div className="page dashboard">
@@ -330,12 +427,18 @@ export function DashboardPage() {
                 query.refetch(),
                 profileQuery.refetch(),
                 documentsQuery.refetch(),
+                writingQuery.refetch(),
+                referencesQuery.refetch(),
+                interviewsQuery.refetch(),
               ])
             }
             refreshing={
               query.isFetching ||
               profileQuery.isFetching ||
-              documentsQuery.isFetching
+              documentsQuery.isFetching ||
+              writingQuery.isFetching ||
+              referencesQuery.isFetching ||
+              interviewsQuery.isFetching
             }
           />
           <Link className="primary dashboard-add" to="/app/applications">
@@ -526,13 +629,39 @@ export function DashboardPage() {
           </header>
           <GuidePhaseProgress
             pages={setupPages}
-            activeIndex={activePhaseIndex}
+            activeIndex={visiblePhaseIndex}
           />
-          <div className="setup-page-intro" aria-live="polite">
-            <span>
-              Phase {activePhaseIndex + 1} of {setupPages.length}
-            </span>
-            <h3>{setupPage.title}</h3>
+          <div className="setup-page-intro">
+            <div aria-live="polite">
+              <span>
+                Phase {visiblePhaseIndex + 1} of {setupPages.length}
+              </span>
+              <h3>{setupPage.title}</h3>
+            </div>
+            <div className="setup-page-controls">
+              <button
+                type="button"
+                aria-label="Previous"
+                disabled={visiblePhaseIndex === 0}
+                onClick={() =>
+                  setSelectedPhaseIndex(Math.max(0, visiblePhaseIndex - 1))
+                }
+              >
+                <ChevronRight aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                disabled={visiblePhaseIndex === setupPages.length - 1}
+                onClick={() =>
+                  setSelectedPhaseIndex(
+                    Math.min(setupPages.length - 1, visiblePhaseIndex + 1),
+                  )
+                }
+              >
+                <ChevronRight aria-hidden="true" />
+              </button>
+            </div>
           </div>
           {setupPage.items.map((item) => (
             <SetupRow {...item} key={item.label} />
@@ -545,12 +674,23 @@ export function DashboardPage() {
                 onClick={() => {
                   if (profileQuery.isError) void profileQuery.refetch();
                   if (documentsQuery.isError) void documentsQuery.refetch();
+                  if (writingQuery.isError) void writingQuery.refetch();
+                  if (referencesQuery.isError) void referencesQuery.refetch();
+                  if (interviewsQuery.isError) void interviewsQuery.refetch();
                 }}
                 disabled={
-                  profileQuery.isFetching || documentsQuery.isFetching
+                  profileQuery.isFetching ||
+                  documentsQuery.isFetching ||
+                  writingQuery.isFetching ||
+                  referencesQuery.isFetching ||
+                  interviewsQuery.isFetching
                 }
               >
-                {profileQuery.isFetching || documentsQuery.isFetching
+                {profileQuery.isFetching ||
+                documentsQuery.isFetching ||
+                writingQuery.isFetching ||
+                referencesQuery.isFetching ||
+                interviewsQuery.isFetching
                   ? "Checking…"
                   : "Retry progress check"}
               </button>
@@ -631,34 +771,42 @@ function WorkspaceGuideModal({
   total: number;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+  }, []);
+
   return (
-    <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="apps-dialog"
-        role="dialog"
-        aria-labelledby="workspace-guide-modal-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="apps-dialog-header">
-          <h2 id="workspace-guide-modal-title">Workspace guide</h2>
-          <button type="button" onClick={onClose} aria-label="Close">
-            <X aria-hidden="true" />
-          </button>
-        </header>
-        <p className="apps-dialog-subtext">{completed}/{total} complete</p>
-        <div className="apps-dialog-body">
-          {pages.map((page, index) => (
-            <section className="guide-modal-phase" key={page.title}>
-              <span>Phase {index + 1} of {pages.length}</span>
-              <h3>{page.title}</h3>
-              {page.items.map((item) => (
-                <SetupRow {...item} key={item.label} onNavigate={onClose} />
-              ))}
-            </section>
-          ))}
-        </div>
+    <dialog
+      ref={dialogRef}
+      className="apps-dialog workspace-guide-dialog"
+      aria-labelledby="workspace-guide-modal-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <header className="apps-dialog-header">
+        <h2 id="workspace-guide-modal-title">Workspace guide</h2>
+        <button type="button" onClick={onClose} aria-label="Close">
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      <p className="apps-dialog-subtext">{completed}/{total} complete</p>
+      <div className="apps-dialog-body">
+        {pages.map((page, index) => (
+          <section className="guide-modal-phase" key={page.title}>
+            <span>Phase {index + 1} of {pages.length}</span>
+            <h3>{page.title}</h3>
+            {page.items.map((item) => (
+              <SetupRow {...item} key={item.label} onNavigate={onClose} />
+            ))}
+          </section>
+        ))}
       </div>
-    </div>
+    </dialog>
   );
 }
 

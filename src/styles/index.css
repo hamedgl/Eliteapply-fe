@@ -8915,11 +8915,19 @@ select option {
 
 .setup-page-intro {
   padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   border-bottom: 1px solid var(--app-line);
   background: var(--app-surface-subtle);
 }
 
-.setup-page-intro > span {
+.setup-page-intro > div:first-child {
+  min-width: 0;
+}
+
+.setup-page-intro > div:first-child > span {
   color: var(--app-blue);
   font-size: 0.72rem;
   font-weight: 700;
@@ -8932,11 +8940,44 @@ select option {
   font-size: 0.88rem;
 }
 
-.setup-page-intro p {
-  margin: 0.25rem 0 0;
+.setup-page-controls {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+}
+
+.setup-page-controls button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--app-blue);
+  border: 1px solid var(--app-line-strong);
+  border-radius: 8px;
+  background: var(--app-surface);
+  cursor: pointer;
+}
+
+.setup-page-controls button:first-child svg {
+  transform: rotate(180deg);
+}
+
+.setup-page-controls button:hover:not(:disabled) {
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
+}
+
+.setup-page-controls button:disabled {
   color: var(--app-muted);
-  font-size: 0.75rem;
-  line-height: 1.45;
+  border-color: var(--app-line);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.setup-page-controls svg {
+  width: 17px;
+  height: 17px;
 }
 
 .dashboard-empty {
@@ -9456,6 +9497,17 @@ select option {
 
 .guide-modal-phase .setup-step {
   padding-inline: 0;
+}
+
+.workspace-guide-dialog {
+  width: min(620px, calc(100% - 2rem));
+  margin: auto;
+  color: var(--app-text);
+  border: 0;
+}
+
+.workspace-guide-dialog::backdrop {
+  background: rgb(16 27 59 / 45%);
 }
 
 .progress-explainer {
