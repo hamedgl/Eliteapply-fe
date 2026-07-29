@@ -4,9 +4,6 @@
   "compatibility_date": "2026-07-28",
   "vars": {
     "API_BASE_URL": "https://api.eliteapply.net/api/v1",
-    "R2_ACCOUNT_ID": "3b5a2df90ebfd26744fbe618f02765a0",
-    "R2_BUCKET_NAME": "eliteapply-avatars",
-    "R2_JURISDICTION": "eu",
   },
   "r2_buckets": [
     {

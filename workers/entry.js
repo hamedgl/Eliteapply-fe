@@ -1,5 +1,3 @@
-import { AwsClient } from "aws4fetch";
-
 const SHELL_PREFIXES = [
   "/app",
   "/admin",
@@ -14,7 +12,6 @@ const AVATAR_TYPES = {
   "image/png": "png",
   "image/webp": "webp",
 };
-const STAGING_PREFIX = "staging/avatars";
 const AVATAR_PREFIX = "eliteapply/avatars";
 const AVATAR_CONTENT_PATH = "/api/avatar/content/";
 
@@ -40,10 +37,6 @@ function json(data, status = 200, headers = {}) {
       ...headers,
     },
   });
-}
-
-function objectPath(key) {
-  return key.split("/").map(encodeURIComponent).join("/");
 }
 
 function keyFromContentUrl(value) {
@@ -91,14 +84,6 @@ function detectImageType(bytes) {
   return null;
 }
 
-async function requestBody(request) {
-  try {
-    return await request.json();
-  } catch {
-    throw new HttpError(400, "Invalid request body.");
-  }
-}
-
 async function currentUser(request, env) {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer "))
@@ -118,11 +103,16 @@ async function currentUser(request, env) {
   return { authorization, profile: await response.json() };
 }
 
-async function createUploadUrl(request, env) {
-  const { profile } = await currentUser(request, env);
-  const body = await requestBody(request);
-  const contentType = String(body.content_type || "").toLowerCase();
-  const sizeBytes = Number(body.size_bytes);
+async function uploadAvatar(request, env) {
+  const { authorization, profile: currentProfile } = await currentUser(
+    request,
+    env,
+  );
+  const contentType = request.headers
+    .get("content-type")
+    ?.split(";", 1)[0]
+    .toLowerCase();
+  const sizeBytes = Number(request.headers.get("content-length"));
   if (!AVATAR_TYPES[contentType])
     throw new HttpError(415, "Upload a JPEG, PNG or WebP image.");
   if (
@@ -132,71 +122,18 @@ async function createUploadUrl(request, env) {
   )
     throw new HttpError(413, "Image must be under 2 MB.");
 
-  const key = `${STAGING_PREFIX}/${profile.id}/${crypto.randomUUID()}.${AVATAR_TYPES[contentType]}`;
-  const r2Account = [env.R2_ACCOUNT_ID, env.R2_JURISDICTION]
-    .filter(Boolean)
-    .join(".");
-  const url = new URL(
-    `https://${r2Account}.r2.cloudflarestorage.com/${env.R2_BUCKET_NAME}/${objectPath(key)}`,
-  );
-  url.searchParams.set("X-Amz-Expires", "300");
-  const signer = new AwsClient({
-    accessKeyId: env.R2_ACCESS_KEY_ID,
-    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-  });
-  const signed = await signer.sign(
-    new Request(url, {
-      method: "PUT",
-      headers: { "content-type": contentType },
-    }),
-    { aws: { signQuery: true } },
-  );
-
-  return json({
-    storage_key: key,
-    upload_url: signed.url,
-    upload_method: "PUT",
-    upload_fields: {},
-    max_size_bytes: MAX_AVATAR_BYTES,
-    expires_at: new Date(Date.now() + 300_000).toISOString(),
-  });
-}
-
-async function finalizeUpload(request, env) {
-  const { authorization, profile: currentProfile } = await currentUser(
-    request,
-    env,
-  );
-  const body = await requestBody(request);
-  const stagingKey = body.storage_key;
-  if (!ownedKey(stagingKey, STAGING_PREFIX, currentProfile.id))
-    throw new HttpError(404, "Avatar upload not found.");
-
-  const object = await env.AVATARS.get(stagingKey);
-  if (!object) throw new HttpError(409, "Uploaded image was not found.");
-  const bytes = new Uint8Array(await object.arrayBuffer());
+  const bytes = new Uint8Array(await request.arrayBuffer());
   const detectedType = detectImageType(bytes.subarray(0, 12));
-  const declaredType = object.httpMetadata?.contentType;
-  if (
-    bytes.length < 1 ||
-    bytes.length > MAX_AVATAR_BYTES ||
-    !detectedType ||
-    declaredType !== detectedType
-  ) {
-    await env.AVATARS.delete(stagingKey);
+  if (bytes.length !== sizeBytes || detectedType !== contentType)
     throw new HttpError(
       415,
       "The uploaded file is not a valid supported image.",
     );
-  }
 
-  const finalKey = stagingKey.replace(
-    `${STAGING_PREFIX}/`,
-    `${AVATAR_PREFIX}/`,
-  );
+  const finalKey = `${AVATAR_PREFIX}/${currentProfile.id}/${crypto.randomUUID()}.${AVATAR_TYPES[contentType]}`;
   await env.AVATARS.put(finalKey, bytes, {
     httpMetadata: {
-      contentType: detectedType,
+      contentType,
       cacheControl: "public, max-age=31536000, immutable",
     },
     customMetadata: {
@@ -204,7 +141,6 @@ async function finalizeUpload(request, env) {
       finalizedAt: new Date().toISOString(),
     },
   });
-  await env.AVATARS.delete(stagingKey);
 
   const response = await fetch(`${env.API_BASE_URL}/users/me/avatar/complete`, {
     method: "POST",
@@ -301,10 +237,8 @@ async function serveAvatar(request, env, pathname) {
 }
 
 async function routeAvatar(request, env, url) {
-  if (url.pathname === "/api/avatar/upload-url" && request.method === "POST")
-    return createUploadUrl(request, env);
-  if (url.pathname === "/api/avatar/complete" && request.method === "POST")
-    return finalizeUpload(request, env);
+  if (url.pathname === "/api/avatar" && request.method === "POST")
+    return uploadAvatar(request, env);
   if (url.pathname === "/api/avatar" && request.method === "DELETE")
     return removeAvatar(request, env);
   if (

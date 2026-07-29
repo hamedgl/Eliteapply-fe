@@ -4,9 +4,9 @@ import worker from "../../workers/entry.js";
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("R2 avatar finalization", () => {
-  it("deletes an upload whose bytes do not match its image content type", async () => {
-    const deleteObject = vi.fn(async () => undefined);
+describe("R2 avatar upload", () => {
+  it("does not store bytes that do not match the image content type", async () => {
+    const putObject = vi.fn(async () => undefined);
     const api = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       Response.json({
         id: "user-1",
@@ -14,33 +14,25 @@ describe("R2 avatar finalization", () => {
       }),
     );
     const response = await worker.fetch(
-      new Request("https://eliteapply.net/api/avatar/complete", {
+      new Request("https://eliteapply.net/api/avatar", {
         method: "POST",
         headers: {
           authorization: "Bearer test",
-          "content-type": "application/json",
+          "content-type": "image/png",
+          "content-length": "12",
         },
-        body: JSON.stringify({
-          storage_key: "staging/avatars/user-1/not-an-image.png",
-        }),
+        body: new TextEncoder().encode("not an image"),
       }),
       {
         API_BASE_URL: "https://api.eliteapply.net/api/v1",
         AVATARS: {
-          get: vi.fn(async () => ({
-            httpMetadata: { contentType: "image/png" },
-            arrayBuffer: async () =>
-              new TextEncoder().encode("not an image").buffer,
-          })),
-          delete: deleteObject,
+          put: putObject,
         },
       },
     );
 
     expect(response.status).toBe(415);
-    expect(deleteObject).toHaveBeenCalledWith(
-      "staging/avatars/user-1/not-an-image.png",
-    );
+    expect(putObject).not.toHaveBeenCalled();
     expect(api).toHaveBeenCalledOnce();
   });
 });

@@ -3,18 +3,9 @@ import { performTokenRefresh } from "../auth/refresh";
 import { sessionSnapshot } from "../auth/session";
 import { apiRequest } from "./client";
 import { normalizeApiError } from "./errors";
-import { uploadToSignedUrl } from "./signedTransport";
 
 type S = components["schemas"];
 type Profile = S["UserProfileResponse"];
-
-type AvatarUploadTarget = {
-  storage_key: string;
-  upload_url: string;
-  upload_method: string;
-  upload_fields?: Record<string, unknown>;
-  max_size_bytes: number;
-};
 
 const correlation = () => crypto.randomUUID();
 
@@ -43,32 +34,14 @@ async function avatarRequest<T>(
 }
 
 async function uploadAvatar(file: File): Promise<Profile> {
-  const target = await avatarRequest<AvatarUploadTarget>(
-    "/api/avatar/upload-url",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        content_type: file.type,
-        size_bytes: file.size,
-      }),
-    },
-  );
-  await uploadToSignedUrl({
-    uploadUrl: target.upload_url,
-    method: target.upload_method,
-    fields: target.upload_fields,
-    file,
-    contentType: file.type,
-    maxSizeBytes: target.max_size_bytes,
-  });
-  return avatarRequest<Profile>("/api/avatar/complete", {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+    throw new Error("Upload a JPEG, PNG or WebP image.");
+  if (!file.size || file.size > 2 * 1024 * 1024)
+    throw new Error("Image must be under 2 MB.");
+  return avatarRequest<Profile>("/api/avatar", {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      storage_key: target.storage_key,
-      size_bytes: file.size,
-    }),
+    headers: { "content-type": file.type },
+    body: file,
   });
 }
 
