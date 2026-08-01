@@ -5,6 +5,10 @@ import { Plus, Sparkles, X } from "lucide-react";
 import { Select } from "../../components/ui/select";
 import { ApiError } from "../../lib/api/errors";
 import { PageHeader } from "../../components/page/PageHeader";
+import {
+  GeneratedPageSkeleton,
+  PublicFlowPageSkeleton,
+} from "../../components/page/PageSkeleton";
 import { WorkspacePageGuideButton } from "../../components/AppShell";
 import { ActiveFilterChips } from "../applications/components/ActiveFilterChips";
 import { useSlashFocus } from "../applications/hooks";
@@ -525,11 +529,7 @@ export function ReferenceDetail() {
 
   const item = reference.data;
   if (reference.isPending)
-    return (
-      <div className="page">
-        <ReferencesSkeleton />
-      </div>
-    );
+    return <GeneratedPageSkeleton page="referenceDetail" />;
   if (!item)
     return (
       <div className="page">
@@ -979,7 +979,7 @@ export function VerifyReference() {
   return (
     <Public title="Academic reference verification">
       {q.isPending ? (
-        <p>Checking reference…</p>
+        <PublicFlowPageSkeleton variant="verify" embedded />
       ) : q.isError ? (
         <p>This reference could not be verified.</p>
       ) : (

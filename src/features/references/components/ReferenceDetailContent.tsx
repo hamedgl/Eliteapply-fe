@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { StatusBadge } from "../../../components/data-display/StatusBadge";
+import { SectionSkeleton } from "../../../components/page/PageSkeleton";
 import { referencesApi } from "../../../lib/api/phase3";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import { formatDate, label } from "../../applications/model";
@@ -97,7 +98,7 @@ export function ReferenceDetailContent({
       <section className="apps-drawer-group">
         <h3>Timeline</h3>
         {events.isPending ? (
-          <p className="apps-dialog-subtext">Loading timeline…</p>
+          <SectionSkeleton label="Loading reference timeline" rows={3} />
         ) : eventItems.length ? (
           <ol className="reference-timeline">
             {eventItems.map((event) => (

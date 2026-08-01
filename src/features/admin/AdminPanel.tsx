@@ -42,6 +42,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
+import { AdminRoutePageSkeleton } from "../../components/page/PageSkeleton";
 import {
   useEffect,
   useRef,
@@ -2906,14 +2907,7 @@ function PanelSkeleton({ rows = 3 }: { rows?: number }) {
 }
 
 function AdminSkeleton({ label }: { label: string }) {
-  return (
-    <main className="admin-entry-skeleton" aria-busy="true">
-      <p role="status">{label}</p>
-      <div />
-      <div />
-      <div />
-    </main>
-  );
+  return <AdminRoutePageSkeleton embedded={label.startsWith("Loading ")} />;
 }
 
 function ForbiddenPage() {

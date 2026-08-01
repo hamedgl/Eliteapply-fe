@@ -14,6 +14,7 @@ import { applicationsApi, intelligenceApi } from "../../lib/api/phase2";
 import { countryName } from "../../lib/countries";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { WorkspacePageGuideButton } from "../../components/AppShell";
+import { SectionSkeleton } from "../../components/page/PageSkeleton";
 
 type Import = components["schemas"]["OpportunityImportResponse"];
 const terminal = new Set([
@@ -405,7 +406,7 @@ export function ImportPage() {
             </button>
           </header>
           {history.isPending ? (
-            <p role="status">Loading imports…</p>
+            <SectionSkeleton label="Loading import history" rows={4} />
           ) : items.length ? (
             <ul>
               {items.map((item) => (
@@ -456,7 +457,7 @@ export function ImportPage() {
         </section>
       </div>
       {current.isPending && selected ? (
-        <p role="status">Loading extraction…</p>
+        <SectionSkeleton label="Loading extracted opportunity fields" variant="fields" rows={8} />
       ) : current.data ? (
         <ImportReview
           key={current.data.id}

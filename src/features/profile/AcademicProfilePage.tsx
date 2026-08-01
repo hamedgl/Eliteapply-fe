@@ -12,6 +12,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { PageHeader } from "../../components/page/PageHeader";
+import { ProfilePageSkeleton } from "../../components/page/PageSkeleton";
 import { OverflowMenu } from "../../components/actions/OverflowMenu";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import {
@@ -167,20 +168,7 @@ export function AcademicProfilePage() {
   );
 
   if (query.isPending || !draft)
-    return (
-      <div
-        className="apps-skeleton"
-        aria-busy="true"
-        aria-label="Loading academic profile"
-      >
-        <div className="skeleton apps-skeleton-toolbar" />
-        <div className="apps-skeleton-table">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-row" key={i} />
-          ))}
-        </div>
-      </div>
-    );
+    return <ProfilePageSkeleton section={activeSection} />;
   if (query.isError)
     return (
       <div className="apps-page-error" role="alert">

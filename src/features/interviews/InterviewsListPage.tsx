@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Mic, MessageSquare, Mic2, PenLine, Plus } from "lucide-react";
 import type { components } from "../../generated/api/schema";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton } from "../../components/page/PageSkeleton";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { ProgressBar } from "../../components/data-display/ProgressBar";
@@ -51,6 +52,9 @@ export function InterviewsPage() {
   });
   const items = history.data?.pages.flatMap((page) => page.items) ?? [];
 
+  if (history.isPending)
+    return <GeneratedPageSkeleton page="interviews" />;
+
   return (
     <div className="page apps-page">
       <PageHeader
@@ -66,15 +70,7 @@ export function InterviewsPage() {
         }
       />
 
-      {history.isPending ? (
-        <div className="apps-skeleton" aria-busy="true" aria-label="Loading practice history">
-          <div className="apps-skeleton-table">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div className="skeleton apps-skeleton-row" key={index} />
-            ))}
-          </div>
-        </div>
-      ) : history.isError ? (
+      {history.isError ? (
         <div className="apps-page-error" role="alert">
           <h2>We couldn’t load your practice history.</h2>
           <button className="primary" onClick={() => history.refetch()}>

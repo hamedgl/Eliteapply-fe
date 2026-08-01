@@ -12,6 +12,7 @@ import { queryKeys } from "../../lib/api/queryKeys";
 import { useEntitlements } from "../../lib/billing/provider";
 import { preloadAppRoute } from "../../app/preload";
 import { WorkspacePageGuideButton } from "../../components/AppShell";
+import { SectionSkeleton } from "../../components/page/PageSkeleton";
 
 const number = new Intl.NumberFormat();
 const date = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -150,8 +151,14 @@ export function BillingPage() {
           <CreditCard aria-hidden="true" />
           <div>
             <span>Current plan</span>
-            <strong>{entitlement?.plan_label ?? "Loading plan…"}</strong>
-            <small>{statusCopy(subscription.data)}</small>
+            <strong>
+              {entitlement?.plan_label ?? <span className="skeleton billing-inline-skeleton" />}
+            </strong>
+            {subscription.isPending ? (
+              <span className="skeleton billing-inline-skeleton is-short" />
+            ) : (
+              <small>{statusCopy(subscription.data)}</small>
+            )}
           </div>
           {entitlement?.plan_name !== "free" ? (
             <button
@@ -200,7 +207,7 @@ export function BillingPage() {
           </div>
         </header>
         {plans.isPending ? (
-          <p role="status">Loading available plans…</p>
+          <SectionSkeleton label="Loading available plans" variant="cards" rows={2} />
         ) : plans.isError ? (
           <p role="alert">Plans could not be loaded. Try again later.</p>
         ) : plans.data?.length ? (
@@ -268,7 +275,7 @@ export function BillingPage() {
             </button>
           </form>
         ) : tokenProduct.isPending ? (
-          <p role="status">Loading token options…</p>
+          <SectionSkeleton label="Loading token options" variant="fields" rows={2} />
         ) : (
           <p role="alert">Token products are not available right now.</p>
         )}
@@ -282,7 +289,7 @@ export function BillingPage() {
           </div>
         </header>
         {usage.isPending ? (
-          <p role="status">Loading usage history…</p>
+          <SectionSkeleton label="Loading usage history" variant="table" rows={5} columns={4} />
         ) : logs.length ? (
           <div className="table-wrap">
             <table className="billing-table">

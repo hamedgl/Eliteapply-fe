@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
-  Loader2,
   Lock,
   MessageSquare,
   ShieldCheck,
@@ -16,6 +15,7 @@ import { ApiError } from "../../lib/api/errors";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { sanitizePreviewHtml } from "../../lib/safeHtml";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
+import { SharedWritingPageSkeleton } from "../../components/page/PageSkeleton";
 import { relativeTime } from "../notifications/model";
 import { label } from "./documentHtml";
 import "./shared-writing.css";
@@ -98,17 +98,6 @@ function DocumentFrame({ html, title }: { html: string; title: string }) {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const meta =
-      document.querySelector<HTMLMetaElement>('meta[name="robots"]') ??
-      document.head.appendChild(document.createElement("meta"));
-    const previous = meta.content;
-    meta.name = "robots";
-    meta.content = "noindex,nofollow";
-    return () => {
-      meta.content = previous;
-    };
-  }, []);
   return (
     <div className="shared-doc">
       <header className="shared-doc-bar">
@@ -162,6 +151,18 @@ export function SharedWritingPage() {
   const [body, setBody] = useState("");
   const [justPosted, setJustPosted] = useState(false);
 
+  useEffect(() => {
+    const meta =
+      window.document.querySelector<HTMLMetaElement>('meta[name="robots"]') ??
+      window.document.head.appendChild(window.document.createElement("meta"));
+    const previous = meta.content;
+    meta.name = "robots";
+    meta.content = "noindex,nofollow";
+    return () => {
+      meta.content = previous;
+    };
+  }, []);
+
   const document = useQuery({
     queryKey: [...queryKeys.sharedDocument(token), submittedPasscode ? "unlocked" : "locked"],
     queryFn: () => publicShareApi.get(token, submittedPasscode),
@@ -198,14 +199,7 @@ export function SharedWritingPage() {
     code === PASSCODE_REQUIRED || code === PASSCODE_INVALID || code === PASSCODE_LOCKED;
 
   if (document.isPending) {
-    return (
-      <Shell>
-        <main className="shared-doc-notice" aria-busy="true">
-          <Loader2 aria-hidden="true" className="shared-doc-spinner" />
-          <h1>Opening the document…</h1>
-        </main>
-      </Shell>
-    );
+    return <SharedWritingPageSkeleton />;
   }
 
   if (code === PASSCODE_LOCKED) {

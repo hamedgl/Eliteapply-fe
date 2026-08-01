@@ -19,6 +19,7 @@ import { applicationsApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton } from "../../components/page/PageSkeleton";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { aggregateLabel, aggregateTypes, type Reminder } from "./model";
@@ -167,21 +168,14 @@ export function RemindersPage() {
     return { dueToday: dueToday.length, upcomingWeek: upcomingWeek.length, overdue: overdue.length };
   }, [statsQuery.data]);
 
-  if (pageView === "list" && list.isPending)
-    return (
-      <div className="apps-skeleton" aria-busy="true" aria-label="Loading reminders">
-        <div className="apps-skeleton-summary">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-summary-item" key={i} />
-          ))}
-        </div>
-        <div className="apps-skeleton-table">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-row" key={i} />
-          ))}
-        </div>
-      </div>
-    );
+  if (pageView === "list" && (list.isPending || statsQuery.isPending))
+    return <GeneratedPageSkeleton page="remindersList" />;
+
+  if (
+    pageView === "calendar" &&
+    (statsQuery.isPending || calendarReminders.isPending || calendarApplications.isPending)
+  )
+    return <GeneratedPageSkeleton page="remindersCalendar" />;
 
   if (pageView === "list" && list.isError)
     return (
@@ -330,17 +324,7 @@ export function RemindersPage() {
         </>
       ) : (
         <div className="reminders-calendar-view">
-          {calendarReminders.isPending || calendarApplications.isPending ? (
-            <div
-              className="apps-card reminders-calendar-loading"
-              role="status"
-              aria-label="Loading calendar"
-            >
-              <div className="skeleton" />
-              <div className="skeleton" />
-              <div className="skeleton" />
-            </div>
-          ) : calendarReminders.isError || calendarApplications.isError ? (
+          {calendarReminders.isError || calendarApplications.isError ? (
             <div className="apps-page-error" role="alert">
               <h2>We couldn’t load your calendar.</h2>
               <button

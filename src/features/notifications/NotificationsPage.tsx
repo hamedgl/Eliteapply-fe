@@ -6,6 +6,7 @@ import { notificationsApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { safeNotificationPath } from "../../lib/navigation";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton, SectionSkeleton } from "../../components/page/PageSkeleton";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
@@ -70,22 +71,8 @@ export function NotificationsPage() {
     savePreferences.mutate({ category_settings });
   }
 
-  if (list.isPending)
-    return (
-      <div className="apps-skeleton" aria-busy="true" aria-label="Loading notifications">
-        <div className="apps-skeleton-summary">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-summary-item" key={i} />
-          ))}
-        </div>
-        <div className="skeleton apps-skeleton-toolbar" />
-        <div className="apps-skeleton-table">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-row" key={i} />
-          ))}
-        </div>
-      </div>
-    );
+  if (list.isPending || unreadCount.isPending)
+    return <GeneratedPageSkeleton page="notifications" />;
   if (list.isError)
     return (
       <div className="apps-page-error" role="alert">
@@ -309,7 +296,7 @@ export function NotificationsPage() {
             </div>
           </form>
         ) : (
-          <p role="status">Loading preferences…</p>
+          <SectionSkeleton label="Loading notification preferences" variant="table" rows={5} columns={3} />
         )}
       </section>
     </div>

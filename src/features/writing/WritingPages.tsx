@@ -50,6 +50,10 @@ import { DocumentOutline } from "./DocumentOutline";
 import { WritingReviewDrawer } from "./WritingReviewDrawer";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { PageRefreshButton } from "../../components/page/PageHeader";
+import {
+  GeneratedPageSkeleton,
+  WritingLibraryPageSkeleton,
+} from "../../components/page/PageSkeleton";
 import { WorkspacePageGuideButton } from "../../components/AppShell";
 import {
   contentToHtml,
@@ -187,6 +191,8 @@ export function WritingLibrary({
   };
   const actionPending =
     archive.isPending || duplicate.isPending || unlink.isPending;
+  if (q.isPending)
+    return <WritingLibraryPageSkeleton createOpen={openCreate} />;
   return (
     <div className="page writing-library">
       <header className="page-heading">
@@ -213,7 +219,7 @@ export function WritingLibrary({
           </button>
         </div>
       </header>
-      {!q.isPending && !q.isError && documents.length ? (
+      {!q.isError && documents.length ? (
         <section className="writing-summary" aria-label="Document summary">
           <div>
             <strong>{documents.length}</strong>
@@ -327,13 +333,7 @@ export function WritingLibrary({
           Show archived
         </label>
       </section>
-      {q.isPending ? (
-        <div className="writing-document-grid" aria-label="Loading documents">
-          {[0, 1, 2].map((item) => (
-            <div className="writing-card writing-card-skeleton" key={item} />
-          ))}
-        </div>
-      ) : q.isError ? (
+      {q.isError ? (
         <div className="vault-empty writing-error-state">
           <AlertTriangle aria-hidden="true" />
           <h2>Documents could not be loaded</h2>
@@ -910,7 +910,7 @@ export function WritingEditor() {
       setExporting(null);
     }
   }
-  if (q.isPending) return <div className="page">Loading editor…</div>;
+  if (q.isPending) return <GeneratedPageSkeleton page="writingEditor" />;
   if (!q.data)
     return (
       <div className="page error-state">

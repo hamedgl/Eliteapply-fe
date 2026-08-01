@@ -14,6 +14,10 @@ import {
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
 import { PageHeader } from "../../components/page/PageHeader";
+import {
+  CatalogueRecordPageSkeleton,
+  CataloguePageSkeleton,
+} from "../../components/page/PageSkeleton";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
 import { CountryCombobox } from "../../components/filters/CountryCombobox";
@@ -103,6 +107,9 @@ export function CataloguePage() {
   }
 
   if (id) return <CatalogueDetail kind={kind} id={id} />;
+
+  if (q.isPending)
+    return <CataloguePageSkeleton kind={kind} />;
 
   const noFiltersActive = !filters.search && !filters.country && !filters.degreeLevel && !filters.fieldOfStudy && !filters.verified;
   const addPrivateLabel = `Add private ${kindSingular[kind]}`;
@@ -207,15 +214,7 @@ export function CataloguePage() {
         catalogue data.
       </p>
 
-      {q.isPending ? (
-        <div className="apps-skeleton" aria-busy="true" aria-label={`Loading ${kind}`}>
-          <div className="apps-skeleton-table">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div className="skeleton apps-skeleton-row" key={i} />
-            ))}
-          </div>
-        </div>
-      ) : q.isError ? (
+      {q.isError ? (
         <div className="apps-page-error" role="alert">
           <h1>Catalogue unavailable</h1>
           <button className="primary" onClick={() => q.refetch()}>
@@ -309,11 +308,7 @@ function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
   });
 
   if (q.isPending)
-    return (
-      <div className="page" role="status">
-        Loading catalogue record…
-      </div>
-    );
+    return <CatalogueRecordPageSkeleton kind={kind} />;
   if (q.isError || !q.data)
     return (
       <div className="page error-state">

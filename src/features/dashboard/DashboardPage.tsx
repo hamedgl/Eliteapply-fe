@@ -39,6 +39,7 @@ import { ApplicationReadinessCard } from "./components/ApplicationReadinessCard"
 import { ProgressExplainerDialog } from "./components/ProgressExplainerDialog";
 import { readDraft, type SectionKey } from "../profile/model";
 import { PageRefreshButton } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton } from "../../components/page/PageSkeleton";
 import { WorkspacePageGuideButton } from "../../components/AppShell";
 
 type Deadline = DashboardDeadline;
@@ -152,7 +153,7 @@ export function DashboardPage() {
     queryFn: () => interviewsApi.list(),
   });
 
-  if (query.isPending) return <DashboardSkeleton />;
+  if (query.isPending) return <GeneratedPageSkeleton page="dashboard" />;
 
   if (query.isError) {
     return (
@@ -1128,27 +1129,6 @@ function SetupRow({
       </em>
       <ChevronRight aria-hidden="true" />
     </Link>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="page dashboard dashboard-loading" aria-busy="true">
-      <p className="sr-only" role="status">
-        Loading your dashboard…
-      </p>
-      <div className="skeleton skeleton-heading" />
-      <div className="skeleton skeleton-focus" />
-      <div className="dashboard-summary-row">
-        <div className="skeleton skeleton-panel" />
-        <div className="skeleton skeleton-panel" />
-        <div className="skeleton skeleton-panel" />
-      </div>
-      <div className="dashboard-top-row">
-        <div className="skeleton skeleton-panel" />
-        <div className="skeleton skeleton-rail" />
-      </div>
-    </div>
   );
 }
 

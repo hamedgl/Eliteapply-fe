@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { writingApi, storiesApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton } from "../../components/page/PageSkeleton";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
@@ -107,20 +108,7 @@ export function StoriesPage() {
   const noFiltersActive = !search && !category && !sensitivity && !includeArchived;
 
   if (q.isPending)
-    return (
-      <div className="apps-skeleton" aria-busy="true" aria-label="Loading stories">
-        <div className="apps-skeleton-summary">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-summary-item" key={i} />
-          ))}
-        </div>
-        <div className="apps-skeleton-table">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-row" key={i} />
-          ))}
-        </div>
-      </div>
-    );
+    return <GeneratedPageSkeleton page="stories" />;
 
   if (q.isError)
     return (

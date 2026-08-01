@@ -17,6 +17,7 @@ import {
   MarketingNotFoundPage,
   MarketingRoute as MarketingPage,
 } from "../features/marketing/MarketingPages";
+import { RoutePageSkeleton } from "../components/page/PageSkeleton";
 
 const AppShell = lazy(() =>
     import("../components/AppShell").then((x) => ({ default: x.AppShell })),
@@ -177,18 +178,7 @@ const AppShell = lazy(() =>
     })),
   );
 function RouteLoading() {
-  return (
-    <div className="page route-loading" role="status" aria-busy="true">
-      <span className="route-loading-label">Opening workspace</span>
-      <div className="skeleton route-loading-title" />
-      <div className="skeleton route-loading-copy" />
-      <div className="route-loading-panels">
-        <div className="skeleton" />
-        <div className="skeleton" />
-      </div>
-      <span className="sr-only">Loading workspace…</span>
-    </div>
-  );
+  return <RoutePageSkeleton />;
 }
 
 const load = (node: React.ReactNode) => (
@@ -199,13 +189,11 @@ function Protected() {
     initializing = useSession((s) => s.initializing),
     location = useLocation();
   if (initializing)
-    return (
-      <main className="loading" role="status">
-        Restoring your secure session…
-      </main>
-    );
+    return <RoutePageSkeleton />;
   return token ? (
-    <AppShell />
+    <Suspense fallback={<RoutePageSkeleton />}>
+      <AppShell />
+    </Suspense>
   ) : (
     <Navigate
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
@@ -303,7 +291,7 @@ const router = createBrowserRouter([
     path: "/login",
     element: (
       <PublicOnly>
-        <AuthPage mode="login" />
+        {load(<AuthPage mode="login" />)}
       </PublicOnly>
     ),
   },
@@ -311,14 +299,14 @@ const router = createBrowserRouter([
     path: "/register",
     element: (
       <PublicOnly>
-        <AuthPage mode="register" />
+        {load(<AuthPage mode="register" />)}
       </PublicOnly>
     ),
   },
-  { path: "/confirm-email", element: <AuthPage mode="confirm" /> },
-  { path: "/forgot-password", element: <AuthPage mode="forgot" /> },
-  { path: "/reset-password", element: <ResetPasswordPage /> },
-  { path: "/auth/callback", element: <OAuthCallbackPage /> },
+  { path: "/confirm-email", element: load(<AuthPage mode="confirm" />) },
+  { path: "/forgot-password", element: load(<AuthPage mode="forgot" />) },
+  { path: "/reset-password", element: load(<ResetPasswordPage />) },
+  { path: "/auth/callback", element: load(<OAuthCallbackPage />) },
   { path: "/terms", element: <MarketingPage /> },
   { path: "/privacy", element: <MarketingPage /> },
   { path: "/accessibility", element: <MarketingPage /> },

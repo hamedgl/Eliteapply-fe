@@ -7,6 +7,7 @@ import { discoveryApi, profileApi } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { usePromptDialog } from "../../components/PromptDialog";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton } from "../../components/page/PageSkeleton";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
@@ -125,6 +126,9 @@ export function DiscoveryPage() {
     limit: 10,
   };
 
+  if (saved.isPending || recommendations.isPending || profile.isPending)
+    return <GeneratedPageSkeleton page={tab === "saved" ? "discoverySaved" : "discoveryRecommended"} />;
+
   return (
     <div className="page apps-page">
       <PageHeader
@@ -182,9 +186,7 @@ export function DiscoveryPage() {
 
       {tab === "saved" ? (
         <div className="discovery-saved-list">
-          {saved.isPending ? (
-            <p role="status">Loading saved searches…</p>
-          ) : saved.data?.length ? (
+          {saved.data?.length ? (
             saved.data.map((item) => (
               <SavedSearchCard
                 key={item.id}
@@ -244,9 +246,7 @@ export function DiscoveryPage() {
 
           <section className="discovery-results">
             <h3>Recommended for your profile</h3>
-            {recommendations.isPending ? (
-              <p role="status">Loading recommendations…</p>
-            ) : recommendations.data?.items.length ? (
+            {recommendations.data?.items.length ? (
               <>
                 <div className="match-grid">
                   {recommendations.data.items.map((item) => (

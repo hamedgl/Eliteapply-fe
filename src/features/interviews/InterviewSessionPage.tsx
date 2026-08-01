@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton, SectionSkeleton } from "../../components/page/PageSkeleton";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { ProgressBar } from "../../components/data-display/ProgressBar";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
@@ -111,16 +112,7 @@ export function InterviewPage() {
   }, [turnCount]);
 
   if (session.isPending)
-    return (
-      <div className="page apps-page apps-skeleton" aria-busy="true" aria-label="Restoring session">
-        <div className="skeleton apps-skeleton-toolbar" />
-        <div className="apps-skeleton-table">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div className="skeleton apps-skeleton-row" key={index} />
-          ))}
-        </div>
-      </div>
-    );
+    return <GeneratedPageSkeleton page="interviewDetail" />;
 
   if (session.isError || !session.data)
     return (
@@ -178,10 +170,7 @@ export function InterviewPage() {
         <main className="iv-thread">
           {interview.status === "completed" ? (
             report.isPending ? (
-              <p className="iv-notice" role="status">
-                <Loader2 aria-hidden="true" className="iv-spin" />
-                Preparing your report…
-              </p>
+              <SectionSkeleton label="Preparing interview report" variant="fields" rows={6} />
             ) : report.data ? (
               <InterviewReportPanel report={report.data} />
             ) : (
@@ -223,10 +212,7 @@ export function InterviewPage() {
           </ol>
 
           {turns.isPending && !turnCount ? (
-            <p className="iv-notice" role="status">
-              <Loader2 aria-hidden="true" className="iv-spin" />
-              Loading your answers…
-            </p>
+            <SectionSkeleton label="Loading interview answers" rows={3} />
           ) : null}
 
           <div ref={composerRef}>

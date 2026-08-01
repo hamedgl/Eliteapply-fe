@@ -27,6 +27,7 @@ import { openSignedDownload } from "../../lib/api/signedTransport";
 import { Select } from "../../components/ui/select";
 import { formatDate, label } from "../applications/model";
 import { PageHeader } from "../../components/page/PageHeader";
+import { GeneratedPageSkeleton, SectionSkeleton } from "../../components/page/PageSkeleton";
 import { SummaryStrip } from "../../components/page/SummaryStrip";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
 import { documentCategories, expiryInfo, formatBytes, scanStatus, type AcademicDocument } from "./model";
@@ -156,21 +157,7 @@ export function DocumentsPage() {
   }
 
   if (query.isPending)
-    return (
-      <div className="apps-skeleton" aria-busy="true" aria-label="Loading documents">
-        <div className="apps-skeleton-summary">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-summary-item" key={i} />
-          ))}
-        </div>
-        <div className="skeleton apps-skeleton-toolbar" />
-        <div className="apps-skeleton-table">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div className="skeleton apps-skeleton-row" key={i} />
-          ))}
-        </div>
-      </div>
-    );
+    return <GeneratedPageSkeleton page="documents" />;
   if (query.isError)
     return (
       <div className="apps-page-error" role="alert">
@@ -477,11 +464,7 @@ export function DocumentDetailPage() {
     openSignedDownload((await documentsApi.download(id)).download_url);
   }
   if (query.isPending)
-    return (
-      <div className="page" role="status">
-        Loading document details…
-      </div>
-    );
+    return <GeneratedPageSkeleton page="documentDetail" />;
   if (query.isError || !query.data)
     return (
       <div className="page error-state">
@@ -639,9 +622,7 @@ export function DocumentDetailPage() {
             </header>
             {links.isPending ||
             (linkedApplicationIds.length > 0 && linkedApplications.isPending) ? (
-              <p className="docs-detail-loading" role="status">
-                Loading linked applications…
-              </p>
+              <SectionSkeleton label="Loading linked applications" rows={2} />
             ) : links.isError ||
               (linkedApplicationIds.length > 0 && linkedApplications.isError) ? (
               <p className="form-error" role="alert">
@@ -691,7 +672,7 @@ export function DocumentDetailPage() {
                 </button>
               </header>
               {versions.isPending ? (
-                <p className="docs-detail-loading" role="status">Loading versions…</p>
+                <SectionSkeleton label="Loading versions" rows={3} />
               ) : versionItems.length ? (
                 <ul className="docs-detail-timeline">
                   {versionItems.slice(0, 3).map((version) => (
@@ -729,7 +710,7 @@ export function DocumentDetailPage() {
                 </button>
               </header>
               {activity.isPending ? (
-                <p className="docs-detail-loading" role="status">Loading activity…</p>
+                <SectionSkeleton label="Loading activity" rows={3} />
               ) : activityItems.length ? (
                 <ul className="docs-detail-timeline">
                   {activityItems.slice(0, 3).map((event) => (

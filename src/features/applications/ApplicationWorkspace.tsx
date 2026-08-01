@@ -73,6 +73,7 @@ import {
   seedApplicationWorkspace,
 } from "./applicationQueries";
 import type { components } from "../../generated/api/schema";
+import { ApplicationWorkspacePageSkeleton } from "../../components/page/PageSkeleton";
 import "../../styles/workspace.css";
 
 type S = components["schemas"];
@@ -3992,32 +3993,7 @@ function FeedbackToast({
 }
 
 function ApplicationWorkspaceSkeleton({ tab }: { tab: Tab }) {
-  return (
-    <div
-      className="page apps-page detail-page"
-      aria-busy="true"
-      aria-label={`Loading ${tab}`}
-    >
-      <div className="detail-skeleton-header">
-        <div className="skeleton" />
-        <div className="skeleton" />
-        <div className="skeleton" />
-      </div>
-      <div className="detail-skeleton-tabs">
-        {TABS.map((item) => (
-          <div className="skeleton" key={item} />
-        ))}
-      </div>
-      <div className="detail-skeleton-layout">
-        <div>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div className="skeleton detail-skeleton-row" key={index} />
-          ))}
-        </div>
-        <div className="skeleton detail-skeleton-aside" />
-      </div>
-    </div>
-  );
+  return <ApplicationWorkspacePageSkeleton tab={tab} />;
 }
 function ResourceRowsSkeleton() {
   return (

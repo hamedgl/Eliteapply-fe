@@ -503,7 +503,7 @@ export function ApplicationsPage() {
     [listApps, boardApps],
   );
 
-  if (activeQuery.isPending) return <ApplicationsSkeleton />;
+  if (activeQuery.isPending) return <ApplicationsSkeleton view={view} />;
   if (activeQuery.isError)
     return (
       <div className="apps-page-error" role="alert">
