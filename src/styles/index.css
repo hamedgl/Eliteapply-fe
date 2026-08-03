@@ -1899,6 +1899,20 @@ th {
   font-size: 0.72rem;
   color: var(--app-muted);
 }
+/* AI provenance for a saved version (EU AI Act Art. 50 content labelling). */
+.writing-revision-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--app-violet);
+}
+.writing-revision-ai svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
 .writing-editor .writing-revision-restore {
   display: inline-flex;
   align-items: center;

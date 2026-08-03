@@ -7,6 +7,7 @@ import {
   LockKeyhole,
   Mail,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -15,6 +16,7 @@ type LegalPageKind =
   | "privacy"
   | "terms"
   | "accessibility"
+  | "ai"
   | "contact";
 
 type LegalSection = {
@@ -43,6 +45,7 @@ type LegalPageConfig = {
 };
 
 const LAST_REVIEWED = "19 July 2026";
+const AI_NOTICE_REVIEWED = "4 August 2026";
 const SUPPORT_EMAIL = "support@eliteapply.net";
 
 const legalPages: Record<LegalPageKind, LegalPageConfig> = {
@@ -183,6 +186,7 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
         paragraphs: [
           "When you deliberately request an AI-assisted feature, EliteApply may process the prompt, selected application context and returned output needed to complete that request. Do not include information you are not entitled to use or confidential third-party material that is unnecessary for the task.",
           "Generated suggestions are assistance, not decisions. You remain responsible for reviewing accuracy, protecting third-party privacy and deciding what becomes part of an application.",
+          "The AI Transparency Notice lists every AI-assisted feature, how AI-assisted content is labelled and what these features are not allowed to do.",
         ],
       },
       {
@@ -251,7 +255,7 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
     related: [
       { path: "/security", label: "Security" },
       { path: "/terms", label: "Terms of Service" },
-      { path: "/contact", label: "Contact" },
+      { path: "/ai-transparency", label: "AI Transparency Notice" },
     ],
   },
   terms: {
@@ -310,6 +314,7 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
         paragraphs: [
           "AI-assisted suggestions may be incomplete, inaccurate, generic or unsuitable for a provider's rules. Review, edit and verify all output before using it.",
           "You remain responsible for authorship, academic integrity, factual accuracy and disclosure required by a scholarship provider or institution. Do not use EliteApply to misrepresent experience, fabricate evidence or conceal prohibited assistance.",
+          "The AI Transparency Notice describes which features use AI, how AI-assisted versions are labelled in your workspace and the limits these features operate under.",
         ],
       },
       {
@@ -394,7 +399,7 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
     ],
     related: [
       { path: "/privacy", label: "Privacy Policy" },
-      { path: "/security", label: "Security" },
+      { path: "/ai-transparency", label: "AI Transparency Notice" },
       { path: "/contact", label: "Contact" },
     ],
   },
@@ -465,6 +470,140 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
       { path: "/privacy", label: "Privacy Policy" },
     ],
   },
+  ai: {
+    title: "AI Transparency Notice",
+    intro:
+      "Where EliteApply uses artificial intelligence, what those features do and do not do, how AI-assisted content is labelled, and the control you keep over every suggestion.",
+    dateLabel: "Last reviewed",
+    date: AI_NOTICE_REVIEWED,
+    summaryTitle: "Assistance you can inspect, not a decision-maker",
+    summary:
+      "EliteApply's AI features draft, rewrite, extract and score text you ask them to work on. They do not decide admissions, do not score you as a person and never submit anything on your behalf.",
+    sections: [
+      {
+        id: "scope",
+        title: "What this notice covers",
+        paragraphs: [
+          "This notice explains the AI-assisted features of EliteApply for the people who use them. It is written to meet the transparency duties in Regulation (EU) 2024/1689 (the EU AI Act), in particular Article 50, which requires that people are told when they interact with an AI system and when content has been generated or manipulated by one.",
+          "EliteApply builds its features on general-purpose AI models supplied by third-party providers. For those features EliteApply acts as the provider of the AI system towards you, and the model supplier acts as our processor and upstream model provider. This notice sits alongside the Privacy Policy, which explains the legal bases and data handling, and the Terms of Service, which govern authorship and acceptable use.",
+        ],
+        source: {
+          href: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
+          label: "Read Regulation (EU) 2024/1689 on EUR-Lex",
+        },
+      },
+      {
+        id: "features",
+        title: "Where AI is used in EliteApply",
+        paragraphs: [
+          "AI never runs in the background on your workspace. Each of the features below runs only when you start it, on the content you point it at.",
+        ],
+        bullets: [
+          "Writing studio generation — drafts an outline, drafts or improves a section, or turns experience into academic CV bullets from the instruction you write.",
+          "Quality analysis — returns indicative scores, findings and claim warnings for a draft you ask it to analyse.",
+          "Story assist — rewrites one field of a story you select for clarity, length or interview delivery, and shows the original beside the suggestion.",
+          "Opportunity import — extracts programme facts from a page, PDF or pasted text into fields with per-field confidence for you to check and confirm.",
+          "Interview practice — generates practice questions and written coaching feedback on the answers you record or type.",
+        ],
+      },
+      {
+        id: "interaction-disclosure",
+        title: "You are told when you are interacting with AI",
+        paragraphs: [
+          "Every screen that starts an AI feature carries a visible notice, and interview practice states before and during the session that the questions and coaching come from an AI system rather than a human interviewer or an admissions officer.",
+          "If an AI feature is unavailable, out of tokens or has failed, the interface says so instead of silently returning a weaker result.",
+        ],
+      },
+      {
+        id: "content-labelling",
+        title: "AI-assisted content is labelled and traceable",
+        paragraphs: [
+          "When a generation run changes your document, the resulting version is saved to version history and marked as AI-assisted, so you can see which versions came from a model and restore an earlier one at any time.",
+          "Generation runs record the model and prompt version used, and interview reports record the rubric and prompt version. Those identifiers are shown in the interface so a specific output can be traced to the run that produced it.",
+          "Labelling inside EliteApply does not travel with text you copy elsewhere. If a scholarship provider, university or funder requires a declaration of AI assistance, that declaration remains yours to make.",
+        ],
+      },
+      {
+        id: "human-control",
+        title: "You stay in control of every output",
+        paragraphs: [
+          "AI output is a suggestion until you accept it. Story suggestions must be applied deliberately, imported fields must be confirmed field by field, and generation runs can be cancelled while they are running or retried as a new run.",
+          "EliteApply does not submit applications, contact providers, message referees or make any decision about you on the basis of a model output.",
+        ],
+        bullets: [
+          "Review AI output against the provider's current rules before using it.",
+          "Verify every date, name, figure and claim yourself — a model can state something false confidently.",
+          "Keep the final language recognisably yours; you must be able to defend it in an interview.",
+          "Do not paste confidential third-party material into a prompt when the task does not need it.",
+        ],
+      },
+      {
+        id: "not-done",
+        title: "What EliteApply's AI features do not do",
+        paragraphs: [
+          "These limits are product design decisions and are reflected in what the API returns to the interface.",
+        ],
+        bullets: [
+          "No admissions, eligibility or funding decision is made or automated — providers decide, and readiness or quality scores are indicative guidance about a draft, not a prediction of an outcome.",
+          "No emotion recognition or inference of emotional state from your voice, face or writing. Interview audio is used for transcription and content-based coaching only.",
+          "No biometric identification or categorisation, and no inference of protected characteristics such as ethnicity, religion, health, political opinion or sexual orientation.",
+          "No social scoring, profiling for risk, or ranking of users against one another.",
+          "No untargeted scraping of faces or personal data to build a database; opportunity import reads only the source you supply.",
+        ],
+      },
+      {
+        id: "classification",
+        title: "How we classify these features under the AI Act",
+        paragraphs: [
+          "EliteApply's AI features are assessed as limited-risk AI systems subject to the Article 50 transparency obligations, not high-risk systems under Annex III. The education entries in Annex III cover systems used to determine admission or assignment to an educational institution, to evaluate learning outcomes, to assess the level of education a person will receive, or to monitor and detect prohibited behaviour during tests. EliteApply is used by applicants to prepare their own material and is not used by an institution to admit, grade, place or invigilate anyone.",
+          "We also screen the features against the prohibited practices in Article 5, which is why the limits in the previous section are enforced in the product rather than left to policy. If a future feature would change this assessment, we will complete the applicable conformity work before releasing it and update this notice.",
+        ],
+      },
+      {
+        id: "models-and-data",
+        title: "Models, processors and your content",
+        paragraphs: [
+          "AI features send the prompt you write, the selected document or field, and the context needed for the task to a third-party model provider under a processing contract, and return the output to your workspace. We do not publish a model name here that we cannot keep accurate; the model version actually used is recorded per run and shown with the result.",
+          "How long prompts, outputs and runs are retained, where processing takes place and which rights you can exercise are described in the Privacy Policy. Account deletion and JSON export in Privacy & data settings cover AI-assisted content in your workspace like any other content.",
+        ],
+      },
+      {
+        id: "limitations",
+        title: "Known limitations",
+        paragraphs: [
+          "Being explicit about weaknesses is part of using these features safely.",
+        ],
+        bullets: [
+          "Models can invent facts, citations, deadlines and eligibility rules that look plausible.",
+          "Extraction confidence is an estimate from the model, not a verification of the source page.",
+          "Scores and coaching feedback are generated from a rubric; they are indicative and cannot predict a provider's judgement.",
+          "Output tends towards generic academic register and can flatten a distinctive voice if accepted unedited.",
+          "Quality is weaker for languages, disciplines, regions and application formats that are less represented in training data.",
+        ],
+      },
+      {
+        id: "report",
+        title: "Report a problem with an AI output",
+        paragraphs: [
+          `Email ${SUPPORT_EMAIL} with the subject “AI feedback”. Tell us the feature, roughly when it happened and what the output got wrong or did that it should not do. Include the model, prompt or rubric version shown with the result if you still have it.`,
+          "Do not paste passwords, access codes or confidential referee content into a report. We use these reports to correct prompts, tighten limits and, where needed, withdraw a feature.",
+        ],
+      },
+      {
+        id: "changes",
+        title: "Changes to this notice",
+        paragraphs: [
+          "We will update this notice when an AI feature is added, materially changed or removed, and when obligations under the EU AI Act come into application on their published dates. The date at the top of this page shows the last review.",
+          `Questions about this notice can be sent to ${SUPPORT_EMAIL} with the subject “AI transparency”.`,
+        ],
+      },
+    ],
+    related: [
+      { path: "/privacy", label: "Privacy Policy" },
+      { path: "/terms", label: "Terms of Service" },
+      { path: "/resources/authentic-voice-ai-assistance", label: "Using AI without losing your voice" },
+    ],
+  },
   contact: {
     title: "Contact EliteApply",
     intro:
@@ -528,6 +667,7 @@ const legalPageIcons = {
   privacy: LockKeyhole,
   terms: FileText,
   accessibility: CheckCircle2,
+  ai: Sparkles,
   contact: Mail,
 } as const;
 

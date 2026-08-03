@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AlertTriangle, CheckCircle2, Info, Quote, Wand2, X } from "lucide-react";
 import { ProgressBar } from "../../components/data-display/ProgressBar";
 import { StatusBadge, type BadgeTone } from "../../components/data-display/StatusBadge";
+import { AiNotice } from "../../components/common/AiNotice";
 import type { components } from "../../generated/api/schema";
 
 type S = components["schemas"];
@@ -154,6 +155,11 @@ export function QualityAnalysisDialog({
         </button>
       </header>
       <div className="apps-dialog-body">
+        <AiNotice>
+          These scores, findings and claim warnings are produced by an AI model
+          reading this draft. They are indicative guidance about the writing,
+          not an assessment of you or a prediction of a provider's decision.
+        </AiNotice>
         {scores.length ? (
           <section className="writing-quality-section">
             <h3>Scores</h3>

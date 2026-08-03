@@ -44,4 +44,20 @@ describe("DocumentOutline", () => {
     expect(screen.getByText(/Add headings/)).toBeInTheDocument();
     expect(screen.getByText(/versioned here/)).toBeInTheDocument();
   });
+
+  it("labels versions the model wrote and leaves hand-written ones unmarked", () => {
+    render(
+      <DocumentOutline
+        html="<h1>Draft</h1>"
+        revisions={[
+          revision,
+          { ...revision, id: `${revision.id}x`, revision_number: 4, ai_insertions: [{}] },
+        ]}
+        onRestore={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText(/AI-assisted · 1 insertion/)).toBeInTheDocument();
+    expect(screen.getAllByText(/AI-assisted/)).toHaveLength(1);
+  });
 });

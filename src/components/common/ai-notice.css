@@ -1,0 +1,68 @@
+/* AI transparency disclosure (EU AI Act Art. 50). Rendered inside the
+   authenticated shell and on public pages, so every token falls back to the
+   global palette when the .app-shell scope is absent. */
+
+.ai-notice {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--app-violet-soft, #f2ebfe);
+  border-radius: var(--app-radius-sm, 8px);
+  background: var(--app-violet-soft, #f2ebfe);
+  color: var(--app-text, #34415c);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.ai-notice > svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1rem;
+  color: var(--app-violet, #6d28d9);
+}
+
+.ai-notice > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.ai-notice p {
+  margin: 0;
+}
+
+.ai-notice-provenance {
+  color: var(--app-muted, #64718a);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.ai-notice-link {
+  align-self: flex-start;
+  color: var(--app-violet, #6d28d9);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ai-notice-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.ai-notice.is-compact {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--app-muted, #64718a);
+  font-size: 0.75rem;
+}
+
+.ai-notice.is-compact > svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}

@@ -8,6 +8,7 @@ import {
 import { Check, Link2, RefreshCw, Trash2, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
+import { AiNotice } from "../../components/common/AiNotice";
 import { CountryCombobox } from "../../components/filters/CountryCombobox";
 import type { components } from "../../generated/api/schema";
 import { applicationsApi, intelligenceApi } from "../../lib/api/phase2";
@@ -601,6 +602,10 @@ function ImportReview({
             Check the AI-extracted facts against the source before adding them
             to your application.
           </p>
+          <AiNotice compact>
+            Fields and confidence come from an AI model reading the source, not
+            from the provider. Nothing is added until you confirm.
+          </AiNotice>
         </div>
         <div className="import-review-actions">
           {active ? (

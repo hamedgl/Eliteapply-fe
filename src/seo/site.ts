@@ -134,6 +134,14 @@ const corePages: readonly PageDefinition[] = [
     indexable: true,
     kind: "page",
   },
+  {
+    path: "/ai-transparency",
+    title: "AI Transparency Notice",
+    description:
+      "See which EliteApply features use AI, how AI-assisted content is labelled, the limits these features operate under and the control students keep.",
+    indexable: true,
+    kind: "page",
+  },
 ] as const;
 
 const contentPages: readonly PageDefinition[] = [

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { History, ListTree, RotateCcw } from "lucide-react";
+import { History, ListTree, RotateCcw, Sparkles } from "lucide-react";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
 import type { components } from "../../generated/api/schema";
 
@@ -106,6 +106,13 @@ export function DocumentOutline({
                     v{revision.revision_number} ·{" "}
                     {time.format(new Date(revision.created_at))}
                   </span>
+                  {revision.ai_insertions.length ? (
+                    <span className="writing-revision-ai">
+                      <Sparkles aria-hidden="true" />
+                      AI-assisted · {revision.ai_insertions.length} insertion
+                      {revision.ai_insertions.length === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
                 </div>
                 <button
                   type="button"

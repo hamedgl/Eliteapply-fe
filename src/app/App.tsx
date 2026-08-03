@@ -310,6 +310,7 @@ const router = createBrowserRouter([
   { path: "/terms", element: <MarketingPage /> },
   { path: "/privacy", element: <MarketingPage /> },
   { path: "/accessibility", element: <MarketingPage /> },
+  { path: "/ai-transparency", element: <MarketingPage /> },
   { path: "/share/:token", element: load(<SharedWriting />) },
   {
     path: "/collaborator-invitations/:token/accept",

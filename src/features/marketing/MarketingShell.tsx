@@ -408,6 +408,7 @@ export function MarketingFooter() {
         <Link to="/privacy">Privacy</Link>
         <Link to="/terms">Terms</Link>
         <Link to="/accessibility">Accessibility</Link>
+        <Link to="/ai-transparency">AI transparency</Link>
         <Link to="/contact">Contact</Link>
       </nav>
       <div className="footer-bottom">

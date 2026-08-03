@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sparkles, X, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Select } from "../../../components/ui/select";
+import { AiNotice } from "../../../components/common/AiNotice";
 import { writingApi, storiesApi } from "../../../lib/api/phase3";
 import type { Story } from "../model";
 import type { StoryAIAssistResponse } from "../../../lib/api/phase3";
@@ -104,6 +105,12 @@ export function StoryAiAssistModal({
 
         <div className="apps-dialog-body">
           {error ? <div className="apps-notice is-danger">{error}</div> : null}
+
+          <AiNotice>
+            An AI model rewrites the field you choose. Nothing changes until you
+            apply the suggestion, and the original stays beside it for
+            comparison.
+          </AiNotice>
 
           <div className="story-ai-grid">
             <label>

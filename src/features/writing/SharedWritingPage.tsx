@@ -15,6 +15,7 @@ import { ApiError } from "../../lib/api/errors";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { sanitizePreviewHtml } from "../../lib/safeHtml";
 import { StatusBadge } from "../../components/data-display/StatusBadge";
+import { AiNotice } from "../../components/common/AiNotice";
 import { SharedWritingPageSkeleton } from "../../components/page/PageSkeleton";
 import { relativeTime } from "../notifications/model";
 import { label } from "./documentHtml";
@@ -299,6 +300,11 @@ export function SharedWritingPage() {
               ) : null}
             </p>
           </header>
+          <AiNotice>
+            This draft was written in EliteApply, where AI assistance is
+            available. Parts of it may have been generated or rewritten by an AI
+            model and edited by the author.
+          </AiNotice>
           <DocumentFrame html={data.html} title={`${data.title} — document body`} />
         </article>
 

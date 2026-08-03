@@ -41,6 +41,7 @@ EliteApply is built by Executive Precision Era, which also makes [EliteResume](h
 ## Policies and contact
 
 - [Accessibility](https://eliteapply.net/accessibility)
+- [AI Transparency Notice](https://eliteapply.net/ai-transparency)
 - [Contact](https://eliteapply.net/contact)
 - Support: support@eliteapply.net
 

@@ -78,6 +78,7 @@ export function MarketingRoute() {
         "/privacy": <LegalPage kind="privacy" />,
         "/terms": <LegalPage kind="terms" />,
         "/accessibility": <LegalPage kind="accessibility" />,
+        "/ai-transparency": <LegalPage kind="ai" />,
       } as Record<string, React.ReactNode>)[pathname] ?? <MarketingNotFound />;
   }
 
