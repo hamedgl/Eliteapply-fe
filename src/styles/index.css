@@ -15846,6 +15846,11 @@ body:has(.admin-shell) {
   color: var(--m-text);
   line-height: 1.7;
 }
+.mkt2-about-badge {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 0;
+}
 .mkt2-resource-hero {
   min-height: 760px;
   grid-template-columns: 0.8fr 0.55fr 1.15fr;
