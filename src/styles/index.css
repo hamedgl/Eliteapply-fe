@@ -14411,7 +14411,8 @@ body:has(.admin-shell) {
   border-left: 1px solid var(--m-line);
   background: var(--m-surface-subtle);
 }
-.mkt2-writing-proof h3 {
+.mkt2-writing-proof .mkt2-prompt-title {
+  display: block;
   margin: 0.65rem 0 0;
   font-size: 1.35rem;
 }
@@ -14766,7 +14767,8 @@ body:has(.admin-shell) {
   color: var(--m-blue);
   margin-bottom: 0.2rem;
 }
-.mkt2-inspector-head h4 {
+.mkt2-inspector-head .mkt2-inspector-title {
+  display: block;
   margin: 0;
   font-size: 1.05rem;
   color: var(--m-text-strong);

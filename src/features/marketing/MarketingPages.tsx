@@ -445,7 +445,7 @@ function TrackerProof() {
           <div className="mkt2-inspector-head">
             <div>
               <span className="mkt2-inspector-tag">Workspace Inspector</span>
-              <h4>{selectedApp.name}</h4>
+              <strong className="mkt2-inspector-title">{selectedApp.name}</strong>
               <small>{selectedApp.grantor} · Deadline: {selectedApp.deadline}</small>
             </div>
             <div className="mkt2-inspector-progress">
@@ -628,7 +628,7 @@ function WritingProof() {
       <div className="mkt2-writing-proof">
         <section>
           <small>Prompt</small>
-          <h3>{scenario.promptTitle}</h3>
+          <strong className="mkt2-prompt-title">{scenario.promptTitle}</strong>
           <p>{scenario.focus}</p>
 
           <div className="mkt2-draft">

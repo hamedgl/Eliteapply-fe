@@ -13,6 +13,7 @@ EliteApply helps applicants keep each opportunity connected to the evidence and 
 - [For students](https://eliteapply.net/for-students): Applicant use cases and supported workflows.
 - [Pricing](https://eliteapply.net/pricing): Current access and plan information.
 - [Security](https://eliteapply.net/security): Account, session, data export and deletion controls.
+- [About](https://eliteapply.net/about): Why EliteApply exists, its product principles, AI boundaries and current build status.
 
 ## Feature documentation
 
@@ -33,6 +34,17 @@ EliteApply helps applicants keep each opportunity connected to the evidence and 
 - [Use AI assistance while preserving authentic voice](https://eliteapply.net/resources/authentic-voice-ai-assistance)
 - [Request a scholarship reference](https://eliteapply.net/resources/request-scholarship-reference)
 - [International scholarship document checklist](https://eliteapply.net/resources/international-scholarship-document-checklist)
+- [Reference request email template](https://eliteapply.net/resources/reference-request-email-template)
+- [Translations and certified documents](https://eliteapply.net/resources/translations-certified-documents)
+
+## Ways to organise applications
+
+Four entry points covering the same workspace from different applicant questions.
+
+- [Scholarship application tracker](https://eliteapply.net/scholarship-application-tracker): Track status, deadlines and the next responsible action.
+- [Scholarship application organiser](https://eliteapply.net/scholarship-application-organiser): Structure requirements, documents and evidence per opportunity.
+- [Scholarship deadline tracker](https://eliteapply.net/scholarship-deadline-tracker): Keep deadlines and dependent tasks visible.
+- [Scholarship application checklist](https://eliteapply.net/scholarship-application-checklist): Turn eligibility criteria into a workable checklist.
 
 ## Company
 
@@ -42,6 +54,8 @@ EliteApply is built by Executive Precision Era, which also makes [EliteResume](h
 
 - [Accessibility](https://eliteapply.net/accessibility)
 - [AI Transparency Notice](https://eliteapply.net/ai-transparency)
+- [Privacy Policy](https://eliteapply.net/privacy)
+- [Terms of Service](https://eliteapply.net/terms)
 - [Contact](https://eliteapply.net/contact)
 - Support: support@eliteapply.net
 
