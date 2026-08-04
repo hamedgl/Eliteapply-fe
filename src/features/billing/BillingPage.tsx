@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { CheckCircle2, CreditCard, ExternalLink, Gauge } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
+import { Link, NavLink, useParams } from "react-router-dom";
 import { billingApi, newMutationId } from "../../lib/api/billing";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useEntitlements } from "../../lib/billing/provider";
@@ -45,6 +45,7 @@ export function BillingPage() {
   });
   const ids = useRef(new Map<string, string>());
   const [tokens, setTokens] = useState(0);
+  const [supplyConsent, setSupplyConsent] = useState(false);
 
   useEffect(() => {
     if (tokenProduct.data && tokens === 0) setTokens(tokenProduct.data.min_tokens);
@@ -221,7 +222,11 @@ export function BillingPage() {
                     {" AI tokens per period"}
                   </p>
                   {plan.trial_days ? (
-                    <small>{plan.trial_days}-day trial available</small>
+                    <small>
+                      {plan.trial_days}-day trial available, then billed{" "}
+                      {plan.interval === "year" ? "yearly" : "monthly"} unless
+                      you cancel before the trial ends
+                    </small>
                   ) : null}
                 </div>
                 <button
@@ -232,7 +237,17 @@ export function BillingPage() {
                 >
                   Continue to secure checkout
                 </button>
-                <small>Current price and currency appear before payment.</small>
+                {/* Auto-renewal has to be disclosed where the purchase happens,
+                    not only in the terms (EU CRD Art. 8, US state auto-renewal
+                    laws). */}
+                <small>
+                  Current price, currency and tax appear before payment. Renews
+                  automatically every {plan.interval === "year" ? "year" : "month"}{" "}
+                  at the then-current price until you cancel. Cancel anytime in
+                  Manage subscription — access runs to the end of the paid
+                  period. <Link to="/terms#fees">Billing terms</Link> and{" "}
+                  <Link to="/terms#withdrawal">right of withdrawal</Link>.
+                </small>
               </article>
             ))}
           </div>
@@ -270,7 +285,27 @@ export function BillingPage() {
               />
             </label>
             <output aria-live="polite">Estimated checkout total: {topUpPrice}</output>
-            <button className="primary" disabled={topUp.isPending || !tokens}>
+            {/* Tokens are digital content supplied immediately, so the 14-day
+                withdrawal right only lapses against express prior consent plus
+                acknowledgement (EU CRD Art. 16(m)). Without this the purchase
+                stays refundable for 14 days. */}
+            <label className="check-field">
+              <input
+                type="checkbox"
+                checked={supplyConsent}
+                onChange={(event) => setSupplyConsent(event.currentTarget.checked)}
+              />
+              <span>
+                Add these tokens to my balance immediately. I understand that
+                once they are supplied I lose my 14-day{" "}
+                <Link to="/terms#withdrawal">right of withdrawal</Link> for this
+                purchase.
+              </span>
+            </label>
+            <button
+              className="primary"
+              disabled={topUp.isPending || !tokens || !supplyConsent}
+            >
               {topUp.isPending ? "Opening checkout…" : "Buy tokens"}
             </button>
           </form>

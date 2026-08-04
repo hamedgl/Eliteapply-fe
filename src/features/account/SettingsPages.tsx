@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Camera, Download, Eye, EyeOff, ShieldAlert, Trash2 } from "lucide-react";
 import { useSession } from "../../lib/auth/session";
 import { usersApi } from "../../lib/api/users";
@@ -427,6 +427,26 @@ export function PrivacySettings() {
             Download my data
           </button>
           <FormStatus status={exportStatus} />
+        </div>
+      </section>
+
+      <section className="settings-card" aria-labelledby="rights-title">
+        <header>
+          <h2 id="rights-title">Your privacy rights</h2>
+          <p>
+            You can access, correct, export and delete your data here. To
+            restrict or object to processing, withdraw a consent you gave
+            elsewhere, or ask how a transfer is safeguarded, email{" "}
+            <a href="mailto:support@eliteapply.net?subject=Privacy%20request">
+              support@eliteapply.net
+            </a>{" "}
+            with the subject “Privacy request”. We answer within one month.
+          </p>
+        </header>
+        <div className="settings-inline-action">
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/ai-transparency">AI Transparency Notice</Link>
+          <Link to="/terms">Terms of Service</Link>
         </div>
       </section>
 
