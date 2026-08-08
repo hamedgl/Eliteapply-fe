@@ -1409,6 +1409,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/writing-studio/documents/{document_id}/ai-provenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Document Ai Provenance
+         * @description Art. 50(2) marking for this document, derived from its completed generation runs.
+         */
+        get: operations["document_ai_provenance_api_v1_writing_studio_documents__document_id__ai_provenance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/writing-studio/documents/{document_id}/export.txt": {
         parameters: {
             query?: never;
@@ -3489,6 +3509,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/oauth/google/one-tap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign in via Google One Tap (verifies a client-side Google ID token) */
+        post: operations["google_one_tap_api_v1_auth_oauth_google_one_tap_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me": {
         parameters: {
             query?: never;
@@ -3663,6 +3700,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/transparency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ai Transparency */
+        get: operations["ai_transparency_api_v1_ai_transparency_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/usage": {
         parameters: {
             query?: never;
@@ -3684,6 +3738,49 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AITransparencyResponse
+         * @description The Art. 50(1) notice plus the public part of the Art. 6 classification record.
+         *
+         *     Unauthenticated on purpose: the obligation is owed to any natural person who
+         *     interacts with the system, and a client has to be able to render the notice before
+         *     a session exists.
+         */
+        AITransparencyResponse: {
+            /** System Name */
+            system_name: string;
+            /** Provider */
+            provider: string;
+            /** Regulation */
+            regulation: string;
+            /** Provider Role */
+            provider_role: string;
+            /** Risk Classification */
+            risk_classification: string;
+            /** Classification Rationale */
+            classification_rationale: string;
+            /** Interaction Notice */
+            interaction_notice: string;
+            /** Content Notice */
+            content_notice: string;
+            /** Purposes */
+            purposes: string[];
+            automated_decision_making: components["schemas"]["AutomatedDecisionDisclosure"];
+            /** Human Oversight */
+            human_oversight: string[];
+            /** Known Limitations */
+            known_limitations: string[];
+            emotion_recognition: components["schemas"]["EmotionRecognitionDisclosure"];
+            /** Biometric Processing */
+            biometric_processing: boolean;
+            /** Models */
+            models: components["schemas"]["ModelDisclosure"][];
+            content_marking: components["schemas"]["ContentMarkingDisclosure"];
+            /** Incident Contact */
+            incident_contact?: string | null;
+            /** Documentation */
+            documentation: string;
+        };
         /** AcademicInterviewCreate */
         AcademicInterviewCreate: {
             /**
@@ -3765,6 +3862,8 @@ export interface components {
             } | null;
             /** Context Version Hash */
             context_version_hash: string;
+            /** Ai Provider */
+            ai_provider?: string | null;
             /** Report */
             report?: {
                 [key: string]: unknown;
@@ -4609,6 +4708,13 @@ export interface components {
              */
             created_at: string;
         };
+        /** AutomatedDecisionDisclosure */
+        AutomatedDecisionDisclosure: {
+            /** Makes Binding Decisions */
+            makes_binding_decisions: boolean;
+            /** Statement */
+            statement: string;
+        };
         /** AvatarCompleteRequest */
         AvatarCompleteRequest: {
             /** Storage Key */
@@ -4902,6 +5008,42 @@ export interface components {
             email: string;
             /** Code */
             code: string;
+        };
+        /** ContentMarkingDisclosure */
+        ContentMarkingDisclosure: {
+            /** Vocabulary */
+            vocabulary: string;
+            /** Ai Value */
+            ai_value: string;
+            /** Ai Edited Value */
+            ai_edited_value: string;
+            /** Channels */
+            channels: string[];
+        };
+        /**
+         * ContentProvenanceResponse
+         * @description Machine-readable Art. 50(2) marking for one piece of stored content.
+         *
+         *     `ai_generated: false` is meaningful — it asserts human authorship rather than
+         *     leaving the marking absent, which a verifier cannot distinguish from an omission.
+         */
+        ContentProvenanceResponse: {
+            /** Ai Generated */
+            ai_generated: boolean;
+            /** Digital Source Type */
+            digital_source_type: string;
+            /** System */
+            system?: string | null;
+            /** Providers */
+            providers?: string[];
+            /** Models */
+            models?: string[];
+            /** Generated At */
+            generated_at?: string | null;
+            /** Notice */
+            notice: string;
+            /** Legal Basis */
+            legal_basis: string;
         };
         /** CursorPage[AdminActionSummary] */
         CursorPage_AdminActionSummary_: {
@@ -5493,6 +5635,8 @@ export interface components {
         };
         /** EligibilityRecommendationsResponse */
         EligibilityRecommendationsResponse: {
+            /** Ai Provider */
+            ai_provider?: string | null;
             /** Summary */
             summary: string;
             /** Recommendations */
@@ -5571,6 +5715,13 @@ export interface components {
              * Format: date-time
              */
             last_calculated_at: string;
+        };
+        /** EmotionRecognitionDisclosure */
+        EmotionRecognitionDisclosure: {
+            /** Performed */
+            performed: boolean;
+            /** Statement */
+            statement: string;
         };
         /** EntitlementResponse */
         EntitlementResponse: {
@@ -5723,6 +5874,8 @@ export interface components {
             model_version: string | null;
             /** Input Hash */
             input_hash: string;
+            /** Ai Provider */
+            ai_provider?: string | null;
             /**
              * Usage Reservation Id
              * Format: uuid
@@ -5759,6 +5912,13 @@ export interface components {
             funding_requirement?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** GoogleOneTapRequest */
+        GoogleOneTapRequest: {
+            /** Id Token */
+            id_token: string;
+            /** Accepted Terms Version */
+            accepted_terms_version?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -6056,6 +6216,8 @@ export interface components {
             };
             /** Contradiction Warnings */
             contradiction_warnings: unknown[];
+            /** Ai Provider */
+            ai_provider?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -6169,6 +6331,17 @@ export interface components {
         MessageResponse: {
             /** Message */
             message: string;
+        };
+        /** ModelDisclosure */
+        ModelDisclosure: {
+            /** Backend */
+            backend: string;
+            /** Operator */
+            operator: string;
+            /** Model */
+            model: string;
+            /** Role */
+            role: string;
         };
         /** NotificationCategoryPreference */
         NotificationCategoryPreference: {
@@ -6694,6 +6867,8 @@ export interface components {
             findings: components["schemas"]["QualityAnalysisFinding"][];
             /** Claim Warnings */
             claim_warnings: components["schemas"]["QualityAnalysisClaimWarning"][];
+            /** Ai Provider */
+            ai_provider?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -6744,6 +6919,8 @@ export interface components {
         };
         /** RefereePolishResponse */
         RefereePolishResponse: {
+            /** Ai Provider */
+            ai_provider?: string | null;
             /** Polished Content */
             polished_content: string;
         };
@@ -7742,6 +7919,7 @@ export interface components {
              * @default false
              */
             can_comment: boolean;
+            ai_provenance: components["schemas"]["ContentProvenanceResponse"];
         };
         /**
          * SourceFormat
@@ -7765,6 +7943,8 @@ export interface components {
         };
         /** StoryAIAssistResponse */
         StoryAIAssistResponse: {
+            /** Ai Provider */
+            ai_provider?: string | null;
             /**
              * Story Id
              * Format: uuid
@@ -11935,6 +12115,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QualityAnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    document_ai_provenance_api_v1_writing_studio_documents__document_id__ai_provenance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentProvenanceResponse"];
                 };
             };
             /** @description Validation Error */
@@ -16526,6 +16737,39 @@ export interface operations {
             };
         };
     };
+    google_one_tap_api_v1_auth_oauth_google_one_tap_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleOneTapRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_my_profile_api_v1_users_me_get: {
         parameters: {
             query?: never;
@@ -16949,6 +17193,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_transparency_api_v1_ai_transparency_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AITransparencyResponse"];
                 };
             };
         };

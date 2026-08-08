@@ -5886,6 +5886,55 @@
         }
       }
     },
+    "/api/v1/writing-studio/documents/{document_id}/ai-provenance": {
+      "get": {
+        "tags": [
+          "Academic Writing Studio"
+        ],
+        "summary": "Document Ai Provenance",
+        "description": "Art. 50(2) marking for this document, derived from its completed generation runs.",
+        "operationId": "document_ai_provenance_api_v1_writing_studio_documents__document_id__ai_provenance_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentProvenanceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/writing-studio/documents/{document_id}/export.txt": {
       "get": {
         "tags": [
@@ -13630,6 +13679,47 @@
         }
       }
     },
+    "/api/v1/auth/oauth/google/one-tap": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sign in via Google One Tap (verifies a client-side Google ID token)",
+        "operationId": "google_one_tap_api_v1_auth_oauth_google_one_tap_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleOneTapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me": {
       "get": {
         "tags": [
@@ -14303,6 +14393,27 @@
         }
       }
     },
+    "/api/v1/ai/transparency": {
+      "get": {
+        "tags": [
+          "AI Transparency"
+        ],
+        "summary": "Ai Transparency",
+        "operationId": "ai_transparency_api_v1_ai_transparency_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AITransparencyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/usage": {
       "get": {
         "tags": [
@@ -14363,6 +14474,120 @@
   },
   "components": {
     "schemas": {
+      "AITransparencyResponse": {
+        "properties": {
+          "system_name": {
+            "type": "string",
+            "title": "System Name"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "regulation": {
+            "type": "string",
+            "title": "Regulation"
+          },
+          "provider_role": {
+            "type": "string",
+            "title": "Provider Role"
+          },
+          "risk_classification": {
+            "type": "string",
+            "title": "Risk Classification"
+          },
+          "classification_rationale": {
+            "type": "string",
+            "title": "Classification Rationale"
+          },
+          "interaction_notice": {
+            "type": "string",
+            "title": "Interaction Notice"
+          },
+          "content_notice": {
+            "type": "string",
+            "title": "Content Notice"
+          },
+          "purposes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Purposes"
+          },
+          "automated_decision_making": {
+            "$ref": "#/components/schemas/AutomatedDecisionDisclosure"
+          },
+          "human_oversight": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Human Oversight"
+          },
+          "known_limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Known Limitations"
+          },
+          "emotion_recognition": {
+            "$ref": "#/components/schemas/EmotionRecognitionDisclosure"
+          },
+          "biometric_processing": {
+            "type": "boolean",
+            "title": "Biometric Processing"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelDisclosure"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "content_marking": {
+            "$ref": "#/components/schemas/ContentMarkingDisclosure"
+          },
+          "incident_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Contact"
+          },
+          "documentation": {
+            "type": "string",
+            "title": "Documentation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "system_name",
+          "provider",
+          "regulation",
+          "provider_role",
+          "risk_classification",
+          "classification_rationale",
+          "interaction_notice",
+          "content_notice",
+          "purposes",
+          "automated_decision_making",
+          "human_oversight",
+          "known_limitations",
+          "emotion_recognition",
+          "biometric_processing",
+          "models",
+          "content_marking",
+          "documentation"
+        ],
+        "title": "AITransparencyResponse",
+        "description": "The Art. 50(1) notice plus the public part of the Art. 6 classification record.\n\nUnauthenticated on purpose: the obligation is owed to any natural person who\ninteracts with the system, and a client has to be able to render the notice before\na session exists."
+      },
       "AcademicInterviewCreate": {
         "properties": {
           "mutation_id": {
@@ -14525,6 +14750,17 @@
           "context_version_hash": {
             "type": "string",
             "title": "Context Version Hash"
+          },
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
           },
           "report": {
             "anyOf": [
@@ -17085,6 +17321,24 @@
         ],
         "title": "AuditEventResponse"
       },
+      "AutomatedDecisionDisclosure": {
+        "properties": {
+          "makes_binding_decisions": {
+            "type": "boolean",
+            "title": "Makes Binding Decisions"
+          },
+          "statement": {
+            "type": "string",
+            "title": "Statement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "makes_binding_decisions",
+          "statement"
+        ],
+        "title": "AutomatedDecisionDisclosure"
+      },
       "AvatarCompleteRequest": {
         "properties": {
           "storage_key": {
@@ -17844,6 +18098,103 @@
           "code"
         ],
         "title": "ConfirmEmailRequest"
+      },
+      "ContentMarkingDisclosure": {
+        "properties": {
+          "vocabulary": {
+            "type": "string",
+            "title": "Vocabulary"
+          },
+          "ai_value": {
+            "type": "string",
+            "title": "Ai Value"
+          },
+          "ai_edited_value": {
+            "type": "string",
+            "title": "Ai Edited Value"
+          },
+          "channels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Channels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vocabulary",
+          "ai_value",
+          "ai_edited_value",
+          "channels"
+        ],
+        "title": "ContentMarkingDisclosure"
+      },
+      "ContentProvenanceResponse": {
+        "properties": {
+          "ai_generated": {
+            "type": "boolean",
+            "title": "Ai Generated"
+          },
+          "digital_source_type": {
+            "type": "string",
+            "title": "Digital Source Type"
+          },
+          "system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System"
+          },
+          "providers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Providers"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice"
+          },
+          "legal_basis": {
+            "type": "string",
+            "title": "Legal Basis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ai_generated",
+          "digital_source_type",
+          "notice",
+          "legal_basis"
+        ],
+        "title": "ContentProvenanceResponse",
+        "description": "Machine-readable Art. 50(2) marking for one piece of stored content.\n\n`ai_generated: false` is meaningful \u2014 it asserts human authorship rather than\nleaving the marking absent, which a verifier cannot distinguish from an omission."
       },
       "CursorPage_AdminActionSummary_": {
         "properties": {
@@ -19595,6 +19946,17 @@
       },
       "EligibilityRecommendationsResponse": {
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "summary": {
             "type": "string",
             "title": "Summary"
@@ -19774,6 +20136,24 @@
           "last_calculated_at"
         ],
         "title": "EligibilityResponse"
+      },
+      "EmotionRecognitionDisclosure": {
+        "properties": {
+          "performed": {
+            "type": "boolean",
+            "title": "Performed"
+          },
+          "statement": {
+            "type": "string",
+            "title": "Statement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "performed",
+          "statement"
+        ],
+        "title": "EmotionRecognitionDisclosure"
       },
       "EntitlementResponse": {
         "properties": {
@@ -20129,6 +20509,17 @@
             "type": "string",
             "title": "Input Hash"
           },
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "usage_reservation_id": {
             "type": "string",
             "format": "uuid",
@@ -20254,6 +20645,31 @@
         "additionalProperties": true,
         "type": "object",
         "title": "GoalsSection"
+      },
+      "GoogleOneTapRequest": {
+        "properties": {
+          "id_token": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id Token"
+          },
+          "accepted_terms_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Terms Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_token"
+        ],
+        "title": "GoogleOneTapRequest"
       },
       "HTTPValidationError": {
         "properties": {
@@ -21048,6 +21464,17 @@
             "type": "array",
             "title": "Contradiction Warnings"
           },
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -21354,6 +21781,34 @@
           "message"
         ],
         "title": "MessageResponse"
+      },
+      "ModelDisclosure": {
+        "properties": {
+          "backend": {
+            "type": "string",
+            "title": "Backend"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "backend",
+          "operator",
+          "model",
+          "role"
+        ],
+        "title": "ModelDisclosure"
       },
       "NotificationCategoryPreference": {
         "properties": {
@@ -22834,6 +23289,17 @@
             "type": "array",
             "title": "Claim Warnings"
           },
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -22953,6 +23419,17 @@
       },
       "RefereePolishResponse": {
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "polished_content": {
             "type": "string",
             "title": "Polished Content"
@@ -25863,6 +26340,9 @@
             "type": "boolean",
             "title": "Can Comment",
             "default": false
+          },
+          "ai_provenance": {
+            "$ref": "#/components/schemas/ContentProvenanceResponse"
           }
         },
         "type": "object",
@@ -25872,7 +26352,8 @@
           "scope",
           "word_count",
           "character_count",
-          "document_type"
+          "document_type",
+          "ai_provenance"
         ],
         "title": "SharedDocumentResponse"
       },
@@ -25942,6 +26423,17 @@
       },
       "StoryAIAssistResponse": {
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "story_id": {
             "type": "string",
             "format": "uuid",

@@ -106,8 +106,8 @@ describe("Phase 1 delta helpers", () => {
     const generated = readFileSync("src/generated/api/schema.ts", "utf8");
     // Hardcoded counts, not a self-comparison: this guards against
     // openapi.json changing without `npm run api:generate` being rerun.
-    expect(Object.keys(contract.paths)).toHaveLength(211);
-    expect(Object.keys(contract.components.schemas)).toHaveLength(264);
+    expect(Object.keys(contract.paths)).toHaveLength(214);
+    expect(Object.keys(contract.components.schemas)).toHaveLength(271);
     for (const path of Object.keys(contract.paths)) {
       if (!path.startsWith("/api/v1/auth/")) {
         expect(generated).toContain(`"${path}"`);

@@ -47,6 +47,23 @@ export const authApi = {
     return res.data;
   },
 
+  googleOneTap: async (body: S["GoogleOneTapRequest"]) => {
+    let csrf = getCsrfToken();
+    if (!csrf) {
+      csrf = await bootstrapCsrf(true);
+    }
+    const res = await rawFetch<S["LoginResponse"]>("/auth/oauth/google/one-tap", {
+      method: "POST",
+      body,
+      credentials: "include",
+      headers: {
+        "X-CSRF-Token": csrf ?? "",
+      },
+    });
+    sessionSnapshot().setTokens(res.data);
+    return res.data;
+  },
+
   forgot: (body: S["ForgotPasswordRequest"]) =>
     apiRequest("/auth/forgot-password", {
       method: "POST",
