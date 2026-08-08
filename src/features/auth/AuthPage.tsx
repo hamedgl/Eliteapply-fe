@@ -7,7 +7,6 @@ import { ApiError } from "../../lib/api/errors";
 import { productConfig } from "../../lib/config/product";
 import { PASSWORD_RULES } from "./passwordRules";
 import { OAuthButtons } from "./OAuthButtons";
-import { GoogleOneTapPrompt } from "./GoogleOneTapPrompt";
 import "./auth-form.css";
 
 type Mode = "login" | "register" | "confirm" | "forgot";
@@ -141,10 +140,6 @@ export function AuthPage({ mode }: { mode: Mode }) {
           </div>
           {(mode === "login" || mode === "register") && (
             <>
-              <GoogleOneTapPrompt
-                mode={mode}
-                returnTo={new URLSearchParams(location.search).get("returnTo")}
-              />
               <OAuthButtons
                 mode={mode}
                 returnTo={new URLSearchParams(location.search).get("returnTo")}

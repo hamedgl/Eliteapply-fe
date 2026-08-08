@@ -48,7 +48,7 @@ const LAST_REVIEWED = "19 July 2026";
 const AI_NOTICE_REVIEWED = "4 August 2026";
 /** Keep in sync with `productConfig.legal.currentTermsVersion`, which is the
     version recorded against an account at registration. */
-const TERMS_EFFECTIVE = "4 August 2026";
+const TERMS_EFFECTIVE = "8 August 2026";
 const PRIVACY_EFFECTIVE = "4 August 2026";
 const OPERATOR = "Executive Precision Era";
 const SUPPORT_EMAIL = "support@eliteapply.net";
@@ -518,9 +518,12 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
         id: "liability",
         title: "Limits of liability",
         paragraphs: [
-          "To the fullest extent permitted by law, EliteApply is not liable for indirect, incidental, special, consequential or punitive loss, or for lost opportunities, decisions made by scholarship providers, or content lost outside our reasonable control.",
-          "Where liability may lawfully be limited, EliteApply's total liability relating to the service will not exceed the amount you paid for the service during the 12 months before the event giving rise to the claim. This limit does not apply to liability that cannot legally be limited.",
-          "We do not exclude or limit liability for death or personal injury caused by our negligence, for fraud or fraudulent misrepresentation, for damage caused intentionally or by gross negligence, or for anything else that the law does not allow us to limit.",
+          "Liability we never limit. We do not exclude or limit liability for death or personal injury caused by our negligence, for fraud or fraudulent misrepresentation, for damage caused intentionally or by gross negligence, or for anything else that the law does not allow us to limit. If you are a consumer, this section does not affect the statutory rights described in “Your statutory consumer rights”, and where any part of this section conflicts with a right you have that cannot be limited by contract, that right prevails and the rest of this section continues to apply.",
+          "Losses we exclude. To the fullest extent permitted by law, and except for the liability described in the paragraph above, EliteApply is not liable for indirect, incidental, special, consequential or punitive loss, or for loss of profit, revenue, business, opportunity, goodwill or anticipated savings, for decisions taken by scholarship providers, institutions, funders or employers, or for content lost outside our reasonable control, in each case whether or not the possibility of that loss was foreseeable or notified to us.",
+          `Aggregate cap. To the fullest extent permitted by law, the total aggregate liability of ${OPERATOR} and its affiliates for all claims arising out of or in connection with these terms or the service — whether in contract, tort (including negligence), breach of statutory duty, misrepresentation, restitution or otherwise — is limited, taken together, to the total fees you paid or that became payable by you for the service in the 12 months immediately before the event giving rise to the first such claim.`,
+          "The cap is aggregate, not per claim. It is a single maximum for the period described above and is not increased by the number of claims, the number of events giving rise to them, the legal grounds relied on, or the number of people bringing them. Where claims relate to more than one event, the 12-month period is counted back from the earliest of those events.",
+          "How the cap is calculated. “Fees” means amounts paid or payable by you to EliteApply for the service under these terms during that period, excluding taxes, payment-provider charges and any amounts refunded or credited to you. If you paid no fees in that period, including where you used a free plan or a trial, our total aggregate liability for that period is limited to EUR 100.",
+          "This limit reflects the price of the service and the allocation of risk between us. It applies even if a limited remedy fails of its essential purpose, and it survives suspension, cancellation, termination or expiry of these terms.",
         ],
       },
       {

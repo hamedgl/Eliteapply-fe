@@ -50,6 +50,7 @@ import { preloadAppRoute } from "../app/preload";
 import { ProgressBar } from "./data-display/ProgressBar";
 import { NotificationsDropdown } from "../features/notifications/NotificationsDropdown";
 import { GlobalSearch } from "../features/search/GlobalSearch";
+import { ConsentGate } from "../features/auth/ConsentGate";
 import "../styles/workspace.css";
 
 const compactNumber = new Intl.NumberFormat(undefined, { notation: "compact" });
@@ -895,6 +896,7 @@ export function AppShell() {
           onClose={() => setPageGuideOpen(false)}
         />
       ) : null}
+      <ConsentGate />
     </div>
   );
 }

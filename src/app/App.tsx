@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef } from "react";
 import {
   Navigate,
   Link,
+  Outlet,
   RouterProvider,
   createBrowserRouter,
   isRouteErrorResponse,
@@ -9,6 +10,7 @@ import {
   useRouteError,
 } from "react-router-dom";
 import { useSession } from "../lib/auth/session";
+import { GoogleOneTapPrompt } from "../features/auth/GoogleOneTapPrompt";
 import {
   LandingPage,
   ProductPreviewPage,
@@ -263,7 +265,18 @@ function AppRouteError() {
   );
 }
 
-const router = createBrowserRouter([
+// Pathless root: One Tap greets anonymous visitors on every public route (it gates itself
+// once a session exists), instead of only on /login and /register.
+function RootLayout() {
+  return (
+    <>
+      <GoogleOneTapPrompt />
+      <Outlet />
+    </>
+  );
+}
+
+const routes = [
   { path: "/", element: <LandingPage /> },
   { path: "/product-preview", element: <ProductPreviewPage /> },
   { path: "/features/*", element: <MarketingPage /> },
@@ -369,7 +382,9 @@ const router = createBrowserRouter([
     ],
   },
   { path: "*", element: <MarketingNotFoundPage /> },
-]);
+];
+
+const router = createBrowserRouter([{ element: <RootLayout />, children: routes }]);
 export function App() {
   const previousPath = useRef(router.state.location.pathname);
   useEffect(() => router.subscribe(({location}) => {

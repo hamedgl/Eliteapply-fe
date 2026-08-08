@@ -26,6 +26,11 @@ describe("Terms of Service", () => {
       expect(screen.getByRole("heading", { level: 2, name: heading })).toBeInTheDocument();
 
     expect(screen.getByText(/renew automatically/i)).toBeInTheDocument();
+    // The aggregate cap is the clause that bounds our financial exposure.
+    expect(screen.getByText(/is limited, taken together, to the total fees you paid/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/12 months immediately before the event giving rise to the first/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/do not require arbitration/i)).toBeInTheDocument();
     expect(screen.getByText(/14 days from the day the contract is concluded/)).toBeInTheDocument();
   });
