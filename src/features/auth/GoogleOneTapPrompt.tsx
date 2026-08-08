@@ -20,7 +20,12 @@ export function GoogleOneTapPrompt({
   const busy = useRef(false);
 
   useEffect(() => {
-    if (!productConfig.googleClientId) return;
+    if (!productConfig.googleClientId) {
+      if (import.meta.env.DEV) {
+        console.warn("Google One Tap disabled: VITE_GOOGLE_CLIENT_ID is not set.");
+      }
+      return;
+    }
     let cancelPrompt: (() => void) | undefined;
     let unmounted = false;
 

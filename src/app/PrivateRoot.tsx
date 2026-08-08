@@ -21,9 +21,11 @@ const queryClient = new QueryClient({
 });
 
 function Bootstrap() {
-  const setAuthenticated = useSession((state) => state.setAuthenticated);
   const setUser = useSession((state) => state.setUser);
   const setInitializing = useSession((state) => state.setInitializing);
+  const accessToken = useSession((state) => state.accessToken);
+  const hasUser = useSession((state) => state.user !== null);
+  const initializing = useSession((state) => state.initializing);
 
   useEffect(() => {
     const unsubscribeCleanup = onAuthCleanup(() => {
@@ -89,6 +91,26 @@ function Bootstrap() {
       active = false;
     };
   }, [setInitializing, setUser]);
+
+  // The mount effect above only runs once, so a login that happens *after* mount
+  // (password, Google One Tap, OAuth callback — all of which only set tokens)
+  // would leave `user` null until a full page reload. Fetch the profile whenever
+  // we hold a token without one.
+  useEffect(() => {
+    if (initializing || !accessToken || hasUser) return;
+    let active = true;
+    void (async () => {
+      try {
+        const user = await usersApi.me();
+        if (active) setUser(user);
+      } catch {
+        // ponytail: header falls back to "Your account"; the next refresh retries.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [initializing, accessToken, hasUser, setUser]);
 
   useEffect(() => {
     const handleFocusOrVisible = () => {

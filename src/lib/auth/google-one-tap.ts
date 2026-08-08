@@ -11,20 +11,13 @@ type GoogleIdConfiguration = {
   use_fedcm_for_prompt?: boolean;
 };
 
-type PromptMomentNotification = {
-  isNotDisplayed: () => boolean;
-  isSkippedMoment: () => boolean;
-  getNotDisplayedReason: () => string;
-  getSkippedReason: () => string;
-};
-
 declare global {
   interface Window {
     google?: {
       accounts: {
         id: {
           initialize: (config: GoogleIdConfiguration) => void;
-          prompt: (listener?: (notification: PromptMomentNotification) => void) => void;
+          prompt: () => void;
           cancel: () => void;
           disableAutoSelect: () => void;
         };
@@ -85,7 +78,6 @@ function ensureAutoSelectResetOnSignOut() {
 export async function initGoogleOneTap(opts: {
   clientId: string;
   onCredential: (credential: string) => void;
-  onNotDisplayed?: (reason: string) => void;
 }): Promise<() => void> {
   await loadGoogleIdentityScript();
   ensureAutoSelectResetOnSignOut();
@@ -102,13 +94,8 @@ export async function initGoogleOneTap(opts: {
     use_fedcm_for_prompt: true,
   });
 
-  google.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed()) {
-      opts.onNotDisplayed?.(notification.getNotDisplayedReason());
-    } else if (notification.isSkippedMoment()) {
-      opts.onNotDisplayed?.(notification.getSkippedReason());
-    }
-  });
+  // No moment listener: with FedCM enabled Google throws on isNotDisplayed()/isSkippedMoment().
+  google.accounts.id.prompt();
 
   return () => google.accounts.id.cancel();
 }
