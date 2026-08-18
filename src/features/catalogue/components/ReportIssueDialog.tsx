@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useModalDialog } from "../../../lib/dom-hooks";
 import { X } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Select } from "../../../components/ui/select";
@@ -39,6 +40,8 @@ function ReportForm({
   entityTitle: string;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef, onClose);
   const [issueType, setIssueType] = useState("outdated_deadline");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -64,7 +67,9 @@ function ReportForm({
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
       <div
         className="apps-dialog"
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="report-issue-title"
         onClick={(e) => e.stopPropagation()}
       >

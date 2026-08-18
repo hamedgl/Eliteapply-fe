@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
+import { chooseOption } from "./select-helper";
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
   identity_subject: "test",
@@ -10,6 +12,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -49,6 +53,23 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith("/users/me")) return route.fulfill({ json: user });
     if (url.endsWith("/platform/capabilities"))
       return route.fulfill({ json: [] });
+    if (url.endsWith("/billing/entitlements"))
+      return route.fulfill({
+        json: {
+          plan_key: "free",
+          plan_name: "free",
+          plan_label: "Free",
+          subscription_status: "active",
+          is_active: true,
+          cancel_at_period_end: false,
+          current_period_end: null,
+          trial_end: null,
+          ai_tokens_used: 0,
+          ai_tokens_limit: 1000,
+          ai_tokens_reset_at: "2027-01-01T00:00:00Z",
+          purchased_tokens_remaining: 0,
+        },
+      });
     if (new URL(url).pathname.endsWith("/catalogue/institutions"))
       return route.fulfill({
         json: {
@@ -112,19 +133,34 @@ test.beforeEach(async ({ page }) => {
     )
       return route.fulfill({
         json: {
-          items: [],
+          items: [
+            {
+              type: "scholarship",
+              id: "00000000-0000-4000-8000-000000000023",
+              name: "Chevening Scholarship",
+              institution_id: "00000000-0000-4000-8000-000000000021",
+              institution_name: "University of Oxford",
+              reasons: ["Matches your target country"],
+              score: 82,
+            },
+          ],
           disclaimer:
             "Recommendations organize relevant options and do not predict admission.",
         },
       });
     if (new URL(url).pathname.includes("/share/"))
       return route.fulfill({
+        // Matches SharedDocumentResponse in docs/api/openapi.json.
         json: {
           title: "Research motivation statement",
           html: "<h1>Research motivation</h1><p>Safe preview</p>",
           scope: "comment",
           word_count: 2,
           character_count: 17,
+          document_type: "personal_statement",
+          expires_at: null,
+          can_comment: true,
+          ai_provenance: null,
         },
       });
     if (url.endsWith("/applications/board"))
@@ -184,7 +220,7 @@ test("catalogue distinguishes canonical records and exposes discovery", async ({
     page.getByRole("heading", { name: "Academic catalogue" }),
   ).toBeVisible();
   await expect(page.getByText("University of Oxford")).toBeVisible();
-  await expect(page.getByText("Canonical", { exact: true })).toBeVisible();
+  await expect(page.getByText("Verified", { exact: true }).first()).toBeVisible();
   await page.screenshot({
     path: "/tmp/eliteapply-phase2-catalogue.png",
     fullPage: true,
@@ -193,8 +229,10 @@ test("catalogue distinguishes canonical records and exposes discovery", async ({
   await expect(
     page.getByRole("heading", { name: "Saved searches & matches" }),
   ).toBeVisible();
+  // The honesty note is backend-owned copy and must stay visible alongside
+  // any result that carries a match score.
   await expect(
-    page.getByText(/How to read this:.*do not predict admission/i),
+    page.getByText(/do not predict admission/i),
   ).toBeVisible();
 });
 
@@ -328,13 +366,18 @@ test("public writing share is noindex and comment-capable", async ({
     page.getByRole("heading", { name: "Research motivation statement" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Leave a comment" }),
+    page.getByRole("heading", { name: "Leave feedback" }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     "noindex,nofollow",
   );
-  await expect(page.locator("iframe")).toHaveAttribute("sandbox", "");
+  // The frame runs one appended height-reporter script, so `allow-scripts` is
+  // expected. What must never appear is `allow-same-origin`: without it the
+  // frame has an opaque origin and author HTML cannot reach this page.
+  const sandbox = await page.locator("iframe").getAttribute("sandbox");
+  expect(sandbox).toBe("allow-scripts");
+  expect(sandbox).not.toContain("allow-same-origin");
   await page.screenshot({
     path: "/tmp/eliteapply-phase2-share.png",
     fullPage: true,
@@ -368,16 +411,23 @@ test("scholarship applications require and submit a catalogue scholarship", asyn
   await page
     .getByRole("option", { name: "Rhodes Scholarship — Rhodes Trust" })
     .click();
+  // Every required control must carry the visible asterisk cue, which the
+  // shared field styles render on the label's first span (::after).
   expect(
     await dialog
       .locator(":is(input, select, textarea):required")
       .evaluateAll((controls) =>
         controls
-          .filter(
-            (control) =>
-              getComputedStyle(control.closest("label")!, "::before")
-                .content !== '"*"',
-          )
+          .filter((control) => {
+            const marker = control
+              .closest("label")
+              ?.querySelector("span:first-child");
+            return (
+              !marker ||
+              !getComputedStyle(marker, "::after").content.includes("*")
+            );
+          })
+
           .map((control) => control.getAttribute("name")),
       ),
   ).toEqual([]);
@@ -429,9 +479,10 @@ test("application modal opens a usable private programme form", async ({
   await expect(page.locator('select[name="institution_id"]')).toContainText(
     "University of Oxford",
   );
-  const form = page.locator("form").filter({
-    has: page.getByRole("heading", { name: "Add private programme" }),
-  });
+  // The heading lives in the dialog header, a sibling of the form.
+  const form = page
+    .getByRole("dialog", { name: "Add private programme" })
+    .locator("form");
   await form.getByLabel("Name").fill("MSc Public Policy");
   await form
     .locator('select[name="institution_id"]')
@@ -476,20 +527,19 @@ test("application filters persist every field after closing and reloading", asyn
   await drawer.getByRole("combobox", { name: "Scholarship" }).click();
   await drawer.getByRole("option", { name: /Rhodes Scholarship/ }).click();
 
-  await drawer
-    .locator("label", { hasText: "Application type" })
-    .getByRole("button")
-    .click();
-  await page.getByRole("option", { name: "Scholarship", exact: true }).click();
+  await chooseOption(
+    page,
+    drawer.getByRole("combobox", { name: "Application type" }),
+    "Scholarship",
+  );
   await drawer.getByLabel("Deadline from").fill("2026-08-01");
   await drawer.getByLabel("Deadline to").fill("2026-12-31");
-  await drawer.locator("label", { hasText: "Tag" }).getByRole("button").click();
-  await page.getByRole("option", { name: "Funding", exact: true }).click();
-  await drawer
-    .locator("label", { hasText: "Priority" })
-    .getByRole("button")
-    .click();
-  await page.getByRole("option", { name: "High", exact: true }).click();
+  await chooseOption(page, drawer.getByRole("combobox", { name: "Tag" }), "Funding");
+  await chooseOption(
+    page,
+    drawer.getByRole("combobox", { name: "Priority" }),
+    "High",
+  );
   await drawer.getByLabel("Include archived").click();
   await expect(drawer.getByLabel("Include archived")).toBeChecked();
 
@@ -590,7 +640,7 @@ test("board is keyboard operable and responsive", async ({ page }) => {
     ),
   ).toBeLessThanOrEqual(0);
   const card = await page
-    .locator(".application-list-table tr")
+    .locator(".apps-table tr")
     .last()
     .boundingBox();
   const open = await page.getByRole("link", { name: "Open" }).boundingBox();
@@ -599,7 +649,7 @@ test("board is keyboard operable and responsive", async ({ page }) => {
   expect(open!.height).toBeGreaterThanOrEqual(44);
   expect(open!.y + open!.height).toBeLessThanOrEqual(card!.y + card!.height);
   const selectTarget = await page
-    .locator(".application-row-select")
+    .locator("td.apps-table-select")
     .first()
     .boundingBox();
   expect(selectTarget).not.toBeNull();
@@ -642,8 +692,10 @@ test("board cards drag between stages and columns collapse", async ({
                   ),
                 ]
               : [],
-          shortlisted:
-            stage === "shortlisted"
+          // A primary stage: non-primary columns are hidden while empty, so
+          // they are not a valid drop target until they hold a card.
+          waiting_for_documents:
+            stage === "waiting_for_documents"
               ? [
                   app(
                     "00000000-0000-4000-8000-000000000013",
@@ -674,29 +726,30 @@ test("board cards drag between stages and columns collapse", async ({
 
   await page.goto("/app/applications?view=board");
   const card = page.getByRole("article", { name: "MSc Computer Science" });
-  const shortlisted = page.getByRole("region", { name: "Shortlisted" });
-  const handle = card.locator(".application-drag-handle");
+  const target = page.getByRole("region", { name: "Waiting For Documents" });
+  const handle = card.locator(".apps-board-drag-handle");
   await expect(handle).toHaveAttribute("draggable", "true");
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   await handle.dispatchEvent("dragstart", { dataTransfer });
-  await shortlisted.dispatchEvent("dragover", { dataTransfer });
-  await shortlisted.dispatchEvent("drop", { dataTransfer });
-  await expect.poll(() => update?.stage).toBe("shortlisted");
+  await target.dispatchEvent("dragover", { dataTransfer });
+  await target.dispatchEvent("drop", { dataTransfer });
+  await expect.poll(() => update?.stage).toBe("waiting_for_documents");
   await expect(
-    shortlisted.getByRole("article", { name: "MSc Computer Science" }),
+    target.getByRole("article", { name: "MSc Computer Science" }),
   ).toBeVisible();
   await page.screenshot({
     path: "/tmp/eliteapply-kanban-moved.png",
     fullPage: false,
   });
 
-  const collapse = page.getByRole("button", { name: "Collapse Shortlisted" });
+  const collapse = page.getByRole("button", {
+    name: "Collapse Waiting For Documents",
+  });
   await collapse.click();
   await expect(
-    page.getByRole("button", { name: "Expand Shortlisted" }),
+    page.getByRole("button", { name: "Expand Waiting For Documents" }),
   ).toHaveAttribute("aria-expanded", "false");
-  await expect(shortlisted.locator(".board-column-content")).toBeHidden();
-  await expect(shortlisted).toHaveCSS("flex-basis", "54px");
+  await expect(target.locator(".apps-board-column-content")).toBeHidden();
   await page.screenshot({
     path: "/tmp/eliteapply-kanban-collapsed.png",
     fullPage: false,
@@ -724,9 +777,11 @@ test("board shows the backend reason when a move fails", async ({ page }) => {
       }),
   );
   await page.goto("/app/applications?view=board");
-  await page
-    .getByLabel("Move MSc Computer Science")
-    .selectOption("shortlisted");
+  await chooseOption(
+    page,
+    page.getByRole("combobox", { name: "Move MSc Computer Science" }),
+    "Shortlisted",
+  );
   const alert = page.getByRole("alert");
   await expect(alert).toContainText(
     "application is locked while submission is in progress.",

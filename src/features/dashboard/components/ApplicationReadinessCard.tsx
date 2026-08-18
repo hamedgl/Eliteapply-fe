@@ -9,7 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {Link} from "react-router-dom";
 import { track } from "../../../lib/analytics/track";
 import { applicationsApi, intelligenceApi } from "../../../lib/api/phase2";
 import { platformApi, type DashboardApplicationItem } from "../../../lib/api/platform";
@@ -413,7 +413,6 @@ export function ApplicationReadinessCard({
   isError: externalIsError,
   onRetry: externalOnRetry,
 }: ApplicationReadinessCardProps) {
-  const navigate = useNavigate();
 
   // Primary Query: GET /api/v1/dashboard/readiness
   const readinessQuery = useQuery({
@@ -432,7 +431,9 @@ export function ApplicationReadinessCard({
     queryKey: queryKeys.applications,
     queryFn: async () => {
       const res = await applicationsApi.list({ limit: 50 });
-      return res.items;
+      // react-query rejects an undefined result; an empty list is the correct
+      // fallback when the payload arrives without its items array.
+      return res.items ?? [];
     },
     enabled:
       externalReadinessItems === undefined &&

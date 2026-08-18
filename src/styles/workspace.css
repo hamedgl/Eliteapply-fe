@@ -189,7 +189,8 @@
 .detail-tabs {
   position: sticky;
   top: calc(var(--app-navigation-height) + 151px);
-  z-index: 19;
+  /* Sits directly beneath the sticky page header, never above it. */
+  z-index: calc(var(--app-z-page-sticky) - 1);
   display: flex;
   gap: 0.15rem;
   overflow-x: auto;
@@ -292,7 +293,7 @@
 .detail-task-group > h3 + * button:not(.apps-row-menu-trigger),
 .detail-load-more,
 .detail-filter-bar button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--app-line);
   border-radius: 9999px;
@@ -813,7 +814,7 @@
 }
 
 .detail-missing-documents button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.45rem 0.7rem;
   border: 1px solid #d5b57d;
   border-radius: 9999px;
@@ -1193,7 +1194,7 @@
 
 .detail-toast {
   position: fixed;
-  z-index: 70;
+  z-index: var(--app-z-toast);
   inset-inline-end: 1.25rem;
   inset-block-end: 1.25rem;
   display: flex;
@@ -1250,7 +1251,7 @@
 .bulk-grid select,
 .detail-filter-bar select,
 .detail-row-actions select {
-  min-height: 42px;
+  min-height: var(--app-control-height);
   border: 1px solid var(--app-line-strong);
   border-radius: 8px;
   color: var(--app-ink);
@@ -1517,7 +1518,7 @@
   }
   .detail-header-actions .primary {
     position: fixed;
-    z-index: 30;
+    z-index: var(--app-z-floating-action);
     inset-inline: 1rem;
     inset-block-end: 0.75rem;
     justify-content: center;
@@ -1801,6 +1802,9 @@
 .apps-toolbar-search:focus-within {
   border-color: var(--app-blue);
   background: var(--app-surface);
+  /* The inner input suppresses its own outline, so the box carries the
+     indicator — same cobalt halo as the shared field primitive. */
+  box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
 }
 .apps-toolbar-search svg {
   width: 17px;
@@ -1941,7 +1945,7 @@
 .apps-drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--app-z-scrim);
   display: flex;
   justify-content: flex-end;
   background: rgb(16 27 59 / 45%);
@@ -2109,7 +2113,7 @@
   gap: 0.55rem;
 }
 .apps-drawer-actions > button:not(.primary) {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0 0.85rem;
   color: var(--app-text);
   border-radius: 9999px;
@@ -2282,6 +2286,26 @@
 .apps-table-select {
   width: 40px;
 }
+
+/* Row selection is a primary bulk-edit affordance and the checkbox glyph is
+   ~13px, well under any usable target size. The cell itself becomes the hit
+   area via a stretched pseudo-element on the input. */
+.apps-table-select {
+  position: relative;
+}
+
+.apps-table-select input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.apps-table-select input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
 .apps-row-title {
   display: block;
   color: var(--app-ink);
@@ -2333,6 +2357,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  /* Row-level action: keep a full 44px touch target on narrow viewports,
+     where this is the primary way into an application. */
+  min-height: 44px;
   padding: 0.45rem 1rem;
   color: var(--app-blue);
   border: 1px solid var(--app-line);
@@ -2396,7 +2423,7 @@
   justify-items: start;
   gap: 0.55rem;
   width: 100%;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.6rem;
   color: var(--app-text);
   border: 0;
@@ -2691,7 +2718,7 @@
 .apps-dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--app-z-scrim);
   display: grid;
   place-items: center;
   padding: 1rem;
@@ -2786,9 +2813,9 @@
 .settings-form label:not(.check):not(.check-field) > :is(input, select, textarea),
 .apps-dialog label:not(.check):not(.check-field):not(.reference-method-option) > :is(input, select, textarea) {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.85rem;
-  border: 1px solid var(--app-line-strong, #cfd7e6);
+  border: 1px solid var(--app-line-strong);
   border-radius: 8px;
   background: var(--app-surface, #ffffff);
   color: var(--app-ink, #101b3b);
@@ -2800,7 +2827,7 @@
 .form-grid > label:not(.check):not(.check-field) > :is(input, select, textarea):hover,
 .settings-form label:not(.check):not(.check-field) > :is(input, select, textarea):hover,
 .apps-dialog label:not(.check):not(.check-field):not(.reference-method-option) > :is(input, select, textarea):hover {
-  border-color: #94a3b8;
+  border-color: var(--app-line-hover);
 }
 
 .form-grid > label:not(.check):not(.check-field) > :is(input, select, textarea):focus,
@@ -2814,7 +2841,7 @@
 }
 
 .application-create-dialog .form-grid > label:first-child > input {
-  min-height: 42px;
+  min-height: var(--app-control-height);
   font-size: 0.875rem;
 }
 
@@ -2833,24 +2860,14 @@
   width: 100%;
 }
 
-.application-create-dialog .required-field-label::before {
-  content: "*";
-  margin-right: 0.3rem;
-  color: var(--danger, #b42318);
-  font-weight: 700;
-}
-
+/* One required marker convention app-wide: a trailing asterisk on the field
+   label. The Add-application dialog previously used a leading one, which made
+   the same form control look different depending on where it was rendered. */
 label:has(> :is(input, select, textarea):required) > span:first-child::after,
 .required-field-label::after {
   content: " *";
-  color: var(--danger, #b42318);
+  color: var(--app-red);
   font-weight: 700;
-}
-
-.application-create-dialog
-  label:has(> :is(input, select, textarea):required)
-  > .required-field-label:first-child::after {
-  content: none;
 }
 
 .apps-notice {
@@ -3048,7 +3065,7 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
 }
 .apps-board-column-toggle {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -3203,7 +3220,7 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
 }
 .apps-board-card-stage select {
   width: 100%;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.48rem 0.6rem;
   font-size: 0.78rem;
 }
@@ -3760,7 +3777,7 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   gap: 1rem;
 }
 .reference-draft-heading > button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -3805,7 +3822,7 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   flex-wrap: wrap;
 }
 .reference-document-actions button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;

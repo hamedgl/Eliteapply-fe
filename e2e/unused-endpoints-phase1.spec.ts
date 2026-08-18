@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 
 const applicationId = "00000000-0000-4000-8000-000000000010";
 const user = {
@@ -12,6 +13,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -87,7 +90,7 @@ test("workspace seeds requirement and task routes without extra list requests", 
   expect(counts.requirements).toBe(0);
   expect(counts.tasks).toBe(0);
 
-  await page.getByRole("button", { name: "Requirements" }).click();
+  await page.getByRole("tab", { name: /^Requirements/ }).click();
   await expect(page).toHaveURL(
     new RegExp(`/app/applications/${applicationId}/requirements$`),
   );
@@ -100,7 +103,7 @@ test("workspace seeds requirement and task routes without extra list requests", 
     fullPage: false,
   });
 
-  await page.getByRole("button", { name: "Tasks" }).click();
+  await page.getByRole("tab", { name: /^Tasks/ }).click();
   await expect(page.getByText("Review overdue draft")).toBeVisible();
   await expect(page.getByLabel("Task schedule summary")).toContainText(
     "Overdue 1",
@@ -109,28 +112,41 @@ test("workspace seeds requirement and task routes without extra list requests", 
   expect(consoleErrors).toEqual([]);
 });
 
-test("manual refresh uses only the dedicated requirements operation", async ({
+test("manual refresh refetches the composite workspace, not the per-resource routes", async ({
   page,
 }) => {
   const counts = await mockApi(page);
   await page.goto(`/app/applications/${applicationId}`);
-  await page.getByRole("button", { name: "Requirements" }).click();
-  await page.getByRole("button", { name: "Refresh", exact: true }).click();
-  await expect.poll(() => counts.requirements).toBe(1);
-  expect(counts.workspace).toBeGreaterThan(0);
+  await page.getByRole("tab", { name: /^Requirements/ }).click();
+  await expect(page.getByText(requirement.title)).toBeVisible();
+  const before = counts.workspace;
+  await page.getByRole("button", { name: "Refresh page data" }).click();
+  await expect.poll(() => counts.workspace).toBeGreaterThan(before);
+  // Every tab reads from the one composite payload, so refreshing must not
+  // start fanning out to the dedicated list operations.
+  expect(counts.requirements).toBe(0);
   expect(counts.tasks).toBe(0);
+  expect(counts.documentLinks).toBe(0);
 });
 
-test("a direct task link skips the composite workspace", async ({ page }) => {
+test("a direct task link opens the workspace on the tasks tab in one request", async ({
+  page,
+}) => {
   const counts = await mockApi(page);
   await page.goto(`/app/applications/${applicationId}/tasks`);
   await expect(
-    page.getByRole("heading", { name: "Application tasks", level: 1 }),
+    page.getByRole("heading", { name: application.title, level: 1 }),
   ).toBeVisible();
+  await expect(page.getByRole("tab", { name: /^Tasks/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expect(page.getByText("Prepare interview notes")).toBeVisible();
-  expect(counts.workspace).toBe(0);
+  // The composite workspace payload already carries the tasks, so the deep
+  // link must not also hit the dedicated task and requirement list routes.
+  expect(counts.workspace).toBeGreaterThan(0);
   expect(counts.requirements).toBe(0);
-  expect(counts.tasks).toBeGreaterThan(0);
+  expect(counts.tasks).toBe(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await expect(page.getByText("Prepare interview notes")).toBeVisible();
@@ -140,17 +156,35 @@ test("a direct task link skips the composite workspace", async ({ page }) => {
   });
 });
 
-test("requirements recover independently when the workspace fails", async ({
+test("a failed workspace degrades to a recoverable retry, never a blank page", async ({
   page,
 }) => {
   const counts = await mockApi(page, true);
   await page.goto(`/app/applications/${applicationId}`);
-  await page.getByRole("link", { name: "Open requirements" }).click();
-  await expect(page.getByText(requirement.title)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Application workspace unavailable" }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Back to applications" }),
+  ).toBeVisible();
   expect(counts.workspace).toBeGreaterThan(0);
-  expect(counts.requirements).toBe(1);
+  expect(counts.requirements).toBe(0);
   expect(counts.tasks).toBe(0);
 });
+
+const workspaceReadiness = {
+  application_id: applicationId,
+  overall_state: "in_progress",
+  readiness_percent: 25,
+  blocking_issues: [],
+  warnings: [],
+  missing_required_documents: [],
+  incomplete_requirements: [requirement.id],
+  unresolved_eligibility_issues: [],
+  deadline_state: "upcoming",
+  recommended_next_actions: [],
+};
 
 async function mockApi(page: Page, failWorkspace = false) {
   const counts = { workspace: 0, requirements: 0, tasks: 0, documentLinks: 0 };
@@ -186,12 +220,16 @@ async function mockApi(page: Page, failWorkspace = false) {
       if (failWorkspace)
         return route.fulfill({ status: 503, json: { detail: "Unavailable" } });
       return route.fulfill({
+        // Shape must match ApplicationWorkspaceResponse in docs/api/openapi.json:
+        // linked_resources and readiness are required there too.
         json: {
           application,
           requirements: [requirement],
           tasks,
           document_links: documentLinks,
+          linked_resources: [],
           history: [],
+          readiness: workspaceReadiness,
         },
       });
     }
@@ -208,20 +246,7 @@ async function mockApi(page: Page, failWorkspace = false) {
       return route.fulfill({ json: documentLinks });
     }
     if (path.endsWith(`/applications/${applicationId}/readiness`))
-      return route.fulfill({
-        json: {
-          application_id: applicationId,
-          overall_state: "in_progress",
-          readiness_percent: 25,
-          blocking_issues: [],
-          warnings: [],
-          missing_required_documents: [],
-          incomplete_requirements: [requirement.id],
-          unresolved_eligibility_issues: [],
-          deadline_state: "upcoming",
-          recommended_next_actions: [],
-        },
-      });
+      return route.fulfill({ json: workspaceReadiness });
     if (path.endsWith(`/applications/${applicationId}/collaborator-view`))
       return route.fulfill({ json: {} });
     return route.fulfill({ json: {} });

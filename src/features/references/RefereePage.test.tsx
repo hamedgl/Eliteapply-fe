@@ -11,7 +11,7 @@ afterEach(() => {
 
 describe("RefereePage", () => {
   it("shows the uploaded document and submits its confirmed id", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith("/submit")) return Response.json({ status: "approved" });
       return Response.json({

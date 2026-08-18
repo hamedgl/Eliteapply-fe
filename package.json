@@ -19,18 +19,13 @@
     "api:usage": "node scripts/check-openapi-operation-usage.mjs"
   },
   "dependencies": {
-    "@heroui/react": "^3.2.2",
-    "@heroui/styles": "^3.2.2",
     "@tanstack/react-query": "^5.90.21",
-    "clsx": "^2.1.1",
     "lucide-react": "^0.546.0",
-    "motion": "^12.42.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.62.0",
     "react-router": "^8.3.0",
     "react-router-dom": "^7.18.1",
-    "tailwind-merge": "^3.6.0",
     "trix": "^2.1.19",
     "zod": "^4.1.9",
     "zustand": "^5.0.8"

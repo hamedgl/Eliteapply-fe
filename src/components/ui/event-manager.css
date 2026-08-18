@@ -75,7 +75,7 @@
 }
 
 .event-manager-primary {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -115,7 +115,7 @@
 .event-manager-search input,
 .event-manager-toolbar select {
   width: 100%;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   color: var(--app-ink);
   border: 1px solid var(--app-line-strong);
   border-radius: 8px;

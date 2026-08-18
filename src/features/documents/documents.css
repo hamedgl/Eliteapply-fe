@@ -119,7 +119,7 @@
   align-self: flex-start;
 }
 .docs-card-action {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding-block: 0.5rem;
   flex: none;
 }

@@ -221,12 +221,17 @@ function ProductMenu() {
       <button
         type="button"
         className="product-menu-trigger"
+        aria-haspopup="true"
+        aria-controls="product-menu-panel"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
         Product <ChevronDown aria-hidden="true" />
       </button>
-      <div className={open ? "product-menu-panel open" : "product-menu-panel"}>
+      <div
+        id="product-menu-panel"
+        className={open ? "product-menu-panel open" : "product-menu-panel"}
+      >
         <div className="product-menu-panel-inner">
           <Link className="product-menu-all" to="/features" onClick={closeMenu}>
             All features

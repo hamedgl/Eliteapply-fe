@@ -38,8 +38,7 @@ export const sensitivityMeta: Record<
   },
 };
 
-export const label = (value: string) =>
-  value.replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase());
+export { label } from "../../lib/label";
 
 /** Client convention for the untyped `evidence` field: {label, url}. Unknown shapes degrade gracefully. */
 export type EvidenceItem = { label: string; url?: string };

@@ -499,15 +499,18 @@ export function AppShell() {
         ),
       )
     : 0;
-  const daysUntilReset = entitlement
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(entitlement.ai_tokens_reset_at).getTime() - Date.now()) /
-            86_400_000,
-        ),
-      )
+  // A truncated or failed entitlement payload must never surface as "NaN
+  // tokens" in the sidebar; fall back to hiding the figure instead.
+  const tokenResetAt = entitlement
+    ? new Date(entitlement.ai_tokens_reset_at).getTime()
+    : Number.NaN;
+  const daysUntilReset = Number.isFinite(tokenResetAt)
+    ? Math.max(0, Math.ceil((tokenResetAt - Date.now()) / 86_400_000))
     : null;
+  const tokensLimit = Number(entitlement?.ai_tokens_limit);
+  const tokensUsed = Number(entitlement?.ai_tokens_used);
+  const hasTokenAllowance =
+    Number.isFinite(tokensLimit) && Number.isFinite(tokensUsed);
 
   function closeSidebar() {
     setOpen(false);
@@ -758,19 +761,20 @@ export function AppShell() {
               <Sparkles aria-hidden="true" />
               <strong>{entitlement.plan_label} Plan</strong>
             </p>
-            <p className="sidebar-plan-limit">
-              {compactNumber.format(entitlement.ai_tokens_limit)} tokens
-            </p>
-            <ProgressBar
-              percent={tokensUsedPercent}
-              label="AI tokens used"
-            />
-            <p className="sidebar-plan-meta">
-              {compactNumber.format(entitlement.ai_tokens_used)} used
-              {daysUntilReset !== null
-                ? ` · renews in ${daysUntilReset} days`
-                : null}
-            </p>
+            {hasTokenAllowance ? (
+              <>
+                <p className="sidebar-plan-limit">
+                  {compactNumber.format(tokensLimit)} tokens
+                </p>
+                <ProgressBar percent={tokensUsedPercent} label="AI tokens used" />
+                <p className="sidebar-plan-meta">
+                  {compactNumber.format(tokensUsed)} used
+                  {daysUntilReset !== null
+                    ? ` · renews in ${daysUntilReset} days`
+                    : null}
+                </p>
+              </>
+            ) : null}
             <NavLink
               className="sidebar-plan-manage"
               to="/app/settings/billing"

@@ -68,3 +68,30 @@ export function useDismiss(
     };
   }, [refs, active]);
 }
+
+/**
+ * Modal dialog semantics for hand-rolled backdrop + panel markup: focus trap,
+ * Escape to close, focus restored to the trigger on unmount.
+ *
+ * Native `<dialog>` (see ConfirmationDialog) gives all of this for free and is
+ * the better choice for new dialogs. This exists for the panels that predate it.
+ */
+export function useModalDialog(
+  ref: React.RefObject<HTMLElement | null>,
+  onClose: () => void,
+) {
+  useFocusTrap(ref, true);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      // A nested dialog opened on top owns Escape.
+      if (document.querySelector("dialog[open]")) return;
+      event.stopPropagation();
+      onCloseRef.current();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
+}

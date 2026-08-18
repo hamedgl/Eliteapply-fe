@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -11,6 +12,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -26,6 +29,21 @@ const dashboard = {
   recommended_next_action: "complete_academic_profile",
 };
 
+const entitlement = {
+  plan_key: "free",
+  plan_name: "free",
+  plan_label: "Free",
+  subscription_status: "active",
+  is_active: true,
+  cancel_at_period_end: false,
+  current_period_end: null,
+  trial_end: null,
+  ai_tokens_used: 0,
+  ai_tokens_limit: 1000,
+  ai_tokens_reset_at: "2027-01-01T00:00:00Z",
+  purchased_tokens_remaining: 0,
+};
+
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
@@ -38,6 +56,8 @@ test.beforeEach(async ({ page }) => {
     if (url.endsWith("/platform/capabilities")) {
       return route.fulfill({ json: [] });
     }
+    if (url.endsWith("/billing/entitlements"))
+      return route.fulfill({ json: entitlement });
     if (url.endsWith("/dashboard")) {
       return route.fulfill({ json: dashboard });
     }
@@ -258,16 +278,39 @@ test("upcoming deadlines use an interactive compact calendar", async ({
   page,
 }) => {
   const applicationId = "00000000-0000-4000-8000-000000000070";
+  // Anchored to today: a fixed past date silently falls out of the upcoming
+  // window and the panel renders its empty state instead.
+  const now = new Date();
+  const deadlineAt = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 24, 0, 0, 0),
+  );
+  if (deadlineAt.getTime() < now.getTime())
+    deadlineAt.setUTCMonth(deadlineAt.getUTCMonth() + 1);
+  const monthLabel = (offset: number) => {
+    const month = new Date(deadlineAt);
+    month.setUTCDate(1);
+    month.setUTCMonth(month.getUTCMonth() + offset);
+    return month.toLocaleString("en-GB", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  };
+
   await page.route("**/api/v1/dashboard", (route) =>
     route.fulfill({
       json: {
         ...dashboard,
         applications_by_stage: { preparing: 1 },
         upcoming_deadlines: [
+          // Matches DashboardDeadlineItem in docs/api/openapi.json.
           {
             application_id: applicationId,
             application_title: "Oxford scholarship",
-            deadline_at: "2026-07-24T00:00:00Z",
+            due_at: deadlineAt.toISOString(),
+            kind: "application",
+            requirement_id: null,
+            task_id: null,
           },
         ],
       },
@@ -278,14 +321,14 @@ test("upcoming deadlines use an interactive compact calendar", async ({
   const deadlines = page
     .locator(".dashboard-surface")
     .filter({ hasText: "Upcoming deadlines" });
-  await expect(deadlines.getByText("July 2026")).toBeVisible();
+  await expect(deadlines.getByText(monthLabel(0))).toBeVisible();
   await expect(
     deadlines.getByRole("button", { name: /Oxford scholarship/ }),
   ).toBeVisible();
   await deadlines.getByRole("button", { name: "Next period" }).click();
-  await expect(deadlines.getByText("August 2026")).toBeVisible();
+  await expect(deadlines.getByText(monthLabel(1))).toBeVisible();
   await deadlines.getByRole("button", { name: "Previous period" }).click();
-  await expect(deadlines.getByText("July 2026")).toBeVisible();
+  await expect(deadlines.getByText(monthLabel(0))).toBeVisible();
   await page.screenshot({
     path: "/tmp/eliteapply-dashboard-deadline-calendar.png",
     fullPage: true,
@@ -310,6 +353,9 @@ test("upcoming deadlines use an interactive compact calendar", async ({
 });
 
 test("navigation preloads the next workspace route on hover", async ({ page }) => {
+  // Hover preloading is a pointer affordance in the persistent desktop
+  // sidebar; on a phone the same links live behind the drawer toggle.
+  await page.setViewportSize({ width: 1280, height: 900 });
   const errors: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
@@ -320,7 +366,10 @@ test("navigation preloads the next workspace route on hover", async ({ page }) =
     (request) =>
       request.url().includes("/src/features/applications/ApplicationsPage.tsx"),
   );
-  await page.getByRole("link", { name: "Applications" }).hover();
+  await page
+    .getByRole("navigation", { name: "Primary navigation" })
+    .getByRole("link", { name: "Applications" })
+    .hover();
   await applicationPageRequest;
   await expect(
     page.getByRole("heading", { name: "Good morning, Hamed" }),
@@ -521,13 +570,16 @@ test("mobile app navigation is touch-safe and closes with Escape", async ({
   await expect(
     page.getByRole("button", { name: "Close navigation" }).last(),
   ).toBeFocused();
-  await page.getByRole("button", { name: "Log out" }).focus();
+  // The account trigger is the drawer's last focusable; logging out lives
+  // inside the menu it opens.
+  const account = page.getByRole("button", { name: /Hamed Golchin-Albuquerque/ });
+  await account.focus();
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", { name: "EliteApply" }).last(),
   ).toBeFocused();
   await page.keyboard.press("Shift+Tab");
-  await expect(page.getByRole("button", { name: "Log out" })).toBeFocused();
+  await expect(account).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(menu).toBeFocused();
   await expect(menu).toHaveAttribute("aria-expanded", "false");
@@ -538,8 +590,11 @@ test("mobile app navigation is touch-safe and closes with Escape", async ({
   });
   expect(controlSize.width).toBeGreaterThanOrEqual(44);
   expect(controlSize.height).toBeGreaterThanOrEqual(44);
+  // Escape closed the drawer above; the remaining targets live inside it.
+  await menu.click();
   const notificationSize = await page
-    .getByRole("link", { name: /unread notifications/ })
+    .getByRole("link", { name: /notifications/i })
+    .first()
     .evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return { width: rect.width, height: rect.height };

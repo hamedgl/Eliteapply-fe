@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  Bell,
   BookOpen,
   BriefcaseBusiness,
   CalendarDays,
@@ -14,7 +13,6 @@ import {
   Filter,
   Folder,
   GraduationCap,
-  Globe2,
   Link2,
   ListChecks,
   LayoutDashboard,
@@ -36,6 +34,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import closingPathIllustration from "../../assets/illustrations/application-path.webp";
 import connectedWorkspaceIllustration from "../../assets/illustrations/connected-workspace.webp";
@@ -877,6 +876,9 @@ export function ProductPreviewPage() {
                   <button
                     type="button"
                     className="guide-step-button"
+                    // Without this the accessible name is the number plus the
+                    // whole description sentence — a paragraph-long button name.
+                    aria-label={`Show stage ${index + 1}: ${step.label}`}
                     aria-pressed={index === activeGuide}
                     aria-controls="workflow-preview"
                     onClick={() => setActiveGuide(index)}
@@ -1688,7 +1690,7 @@ function TrackerPreview() {
                 <span role="cell">{app.deadline}</span>
                 <span role="cell">
                   <i className="mini-progress">
-                    <b style={{ width: `${progressPct}%` }} />
+                    <b style={{ "--fill": progressPct / 100 } as CSSProperties} />
                   </i>
                   {progressPct}%
                 </span>
@@ -4302,6 +4304,9 @@ function GuidedWorkflowBoard({
                 type="button"
                 id={`workflow-stage-tab-${index}`}
                 role="tab"
+                // Without an explicit name the tab announces as the number plus
+                // the title plus the summary line.
+                aria-label={`Show stage ${index + 1}: ${item.title}`}
                 aria-selected={index === activeGuide}
                 aria-controls="workflow-preview"
                 tabIndex={index === activeGuide ? 0 : -1}
@@ -4322,9 +4327,10 @@ function GuidedWorkflowBoard({
       <section
         id="workflow-preview"
         role="tabpanel"
+        // aria-labelledby points at the selected tab, which is the correct name
+        // for a tabpanel; an aria-label here would be silently ignored.
         aria-labelledby={`workflow-stage-tab-${activeGuide}`}
         className={`workflow-application${animated ? " workflow-animated" : ""}`}
-        aria-label={`${stage.title} application workflow demonstration`}
       >
         <header className="workflow-application-header">
           <div className="workflow-opportunity">

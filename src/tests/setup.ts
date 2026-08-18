@@ -1,4 +1,11 @@
-import"@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+
+// `globals: true` is off, so React Testing Library never registers its own
+// auto-cleanup. Without this, every render in a file stays in the document and
+// later queries match elements left behind by earlier tests.
+afterEach(cleanup);
 
 // jsdom's ElementInternals has no form-association API (used by trix-editor).
 // ponytail: test-env polyfill only, real browsers implement this natively.

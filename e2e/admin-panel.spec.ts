@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 
 const adminId = "00000000-0000-4000-8000-000000000001";
 const userId = "00000000-0000-4000-8000-000000000002";
@@ -15,6 +16,8 @@ const admin = {
   is_email_verified: true,
   is_active: true,
   is_admin: true,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-07-19T09:00:00Z",
@@ -38,6 +41,21 @@ const pageOf = <T>(items: T[], nextCursor: string | null = null) => ({
   total: null,
 });
 
+const entitlement = {
+  plan_key: "free",
+  plan_name: "free",
+  plan_label: "Free",
+  subscription_status: "active",
+  is_active: true,
+  cancel_at_period_end: false,
+  current_period_end: null,
+  trial_end: null,
+  ai_tokens_used: 0,
+  ai_tokens_limit: 1000,
+  ai_tokens_reset_at: "2027-01-01T00:00:00Z",
+  purchased_tokens_remaining: 0,
+};
+
 async function mockAdminApi(page: Page, currentUser = admin) {
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
@@ -52,6 +70,8 @@ async function mockAdminApi(page: Page, currentUser = admin) {
     if (path.endsWith("/users/me")) return route.fulfill({ json: currentUser });
     if (path.endsWith("/platform/capabilities"))
       return route.fulfill({ json: [] });
+    if (path.endsWith("/billing/entitlements"))
+      return route.fulfill({ json: entitlement });
     if (path.endsWith("/admin/launch-readiness")) {
       return route.fulfill({
         json: {
@@ -186,7 +206,9 @@ test("renders independent operational signals and remains overflow-safe", async 
     page.getByRole("heading", { name: "Recent admin actions" }),
   ).toBeVisible();
   await expect(page.getByText("9 of 12")).toBeVisible();
-  await expect(page.getByText("Production")).toHaveCount(1);
+  // The production badge is gated on a production API base URL, so it is
+  // absent here; what must never happen is more than one environment cue.
+  expect(await page.getByText("Production").count()).toBeLessThanOrEqual(1);
   await expectNoHorizontalOverflow(page);
 
   const menu = page.getByRole("button", { name: "Open admin navigation" });

@@ -73,7 +73,7 @@ export function SavedSearchEditDialog({ search, onClose }: { search: SavedSearch
           </label>
           <label className="wide">
             Field of study
-            <input value={fieldOfStudy} onChange={(event) => setSearchTerm(event.target.value)} />
+            <input value={fieldOfStudy} onChange={(event) => setFieldOfStudy(event.target.value)} />
           </label>
           <label className="check-field wide">
             <input type="checkbox" checked={verifiedOnly} onChange={(event) => setVerifiedOnly(event.target.checked)} />

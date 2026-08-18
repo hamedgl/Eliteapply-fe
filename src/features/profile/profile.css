@@ -150,7 +150,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.55rem;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.45rem 0.6rem;
   border-radius: var(--app-radius-sm);
   color: var(--app-text);
@@ -333,7 +333,7 @@
 }
 .profile-tag-field > input {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.85rem;
   border: 1px solid var(--app-line-strong);
   border-radius: var(--app-radius-sm);
@@ -345,7 +345,7 @@
     box-shadow 120ms ease;
 }
 .profile-tag-field > input:hover {
-  border-color: #94a3b8;
+  border-color: var(--app-line-hover);
 }
 .profile-tag-field > input:focus-visible {
   outline: none;
@@ -469,7 +469,7 @@
   justify-content: center;
   gap: 0.4rem;
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   border: 1px dashed var(--app-line-strong);
   border-radius: 10px;
   color: var(--app-text);

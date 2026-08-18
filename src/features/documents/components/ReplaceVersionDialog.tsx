@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useModalDialog } from "../../../lib/dom-hooks";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { documentsApi } from "../../../lib/api/phase2";
@@ -26,6 +27,8 @@ function ReplaceForm({
   doc: AcademicDocument;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef, onClose);
   const qc = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [reason, setReason] = useState("");
@@ -83,7 +86,9 @@ function ReplaceForm({
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
       <div
         className="apps-dialog"
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="replace-version-title"
         onClick={(e) => e.stopPropagation()}
       >

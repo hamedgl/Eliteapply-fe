@@ -41,7 +41,7 @@ const requiredRoutes = [
   ["/for-students", "Built for serious applications at every stage."],
   ["/pricing", "Start organising your applications for free."],
   ["/security", "Security at EliteApply"],
-  ["/about", "Scholarship applications deserve a calmer working system."],
+  ["/about", "A better application process should still feel like yours."],
   ["/contact", "Contact EliteApply"],
   [
     "/resources",
@@ -75,7 +75,7 @@ const guideRoutes = [
   ],
   [
     "/resources/scholarship-application-checklist",
-    "Scholarship application checklist",
+    "Scholarship application checklist guide",
   ],
   [
     "/resources/scholarship-deadline-planning",
@@ -114,6 +114,9 @@ const guideRoutes = [
 test("every Phase 2 public route renders unique meaningful content without runtime errors", async ({
   page,
 }) => {
+  // ~30 full navigations in one test; the default 30s budget is not enough
+  // when the whole suite is competing for the dev server.
+  test.setTimeout(120_000);
   const errors: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
@@ -238,7 +241,7 @@ test("pricing and legal routes publish specific controls without unsupported cla
     page.getByRole("heading", { name: "Information we handle" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Your choices and privacy rights" }),
+    page.getByRole("heading", { name: "Your rights and how to use them" }),
   ).toBeVisible();
   await expect(page.getByText("Launch status")).toHaveCount(0);
 
@@ -280,7 +283,7 @@ test("mobile public navigation traps focus, closes on Escape and preserves the v
   await expect(
     page.getByRole("navigation", { name: "Main navigation" }),
   ).toHaveClass(/open/);
-  await expect(page.locator("details.product-menu summary")).toBeFocused();
+  await expect(page.locator(".product-menu-trigger")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Open navigation" }),

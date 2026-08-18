@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useModalDialog } from "../../../lib/dom-hooks";
 import { X, Link2, Unlink, FileText, Briefcase } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storiesApi } from "../../../lib/api/phase3";
@@ -31,6 +32,8 @@ function LinkEntitiesContent({
   story: Story;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef, onClose);
   const qc = useQueryClient();
   const [selectedAppId, setSelectedAppId] = useState("");
   const [selectedDocId, setSelectedDocId] = useState("");
@@ -89,7 +92,9 @@ function LinkEntitiesContent({
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
       <div
         className="apps-dialog link-entities-modal"
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="link-entities-title"
         onClick={(e) => e.stopPropagation()}
       >

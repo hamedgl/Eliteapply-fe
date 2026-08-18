@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { components } from "../../generated/api/schema";
-import type { AuthSessionState, AuthenticatedUser, AuthStatus } from "./auth-types";
+import type { AuthSessionState, AuthenticatedUser } from "./auth-types";
 
 type LoginResponse = components["schemas"]["LoginResponse"];
 

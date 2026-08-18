@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -12,6 +13,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-07-19T09:00:00Z",
@@ -40,15 +43,37 @@ test("signed-in marketing header exposes account settings and logout", async ({
     }
     if (url.endsWith("/platform/capabilities"))
       return route.fulfill({ json: [] });
+    if (url.endsWith("/billing/entitlements"))
+      return route.fulfill({
+        json: {
+          plan_key: "free",
+          plan_name: "free",
+          plan_label: "Free",
+          subscription_status: "active",
+          is_active: true,
+          cancel_at_period_end: false,
+          current_period_end: null,
+          trial_end: null,
+          ai_tokens_used: 0,
+          ai_tokens_limit: 1000,
+          ai_tokens_reset_at: "2027-01-01T00:00:00Z",
+          purchased_tokens_remaining: 0,
+        },
+      });
     return route.fulfill({ json: {} });
   });
 
+  // Public routes skip the refresh round-trip unless the browser carries the
+  // `ea_has_session` hint, so a signed-in visitor arriving at "/" must have it.
+  await page.addInitScript(() => {
+    localStorage.setItem("ea_has_session", "1");
+  });
   await page.goto("/");
   await expect(page).toHaveURL("/");
   await expect(page).toHaveTitle(/EliteApply/);
   await expect(
     page.getByRole("heading", {
-      name: "Plan, write and submit stronger scholarship applications.",
+      name: "Plan, write and submit stronger scholarship applications with AI.",
     }),
   ).toBeVisible();
   const navigationToggle = page.getByRole("button", {

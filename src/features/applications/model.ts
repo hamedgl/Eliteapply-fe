@@ -92,10 +92,7 @@ export const STAGE_TONE: Record<string, StageTone> = {
   archived: "grey",
 };
 
-export const label = (value: string) =>
-  value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (x) => x.toUpperCase());
+export { label } from "../../lib/label";
 
 export const formatDate = (value: string | null) =>
   value

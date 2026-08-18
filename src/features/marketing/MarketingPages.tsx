@@ -1,5 +1,4 @@
 import {
-  AlertCircle,
   ArrowRight,
   BookOpen,
   CalendarDays,
@@ -11,16 +10,13 @@ import {
   Circle,
   ClipboardCheck,
   Clock3,
-  ExternalLink,
   FileText,
-  Filter,
   Folder,
   GraduationCap,
   Link2,
   ListChecks,
   Map,
   PenLine,
-  Plus,
   RotateCcw,
   Search,
   Send,
@@ -30,7 +26,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { components } from "../../generated/api/schema";
 import { billingApi } from "../../lib/api/billing";
@@ -1047,7 +1044,10 @@ function ReadinessProof() {
               : "Work still needs attention"}
           </strong>
           <div className="mkt2-progress-track">
-            <div className="mkt2-progress-fill" style={{ width: `${scorePercent}%` }} />
+            <div
+              className="mkt2-progress-fill"
+              style={{ "--fill": scorePercent / 100 } as CSSProperties}
+            />
           </div>
         </div>
         <span>{scorePercent}% ready · 18 days left</span>
@@ -1714,7 +1714,7 @@ function ForStudentsPage() {
                 <div className="mkt2-ws-progress-bar">
                   <div
                     className="mkt2-ws-progress-fill"
-                    style={{ width: `${computedPercent}%` }}
+                    style={{ "--fill": computedPercent / 100 } as CSSProperties}
                   />
                 </div>
               </div>

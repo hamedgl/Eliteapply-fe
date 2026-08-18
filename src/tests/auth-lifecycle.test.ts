@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getCsrfToken } from "../lib/auth/csrf";
 import { useSession } from "../lib/auth/session";
-import { clearAuthenticatedClientState, onAuthCleanup } from "../lib/auth/auth-cleanup";
-import { performTokenRefresh } from "../lib/auth/refresh";
-import { logout, logoutAll } from "../lib/auth/logout";
+import { clearAuthenticatedClientState } from "../lib/auth/auth-cleanup";
+import { logoutAll } from "../lib/auth/logout";
 import { apiRequest, isBodyReplayable } from "../lib/api/client";
 import { authChannel } from "../lib/auth/auth-channel";
 import { ApiError } from "../lib/api/errors";
@@ -173,7 +172,7 @@ describe("Frontend Auth Lifecycle Hardening & Production P0 Fixes", () => {
       useSession.getState().setAuthenticated({ accessToken: "old-token", expiresIn: 3600 });
 
       let callCount = 0;
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url, opts) => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
         if (String(url).endsWith("/auth/csrf")) {
           return new Response(JSON.stringify({ ok: true }), { status: 200 });
         }

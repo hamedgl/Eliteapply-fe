@@ -1,8 +1,10 @@
+import { useRef } from "react";
 import { X, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { usageApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
+import { useModalDialog } from "../../lib/dom-hooks";
 
 export function UsageModal({
   entityType,
@@ -39,6 +41,8 @@ function UsageContent({
   entityTitle?: string;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef, onClose);
   const query = useQuery({
     queryKey: queryKeys.entityUsage(entityType, entityId),
     queryFn: () => usageApi.get(entityType, entityId),
@@ -64,7 +68,9 @@ function UsageContent({
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
       <div
         className="apps-dialog"
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="usage-modal-title"
         onClick={(e) => e.stopPropagation()}
       >

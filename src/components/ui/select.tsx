@@ -1,11 +1,9 @@
-"use client";
-
-import { AnimatePresence, motion } from "motion/react";
 import {
   forwardRef,
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -13,12 +11,10 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { SPRING_PRESS, SPRING_PANEL } from "./be-ui-button";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+/** Joins class names, dropping falsy entries. */
+export function cn(...inputs: Array<string | false | null | undefined>) {
+  return inputs.filter(Boolean).join(" ");
 }
 
 export interface SelectOption {
@@ -46,6 +42,9 @@ export interface SelectProps {
   children?: ReactNode;
 }
 
+/** Matches `.custom-select-popover` max-height in index.css. */
+const POPOVER_MAX_HEIGHT = 260;
+
 export const Select = forwardRef<HTMLButtonElement, SelectProps>(
   (
     {
@@ -68,6 +67,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
   ) => {
     const generatedId = useId();
     const id = idProp || generatedId;
+    const listboxId = `${id}-listbox`;
     const containerRef = useRef<HTMLDivElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
     const [popoverRect, setPopoverRect] = useState<{
@@ -78,21 +78,22 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     } | null>(null);
 
     // Extract options from props or children (<option value="val">Label</option>)
-    const parsedOptions: SelectOption[] = [];
-    if (optionsProp) {
-      parsedOptions.push(...optionsProp);
-    } else if (children) {
+    const parsedOptions: SelectOption[] = useMemo(() => {
+      if (optionsProp) return optionsProp;
+      if (!children) return [];
       const childrenArray = Array.isArray(children) ? children : [children];
+      const collected: SelectOption[] = [];
       childrenArray.forEach((child: any) => {
         if (child && child.type === "option") {
-          parsedOptions.push({
+          collected.push({
             value: String(child.props.value ?? child.props.children ?? ""),
             label: String(child.props.children ?? child.props.value ?? ""),
             disabled: Boolean(child.props.disabled),
           });
         }
       });
-    }
+      return collected;
+    }, [optionsProp, children]);
 
     const isControlled = valueProp !== undefined;
     const resetValue = defaultValue || (parsedOptions[0]?.value ?? "");
@@ -100,6 +101,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const currentValue = isControlled ? valueProp : internalValue;
 
     const [isOpen, setIsOpen] = useState(false);
+    // Keyboard highlight. Arrow keys move this; only Enter/Space commit it, so
+    // navigating a listbox never fires onChange for every option passed over.
+    const [activeIndex, setActiveIndex] = useState(-1);
 
     useEffect(() => {
       if (isControlled) return;
@@ -110,9 +114,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       return () => form.removeEventListener("reset", reset);
     }, [isControlled, resetValue]);
 
-    const selectedOption = parsedOptions.find(
+    const selectedIndex = parsedOptions.findIndex(
       (opt) => String(opt.value) === String(currentValue),
     );
+    const selectedOption =
+      selectedIndex >= 0 ? parsedOptions[selectedIndex] : undefined;
 
     const handleSelect = useCallback(
       (val: string) => {
@@ -138,6 +144,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       },
       [isControlled, name, onChange],
     );
+
+    // Opening starts the highlight on the current selection.
+    useEffect(() => {
+      if (isOpen) setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      else setActiveIndex(-1);
+      // Only re-seed on open/close, not when the selection changes underneath.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     // Close popover on outside click
     useEffect(() => {
@@ -168,12 +182,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       const updateRect = () => {
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
-        // matches .custom-select-popover max-height in index.css
-        const popoverMaxHeight = 260;
         const spaceBelow = window.innerHeight - rect.bottom;
         const spaceAbove = rect.top;
         const placement: "top" | "bottom" =
-          spaceBelow < popoverMaxHeight && spaceAbove > spaceBelow
+          spaceBelow < POPOVER_MAX_HEIGHT && spaceAbove > spaceBelow
             ? "top"
             : "bottom";
         setPopoverRect({
@@ -195,47 +207,92 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       };
     }, [isOpen]);
 
-    // Handle keyboard navigation
+    // Keep the highlighted option in view while arrowing through a long list.
+    useEffect(() => {
+      if (!isOpen || activeIndex < 0) return;
+      const option = popoverRef.current?.querySelector<HTMLElement>(
+        '[data-active="true"]',
+      );
+      // Guarded: jsdom (and older Safari) has no scrollIntoView options support.
+      option?.scrollIntoView?.({ block: "nearest" });
+    }, [isOpen, activeIndex]);
+
+    /** Next selectable index in `direction`, skipping disabled options.
+     *  Clamps at the ends rather than wrapping, matching native <select>. */
+    const step = useCallback(
+      (from: number, direction: 1 | -1) => {
+        for (
+          let i = from + direction;
+          i >= 0 && i < parsedOptions.length;
+          i += direction
+        ) {
+          if (!parsedOptions[i].disabled) return i;
+        }
+        return from;
+      },
+      [parsedOptions],
+    );
+
     const handleKeyDown = (event: React.KeyboardEvent) => {
       if (disabled) return;
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        setIsOpen((prev) => !prev);
-      } else if (event.key === "Escape" && isOpen) {
+      const key = event.key;
+
+      if (key === "Escape") {
+        if (!isOpen) return;
         event.preventDefault();
         event.stopPropagation();
         setIsOpen(false);
-      } else if (event.key === "ArrowDown") {
+        return;
+      }
+
+      if (key === "Tab") {
+        // Leaving the control closes it without committing the highlight.
+        if (isOpen) setIsOpen(false);
+        return;
+      }
+
+      if (key === "Enter" || key === " ") {
         event.preventDefault();
         if (!isOpen) {
           setIsOpen(true);
-        } else {
-          const currentIndex = parsedOptions.findIndex(
-            (o) => String(o.value) === String(currentValue),
-          );
-          const nextIndex = Math.min(
-            currentIndex + 1,
-            parsedOptions.length - 1,
-          );
-          if (parsedOptions[nextIndex]) {
-            handleSelect(String(parsedOptions[nextIndex].value));
-          }
+          return;
         }
-      } else if (event.key === "ArrowUp") {
+        const option = parsedOptions[activeIndex];
+        if (option && !option.disabled) handleSelect(String(option.value));
+        return;
+      }
+
+      if (key === "ArrowDown" || key === "ArrowUp") {
         event.preventDefault();
         if (!isOpen) {
           setIsOpen(true);
-        } else {
-          const currentIndex = parsedOptions.findIndex(
-            (o) => String(o.value) === String(currentValue),
-          );
-          const prevIndex = Math.max(currentIndex - 1, 0);
-          if (parsedOptions[prevIndex]) {
-            handleSelect(String(parsedOptions[prevIndex].value));
-          }
+          return;
         }
+        const from =
+          activeIndex >= 0
+            ? activeIndex
+            : key === "ArrowDown"
+              ? -1
+              : parsedOptions.length;
+        setActiveIndex(step(from, key === "ArrowDown" ? 1 : -1));
+        return;
+      }
+
+      if (key === "Home" || key === "End") {
+        if (!isOpen) return;
+        event.preventDefault();
+        setActiveIndex(
+          key === "Home"
+            ? step(-1, 1)
+            : step(parsedOptions.length, -1),
+        );
       }
     };
+
+    const activeOptionId =
+      isOpen && activeIndex >= 0 && parsedOptions[activeIndex]
+        ? `${id}-opt-${parsedOptions[activeIndex].value}`
+        : undefined;
 
     return (
       <div
@@ -245,30 +302,25 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         {/* Hidden input for HTML form integration */}
         {name && <input type="hidden" name={name} value={currentValue ?? ""} />}
 
-        <motion.button
+        <button
           ref={ref}
           id={id}
           type="button"
+          role="combobox"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-activedescendant={activeOptionId}
           aria-label={ariaLabel}
           aria-required={required || undefined}
           disabled={disabled}
           onClick={() => setIsOpen((prev) => !prev)}
           onKeyDown={handleKeyDown}
-          whileTap={disabled ? undefined : { scale: 0.97 }}
-          transition={SPRING_PRESS}
           className={cn("custom-select-trigger", triggerClassName)}
         >
           <span className="custom-select-trigger-label">
             {selectedOption?.icon}
-            <span
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <span className="custom-select-trigger-text">
               {selectedOption ? selectedOption.label : placeholder}
             </span>
           </span>
@@ -276,99 +328,78 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             aria-hidden="true"
             className={cn("custom-select-chevron", isOpen && "is-open")}
           />
-        </motion.button>
+        </button>
 
         {isOpen &&
           popoverRect &&
           createPortal(
-            <AnimatePresence>
-              <motion.div
-                ref={popoverRef}
-                role="listbox"
-                aria-activedescendant={
-                  selectedOption
-                    ? `${id}-opt-${selectedOption.value}`
-                    : undefined
-                }
-                initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                animate={{ opacity: 1, y: 4, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                transition={SPRING_PANEL}
-                className={cn("custom-select-popover", popoverClassName)}
-                style={{
-                  position: "fixed",
-                  left: popoverRect.left,
-                  width: popoverRect.width,
-                  ...(popoverRect.placement === "bottom"
-                    ? { top: popoverRect.anchor, bottom: "auto" }
-                    : { top: "auto", bottom: popoverRect.anchor }),
-                }}
-              >
-                {parsedOptions.map((option) => {
-                  const isSelected =
-                    String(option.value) === String(currentValue);
-                  return (
-                    <div
-                      key={String(option.value)}
-                      id={`${id}-opt-${option.value}`}
-                      role="option"
-                      aria-selected={isSelected}
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (!option.disabled) {
-                          handleSelect(String(option.value));
-                        }
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (!option.disabled) {
-                          handleSelect(String(option.value));
-                        }
-                      }}
-                      className={cn(
-                        "custom-select-option",
-                        isSelected && "is-selected",
-                        option.disabled && "is-disabled",
-                      )}
-                    >
-                      <div className="custom-select-option-content">
-                        {option.icon}
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <span
-                            style={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {option.label}
+            <div
+              ref={popoverRef}
+              id={listboxId}
+              role="listbox"
+              aria-labelledby={ariaLabel ? undefined : id}
+              aria-label={ariaLabel}
+              className={cn(
+                "custom-select-popover",
+                `is-${popoverRect.placement}`,
+                popoverClassName,
+              )}
+              style={{
+                position: "fixed",
+                left: popoverRect.left,
+                width: popoverRect.width,
+                ...(popoverRect.placement === "bottom"
+                  ? { top: popoverRect.anchor, bottom: "auto" }
+                  : { top: "auto", bottom: popoverRect.anchor }),
+              }}
+            >
+              {parsedOptions.map((option, index) => {
+                const isSelected = String(option.value) === String(currentValue);
+                return (
+                  <div
+                    key={String(option.value)}
+                    id={`${id}-opt-${option.value}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    aria-disabled={option.disabled || undefined}
+                    data-active={index === activeIndex || undefined}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!option.disabled) {
+                        handleSelect(String(option.value));
+                      }
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!option.disabled) {
+                        handleSelect(String(option.value));
+                      }
+                    }}
+                    className={cn(
+                      "custom-select-option",
+                      isSelected && "is-selected",
+                      index === activeIndex && "is-active",
+                      option.disabled && "is-disabled",
+                    )}
+                  >
+                    <div className="custom-select-option-content">
+                      {option.icon}
+                      <div className="custom-select-option-text">
+                        <span>{option.label}</span>
+                        {option.description && (
+                          <span className="custom-select-option-description">
+                            {option.description}
                           </span>
-                          {option.description && (
-                            <span
-                              style={{
-                                fontSize: "0.75rem",
-                                color: "var(--app-muted, #64748b)",
-                              }}
-                            >
-                              {option.description}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
-                      {isSelected && <Check className="custom-select-check" />}
                     </div>
-                  );
-                })}
-              </motion.div>
-            </AnimatePresence>,
+                    {isSelected && <Check className="custom-select-check" />}
+                  </div>
+                );
+              })}
+            </div>,
             document.body,
           )}
       </div>

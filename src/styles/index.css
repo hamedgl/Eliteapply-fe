@@ -1,16 +1,91 @@
+/* Design tokens — single source of truth for every surface.
+   Defined on :root (not .app-shell) so portaled UI (select popovers, overflow
+   menus, drawers rendered into document.body) resolves the same values as
+   in-tree UI. Legacy short names alias the canonical --app-* tokens. */
 :root {
   font-family: "DM Sans", sans-serif;
-  color: #101b3b;
-  background: #fff;
   font-synthesis: none;
-  --blue: #174bd6;
-  --ink: #101b3b;
-  --muted: #63708a;
-  --line: #dfe4ed;
-  --soft: #f5f7fb;
-  --green: #087b56;
-  --amber: #a85b0d;
-  --danger: #b42318;
+
+  /* Surfaces */
+  --app-canvas: #f5f7fb;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #f9faff;
+
+  /* Lines — --app-line is decorative, --app-line-strong bounds interactive
+     controls and must clear WCAG 2.2 1.4.11 non-text contrast (>= 3:1 on
+     --app-surface). */
+  --app-line: #d9e0eb;
+  --app-line-strong: #838fa5;
+  --app-line-hover: #5f6b81;
+
+  /* Text */
+  --app-ink: #101b3b;
+  --app-text: #34415c;
+  --app-muted: #64718a;
+
+  /* Semantic colour roles */
+  --app-blue: #174bd6;
+  --app-blue-hover: #103eb7;
+  --app-blue-soft: #edf2ff;
+  --app-green: #087b56;
+  --app-green-soft: #e6f6ef;
+  --app-violet: #6d28d9;
+  --app-violet-soft: #f2ebfe;
+  --app-teal: #0f766e;
+  --app-teal-soft: #e5f5f3;
+  --app-indigo: #4338ca;
+  --app-indigo-soft: #edeefd;
+  --app-amber: #92400e;
+  --app-amber-soft: #fdf1e0;
+  --app-red: #b42318;
+  --app-red-soft: #fdeceb;
+  --app-grey: #56617a;
+  --app-grey-soft: #eef1f6;
+
+  /* Shape */
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 16px;
+  --app-navigation-height: 72px;
+
+  /* Control geometry — one hit-target scale for every button, field and
+     menu item so controls line up when placed side by side. */
+  --app-control-height-sm: 32px;
+  --app-control-height: 42px;
+  --app-control-height-lg: 48px;
+
+  /* Motion — every transition in the system reads from these. */
+  --app-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --app-duration-fast: 120ms;
+  --app-duration: 170ms;
+  --app-duration-slow: 240ms;
+
+  /* Focus ring — cobalt outline plus a light halo, per DESIGN.md §4. */
+  --app-focus-ring: 0 0 0 2px var(--app-surface), 0 0 0 4px var(--app-blue);
+
+  /* Semantic z-index scale. Nothing in the app may use a raw z-index above
+     --app-z-page-sticky; add a role here instead. */
+  --app-z-page-sticky: 20;
+  --app-z-floating-action: 30;
+  --app-z-navigation: 40;
+  --app-z-scrim: 50;
+  --app-z-drawer: 60;
+  --app-z-popover: 80;
+  --app-z-toast: 90;
+
+  /* Legacy aliases — pre-token class names still reference these. Keep them
+     pointing at the canonical values so the two systems cannot drift. */
+  --blue: var(--app-blue);
+  --ink: var(--app-ink);
+  --muted: var(--app-muted);
+  --line: var(--app-line);
+  --soft: var(--app-canvas);
+  --green: var(--app-green);
+  --amber: var(--app-amber);
+  --danger: var(--app-red);
+
+  color: var(--app-ink);
+  background: var(--app-surface);
 }
 * {
   box-sizing: border-box;
@@ -65,20 +140,68 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after {
   accent-color: var(--app-blue, #174bd6);
   flex-shrink: 0;
 }
-button,
 a {
   cursor: pointer;
-}
-a {
-  color: var(--blue);
+  color: var(--app-blue);
   text-decoration: none;
 }
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-  outline: 3px solid var(--blue);
+
+/* ── Control baseline ────────────────────────────────────────────────────
+   Every clickable control inherits this. Wrapped in :where() so it carries
+   zero specificity and the ~350 feature-level button rules still win; this
+   layer only supplies what those rules forget — hit target, icon sizing,
+   overflow safety, disabled and busy affordances. Add shared control
+   behaviour here rather than repeating it per feature. */
+:where(button, summary, [role="button"], [role="option"], [role="menuitem"]) {
+  cursor: pointer;
+  /* WCAG 2.2 SC 2.5.8 Target Size (Minimum), AA. Deliberate denser controls
+     override this with their own explicit sizing. */
+  min-block-size: 24px;
+  min-inline-size: 24px;
+  font: inherit;
+  /* break-word, not anywhere: an unbreakable label still wraps rather than
+     overflowing, but the button's min-content width is unchanged, so flex
+     rows keep the sizing they have today. */
+  overflow-wrap: break-word;
+}
+
+/* Icons never squash or stretch when a label wraps. */
+:where(button, summary, [role="button"]) > svg {
+  flex: none;
+}
+
+:where(button, summary, [role="button"], [role="option"], [role="menuitem"])[aria-disabled="true"],
+:where(button, [role="button"]):disabled {
+  cursor: not-allowed;
+}
+
+/* Async work in progress: keep the control readable, stop double-submits.
+   Components set aria-busy while a mutation is in flight. */
+:where(button, [role="button"])[aria-busy="true"] {
+  cursor: progress;
+  pointer-events: none;
+}
+
+/* ── Focus ring ──────────────────────────────────────────────────────────
+   One ring for the whole app: cobalt outline offset from the control, so it
+   follows border-radius and is never clipped by an overflow container. */
+:where(
+  button,
+  summary,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="option"],
+  [role="menuitem"],
+  [role="tab"],
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: 3px solid var(--app-blue);
   outline-offset: 2px;
 }
+
 h1,
 h2,
 .brand {
@@ -87,23 +210,36 @@ h2,
 .primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: var(--blue);
+  min-height: var(--app-control-height);
+  background: var(--app-blue);
   color: #fff;
-  border: 1px solid var(--blue);
+  border: 1px solid var(--app-blue);
   border-radius: 9999px;
   padding: 0.78rem 1.3rem;
   font-weight: 700;
+  text-align: center;
   transition:
-    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 160ms ease,
-    border-color 160ms ease;
+    transform var(--app-duration) var(--app-ease),
+    background-color var(--app-duration) var(--app-ease),
+    border-color var(--app-duration) var(--app-ease);
 }
-.primary:hover:not(:disabled) {
+.primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--app-blue-hover);
+  border-color: var(--app-blue-hover);
   transform: scale(1.02);
 }
-.primary:active:not(:disabled) {
+.primary:active:not(:disabled):not([aria-disabled="true"]) {
   transform: scale(0.95);
+}
+.primary:disabled,
+.primary[aria-disabled="true"],
+.primary[aria-busy="true"] {
+  background: var(--app-line-strong);
+  border-color: var(--app-line-strong);
+  color: #fff;
+  transform: none;
 }
 .brand {
   font-size: 1.75rem;
@@ -242,20 +378,20 @@ h2,
   width: 100%;
   min-height: 3.4rem;
   padding: 0.85rem 1rem;
-  border: 1px solid #aeb8ca;
-  border-radius: 8px;
-  color: var(--ink);
-  background: #fff;
+  border: 1px solid var(--app-line-strong);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-ink);
+  background: var(--app-surface);
   transition:
     border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .auth-form input::placeholder {
-  color: #657087;
+  color: var(--app-muted);
   opacity: 1;
 }
 .auth-form input:not([type="checkbox"]):hover {
-  border-color: #78859d;
+  border-color: var(--app-line-hover);
 }
 .auth-form input:not([type="checkbox"]):focus-visible {
   border-color: var(--blue);
@@ -338,7 +474,7 @@ small {
     background 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .oauth-button:hover {
-  border-color: #aeb8ca;
+  border-color: var(--app-line-strong);
   background: #f7f8fb;
 }
 .oauth-button:focus-visible {
@@ -420,11 +556,6 @@ small {
   height: 12px;
   color: #768299;
   stroke-width: 2;
-}
-.app-shell {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 260px 1fr;
 }
 .sidebar {
   height: 100vh;
@@ -664,9 +795,9 @@ small {
 }
 .settings-form label > :is(input, select, textarea) {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.85rem;
-  border: 1px solid var(--app-line-strong, #cfd7e6);
+  border: 1px solid var(--app-line-strong);
   border-radius: 8px;
   background: var(--app-surface, #ffffff);
   color: var(--app-ink, #101b3b);
@@ -677,7 +808,7 @@ small {
     box-shadow 150ms ease;
 }
 .settings-form label > :is(input, select, textarea):hover {
-  border-color: #94a3b8;
+  border-color: var(--app-line-hover);
 }
 .settings-form label > :is(input, select, textarea):focus,
 .settings-form label > :is(input, select, textarea):focus-visible {
@@ -702,14 +833,14 @@ small {
   width: auto;
   border-radius: 8px;
   padding: 0.6rem 1.35rem;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   font-size: 0.875rem;
   font-weight: 600;
 }
 .settings-form button:not(.primary) {
   justify-self: start;
   padding: 0.6rem 1.25rem;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   background: #fff;
   border: 1px solid #aeb8c9;
   border-radius: 8px;
@@ -843,10 +974,21 @@ small {
     font-size: 2.1rem;
   }
 }
+/* Reduced motion is a component requirement, not a nicety (DESIGN.md §4).
+   This catch-all covers transitions AND keyframe animations, including
+   decorative ones a feature stylesheet forgot to opt out. Animations are
+   collapsed rather than removed so animation-driven end states (a spinner
+   that settles, a reveal that ends visible) still resolve. */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
-    transition: none !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
@@ -862,15 +1004,15 @@ textarea {
   font: inherit;
   font-size: 0.875rem;
   font-weight: 400;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.85rem;
-  color: var(--app-ink, #101b3b);
-  border: 1px solid var(--app-line-strong, #cfd7e6);
-  border-radius: 8px;
-  background: var(--app-surface, #ffffff);
+  color: var(--app-ink);
+  border: 1px solid var(--app-line-strong);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
   transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
+    border-color var(--app-duration) var(--app-ease),
+    box-shadow var(--app-duration) var(--app-ease);
 }
 input:where(
     :not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
@@ -879,7 +1021,7 @@ input:where(
   ):hover:not(:disabled),
 select:hover:not(:disabled),
 textarea:hover:not(:disabled) {
-  border-color: #94a3b8;
+  border-color: var(--app-line-hover);
 }
 input:where(
     :not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
@@ -889,8 +1031,25 @@ input:where(
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  border-color: var(--app-blue, #174bd6);
+  border-color: var(--app-blue);
   box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
+}
+
+/* Disabled fields keep a readable label but drop the interactive affordance.
+   Checkboxes and radios keep their native rendering. */
+input:where(:not([type="checkbox"]):not([type="radio"])):disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  border-color: var(--app-line);
+  background: var(--app-grey-soft);
+}
+
+/* Placeholder text must clear 4.5:1 like any other body text, so it uses the
+   muted role rather than the browser default grey. */
+::placeholder {
+  color: var(--app-muted);
+  opacity: 1;
 }
 select {
   appearance: none;
@@ -990,7 +1149,7 @@ textarea {
 }
 .board-column-toggle {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -1077,7 +1236,7 @@ textarea {
     transform 180ms ease;
 }
 .application-card:hover {
-  border-color: #aeb9cb;
+  border-color: var(--app-line-strong);
   box-shadow: 0 6px 16px rgb(16 27 59 / 8%);
   transform: translateY(-1px);
 }
@@ -1175,7 +1334,7 @@ textarea {
 }
 .application-card select {
   width: 100%;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.48rem 0.6rem;
   font-size: 0.78rem;
 }
@@ -1300,7 +1459,7 @@ th {
 }
 .dialog-actions button:not(.primary) {
   padding: 0.6rem 1.25rem;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   background: #fff;
   border: 1px solid var(--app-line-strong, var(--line, #cbd5e1));
   border-radius: 8px;
@@ -1311,11 +1470,11 @@ th {
 }
 .dialog-actions button:not(.primary):hover {
   background: #f8fafc;
-  border-color: #94a3b8;
+  border-color: var(--app-line-hover);
 }
 .dialog-actions button.primary {
   padding: 0.6rem 1.35rem;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -1728,7 +1887,7 @@ th {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0 0.85rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -2252,7 +2411,7 @@ th {
   background: transparent;
 }
 .writing-new-dialog .detail-tabs button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   font-size: 0.85rem;
 }
 .writing-new-dialog .detail-tabs svg {
@@ -2606,7 +2765,7 @@ th {
   position: fixed;
   left: 1rem;
   top: 1rem;
-  z-index: 30;
+  z-index: var(--app-z-navigation);
   padding: 0.75rem 1rem;
   background: var(--m-ink);
   color: var(--m-white);
@@ -2781,7 +2940,7 @@ th {
 }
 .marketing-account-panel :where(a, button) {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0.6rem 0.7rem;
   display: flex;
   align-items: center;
@@ -3208,7 +3367,7 @@ th {
 }
 .demo-next-action > button {
   width: 100%;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5379,15 +5538,17 @@ th {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.secondary-action,
+/* `.secondary-action` itself is defined once, further down with the rest of
+   the workspace control vocabulary; this rule only extends the shape to
+   detail-page links. */
 .detail-actions > a:not(.primary) {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.72rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #fff;
+  border: 1px solid var(--app-line);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
   font-weight: 700;
 }
 .page-heading-actions {
@@ -5718,7 +5879,7 @@ th {
   padding: 0.4rem;
 }
 .import-pdf-input::file-selector-button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   margin-right: 0.75rem;
   padding: 0.55rem 0.8rem;
   border: 0;
@@ -5747,7 +5908,7 @@ th {
 .icon-text-button,
 .import-review-actions button {
   display: inline-flex;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
@@ -5934,7 +6095,7 @@ th {
 .import-choice-grid label,
 .import-all-nationalities {
   display: flex;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   align-items: center;
   gap: 0.65rem;
   padding: 0.5rem 0.65rem;
@@ -6148,7 +6309,7 @@ th {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.8rem;
   border-color: var(--app-line);
   border-radius: 9999px;
@@ -6253,8 +6414,8 @@ th {
 }
 .eligibility-panel > header button,
 .collaborators-panel > header button {
-  height: 42px !important;
-  min-height: 42px !important;
+  height: var(--app-control-height) !important;
+  min-height: var(--app-control-height) !important;
   padding: 0 1.25rem !important;
   border-radius: 9999px !important;
   flex-shrink: 0;
@@ -6492,7 +6653,7 @@ th {
 }
 .application-card .application-actions button:hover {
   color: var(--blue);
-  border-color: #aeb9cb;
+  border-color: var(--app-line-strong);
   background: #f7f9fd;
 }
 .duplicate-dialog form {
@@ -7406,48 +7567,15 @@ th {
   }
 }
 
-/* Authenticated product system — production hardening */
+/* Authenticated product system — production hardening.
+   Tokens live on :root; this rule only owns shell layout. */
 .app-shell {
-  --app-canvas: #f5f7fb;
-  --app-surface: #ffffff;
-  --app-surface-subtle: #f9faff;
-  --app-line: #d9e0eb;
-  --app-line-strong: #aeb9cb;
-  --app-ink: #101b3b;
-  --app-text: #34415c;
-  --app-muted: #64718a;
-  --app-blue: #174bd6;
-  --app-blue-hover: #103eb7;
-  --app-blue-soft: #edf2ff;
-  --app-green: #087b56;
-  --app-green-soft: #e6f6ef;
-  --app-violet: #6d28d9;
-  --app-violet-soft: #f2ebfe;
-  --app-teal: #0f766e;
-  --app-teal-soft: #e5f5f3;
-  --app-indigo: #4338ca;
-  --app-indigo-soft: #edeefd;
-  --app-amber: #92400e;
-  --app-amber-soft: #fdf1e0;
-  --app-red: #b42318;
-  --app-red-soft: #fdeceb;
-  --app-grey: #56617a;
-  --app-grey-soft: #eef1f6;
-  --app-radius-sm: 8px;
-  --app-radius-md: 12px;
-  --app-radius-lg: 16px;
-  --app-navigation-height: 72px;
-  --app-z-page-sticky: 20;
-  --app-z-navigation: 40;
-  --app-z-scrim: 50;
-  --app-z-drawer: 60;
-  --app-z-popover: 80;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 330px minmax(0, 1fr);
   color: var(--app-ink);
   background: var(--app-canvas);
-  transition: grid-template-columns 220ms var(--m-ease-out, ease-out);
+  transition: grid-template-columns var(--app-duration-slow) var(--app-ease);
 }
 
 .app-shell.sidebar-collapsed {
@@ -7458,7 +7586,7 @@ th {
   position: fixed;
   inset-block-start: 0.75rem;
   inset-inline-start: 0.75rem;
-  z-index: 40;
+  z-index: var(--app-z-navigation);
   padding: 0.7rem 0.9rem;
   color: #fff;
   border-radius: 8px;
@@ -8114,7 +8242,7 @@ th {
 }
 
 .app-shell :where(button:not(.primary), .secondary-action) {
-  min-height: 42px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 1rem;
   display: inline-flex;
   align-items: center;
@@ -8140,7 +8268,7 @@ th {
   :where(button:not(.primary), .secondary-action):hover:not(:disabled) {
   color: var(--app-blue);
   border-color: var(--app-line-strong);
-  background: #f4f6fb;
+  background: var(--app-surface-subtle);
   transform: translateY(-1px);
 }
 
@@ -8151,9 +8279,9 @@ th {
 }
 
 .app-shell :where(button:not(.primary), .secondary-action):disabled {
-  color: #8490a6;
-  border-color: #d8dee8;
-  background: #eef1f6;
+  color: var(--app-muted);
+  border-color: var(--app-line);
+  background: var(--app-grey-soft);
   cursor: not-allowed;
 }
 
@@ -8228,11 +8356,16 @@ th {
 
 select option {
   background-color: var(--app-surface, #ffffff);
-  color: var(--app-ink, #1e293b);
+  color: var(--app-ink);
   padding: 8px 12px;
 }
 
-/* Custom Select Component Design System Styles */
+/* ── Select ──────────────────────────────────────────────────────────────
+   Listbox-pattern replacement for <select>. Shares the field primitive's
+   geometry (--app-control-height, --app-radius-sm, cobalt focus halo) so a
+   Select and an <input> sitting side by side line up exactly. The popover is
+   portaled to <body>; because tokens live on :root it resolves the same
+   values there as it does inside .app-shell. */
 .custom-select-container {
   position: relative;
   display: inline-block;
@@ -8243,47 +8376,56 @@ select option {
 .custom-select-trigger {
   position: relative;
   display: flex;
-  min-height: 42px;
+  min-height: var(--app-control-height);
   width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-radius: 8px !important;
-  border: 1px solid var(--app-line-strong, #cfd7e6);
-  background-color: var(--app-surface, #ffffff);
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--app-line-strong);
+  background-color: var(--app-surface);
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--app-ink, #1e293b);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  color: var(--app-ink);
   cursor: pointer;
-  outline: none;
   transition:
-    border-color 150ms ease,
-    background-color 150ms ease,
-    box-shadow 150ms ease;
+    border-color var(--app-duration) var(--app-ease),
+    background-color var(--app-duration) var(--app-ease),
+    box-shadow var(--app-duration) var(--app-ease),
+    transform var(--app-duration-fast) var(--app-ease);
 }
 
 .custom-select-trigger:hover:not(:disabled) {
-  border-color: #7c8aa3;
-  background-color: #f8fafc;
+  border-color: var(--app-line-hover);
+}
+
+.custom-select-trigger:active:not(:disabled) {
+  transform: scale(0.99);
 }
 
 .custom-select-trigger:focus-visible {
-  box-shadow:
-    0 0 0 2px #ffffff,
-    0 0 0 4px var(--app-blue, #2563eb);
+  outline: none;
+  border-color: var(--app-blue);
+  box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
 }
 
 .custom-select-trigger:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  border-color: var(--app-line);
+  background: var(--app-grey-soft);
+  color: var(--app-muted);
 }
 
 .custom-select-trigger-label {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Long option labels truncate rather than pushing the chevron out of the box. */
+.custom-select-trigger-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -8293,15 +8435,15 @@ select option {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  color: var(--app-muted, #64748b);
+  color: var(--app-muted);
   transition:
-    transform 200ms ease,
-    color 200ms ease;
+    transform var(--app-duration-slow) var(--app-ease),
+    color var(--app-duration-slow) var(--app-ease);
 }
 
 .custom-select-chevron.is-open {
   transform: rotate(180deg);
-  color: var(--app-blue, #2563eb);
+  color: var(--app-blue);
 }
 
 .custom-select-popover {
@@ -8309,75 +8451,112 @@ select option {
   left: 0;
   right: 0;
   top: calc(100% + 6px);
-  z-index: var(--app-z-popover, 80);
+  z-index: var(--app-z-popover);
   min-width: 180px;
   max-height: 260px;
   overflow-y: auto;
-  border-radius: 16px;
-  border: 1px solid var(--app-line, #e2e8f0);
-  background-color: var(--app-surface, #ffffff);
+  overscroll-behavior: contain;
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-line);
+  background-color: var(--app-surface);
   padding: 6px;
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.12),
-    0 8px 10px -6px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
+    0 20px 25px -5px rgb(16 27 59 / 12%),
+    0 8px 10px -6px rgb(16 27 59 / 8%),
+    0 0 0 1px rgb(16 27 59 / 5%);
+  transform-origin: top center;
+  animation: custom-select-in var(--app-duration) var(--app-ease);
+}
+
+.custom-select-popover.is-top {
+  transform-origin: bottom center;
+}
+
+@keyframes custom-select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
 }
 
 .custom-select-option {
   position: relative;
   display: flex;
   width: 100%;
+  min-height: 36px;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  border-radius: 10px;
+  border-radius: var(--app-radius-sm);
   padding: 8px 12px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--app-ink, #1e293b);
+  color: var(--app-ink);
   cursor: pointer;
   user-select: none;
   transition:
-    background-color 150ms ease,
-    color 150ms ease;
+    background-color var(--app-duration) var(--app-ease),
+    color var(--app-duration) var(--app-ease);
 }
 
-.custom-select-option:hover:not(.is-disabled) {
-  background-color: #f1f5f9;
-  color: var(--app-blue, #2563eb);
+/* Pointer hover and keyboard highlight resolve to the same visual state, so
+   arrowing through the list looks identical to moving the mouse over it. */
+.custom-select-option:hover:not(.is-disabled),
+.custom-select-option.is-active:not(.is-disabled) {
+  background-color: var(--app-surface-subtle);
+  color: var(--app-blue);
+}
+
+.custom-select-option.is-active:not(.is-disabled) {
+  box-shadow: inset 0 0 0 1px var(--app-blue);
 }
 
 .custom-select-option.is-selected {
-  background-color: #eff6ff;
-  color: var(--app-blue, #2563eb);
+  background-color: var(--app-blue-soft);
+  color: var(--app-blue);
   font-weight: 600;
 }
 
 .custom-select-option.is-disabled {
   cursor: not-allowed;
-  opacity: 0.4;
+  color: var(--app-muted);
 }
 
 .custom-select-option-content {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.5rem;
+}
+
+.custom-select-option-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.custom-select-option-text > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.custom-select-option-description {
+  font-size: 0.75rem;
+  color: var(--app-muted);
 }
 
 .custom-select-check {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: var(--app-blue, #2563eb);
+  color: var(--app-blue);
   margin-left: auto;
 }
 
 .app-shell input:hover,
 .app-shell textarea:hover {
-  border-color: #7c8aa3;
+  border-color: var(--app-line-hover);
 }
 
 .app-shell textarea {
@@ -8523,7 +8702,7 @@ select option {
 
 .dashboard-focus-primary,
 .dashboard-focus-secondary {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.6rem 1.1rem;
   display: inline-flex;
   align-items: center;
@@ -9232,7 +9411,9 @@ select option {
 }
 
 .donut-segment:focus-visible {
-  outline: none;
+  /* Active and focused share the thicker stroke, so focus adds a cobalt
+     halo of its own — otherwise a keyboard user cannot tell them apart. */
+  filter: drop-shadow(0 0 4px var(--app-blue));
 }
 
 .dashboard-donut-copy {
@@ -9529,7 +9710,7 @@ select option {
 
 .secondary-action,
 .app-shell .rows .row-actions button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.7rem;
   display: inline-flex;
   align-items: center;
@@ -9537,22 +9718,29 @@ select option {
   gap: 0.4rem;
   color: var(--app-ink);
   border: 1px solid var(--app-line);
-  border-radius: 7px;
-  background: #fff;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
   font-size: 0.78rem;
   font-weight: 700;
+  transition:
+    color var(--app-duration) var(--app-ease),
+    background-color var(--app-duration) var(--app-ease),
+    border-color var(--app-duration) var(--app-ease);
 }
 
-.secondary-action:hover,
+.secondary-action:hover:not(:disabled),
 .app-shell .rows .row-actions button:hover:not(:disabled) {
   color: var(--app-blue);
-  background: #f4f6fb;
+  border-color: var(--app-blue);
+  background: var(--app-blue-soft);
 }
 
 .secondary-action:disabled,
+.secondary-action[aria-disabled="true"],
 .app-shell .rows .row-actions button:disabled {
-  color: #8490a6;
-  background: #eef1f6;
+  color: var(--app-muted);
+  border-color: var(--app-line);
+  background: var(--app-grey-soft);
   cursor: not-allowed;
 }
 
@@ -9802,7 +9990,7 @@ select option {
 }
 
 .workspace-page-guide-steps li {
-  min-height: 42px;
+  min-height: var(--app-control-height);
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: start;
@@ -10666,7 +10854,7 @@ select option {
 .page-skeleton-dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--app-z-scrim);
   padding: 1.5rem;
   display: grid;
   overflow-y: auto;
@@ -10944,7 +11132,7 @@ select option {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid var(--line, #dfe4ed);
+  border-bottom: 1px solid var(--line);
   background: #fff;
 }
 
@@ -10966,7 +11154,7 @@ select option {
   display: grid;
   align-content: start;
   gap: 0.85rem;
-  border: 1px solid var(--line, #dfe4ed);
+  border: 1px solid var(--line);
   border-radius: 14px;
   background: #fff;
 }
@@ -10980,7 +11168,7 @@ select option {
   padding-top: 1.75rem;
   display: grid;
   gap: 1rem;
-  border-top: 1px solid var(--line, #dfe4ed);
+  border-top: 1px solid var(--line);
 }
 
 .page-skeleton-auth {
@@ -11039,7 +11227,7 @@ select option {
 .page-skeleton-public-flow > .page-skeleton-facts,
 .page-skeleton-public-content > .page-skeleton-facts {
   padding: 1.25rem;
-  border: 1px solid var(--line, #dfe4ed);
+  border: 1px solid var(--line);
   border-radius: 12px;
   background: #fff;
 }
@@ -11076,7 +11264,7 @@ select option {
   display: grid;
   align-content: start;
   gap: 0.55rem;
-  border-right: 1px solid var(--app-line, #dfe4ed);
+  border-right: 1px solid var(--app-line);
   background: var(--app-surface, #fff);
 }
 
@@ -11366,7 +11554,7 @@ select option {
     grid-template-columns: repeat(5, 8rem);
     overflow-x: auto;
     border-right: 0;
-    border-bottom: 1px solid var(--app-line, #dfe4ed);
+    border-bottom: 1px solid var(--app-line);
   }
   .page-skeleton-admin > aside > .skeleton-shared-brand { display: none; }
 
@@ -12739,7 +12927,7 @@ body:has(.admin-shell) {
 
 .admin-sidebar nav a,
 .admin-sidebar footer :where(a, button) {
-  min-height: 42px;
+  min-height: var(--app-control-height);
   width: 100%;
   padding: 0.6rem 0.55rem;
   display: flex;
@@ -13328,7 +13516,7 @@ body:has(.admin-shell) {
 .admin-flag-rows input,
 .admin-canonical-lookup input {
   min-width: 0;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.65rem;
   color: var(--admin-ink);
   border: 1px solid var(--admin-line-strong);
@@ -13408,7 +13596,7 @@ body:has(.admin-shell) {
 .admin-panel button:not(.admin-copy-id),
 .admin-lookup-form button,
 .admin-pagination button {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.75rem;
   color: var(--admin-text);
   border: 1px solid var(--admin-line-strong);
@@ -13701,7 +13889,7 @@ body:has(.admin-shell) {
 }
 
 .admin-flag-rows label:has(input[type="checkbox"]) {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -14712,7 +14900,9 @@ body:has(.admin-shell) {
 }
 .mkt2-tracker-row.selected {
   background: var(--m-selected);
-  border-left: 3px solid var(--m-blue);
+  /* Full inset ring rather than a left stripe: no 3px content shift when a
+     row becomes selected, and it reads as one bounded object. */
+  box-shadow: inset 0 0 0 1px var(--m-blue);
 }
 .mkt2-action-link {
   border: none;
@@ -14842,7 +15032,7 @@ body:has(.admin-shell) {
   align-items: center;
   gap: 0.55rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  z-index: 20;
+  z-index: var(--app-z-toast);
   animation: mkt2ToastFadeIn 0.25s ease-out;
 }
 .mkt2-toast-bar svg {
@@ -15036,7 +15226,9 @@ body:has(.admin-shell) {
 }
 .mkt2-document-row.selected {
   background: var(--m-selected);
-  border-left: 3px solid var(--m-blue);
+  /* Full inset ring rather than a left stripe: no 3px content shift when a
+     row becomes selected, and it reads as one bounded object. */
+  box-shadow: inset 0 0 0 1px var(--m-blue);
 }
 .mkt2-doc-status-btn {
   border: none;
@@ -15090,7 +15282,9 @@ body:has(.admin-shell) {
 }
 .mkt2-reference-grid.selected {
   background: var(--m-selected);
-  border-left: 3px solid var(--m-blue);
+  /* Full inset ring rather than a left stripe: no 3px content shift when a
+     row becomes selected, and it reads as one bounded object. */
+  box-shadow: inset 0 0 0 1px var(--m-blue);
 }
 .mkt2-ref-pill {
   display: inline-block;
@@ -15128,10 +15322,15 @@ body:has(.admin-shell) {
   overflow: hidden;
   width: 200px;
 }
+/* Composited fill: the track clips, so scaleX avoids relayouting the bar on
+   every frame the way an animated `width` does (matches .apps-progress-bar-fill). */
 .mkt2-progress-fill {
+  width: 100%;
   height: 100%;
   background: var(--m-blue);
-  transition: width 0.35s ease;
+  transform: scaleX(var(--fill, 0));
+  transform-origin: left;
+  transition: transform 0.35s ease;
 }
 .mkt2-readiness-summary.complete .mkt2-progress-fill {
   background: #10b981;
@@ -16808,7 +17007,7 @@ body:has(.admin-shell) {
 .product-menu-all {
   display: flex;
   align-items: center;
-  min-height: 40px;
+  min-height: var(--app-control-height);
   padding: 0.55rem 0.75rem;
   color: var(--m-blue);
   font-weight: 700;
@@ -17745,7 +17944,7 @@ body:has(.admin-shell) {
   font-weight: 600;
 }
 .tracker-head {
-  min-height: 42px;
+  min-height: var(--app-control-height);
   color: var(--m-meta);
   background: var(--m-canvas);
   font-size: 0.72rem;
@@ -17766,10 +17965,13 @@ body:has(.admin-shell) {
   overflow: hidden;
 }
 .mini-progress b {
+  width: 100%;
   height: 100%;
   display: block;
   background: var(--m-blue);
-  transition: width 0.3s ease;
+  transform: scaleX(var(--fill, 0));
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 .tracker-row {
   cursor: pointer;
@@ -17786,8 +17988,11 @@ body:has(.admin-shell) {
   background: transparent;
   font-size: 0.85rem;
   color: var(--m-text-strong);
-  outline: none;
   font-family: inherit;
+}
+.preview-toolbar:focus-within {
+  border-color: var(--m-blue, var(--app-blue));
+  box-shadow: 0 0 0 3px rgb(23 75 214 / 15%);
 }
 .tracker-search-input::placeholder {
   color: var(--m-muted);
@@ -17797,6 +18002,9 @@ body:has(.admin-shell) {
   border: none;
   color: var(--m-muted);
   cursor: pointer;
+  /* Icon-only control: the glyph stays small, the hit area does not. */
+  min-width: 44px;
+  min-height: 44px;
   padding: 4px;
   border-radius: 4px;
   display: inline-flex;
@@ -18965,7 +19173,7 @@ body:has(.admin-shell) {
   list-style: none;
 }
 .workflow-progress-panel > ul li {
-  min-height: 40px;
+  min-height: var(--app-control-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -21357,10 +21565,13 @@ body:has(.admin-shell) {
 }
 
 .mkt2-ws-progress-fill {
+  width: 100%;
   height: 100%;
   background: var(--m-blue);
   border-radius: 100px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scaleX(var(--fill, 0));
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mkt2-ws-checklist-box {

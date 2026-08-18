@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useModalDialog } from "../../../lib/dom-hooks";
 import { X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Select } from "../../../components/ui/select";
@@ -26,6 +27,8 @@ function EditForm({
   doc: AcademicDocument;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef, onClose);
   const qc = useQueryClient();
   const [displayName, setDisplayName] = useState(doc.display_name);
   const [category, setCategory] = useState(doc.category);
@@ -64,7 +67,9 @@ function EditForm({
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
       <div
         className="apps-dialog"
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="edit-doc-title"
         onClick={(e) => e.stopPropagation()}
       >

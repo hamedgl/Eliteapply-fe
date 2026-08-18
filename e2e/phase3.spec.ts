@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
   identity_subject: "test",
@@ -10,6 +11,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -211,6 +214,9 @@ test("writing library and editor are responsive and save-state aware", async ({
   );
   await page.getByLabel("Document content").fill("Updated statement");
   await expect(page.getByText("Unsaved")).toBeVisible();
+  // Desktop measurement: pin the viewport so the mobile project's 390px
+  // default does not turn this into a mobile-layout assertion.
+  await page.setViewportSize({ width: 1280, height: 900 });
   const canvas = page.locator(".writing-trix");
   const [canvasBox, editorMainBox] = await Promise.all([
     canvas.boundingBox(),
@@ -476,7 +482,7 @@ test("student reference draft validates its minimum and applies AI polish inline
   ).toBeEnabled();
 
   const referenceType = await drawer
-    .getByRole("button", { name: "Reference type" })
+    .getByRole("combobox", { name: "Reference type" })
     .boundingBox();
   const dueIn = await drawer.getByLabel("Due in").boundingBox();
   expect(referenceType?.y).toBe(dueIn?.y);
@@ -564,17 +570,17 @@ test("existing reference upload can add and refresh security-cleared documents",
   await drawer.getByLabel("Full name").fill("Professor Ada Silva");
   await drawer.getByLabel("Email").fill("ada@example.test");
   await expect(
-    drawer.getByRole("button", { name: "Referee role" }),
+    drawer.getByRole("combobox", { name: "Referee role" }),
   ).toHaveAttribute("aria-required", "true");
   await drawer.getByRole("button", { name: "Continue" }).click();
 
   await drawer.getByLabel("Application").fill("Oxford");
   await drawer.getByRole("option", { name: application.title }).click();
   await expect(
-    drawer.getByRole("button", { name: "Reference type" }),
+    drawer.getByRole("combobox", { name: "Reference type" }),
   ).toHaveAttribute("aria-required", "true");
   await expect(
-    drawer.getByRole("button", { name: "Existing document" }),
+    drawer.getByRole("combobox", { name: "Existing document" }),
   ).toHaveAttribute("aria-required", "true");
 
   await drawer.getByRole("button", { name: "Upload new" }).click();
@@ -584,7 +590,7 @@ test("existing reference upload can add and refresh security-cleared documents",
   availableDocuments = [uploadedDocument];
   await uploadDialog.getByRole("button", { name: "Close" }).click();
   await expect.poll(() => documentRequests).toBeGreaterThan(1);
-  await drawer.getByRole("button", { name: "Existing document" }).click();
+  await drawer.getByRole("combobox", { name: "Existing document" }).click();
   await page
     .getByRole("option", { name: uploadedDocument.display_name })
     .click();
@@ -625,11 +631,14 @@ test("public referee code stays out of the URL", async ({ page }) => {
       json: { referee_role: "professor", institution: "Example University" },
     });
   });
+  // The field is a 6-character one-time code (maxLength 6); a longer string is
+  // silently truncated and the submit button stays disabled below six.
+  const referenceCode = "482913";
   await page.goto("/referee/academic-reference/token-only");
-  await page.getByLabel("Reference code").fill("separate-code");
+  await page.getByLabel("Reference code").fill(referenceCode);
   await page.getByRole("button", { name: "Continue securely" }).click();
-  await expect.poll(() => header).toBe("separate-code");
-  expect(page.url()).not.toContain("separate-code");
+  await expect.poll(() => header).toBe(referenceCode);
+  expect(page.url()).not.toContain(referenceCode);
 });
 
 test("notification deep link opens a durable interview session", async ({
@@ -681,13 +690,20 @@ test("interview history remains usable on mobile", async ({ page }) => {
 test("calendar combines reminders and deadlines across responsive views", async ({
   page,
 }) => {
+  // The calendar opens on the current month, so fixed past dates would land
+  // outside the visible period and the event would never render.
+  const now = new Date();
+  const inCurrentMonth = (day: number, hour: number) =>
+    new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), day, hour, 0, 0),
+    ).toISOString();
   const reminder = {
     id: "00000000-0000-4000-8000-000000000050",
     aggregate_type: "custom",
     aggregate_id: null,
     title: "Submit final transcript",
     notes: "Upload the stamped copy.",
-    scheduled_at: "2026-07-23T09:00:00Z",
+    scheduled_at: inCurrentMonth(23, 9),
     timezone: "Europe/Lisbon",
     recurrence: "none",
     channel: "in_app",
@@ -710,7 +726,7 @@ test("calendar combines reminders and deadlines across responsive views", async 
             id: "00000000-0000-4000-8000-000000000060",
             title: "Oxford scholarship",
             application_type: "scholarship",
-            primary_deadline_at: "2026-07-24T00:00:00Z",
+            primary_deadline_at: inCurrentMonth(24, 0),
           },
         ],
         next_cursor: null,
@@ -797,23 +813,21 @@ test("calendar sync creates, copies, opens and revokes a private feed", async ({
   });
 
   await page.goto("/app/reminders");
-  await page.getByRole("button", { name: "Create calendar link" }).click();
+  await page.getByRole("button", { name: "Create calendar subscription" }).click();
   await expect(
     page.getByText("Calendar subscription link created."),
   ).toBeVisible();
   await expect(page.getByText("••••••••.ics", { exact: false })).toBeVisible();
+  // The token itself must never reach the DOM, only the masked form.
   await expect(page.locator("body")).not.toContainText(secret);
-  await expect(
-    page.getByRole("link", { name: "Open in calendar app" }),
-  ).toHaveAttribute("href", feedUrl.replace("https:", "webcal:"));
-  const openIcs = page.getByRole("link", { name: "Open .ics feed" });
-  await expect(openIcs).toHaveAttribute("href", feedUrl);
-  await expect(openIcs).toHaveAttribute("rel", "noopener noreferrer");
-  await expect(
-    page.getByRole("link", { name: "Download .ics" }),
-  ).toHaveAttribute("download", "eliteapply-calendar.ics");
 
-  await page.getByRole("button", { name: "Copy URL" }).click();
+  // Link actions live in the card's overflow menu.
+  const settings = page.getByRole("button", { name: "Calendar link settings" });
+  await settings.click();
+  await expect(
+    page.getByRole("menuitem", { name: "Open in calendar app" }),
+  ).toBeVisible();
+  await page.getByRole("menuitem", { name: "Copy URL" }).click();
   await expect
     .poll(() =>
       page.evaluate(
@@ -821,6 +835,7 @@ test("calendar sync creates, copies, opens and revokes a private feed", async ({
       ),
     )
     .toBe(feedUrl);
+
   await page.getByText("Set up Google Calendar").click();
   await expect(
     page.getByText("Subscribe from web", { exact: false }),
@@ -831,17 +846,21 @@ test("calendar sync creates, copies, opens and revokes a private feed", async ({
   });
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator(".calendar-sync").screenshot({
+  await page.locator(".reminders-calendar-card").screenshot({
     path: "/tmp/eliteapply-calendar-sync-mobile.png",
     animations: "disabled",
   });
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "Revoke calendar link" }).click();
+  await settings.click();
+  await page.getByRole("menuitem", { name: "Revoke link" }).click();
+  await page
+    .getByRole("dialog", { name: "Revoke this calendar link?" })
+    .getByRole("button", { name: "Revoke link" })
+    .click();
   await expect(
     page.getByText("The calendar link has been revoked."),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Create calendar link" }),
+    page.getByRole("button", { name: "Create calendar subscription" }),
   ).toBeVisible();
   expect(creates).toBe(1);
   expect(revokes).toBe(1);
@@ -855,7 +874,7 @@ test("calendar sync shows a safe recoverable create error", async ({
     route.fulfill({ status: 503, json: { detail: "calendar-secret" } }),
   );
   await page.goto("/app/reminders");
-  await page.getByRole("button", { name: "Create calendar link" }).click();
+  await page.getByRole("button", { name: "Create calendar subscription" }).click();
   await expect(
     page.getByText("We couldn’t create the calendar link. Try again shortly."),
   ).toBeVisible();

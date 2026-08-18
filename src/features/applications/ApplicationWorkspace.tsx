@@ -287,7 +287,14 @@ export function ApplicationWorkspace() {
   }
   if (workspace.isPending)
     return <ApplicationWorkspaceSkeleton tab={activeTab} />;
-  if (workspace.isError || !workspace.data) {
+  // `application` and `readiness` are required on ApplicationWorkspaceResponse,
+  // but a truncated or malformed payload must degrade to this recoverable error
+  // rather than throwing past the router into a full-page error boundary.
+  if (
+    workspace.isError ||
+    !workspace.data?.application ||
+    !workspace.data?.readiness
+  ) {
     return (
       <PageError
         title="Application workspace unavailable"
@@ -4288,24 +4295,6 @@ function normalizeFinding(value: unknown): NormalFinding {
               ? "Review this criterion before proceeding."
               : "Add or verify supporting information.",
   };
-}
-function eligibilityStatus(findings: NormalFinding[]) {
-  if (findings.some((item) => item.status === "Does not meet"))
-    return "Does not meet";
-  if (
-    findings.some((item) =>
-      ["Needs review", "Missing evidence"].includes(item.status),
-    )
-  )
-    return "Needs review";
-  if (
-    findings.length &&
-    findings.every((item) =>
-      ["Meets requirement", "Likely meets"].includes(item.status),
-    )
-  )
-    return "Meets requirement";
-  return "Unknown";
 }
 function scoreChange(
   current: S["EligibilityResponse"],

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -11,6 +12,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -88,6 +91,21 @@ type Fixture = {
   onCreate?: (body: Record<string, unknown>) => void;
 };
 
+const entitlement = {
+  plan_key: "free",
+  plan_name: "free",
+  plan_label: "Free",
+  subscription_status: "active",
+  is_active: true,
+  cancel_at_period_end: false,
+  current_period_end: null,
+  trial_end: null,
+  ai_tokens_used: 0,
+  ai_tokens_limit: 1000,
+  ai_tokens_reset_at: "2027-01-01T00:00:00Z",
+  purchased_tokens_remaining: 0,
+};
+
 async function stubApi(page: Page, fixture: Fixture) {
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
@@ -99,6 +117,8 @@ async function stubApi(page: Page, fixture: Fixture) {
       });
     if (url.endsWith("/users/me")) return route.fulfill({ json: user });
     if (url.endsWith("/platform/capabilities")) return route.fulfill({ json: [] });
+    if (url.endsWith("/billing/entitlements"))
+      return route.fulfill({ json: entitlement });
     if (new URL(url).pathname.endsWith("/applications"))
       return route.fulfill({
         json: {

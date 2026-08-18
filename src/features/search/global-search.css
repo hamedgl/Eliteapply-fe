@@ -183,7 +183,7 @@
   position: absolute;
   inset-block-start: calc(100% + 0.45rem);
   inset-inline-start: 0;
-  z-index: 40;
+  z-index: var(--app-z-popover);
   width: min(620px, calc(100vw - 2rem));
   max-height: min(70vh, 560px);
   display: flex;

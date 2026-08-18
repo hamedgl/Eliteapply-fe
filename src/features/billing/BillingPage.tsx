@@ -13,6 +13,7 @@ import { useEntitlements } from "../../lib/billing/provider";
 import { preloadAppRoute } from "../../app/preload";
 import { WorkspacePageGuideButton } from "../../components/AppShell";
 import { SectionSkeleton } from "../../components/page/PageSkeleton";
+import { label } from "../../lib/label";
 
 const number = new Intl.NumberFormat();
 const date = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -419,9 +420,7 @@ function statusCopy(subscription?: {
   return title(subscription.subscription_status);
 }
 
-function title(value: string) {
-  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
+const title = label;
 
 function formatDate(value: string) {
   const parsed = new Date(value);

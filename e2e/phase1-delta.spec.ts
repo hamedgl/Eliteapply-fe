@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { currentTermsVersion } from "./product-config";
 
 const user = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -11,6 +12,8 @@ const user = {
   is_email_verified: true,
   is_active: true,
   is_admin: false,
+  consent_version: currentTermsVersion,
+  consent_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -101,6 +104,28 @@ test.beforeEach(async ({ page }) => {
           recommended_next_actions: ["Review the final submission"],
         },
       });
+    if (path.endsWith("/applications/00000000-0000-4000-8000-000000000010/eligibility"))
+      return route.fulfill({
+        // Matches EligibilityResponse in docs/api/openapi.json.
+        json: {
+          id: "00000000-0000-4000-8000-000000000040",
+          application_id: "00000000-0000-4000-8000-000000000010",
+          findings: [],
+          strengths: [],
+          risks: [],
+          questions: [],
+          readiness_score: 100,
+          readiness_components: {},
+          factors: [],
+          overall_status: "likely_eligible",
+          trigger_source: "manual",
+          data_sources: [],
+          important_changes: [],
+          disclaimer: "Eligibility signals do not predict admission.",
+          created_at: "2026-07-01T00:00:00Z",
+          last_calculated_at: "2026-07-01T00:00:00Z",
+        },
+      });
     if (
       path.endsWith("/applications/00000000-0000-4000-8000-000000000010/submit") &&
       route.request().method() === "POST"
@@ -127,6 +152,7 @@ test.beforeEach(async ({ page }) => {
           requirements: [],
           tasks: [],
           document_links: [],
+          linked_resources: [],
           history: [],
         },
       });
@@ -304,9 +330,14 @@ test("document detail waits for a successful security scan", async ({ page }) =>
 
 test("workspace checks readiness immediately before submission", async ({ page }) => {
   await page.goto("/app/applications/00000000-0000-4000-8000-000000000010");
-  await expect(page.getByRole("progressbar")).toHaveAttribute("value", "100");
+  await expect(
+    page.getByRole("progressbar", { name: "Submission readiness" }),
+  ).toHaveAttribute("value", "100");
   await page.getByRole("button", { name: "Mark submitted" }).click();
-  await expect(page.getByText(/Programme · Submitted/)).toBeVisible();
+  // Type and stage are separate header facts now, not one combined string.
+  const header = page.locator(".detail-application-header");
+  await expect(header.getByText("Submitted", { exact: true })).toBeVisible();
+  await expect(header.getByText("Programme", { exact: true })).toBeVisible();
 });
 
 test("workspace navigation and menus stay above sticky page content", async ({

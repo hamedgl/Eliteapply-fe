@@ -31,7 +31,7 @@ test("landing page stays self-contained and semantically ordered", async ({
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Plan, write and submit stronger scholarship applications.",
+      name: "Plan, write and submit stronger scholarship applications with AI.",
     }),
   ).toBeVisible();
   await expect(
@@ -152,7 +152,7 @@ test("phase one includes product, trust, comparison and FAQ content", async ({
     "Track reference requirements before they become last-minute emergencies.",
     "Know what is ready, what is missing and what deserves one final review.",
     "Built for serious applications at every stage.",
-    "Why not use a spreadsheet or a general notes app?",
+    "Why use a purpose-built application workspace instead of a spreadsheet?",
   ]) {
     await expect(page.getByRole("heading", { name: heading })).toBeAttached();
   }
@@ -219,29 +219,27 @@ test("guided tour auto-advances and every stage remains selectable", async ({
   await page.goto("/");
   await page.locator("#how-it-works").scrollIntoViewIfNeeded();
 
-  const firstStep = page.getByRole("button", {
+  const firstStep = page.getByRole("tab", {
     name: "Show stage 1: Add & capture",
   });
-  const secondStep = page.getByRole("button", {
+  const secondStep = page.getByRole("tab", {
     name: "Show stage 2: Break down",
   });
-  const thirdStep = page.getByRole("button", {
+  const thirdStep = page.getByRole("tab", {
     name: "Show stage 3: Prepare",
   });
-  const fourthStep = page.getByRole("button", {
+  const fourthStep = page.getByRole("tab", {
     name: "Show stage 4: Review & submit",
   });
-  await expect(firstStep).toHaveAttribute("aria-pressed", "true");
-  await expect(secondStep).toHaveAttribute("aria-pressed", "true", {
+  await expect(firstStep).toHaveAttribute("aria-selected", "true");
+  await expect(secondStep).toHaveAttribute("aria-selected", "true", {
     timeout: 6000,
   });
 
   await firstStep.click();
-  await expect(firstStep).toHaveAttribute("aria-pressed", "true");
+  await expect(firstStep).toHaveAttribute("aria-selected", "true");
   await expect(
-    page.getByRole("region", {
-      name: /Add & capture application workflow demonstration/i,
-    }),
+    page.getByRole("tabpanel", { name: "Show stage 1: Add & capture" }),
   ).toBeVisible();
   await expect(page.locator(".workflow-stage-checklist")).toContainText(
     "Opportunity details",
@@ -282,7 +280,7 @@ test("mobile navigation traps focus, closes on Escape and stays touch-safe", asy
   await menuButton.click();
   const productMenu = page
     .getByRole("navigation", { name: "Main navigation" })
-    .locator("summary");
+    .getByRole("button", { name: "Product" });
   await expect(productMenu).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(
@@ -326,7 +324,7 @@ test("marketing layout reflows without page overflow at supported widths", async
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Plan, write and submit stronger scholarship applications.",
+        name: "Plan, write and submit stronger scholarship applications with AI.",
       }),
     ).toBeVisible();
     expect(
@@ -340,7 +338,7 @@ test("footer accessibility link reaches a real statement", async ({ page }) => {
   await page.getByRole("link", { name: "Accessibility" }).last().click();
   await expect(page).toHaveURL(/\/accessibility$/);
   await expect(
-    page.getByRole("heading", { name: "Accessibility" }),
+    page.getByRole("heading", { name: "Accessibility Statement", level: 1 }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "support@eliteapply.net" }),

@@ -111,5 +111,4 @@ export function countText(html: string) {
 /** "statement_of_purpose" → "Statement Of Purpose". Shared by the editor, the
  * library, and the public share page so one document type reads the same way
  * everywhere. */
-export const label = (value: string) =>
-  value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+export { label } from "../../lib/label";
