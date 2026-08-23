@@ -732,6 +732,7 @@ export function WritingEditor() {
     [quality, setQuality] = useState<S["QualityAnalysisResponse"] | null>(null),
     [analyzing, setAnalyzing] = useState(false),
     [analyzeError, setAnalyzeError] = useState(""),
+    [generationError, setGenerationError] = useState(""),
     [activeRunId, setActiveRunId] = useState(""),
     [showPreview, setShowPreview] = useState(false),
     [showReview, setShowReview] = useState(false),
@@ -743,6 +744,11 @@ export function WritingEditor() {
         readGenerationDraft(location.state, id),
       );
   const pollStep = useRef(0);
+  const pendingGeneration = useRef<{
+    mutationId: string;
+    operation: string;
+    instruction: string;
+  } | null>(null);
   const previewDialogRef = useRef<HTMLDialogElement>(null);
   const activeRun = useQuery({
     queryKey: ["generation-run", activeRunId],
@@ -845,28 +851,47 @@ export function WritingEditor() {
   async function generate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setGenerationPending(true);
+    setGenerationError("");
+    // Reuse one mutation_id across retries of the same payload: if the server
+    // started (and billed) a run but the response never arrived, minting a
+    // fresh UUID on the next click would defeat the backend's idempotency key
+    // and could start a duplicate run. Only mint a new one when the request
+    // actually changed or the previous attempt is confirmed done.
+    const pending = pendingGeneration.current;
+    const sameRequest =
+      pending &&
+      pending.operation === generationDraft.operation &&
+      pending.instruction === generationDraft.instruction;
+    const mutationId = sameRequest ? pending.mutationId : crypto.randomUUID();
+    pendingGeneration.current = {
+      mutationId,
+      operation: generationDraft.operation,
+      instruction: generationDraft.instruction,
+    };
     try {
       const r = await writingApi.generate(id, {
-        mutation_id: crypto.randomUUID(),
+        mutation_id: mutationId,
         operation:
           generationDraft.operation as S["GenerateWritingRequest"]["operation"],
         instruction: generationDraft.instruction,
         evidence_ids: [],
       });
+      pendingGeneration.current = null;
       pollStep.current = 0;
       setActiveRunId(r.id);
       qc.setQueryData(["generation-run", r.id], r);
       void runs.refetch();
     } catch (error) {
       const requirement = academicProfileRequirement(error);
-      if (!requirement) throw error;
-      setProfileRequirement(requirement);
+      if (requirement) setProfileRequirement(requirement);
+      else setGenerationError("The generation could not be started. Try again.");
     } finally {
       setGenerationPending(false);
     }
   }
   async function retryGeneration(runId: string) {
     setGenerationPending(true);
+    setGenerationError("");
     try {
       const next = await writingApi.retryGeneration(runId);
       pollStep.current = 0;
@@ -874,8 +899,8 @@ export function WritingEditor() {
       qc.setQueryData(["generation-run", next.id], next);
     } catch (error) {
       const requirement = academicProfileRequirement(error);
-      if (!requirement) throw error;
-      setProfileRequirement(requirement);
+      if (requirement) setProfileRequirement(requirement);
+      else setGenerationError("The retry could not be started. Try again.");
     } finally {
       setGenerationPending(false);
     }
@@ -1209,16 +1234,28 @@ export function WritingEditor() {
             <GenerationStatus
               run={activeRun.data}
               onCancel={async () => {
-                const next = await writingApi.cancelGeneration(
-                  activeRun.data!.id,
-                );
-                qc.setQueryData(["generation-run", next.id], next);
+                setGenerationError("");
+                try {
+                  const next = await writingApi.cancelGeneration(
+                    activeRun.data!.id,
+                  );
+                  qc.setQueryData(["generation-run", next.id], next);
+                } catch {
+                  setGenerationError(
+                    "The generation could not be cancelled. It may still be running.",
+                  );
+                }
               }}
               onRetry={async () => {
                 await retryGeneration(activeRun.data!.id);
               }}
               retrying={generationPending}
             />
+          ) : null}
+          {generationError ? (
+            <p className="form-error" role="alert">
+              {generationError}
+            </p>
           ) : null}
           {entitlements.data &&
           entitlements.data.ai_tokens_limit -

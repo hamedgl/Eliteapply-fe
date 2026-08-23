@@ -321,6 +321,12 @@ export function WritingReviewDrawer({
                   ))}
                 </div>
 
+                {setResolved.isError || editComment.isError ? (
+                  <p className="writing-review-error" role="alert">
+                    That change could not be saved. Try again.
+                  </p>
+                ) : null}
+
                 {comments.isPending ? (
                   <div className="writing-review-skeleton" aria-busy="true">
                     {[0, 1, 2].map((row) => (
@@ -541,6 +547,9 @@ export function WritingReviewDrawer({
           onConfirm={() => removeComment.mutate(deleting.id)}
         >
           <p>This removes the comment for everyone. It cannot be undone.</p>
+          {removeComment.isError ? (
+            <p role="alert">The comment could not be deleted. Try again.</p>
+          ) : null}
         </ConfirmationDialog>
       ) : null}
 
@@ -554,6 +563,9 @@ export function WritingReviewDrawer({
           onConfirm={() => revokeShare.mutate(revoking.id)}
         >
           <p>Anyone holding this link loses access immediately. Comments already left stay.</p>
+          {revokeShare.isError ? (
+            <p role="alert">The link could not be revoked. Try again.</p>
+          ) : null}
         </ConfirmationDialog>
       ) : null}
     </>,

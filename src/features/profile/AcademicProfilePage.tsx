@@ -367,6 +367,7 @@ export function AcademicProfilePage() {
       {confirmingDelete ? (
         <DeleteProfileDialog
           pending={remove.isPending}
+          error={remove.isError}
           onCancel={() => setConfirmingDelete(false)}
           onConfirm={() => remove.mutate()}
         />

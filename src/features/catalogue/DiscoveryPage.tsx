@@ -233,6 +233,13 @@ export function DiscoveryPage() {
             </button>
           </div>
 
+          {findMatches.error ? (
+            <p className="apps-notice is-danger" role="alert">
+              <AlertTriangle aria-hidden="true" />
+              Matches could not be found. Open match preferences and try again.
+            </p>
+          ) : null}
+
           {matches ? (
             <section className="discovery-results">
               <h3>Your matches</h3>

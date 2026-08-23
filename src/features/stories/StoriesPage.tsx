@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookMarked, CheckCircle2, Plus, Search, Share2, X } from "lucide-react";
+import { AlertTriangle, BookMarked, CheckCircle2, Plus, Search, Share2, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { writingApi, storiesApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
@@ -103,6 +103,8 @@ export function StoriesPage() {
       }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["stories"] }),
   });
+
+  const cardActionError = archive.error || unarchive.error || duplicate.error;
 
   const clearFilters = () => setParams({}, { replace: true });
   const noFiltersActive = !search && !category && !sensitivity && !includeArchived;
@@ -207,6 +209,13 @@ export function StoriesPage() {
         </label>
       </div>
 
+      {cardActionError ? (
+        <p className="apps-notice is-danger" role="alert">
+          <AlertTriangle aria-hidden="true" />
+          That action could not be completed. Try again.
+        </p>
+      ) : null}
+
       {items.length ? (
         <div className="story-list">
           {items.map((story) => (
@@ -259,6 +268,9 @@ export function StoriesPage() {
           onConfirm={() => remove.mutate(deleting.id)}
         >
           <p>This permanently removes the story and its evidence links. This cannot be undone.</p>
+          {remove.isError ? (
+            <p role="alert">The story could not be deleted. Try again.</p>
+          ) : null}
         </ConfirmationDialog>
       ) : null}
 

@@ -2,10 +2,12 @@ import { ConfirmationDialog } from "../../../components/actions/ConfirmationDial
 
 export function DeleteProfileDialog({
   pending,
+  error,
   onCancel,
   onConfirm,
 }: {
   pending: boolean;
+  error?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -23,6 +25,9 @@ export function DeleteProfileDialog({
         Your applications, documents and stories are not deleted. Recommendation
         quality may drop until you rebuild your profile.
       </p>
+      {error ? (
+        <p role="alert">The profile could not be deleted. Try again.</p>
+      ) : null}
     </ConfirmationDialog>
   );
 }
