@@ -8,10 +8,11 @@ import { ApiError } from "../../lib/api/errors";
 import "../../styles/workspace.css";
 
 /**
- * Google One Tap and the OAuth redirect buttons create accounts without the terms checkbox
- * the email register form has, so the acceptance is collected here on first arrival in /app.
- * It asks once: the answer is stored server-side as `consent_version`, so the dialog only
- * returns if the terms version itself changes.
+ * Google One Tap (and, before login-mode OAuth clicks stopped sending it, the OAuth redirect
+ * buttons too) can create accounts without the terms/age checkboxes the email register form
+ * has, so acceptance is collected here on first arrival in /app. It re-prompts whenever the
+ * account is missing either the current `consent_version` or an `age_confirmed_at` — either
+ * one being unset means the account never actually went through this gate.
  */
 export function ConsentGate() {
   const user = useSession((state) => state.user);
@@ -24,14 +25,22 @@ export function ConsentGate() {
   const [error, setError] = useState("");
 
   const needsConsent =
-    !!user && user.consent_version !== productConfig.legal.currentTermsVersion;
+    !!user &&
+    (user.consent_version !== productConfig.legal.currentTermsVersion ||
+      !user.age_confirmed_at);
 
   useEffect(() => {
     const node = dialogRef.current;
     if (!node) return;
-    if (needsConsent && !node.open) node.showModal();
+    if (needsConsent && !node.open) {
+      // Sync from the account's actual preference right as the dialog opens —
+      // an existing user re-prompted only for age must not have their real
+      // marketing preference silently overwritten by this checkbox's default.
+      setMarketingOptIn(user?.marketing_opt_in ?? false);
+      node.showModal();
+    }
     if (!needsConsent && node.open) node.close();
-  }, [needsConsent]);
+  }, [needsConsent, user]);
 
   if (!needsConsent) return null;
 
@@ -43,6 +52,7 @@ export function ConsentGate() {
         await usersApi.consent({
           accepted_terms_version: productConfig.legal.currentTermsVersion,
           marketing_opt_in: marketingOptIn,
+          age_confirmed: true,
         }),
       );
     } catch (caught) {
@@ -81,7 +91,8 @@ export function ConsentGate() {
       </header>
       <div className="apps-dialog-body">
         <p>
-          Before you start, please accept our{" "}
+          Before you start, please confirm you meet the minimum age to use
+          EliteApply and accept our{" "}
           <Link to={productConfig.legal.terms} target="_blank" rel="noreferrer">
             Terms of Service
           </Link>{" "}

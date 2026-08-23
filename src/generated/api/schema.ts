@@ -5934,6 +5934,8 @@ export interface components {
             id_token: string;
             /** Accepted Terms Version */
             accepted_terms_version?: string | null;
+            /** Age Confirmed */
+            age_confirmed?: boolean | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -7181,6 +7183,8 @@ export interface components {
              * @default false
              */
             marketing_opt_in: boolean;
+            /** Age Confirmed */
+            age_confirmed: boolean;
         };
         /** RegisterResponse */
         RegisterResponse: {
@@ -8372,6 +8376,8 @@ export interface components {
              * @default false
              */
             marketing_opt_in: boolean;
+            /** Age Confirmed */
+            age_confirmed?: boolean | null;
         };
         /** UpdateProfileRequest */
         UpdateProfileRequest: {
@@ -8466,6 +8472,8 @@ export interface components {
             consent_version?: string | null;
             /** Consent At */
             consent_at?: string | null;
+            /** Age Confirmed At */
+            age_confirmed_at: string | null;
             /**
              * Marketing Opt In
              * @default false
@@ -16706,6 +16714,7 @@ export interface operations {
             query?: {
                 return_to?: string | null;
                 accepted_terms_version?: string | null;
+                age_confirmed?: boolean;
             };
             header?: never;
             path: {

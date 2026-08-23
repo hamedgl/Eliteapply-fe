@@ -13619,6 +13619,16 @@
               ],
               "title": "Accepted Terms Version"
             }
+          },
+          {
+            "name": "age_confirmed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Age Confirmed"
+            }
           }
         ],
         "responses": {
@@ -20758,6 +20768,17 @@
               }
             ],
             "title": "Accepted Terms Version"
+          },
+          "age_confirmed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Confirmed"
           }
         },
         "type": "object",
@@ -24167,13 +24188,18 @@
             "type": "boolean",
             "title": "Marketing Opt In",
             "default": false
+          },
+          "age_confirmed": {
+            "type": "boolean",
+            "title": "Age Confirmed"
           }
         },
         "type": "object",
         "required": [
           "email",
           "password",
-          "accepted_terms_version"
+          "accepted_terms_version",
+          "age_confirmed"
         ],
         "title": "RegisterRequest"
       },
@@ -27831,6 +27857,17 @@
             "type": "boolean",
             "title": "Marketing Opt In",
             "default": false
+          },
+          "age_confirmed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Confirmed"
           }
         },
         "type": "object",
@@ -28127,6 +28164,18 @@
             ],
             "title": "Consent At"
           },
+          "age_confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Confirmed At"
+          },
           "marketing_opt_in": {
             "type": "boolean",
             "title": "Marketing Opt In",
@@ -28177,6 +28226,7 @@
           "is_email_verified",
           "is_active",
           "is_admin",
+          "age_confirmed_at",
           "created_at",
           "updated_at",
           "last_login_at"

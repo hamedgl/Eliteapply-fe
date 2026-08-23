@@ -79,6 +79,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           password: String(data.password),
           full_name: String(data.full_name) || null,
           accepted_terms_version: productConfig.legal.currentTermsVersion,
+          age_confirmed: data.age_confirmed === "on",
           marketing_opt_in: data.marketing_opt_in === "on",
         });
         nav(`/confirm-email?email=${encodeURIComponent(String(data.email))}`);
@@ -219,6 +220,10 @@ export function AuthPage({ mode }: { mode: Mode }) {
           )}
           {mode === "register" && (
             <>
+              <label className="check">
+                <input name="age_confirmed" type="checkbox" required />
+                I confirm I meet the minimum age to use EliteApply.
+              </label>
               <label className="check">
                 <input type="checkbox" required />I agree to the{" "}
                 <Link to="/terms">Terms</Link> and{" "}

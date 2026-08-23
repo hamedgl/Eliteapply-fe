@@ -20,6 +20,22 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * The bootstrap profile fetch below isn't a react-query call, so it doesn't get the
+ * `retry: 1` every other query in the app has. Without it, a single transient
+ * network blip leaves the session "authenticated but profile-less" for the rest of
+ * the tab's life — which also means ConsentGate's age/terms gate never gets a
+ * chance to run for that session, since it requires a loaded profile.
+ */
+export async function fetchUserWithRetry() {
+  try {
+    return await usersApi.me();
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return usersApi.me();
+  }
+}
+
 function Bootstrap() {
   const setUser = useSession((state) => state.setUser);
   const setInitializing = useSession((state) => state.setInitializing);
@@ -71,7 +87,7 @@ function Bootstrap() {
         if (!active) return;
 
         if (refreshRes.kind === "success") {
-          const user = await usersApi.me();
+          const user = await fetchUserWithRetry();
           if (active) setUser(user);
         } else if (refreshRes.kind === "invalid_session") {
           useSession.getState().clearSession();
@@ -101,7 +117,7 @@ function Bootstrap() {
     let active = true;
     void (async () => {
       try {
-        const user = await usersApi.me();
+        const user = await fetchUserWithRetry();
         if (active) setUser(user);
       } catch {
         // ponytail: header falls back to "Your account"; the next refresh retries.

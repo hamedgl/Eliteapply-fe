@@ -184,7 +184,7 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
           "Send transactional messages such as email confirmation, password-reset and account-deletion codes.",
           "Provide support, investigate errors, prevent misuse and maintain service integrity.",
           "Record limited first-party product events to understand whether features work, without intentionally sending essays, references, passwords, tokens or codes as event properties.",
-          "Send optional product updates only when you opt in; you can change that preference in privacy settings.",
+          "Record your product-update preference so that if we start sending them, we only send them to accounts that opted in; you can change that preference in privacy settings.",
         ],
       },
       {
@@ -264,7 +264,7 @@ const legalPages: Record<LegalPageKind, LegalPageConfig> = {
         title: "Retention and deletion",
         paragraphs: [
           "We keep account and application information while your account is active, because that is the service you asked for. When you delete the account, account and application data is removed from active systems.",
-          "Some records are kept longer for a specific reason: billing, tax and accounting records for the period required by law; security and abuse-related records for as long as needed to investigate and prevent recurrence; support correspondence while a matter is open and for a reasonable period afterwards; and copies inside encrypted backups until the backup rotates out of its retention window.",
+          "Some records are kept longer for a specific reason: billing, tax and accounting records for the period required by law — our payment provider Stripe, as the merchant of record for these transactions, retains this record after account deletion under its own retention obligations, while our own local copy of your billing history is deleted with the account; security and abuse-related records for as long as needed to investigate and prevent recurrence; support correspondence while a matter is open and for a reasonable period afterwards; and copies inside encrypted backups until the backup rotates out of its retention window.",
           "You can delete individual documents in the workspace. Privacy settings also let you request a JSON export and permanently delete the account after confirming a code sent by email. Export what you need before deleting — deletion is not reversible.",
         ],
       },
