@@ -24,6 +24,12 @@ export function selectInterviewAudioType(
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
+// ponytail: fixed ceiling independent of the server's max_size_bytes (that's
+// only known once upload() calls audioUpload — too late to warn during
+// recording). 10 minutes is generously longer than any interview answer and
+// bounds how much audio sits in browser memory before the user hits stop.
+export const MAX_RECORDING_SECONDS = 600;
+
 export function VoiceAnswer({
   interviewId,
   disabled,
@@ -36,6 +42,8 @@ export function VoiceAnswer({
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const startedAt = useRef<number | null>(null);
+  const failed = useRef(false);
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -66,10 +74,39 @@ export function VoiceAnswer({
       onComplete();
     }
   }, [status.data?.turn_id, onComplete]);
+  // Wall-clock, not a tick count: a hidden/frozen tab throttles setInterval,
+  // so counting ticks lets recording run far past the stated cap before the
+  // next tick happens to fire. Reading Date.now() each tick means whichever
+  // tick does fire still measures true elapsed time and can stop on time.
   useEffect(() => {
     if (!recording) return;
-    const timer = setInterval(() => setElapsed((value) => value + 1), 1000);
+    const tick = () => {
+      const start = startedAt.current;
+      if (start == null) return;
+      const next = Math.floor((Date.now() - start) / 1000);
+      setElapsed(next);
+      if (next >= MAX_RECORDING_SECONDS) {
+        setError(`Recording stopped automatically at the ${clock(MAX_RECORDING_SECONDS)} limit.`);
+        stop();
+      }
+    };
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
+  }, [recording]);
+
+  // A throttled tab can still delay every tick above past the cap. Backgrounding
+  // the tab is also just not a case background recording should silently
+  // continue through, so stop outright rather than trying to enforce the cap
+  // while hidden.
+  useEffect(() => {
+    if (!recording) return;
+    function onVisibilityChange() {
+      if (!document.hidden) return;
+      setError("Recording stopped because the tab was hidden.");
+      stop();
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [recording]);
 
   async function start() {
@@ -82,17 +119,31 @@ export function VoiceAnswer({
     try {
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       chunks.current = [];
+      failed.current = false;
       recorder.current = new MediaRecorder(stream.current, { mimeType: mime });
       recorder.current.ondataavailable = (event) => {
         if (event.data.size) chunks.current.push(event.data);
       };
       recorder.current.onstop = () => {
-        setBlob(new Blob(chunks.current, { type: mime }));
         stream.current?.getTracks().forEach((track) => track.stop());
+        // A failed recording still fires dataavailable/stop with partial or
+        // corrupt output — don't hand that to the user as an uploadable answer.
+        if (failed.current) {
+          chunks.current = [];
+          return;
+        }
+        setBlob(new Blob(chunks.current, { type: mime }));
+      };
+      recorder.current.onerror = () => {
+        failed.current = true;
+        setError("Recording failed unexpectedly. Try again or use the text answer instead.");
+        stream.current?.getTracks().forEach((track) => track.stop());
+        setRecording(false);
       };
       recorder.current.start();
       setType(mime);
       setElapsed(0);
+      startedAt.current = Date.now();
       setRecording(true);
     } catch {
       setError("Microphone access was not granted. You can continue with the text answer.");
@@ -100,7 +151,7 @@ export function VoiceAnswer({
   }
 
   function stop() {
-    recorder.current?.stop();
+    if (recorder.current && recorder.current.state !== "inactive") recorder.current.stop();
     setRecording(false);
   }
 
