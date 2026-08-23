@@ -135,6 +135,9 @@ describe("RefereePage", () => {
     expect(editor).toHaveValue(original);
     fireEvent.click(screen.getByRole("button", { name: "Use suggestion" }));
     expect(editor).toHaveValue(polished);
+
+    const transparencyLink = screen.getByRole("link", { name: /how eliteapply uses ai/i });
+    expect(transparencyLink).toHaveAttribute("target", "_blank");
   });
 });
 

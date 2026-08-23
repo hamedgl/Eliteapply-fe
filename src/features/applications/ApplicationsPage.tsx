@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  ArrowRight,
   Columns3,
   Filter as FilterIcon,
   List as ListIcon,
@@ -23,10 +24,14 @@ import { downloadResponse } from "../../lib/api/download";
 import { newMutationId } from "../../lib/api/mutations";
 import {
   applicationsApi,
+  discoveryApi,
   type ApplicationFilters,
   type ApplicationSort,
 } from "../../lib/api/phase2";
 import { queryKeys } from "../../lib/api/queryKeys";
+import { AiNotice } from "../../components/common/AiNotice";
+import { MatchCard } from "../catalogue/components/MatchCard";
+import "../catalogue/discovery.css";
 import {
   label,
   parseBoard,
@@ -98,6 +103,14 @@ export function ApplicationsPage() {
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(() => params.get("create") === "1");
+  // A MatchCard "Create application" link on this same route (e.g. the
+  // recommendations card below) only changes the URL — React Router keeps
+  // this component mounted, so the lazy useState above never re-runs. Re-sync
+  // whenever the param actually appears.
+  const createRequested = params.get("create") === "1";
+  useEffect(() => {
+    if (createRequested) setCreating(true);
+  }, [createRequested]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState("");
   const [bulkPriority, setBulkPriority] = useState("");
@@ -164,6 +177,10 @@ export function ApplicationsPage() {
     institutionId: filters.institutionId,
     deadlineBefore: filters.deadlineTo,
   };
+  const recommendationsQuery = useQuery({
+    queryKey: queryKeys.recommendations,
+    queryFn: discoveryApi.recommendations,
+  });
   const boardKey = [...queryKeys.board, boardFilters] as const;
   const boardQuery = useQuery({
     queryKey: boardKey,
@@ -671,7 +688,25 @@ export function ApplicationsPage() {
       />
 
       {showOnboarding ? (
-        <OnboardingEmptyState onCreate={() => setCreating(true)} />
+        <>
+          <OnboardingEmptyState onCreate={() => setCreating(true)} />
+          {recommendationsQuery.data?.items.length ? (
+            <section className="dashboard-snapshot dashboard-matches" aria-labelledby="apps-onboarding-matches-title">
+              <header>
+                <h2 id="apps-onboarding-matches-title">Suggested for you</h2>
+                <Link to="/app/discovery">
+                  See all matches <ArrowRight aria-hidden="true" />
+                </Link>
+              </header>
+              <AiNotice compact>{recommendationsQuery.data.disclaimer}</AiNotice>
+              <div className="match-grid">
+                {recommendationsQuery.data.items.slice(0, 3).map((item) => (
+                  <MatchCard key={`${item.type}-${item.id}`} match={item} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </>
       ) : view === "board" ? (
         <ApplicationsBoard
           visibleStages={visibleStages}
@@ -733,7 +768,16 @@ export function ApplicationsPage() {
             catalogueType: value("catalogueType"),
             catalogueId: value("catalogueId"),
           }}
-          onClose={() => setCreating(false)}
+          onClose={() => {
+            setCreating(false);
+            if (params.get("create") === "1") {
+              const next = new URLSearchParams(params);
+              for (const key of ["create", "title", "catalogueType", "catalogueId"]) {
+                next.delete(key);
+              }
+              setParams(next, { replace: true });
+            }
+          }}
         />
       ) : null}
       {duplicateApp ? (

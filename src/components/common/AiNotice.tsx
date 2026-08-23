@@ -15,11 +15,22 @@ export function AiNotice({
   provenance,
   compact = false,
   link = true,
+  id,
+  openInNewTab = false,
 }: {
   children: ReactNode;
   provenance?: string | null;
   compact?: boolean;
   link?: boolean;
+  /** Set when a control elsewhere points at this notice via aria-describedby. */
+  id?: string;
+  /**
+   * The link is a plain anchor (see below), so following it is a full
+   * navigation. Set this when the notice sits above unsaved, unrecoverable
+   * form state — e.g. a draft with no autosave — so the disclosure can't
+   * navigate that state away.
+   */
+  openInNewTab?: boolean;
 }) {
   return (
     /* A plain div, not <aside>: these sit inside rails and dialogs that are
@@ -27,12 +38,16 @@ export function AiNotice({
     <div className={`ai-notice${compact ? " is-compact" : ""}`}>
       <Sparkles aria-hidden="true" />
       <div>
-        <p>{children}</p>
+        <p id={id}>{children}</p>
         {provenance ? <p className="ai-notice-provenance">{provenance}</p> : null}
         {link ? (
           /* Plain anchor: this notice also renders on public pages and inside
              dialogs rendered without a router in tests. */
-          <a className="ai-notice-link" href="/ai-transparency">
+          <a
+            className="ai-notice-link"
+            href="/ai-transparency"
+            {...(openInNewTab ? { target: "_blank", rel: "noopener noreferrer" } : null)}
+          >
             How EliteApply uses AI
           </a>
         ) : null}

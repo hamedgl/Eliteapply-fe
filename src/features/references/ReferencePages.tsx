@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Plus, Sparkles, X } from "lucide-react";
 import { Select } from "../../components/ui/select";
+import { AiNotice } from "../../components/common/AiNotice";
 import { ApiError } from "../../lib/api/errors";
 import { PageHeader } from "../../components/page/PageHeader";
 import {
@@ -910,6 +911,7 @@ export function RefereePage() {
                         letter.trim().length < 50 ||
                         !relationshipDuration.trim()
                       }
+                      aria-describedby="referee-reference-polish-help"
                     >
                       <Sparkles aria-hidden="true" />
                       {polishing ? "Polishing…" : "Polish with AI"}
@@ -929,9 +931,9 @@ export function RefereePage() {
                       }}
                     />
                   </label>
-                  <p className="field-help">
+                  <AiNotice id="referee-reference-polish-help" compact openInNewTab>
                     AI polish improves clarity and grammar without intentionally adding facts. Your draft is sent to EliteApply’s AI service and nothing changes until you apply the suggestion.
-                  </p>
+                  </AiNotice>
                   {polishSuggestion ? (
                     <div className="reference-polish-suggestion" aria-live="polite">
                       <div><strong>Polished suggestion</strong><span>Review it carefully for factual accuracy.</span></div>

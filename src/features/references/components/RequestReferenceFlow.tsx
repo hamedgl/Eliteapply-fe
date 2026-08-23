@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, RefreshCw, Sparkles, Upload } from "lucide-react";
 import { Select } from "../../../components/ui/select";
+import { AiNotice } from "../../../components/common/AiNotice";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { applicationsApi, documentsApi } from "../../../lib/api/phase2";
 import { referencesApi } from "../../../lib/api/phase3";
@@ -315,10 +316,10 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
                   {studentDraftLength} / 50 minimum
                 </strong>
               </div>
-              <p id="student-reference-polish-help" className="field-help">
+              <AiNotice id="student-reference-polish-help" compact openInNewTab>
                 AI polish improves clarity and grammar without intentionally
                 adding facts. Nothing changes until you use the suggestion.
-              </p>
+              </AiNotice>
               {polishSuggestion ? (
                 <div className="reference-polish-suggestion" aria-live="polite">
                   <div>
