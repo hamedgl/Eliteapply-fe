@@ -658,6 +658,23 @@ export function DashboardPage() {
         </section>
       </div>
 
+      {recommendationsQuery.data?.items.length ? (
+        <section className="dashboard-snapshot dashboard-matches">
+          <header>
+            <h2>Recommended for you</h2>
+            <Link to="/app/discovery">
+              See all matches <ArrowRight aria-hidden="true" />
+            </Link>
+          </header>
+          <AiNotice compact>{recommendationsQuery.data.disclaimer}</AiNotice>
+          <div className="match-grid">
+            {recommendationsQuery.data.items.slice(0, 3).map((item) => (
+              <MatchCard key={`${item.type}-${item.id}`} match={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="dashboard-top-row">
         <DashboardSurface
           icon={CalendarDays}
@@ -783,23 +800,6 @@ export function DashboardPage() {
           </button>
         </section>
       </div>
-
-      {recommendationsQuery.data?.items.length ? (
-        <section className="dashboard-snapshot dashboard-matches">
-          <header>
-            <h2>Recommended for you</h2>
-            <Link to="/app/discovery">
-              See all matches <ArrowRight aria-hidden="true" />
-            </Link>
-          </header>
-          <AiNotice compact>{recommendationsQuery.data.disclaimer}</AiNotice>
-          <div className="match-grid">
-            {recommendationsQuery.data.items.slice(0, 3).map((item) => (
-              <MatchCard key={`${item.type}-${item.id}`} match={item} />
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       {showProgressExplainer ? (
         <ProgressExplainerDialog
