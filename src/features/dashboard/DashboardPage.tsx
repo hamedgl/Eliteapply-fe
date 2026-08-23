@@ -148,8 +148,10 @@ export function DashboardPage() {
     queryFn: () => documentsApi.list({ limit: 100 }),
   });
   const writingQuery = useQuery({
+    // Only used below as an existence check (writingDocuments.length), never
+    // a specific count or list — one row is enough to prove "has a document".
     queryKey: [...queryKeys.writing, "workspace-guide"],
-    queryFn: () => writingApi.list(),
+    queryFn: () => writingApi.list(undefined, false, undefined, 1),
   });
   const referencesQuery = useQuery({
     queryKey: [...queryKeys.references(), "workspace-guide"],
@@ -505,7 +507,7 @@ export function DashboardPage() {
         </div>
         <div className="dashboard-focus-art" aria-hidden="true">
           <span className="dashboard-focus-art-glow" />
-          <img src={dashboardFocusIllustration} alt="" width={280} height={280} loading="lazy" />
+          <img src={dashboardFocusIllustration} alt="" width={280} height={280} />
         </div>
       </section>
 
@@ -650,7 +652,6 @@ export function DashboardPage() {
             alt=""
             width={140}
             height={140}
-            loading="lazy"
             aria-hidden="true"
           />
         </section>
