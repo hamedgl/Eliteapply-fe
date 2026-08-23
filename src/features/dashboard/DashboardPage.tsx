@@ -26,7 +26,10 @@ import {
   safeDashboard,
   type DashboardDeadline,
 } from "../../lib/api/platform";
-import { documentsApi, profileApi } from "../../lib/api/phase2";
+import { discoveryApi, documentsApi, profileApi } from "../../lib/api/phase2";
+import { MatchCard } from "../catalogue/components/MatchCard";
+import { AiNotice } from "../../components/common/AiNotice";
+import "../catalogue/discovery.css";
 import { interviewsApi, referencesApi, writingApi } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
@@ -135,6 +138,10 @@ export function DashboardPage() {
   const profileQuery = useQuery({
     queryKey: queryKeys.profile,
     queryFn: profileApi.get,
+  });
+  const recommendationsQuery = useQuery({
+    queryKey: queryKeys.recommendations,
+    queryFn: discoveryApi.recommendations,
   });
   const documentsQuery = useQuery({
     queryKey: queryKeys.documents,
@@ -776,6 +783,23 @@ export function DashboardPage() {
           </button>
         </section>
       </div>
+
+      {recommendationsQuery.data?.items.length ? (
+        <section className="dashboard-snapshot dashboard-matches">
+          <header>
+            <h2>Recommended for you</h2>
+            <Link to="/app/discovery">
+              See all matches <ArrowRight aria-hidden="true" />
+            </Link>
+          </header>
+          <AiNotice compact>{recommendationsQuery.data.disclaimer}</AiNotice>
+          <div className="match-grid">
+            {recommendationsQuery.data.items.slice(0, 3).map((item) => (
+              <MatchCard key={`${item.type}-${item.id}`} match={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {showProgressExplainer ? (
         <ProgressExplainerDialog

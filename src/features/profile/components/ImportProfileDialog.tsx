@@ -26,6 +26,7 @@ export function ImportProfileDialog({
       await Promise.all([
         qc.invalidateQueries({ queryKey: queryKeys.profile }),
         qc.invalidateQueries({ queryKey: queryKeys.profileVersions }),
+        qc.invalidateQueries({ queryKey: queryKeys.recommendations }),
       ]);
       onClose();
     },

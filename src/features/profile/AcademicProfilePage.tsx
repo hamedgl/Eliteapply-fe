@@ -87,6 +87,7 @@ export function AcademicProfilePage() {
       qc.invalidateQueries({ queryKey: queryKeys.profileVersions }),
       qc.invalidateQueries({ queryKey: queryKeys.dashboard }),
       qc.invalidateQueries({ queryKey: queryKeys.onboarding }),
+      qc.invalidateQueries({ queryKey: queryKeys.recommendations }),
     ]);
   };
 
