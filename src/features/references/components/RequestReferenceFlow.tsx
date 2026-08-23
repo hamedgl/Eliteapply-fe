@@ -5,6 +5,7 @@ import { Select } from "../../../components/ui/select";
 import { AiNotice } from "../../../components/common/AiNotice";
 import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { applicationsApi, documentsApi } from "../../../lib/api/phase2";
+import type { AcademicDocument } from "../../documents/model";
 import { referencesApi } from "../../../lib/api/phase3";
 import { newMutationId } from "../../../lib/api/mutations";
 import { queryKeys } from "../../../lib/api/queryKeys";
@@ -42,8 +43,21 @@ export function RequestReferenceFlow({ onCreated }: { onCreated: (referenceId: s
   const studentDraftLength = studentDraft.trim().length;
 
   const documents = useQuery({
-    queryKey: queryKeys.documents,
-    queryFn: documentsApi.list,
+    queryKey: [...queryKeys.documents, "all-for-reference-attach"],
+    // The picker below has no search box, so it needs every eligible
+    // document up front rather than one page — follow next_cursor until
+    // exhausted. Reference attachments are scoped to what one user uploaded,
+    // not a sitewide catalogue, so looping here stays bounded in practice.
+    queryFn: async () => {
+      const items: AcademicDocument[] = [];
+      let cursor: string | null | undefined;
+      do {
+        const page = await documentsApi.list({ limit: 100, cursor });
+        items.push(...page.items);
+        cursor = page.has_more ? page.next_cursor : undefined;
+      } while (cursor);
+      return items;
+    },
     enabled: mode === "existing_upload",
   });
   const cleanDocuments = (documents.data ?? []).filter((document) => document.malware_status === "clean");

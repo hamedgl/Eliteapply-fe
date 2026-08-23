@@ -198,7 +198,7 @@ export function ApplicationWorkspace() {
   });
   const documents = useQuery({
     queryKey: queryKeys.documents,
-    queryFn: documentsApi.list,
+    queryFn: () => documentsApi.list({ limit: 100 }),
     enabled: activeTab === "overview" || activeTab === "documents",
   });
 
@@ -323,7 +323,7 @@ export function ApplicationWorkspace() {
   const incompleteCount = readiness.incomplete_requirements.length;
   const isReady = readiness.overall_state === "ready" && blockingCount === 0;
   const pendingAction = submit.isPending;
-  const documentItems = Array.isArray(documents.data) ? documents.data : [];
+  const documentItems = documents.data?.items ?? [];
   const collaboratorItems = Array.isArray(collaboratorCount.data)
     ? collaboratorCount.data
     : [];

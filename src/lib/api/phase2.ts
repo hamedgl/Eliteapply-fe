@@ -262,8 +262,17 @@ export const applicationsApi = {
       { method: "DELETE" },
     ),
 };
+export type DocumentFilters = {
+  search?: string;
+  category?: string;
+  cursor?: string | null;
+  limit?: number;
+};
 export const documentsApi = {
-  list: () => apiRequest<S["DocumentResponse"][]>("/academic-documents"),
+  list: (filters: DocumentFilters = {}) =>
+    apiRequest<S["DocumentListResponse"]>(
+      `/academic-documents${query({ limit: 25, ...filters })}`,
+    ),
   get: (id: string) =>
     apiRequest<S["DocumentResponse"]>(`/academic-documents/${enc(id)}`),
   update: (id: string, body: S["DocumentUpdate"]) =>

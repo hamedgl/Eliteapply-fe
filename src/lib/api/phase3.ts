@@ -23,9 +23,14 @@ export const writingApi = {
     apiRequest<S["WritingTemplateResponse"]>(
       `/writing-studio/templates/${e(id)}`,
     ),
-  list: (applicationId?: string, includeArchived = false) =>
-    apiRequest<S["WritingDocumentResponse"][]>(
-      `/writing-studio/documents?includeArchived=${includeArchived}${applicationId ? `&applicationId=${e(applicationId)}` : ""}`,
+  list: (
+    applicationId?: string,
+    includeArchived = false,
+    cursor?: string | null,
+    limit?: number,
+  ) =>
+    apiRequest<S["WritingDocumentListResponse"]>(
+      `/writing-studio/documents?includeArchived=${includeArchived}${applicationId ? `&applicationId=${e(applicationId)}` : ""}${cursor ? `&cursor=${e(cursor)}` : ""}${limit ? `&limit=${limit}` : ""}`,
     ),
   create: (body: S["WritingDocumentCreate"]) =>
     apiRequest<S["WritingDocumentResponse"]>("/writing-studio/documents", {

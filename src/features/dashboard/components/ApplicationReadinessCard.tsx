@@ -610,9 +610,7 @@ function ApplicationReadinessRow({
   const percentage =
     eligibilityData?.readiness_score !== undefined
       ? Math.max(0, Math.min(100, eligibilityData.readiness_score))
-      : readinessData?.readiness_percent !== undefined
-        ? readinessData.readiness_percent
-        : ((readinessData as any)?.overall_score ?? item.readinessPercentage);
+      : (readinessData?.readiness_percent ?? item.readinessPercentage);
 
   const missingReq =
     readinessData?.blocking_issues?.[0] ??

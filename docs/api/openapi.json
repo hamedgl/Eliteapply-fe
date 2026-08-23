@@ -37,7 +37,7 @@
           "Monitoring"
         ],
         "summary": "Readiness probe",
-        "description": "Deep readiness check: probes the DB, auth IdP, and SQS concurrently.\n\nReturns 200 only when every critical dependency is reachable; otherwise 503 so\norchestrators/load balancers stop routing traffic to this instance.",
+        "description": "Deep readiness check: probes the DB, auth IdP, and SQS concurrently.\n\nReturns 200 only when every critical dependency is reachable; otherwise 503 so\norchestrators/load balancers stop routing traffic to this instance. The verdict is\ncached for READINESS_TTL_SECONDS.",
         "operationId": "readiness_check_ready_get",
         "responses": {
           "200": {
@@ -3114,6 +3114,36 @@
               ],
               "title": "Category"
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
           }
         ],
         "responses": {
@@ -3122,11 +3152,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DocumentResponse"
-                  },
-                  "title": "Response List Documents Api V1 Academic Documents Get"
+                  "$ref": "#/components/schemas/DocumentListResponse"
                 }
               }
             }
@@ -4985,6 +5011,36 @@
               "default": false,
               "title": "Includearchived"
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
           }
         ],
         "responses": {
@@ -4993,11 +5049,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WritingDocumentResponse"
-                  },
-                  "title": "Response List Documents Api V1 Writing Studio Documents Get"
+                  "$ref": "#/components/schemas/WritingDocumentListResponse"
                 }
               }
             }
@@ -19280,6 +19332,49 @@
         ],
         "title": "DocumentLinkUpdate"
       },
+      "DocumentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "DocumentListResponse"
+      },
       "DocumentResponse": {
         "properties": {
           "category": {
@@ -28546,6 +28641,49 @@
         },
         "type": "object",
         "title": "WritingDocumentDuplicateRequest"
+      },
+      "WritingDocumentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WritingDocumentResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "WritingDocumentListResponse"
       },
       "WritingDocumentResponse": {
         "properties": {

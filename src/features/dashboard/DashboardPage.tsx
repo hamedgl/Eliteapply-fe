@@ -145,7 +145,7 @@ export function DashboardPage() {
   });
   const documentsQuery = useQuery({
     queryKey: queryKeys.documents,
-    queryFn: documentsApi.list,
+    queryFn: () => documentsApi.list({ limit: 100 }),
   });
   const writingQuery = useQuery({
     queryKey: [...queryKeys.writing, "workspace-guide"],
@@ -219,14 +219,12 @@ export function DashboardPage() {
   const documentStatus = getSetupStatus(
     documentsQuery.isPending,
     documentsQuery.isError,
-    Boolean(documentsQuery.data?.length),
+    Boolean(documentsQuery.data?.items.length),
   );
-  const hasLinkedDocument = (documentsQuery.data ?? []).some(
+  const hasLinkedDocument = (documentsQuery.data?.items ?? []).some(
     (item) => (item.link_count ?? item.linked_application_ids?.length ?? 0) > 0,
   );
-  const writingDocuments = Array.isArray(writingQuery.data)
-    ? writingQuery.data
-    : [];
+  const writingDocuments = writingQuery.data?.items ?? [];
   const references = Array.isArray(referencesQuery.data?.items)
     ? referencesQuery.data.items
     : [];

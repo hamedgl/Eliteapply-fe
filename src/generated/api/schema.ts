@@ -33,7 +33,8 @@ export interface paths {
          * @description Deep readiness check: probes the DB, auth IdP, and SQS concurrently.
          *
          *     Returns 200 only when every critical dependency is reachable; otherwise 503 so
-         *     orchestrators/load balancers stop routing traffic to this instance.
+         *     orchestrators/load balancers stop routing traffic to this instance. The verdict is
+         *     cached for READINESS_TTL_SECONDS.
          */
         get: operations["readiness_check_ready_get"];
         put?: never;
@@ -5408,6 +5409,20 @@ export interface components {
             /** Requirement Id */
             requirement_id?: string | null;
         };
+        /** DocumentListResponse */
+        DocumentListResponse: {
+            /** Items */
+            items: components["schemas"]["DocumentResponse"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @default false
+             */
+            has_more: boolean;
+            /** Total */
+            total?: number | null;
+        };
         /** DocumentResponse */
         DocumentResponse: {
             /** Category */
@@ -8634,6 +8649,20 @@ export interface components {
              */
             keep_application_link: boolean;
         };
+        /** WritingDocumentListResponse */
+        WritingDocumentListResponse: {
+            /** Items */
+            items: components["schemas"]["WritingDocumentResponse"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @default false
+             */
+            has_more: boolean;
+            /** Total */
+            total?: number | null;
+        };
         /** WritingDocumentResponse */
         WritingDocumentResponse: {
             /**
@@ -10502,6 +10531,8 @@ export interface operations {
             query?: {
                 search?: string | null;
                 category?: string | null;
+                cursor?: string | null;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -10515,7 +10546,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DocumentResponse"][];
+                    "application/json": components["schemas"]["DocumentListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -11556,6 +11587,8 @@ export interface operations {
             query?: {
                 applicationId?: string | null;
                 includeArchived?: boolean;
+                cursor?: string | null;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -11569,7 +11602,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WritingDocumentResponse"][];
+                    "application/json": components["schemas"]["WritingDocumentListResponse"];
                 };
             };
             /** @description Validation Error */

@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
@@ -79,9 +84,21 @@ export function DocumentsPage() {
     setParams(copy, { replace: true });
   };
 
-  const query = useQuery({
-    queryKey: queryKeys.documents,
-    queryFn: documentsApi.list,
+  const query = useInfiniteQuery({
+    queryKey: [...queryKeys.documents, "list", { search, category: typeFilter }],
+    queryFn: ({ pageParam }) =>
+      documentsApi.list({ search, category: typeFilter, cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => (page.has_more ? page.next_cursor : undefined),
+  });
+  // Decoupled from the (search/category-filtered, paginated) query above:
+  // the page needs an unfiltered count to tell "no documents match this
+  // filter" apart from "this account has never uploaded a document" — see
+  // the onboarding-vs-toolbar branch below.
+  const statsQuery = useQuery({
+    queryKey: [...queryKeys.documents, "stats"],
+    // 100 is the API's hard ceiling (Query(..., le=100)) — anything higher 422s.
+    queryFn: () => documentsApi.list({ limit: 100 }),
   });
 
   const remove = useMutation({
@@ -96,25 +113,29 @@ export function DocumentsPage() {
     },
   });
 
-  const documents = query.data ?? [];
+  const documents = useMemo(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  );
+  const allDocuments = statsQuery.data?.items ?? [];
+  // If the stats fetch itself failed, fall back to the paginated set rather
+  // than showing "upload your first document" to someone who plainly has one.
+  const hasAnyDocument = statsQuery.isError
+    ? documents.length > 0
+    : allDocuments.length > 0;
 
   const filtered = useMemo(() => {
-    const term = search.trim().toLocaleLowerCase();
+    // search/category are already applied server-side; only status (which the
+    // API has no filter for) and sort need to happen over the loaded pages.
     let list = documents.filter((doc) => {
-      if (term && !doc.display_name.toLocaleLowerCase().includes(term)) return false;
-      if (typeFilter && doc.category !== typeFilter) return false;
-      if (statusFilter) {
-        const scan = scanStatus(doc.malware_status);
-        const expiry = expiryInfo(doc.expires_at);
-        if (statusFilter === "ready" && scan.tone !== "green") return false;
-        if (statusFilter === "processing" && scan.tone !== "amber") return false;
-        if (statusFilter === "blocked" && scan.tone !== "red") return false;
-        if (
-          statusFilter === "expiring" &&
-          !(expiry.urgency === "warn" || expiry.urgency === "critical")
-        )
-          return false;
-      }
+      if (!statusFilter) return true;
+      const scan = scanStatus(doc.malware_status);
+      const expiry = expiryInfo(doc.expires_at);
+      if (statusFilter === "ready") return scan.tone === "green";
+      if (statusFilter === "processing") return scan.tone === "amber";
+      if (statusFilter === "blocked") return scan.tone === "red";
+      if (statusFilter === "expiring")
+        return expiry.urgency === "warn" || expiry.urgency === "critical";
       return true;
     });
     list = [...list].sort((a, b) => {
@@ -127,24 +148,24 @@ export function DocumentsPage() {
       return b.created_at.localeCompare(a.created_at);
     });
     return list;
-  }, [documents, search, typeFilter, statusFilter, sort]);
+  }, [documents, statusFilter, sort]);
 
   const stats = useMemo(() => {
-    const expiringSoon = documents.filter((doc) => {
+    const expiringSoon = allDocuments.filter((doc) => {
       const urgency = expiryInfo(doc.expires_at).urgency;
       return urgency === "warn" || urgency === "critical";
     });
-    const needsAttention = documents.filter(
+    const needsAttention = allDocuments.filter(
       (doc) => scanStatus(doc.malware_status).tone === "red",
     );
-    const ready = documents.filter((doc) => scanStatus(doc.malware_status).tone === "green");
+    const ready = allDocuments.filter((doc) => scanStatus(doc.malware_status).tone === "green");
     return {
-      total: documents.length,
+      total: allDocuments.length,
       ready: ready.length,
       expiringSoon: expiringSoon.length,
       needsAttention: needsAttention.length,
     };
-  }, [documents]);
+  }, [allDocuments]);
 
   const clearFilters = () => {
     setParams(new URLSearchParams(), { replace: true });
@@ -156,7 +177,7 @@ export function DocumentsPage() {
     openSignedDownload((await documentsApi.download(doc.id)).download_url);
   }
 
-  if (query.isPending)
+  if (query.isPending || statsQuery.isPending)
     return <GeneratedPageSkeleton page="documents" />;
   if (query.isError)
     return (
@@ -191,8 +212,8 @@ export function DocumentsPage() {
       <PageHeader
         title="Academic Documents"
         description="Manage transcripts, certificates, recommendation letters, and test scores"
-        onRefresh={() => void query.refetch()}
-        refreshing={query.isFetching}
+        onRefresh={() => void Promise.all([query.refetch(), statsQuery.refetch()])}
+        refreshing={query.isFetching || statsQuery.isFetching}
         actions={
           <button className="primary" type="button" onClick={() => setUploadSeed([])}>
             <Plus aria-hidden="true" /> Upload documents
@@ -237,7 +258,7 @@ export function DocumentsPage() {
         </p>
       ) : null}
 
-      {documents.length ? (
+      {hasAnyDocument ? (
         <>
           <div className="apps-card apps-toolbar">
             <div className="apps-toolbar-search">
@@ -329,6 +350,16 @@ export function DocumentsPage() {
             onDelete={setDeleting}
             onClearFilters={clearFilters}
           />
+          {query.hasNextPage ? (
+            <button
+              className="load-more"
+              type="button"
+              disabled={query.isFetchingNextPage}
+              onClick={() => query.fetchNextPage()}
+            >
+              {query.isFetchingNextPage ? "Loading…" : "Load more documents"}
+            </button>
+          ) : null}
         </>
       ) : (
         <OnboardingEmptyState onUpload={() => setUploadSeed([])} />

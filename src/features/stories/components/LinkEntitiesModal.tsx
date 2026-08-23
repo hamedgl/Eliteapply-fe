@@ -46,7 +46,7 @@ function LinkEntitiesContent({
 
   const docsQuery = useQuery({
     queryKey: queryKeys.documents,
-    queryFn: () => documentsApi.list(),
+    queryFn: () => documentsApi.list({ limit: 100 }),
   });
 
   const linkApp = useMutation({
@@ -83,7 +83,7 @@ function LinkEntitiesContent({
   const linkedDocIds = story.linked_document_ids ?? [];
 
   const allApps: Application[] = appsQuery.data?.items ?? [];
-  const allDocs: AcademicDocument[] = docsQuery.data ?? [];
+  const allDocs: AcademicDocument[] = docsQuery.data?.items ?? [];
 
   const availableApps = allApps.filter((app) => !linkedAppIds.includes(app.id));
   const availableDocs = allDocs.filter((doc) => !linkedDocIds.includes(doc.id));

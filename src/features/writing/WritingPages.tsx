@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   AlertTriangle,
   Archive,
@@ -106,13 +111,23 @@ export function WritingLibrary({
   const [linking, setLinking] = useState<S["WritingDocumentResponse"] | null>(
     null,
   );
-  const q = useQuery({
-    queryKey: ["writing", { includeArchived }],
-    queryFn: () => writingApi.list(undefined, includeArchived),
+  const q = useInfiniteQuery({
+    queryKey: ["writing", "list", { includeArchived }],
+    queryFn: ({ pageParam }) =>
+      writingApi.list(undefined, includeArchived, pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => (page.has_more ? page.next_cursor : undefined),
+  });
+  // Decoupled from the paginated query above: the summary counts and the
+  // type/application filter dropdowns need to reflect more than whatever
+  // pages happen to be loaded so far.
+  const statsQuery = useQuery({
+    queryKey: ["writing", "stats", { includeArchived }],
+    queryFn: () => writingApi.list(undefined, includeArchived, undefined, 100),
   });
   const refresh = () => qc.invalidateQueries({ queryKey: ["writing"] });
   const archive = useMutation({
-    mutationFn: (document: NonNullable<typeof q.data>[number]) =>
+    mutationFn: (document: S["WritingDocumentResponse"]) =>
       writingApi.update(document.id, {
         expected_version: document.version,
         status: document.status === "archived" ? "draft" : "archived",
@@ -135,12 +150,16 @@ export function WritingLibrary({
       writingApi.detach(document.id, document.application_id!),
     onSuccess: refresh,
   });
-  const documents = q.data ?? [];
+  const documents = useMemo(
+    () => q.data?.pages.flatMap((page) => page.items) ?? [],
+    [q.data],
+  );
+  const statsDocuments = statsQuery.data?.items ?? [];
   const applications = useMemo(
     () =>
       Array.from(
         new Map(
-          documents
+          statsDocuments
             .filter((document) => document.application_id)
             .map((document) => [
               document.application_id!,
@@ -148,12 +167,12 @@ export function WritingLibrary({
             ]),
         ),
       ).sort((a, b) => a[1].localeCompare(b[1])),
-    [documents],
+    [statsDocuments],
   );
   const documentTypes = useMemo(
     () =>
-      [...new Set(documents.map((document) => document.document_type))].sort(),
-    [documents],
+      [...new Set(statsDocuments.map((document) => document.document_type))].sort(),
+    [statsDocuments],
   );
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase();
@@ -192,7 +211,7 @@ export function WritingLibrary({
   };
   const actionPending =
     archive.isPending || duplicate.isPending || unlink.isPending;
-  if (q.isPending)
+  if (q.isPending || statsQuery.isPending)
     return <WritingLibraryPageSkeleton createOpen={openCreate} />;
   return (
     <div className="page writing-library">
@@ -206,8 +225,8 @@ export function WritingLibrary({
         </div>
         <div className="apps-header-actions">
           <PageRefreshButton
-            onRefresh={() => void q.refetch()}
-            refreshing={q.isFetching}
+            onRefresh={() => void Promise.all([q.refetch(), statsQuery.refetch()])}
+            refreshing={q.isFetching || statsQuery.isFetching}
           />
           <WorkspacePageGuideButton />
           <button
@@ -220,16 +239,16 @@ export function WritingLibrary({
           </button>
         </div>
       </header>
-      {!q.isError && documents.length ? (
+      {!q.isError && statsDocuments.length ? (
         <section className="writing-summary" aria-label="Document summary">
           <div>
-            <strong>{documents.length}</strong>
+            <strong>{statsDocuments.length}</strong>
             <span>{includeArchived ? "Documents" : "Active documents"}</span>
           </div>
           <div>
             <strong>
               {
-                documents.filter((document) => document.status === "draft")
+                statsDocuments.filter((document) => document.status === "draft")
                   .length
               }
             </strong>
@@ -237,14 +256,14 @@ export function WritingLibrary({
           </div>
           <div>
             <strong>
-              {documents.filter((document) => document.application_id).length}
+              {statsDocuments.filter((document) => document.application_id).length}
             </strong>
             <span>Linked to applications</span>
           </div>
           <div>
             <strong>
               {
-                documents.filter((document) =>
+                statsDocuments.filter((document) =>
                   ["review", "final"].includes(document.status),
                 ).length
               }
@@ -502,15 +521,39 @@ export function WritingLibrary({
               );
             })}
           </div>
+          {q.hasNextPage ? (
+            <button
+              className="load-more"
+              type="button"
+              disabled={q.isFetchingNextPage}
+              onClick={() => q.fetchNextPage()}
+            >
+              {q.isFetchingNextPage ? "Loading…" : "Load more documents"}
+            </button>
+          ) : null}
         </>
       ) : documents.length ? (
         <div className="vault-empty writing-filter-empty">
           <Search aria-hidden="true" />
           <h2>No documents match these filters</h2>
-          <p>Try a different search, status, type or application.</p>
+          <p>
+            {q.hasNextPage
+              ? "Try a different search, status, type or application — or load more documents, since these filters only search what's loaded so far."
+              : "Try a different search, status, type or application."}
+          </p>
           <button type="button" onClick={clearFilters}>
             Clear filters
           </button>
+          {q.hasNextPage ? (
+            <button
+              className="load-more"
+              type="button"
+              disabled={q.isFetchingNextPage}
+              onClick={() => q.fetchNextPage()}
+            >
+              {q.isFetchingNextPage ? "Loading…" : "Load more documents"}
+            </button>
+          ) : null}
         </div>
       ) : (
         <div className="vault-empty">

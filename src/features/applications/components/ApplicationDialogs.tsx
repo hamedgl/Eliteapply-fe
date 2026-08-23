@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { applicationsApi, catalogueApi } from "../../../lib/api/phase2";
 import { Select } from "../../../components/ui/select";
-import { queryKeys } from "../../../lib/api/queryKeys";
+import { EntityCombobox } from "../../../components/filters/EntityCombobox";
 import { label, priorities, stages, types, type Application } from "../model";
 import { readableApiError, refreshApplications } from "../utils";
 
@@ -94,35 +94,27 @@ export function CreateApplication({
         : "programme",
   );
   const mutationId = useState(() => crypto.randomUUID())[0];
-  const programmes = useQuery({
-    queryKey: queryKeys.catalogue("programmes", {
-      surface: "application-create",
-    }),
-    queryFn: ({ signal }) => catalogueApi.programmes({}, signal),
-    enabled: applicationType === "programme",
+  const [programme, setProgramme] = useState({
+    id: defaults?.catalogueType === "programme" ? (defaults.catalogueId ?? "") : "",
+    name: defaults?.catalogueType === "programme" ? (defaults.title ?? "") : "",
   });
-  const scholarships = useQuery({
-    queryKey: queryKeys.catalogue("scholarships", {
-      surface: "application-create",
-    }),
-    queryFn: ({ signal }) => catalogueApi.scholarships({}, signal),
-    enabled: applicationType === "scholarship",
+  const [scholarship, setScholarship] = useState({
+    id: defaults?.catalogueType === "scholarship" ? (defaults.catalogueId ?? "") : "",
+    name: defaults?.catalogueType === "scholarship" ? (defaults.title ?? "") : "",
   });
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
-    const opportunityField =
+    const requiresOpportunity =
+      applicationType === "programme" || applicationType === "scholarship";
+    const opportunityId =
       applicationType === "programme"
-        ? "programme_id"
+        ? programme.id
         : applicationType === "scholarship"
-          ? "scholarship_id"
+          ? scholarship.id
           : null;
-    if (opportunityField && !String(data[opportunityField] ?? "")) {
+    if (requiresOpportunity && !opportunityId) {
       setError(`Select a ${applicationType} opportunity.`);
-      event.currentTarget
-        .querySelector<HTMLInputElement>(`input[name="${opportunityField}"]`)
-        ?.parentElement?.querySelector<HTMLButtonElement>("button")
-        ?.focus();
       return;
     }
     try {
@@ -134,14 +126,9 @@ export function CreateApplication({
           defaults?.catalogueType === "institution"
             ? defaults.catalogueId || null
             : null,
-        programme_id:
-          applicationType === "programme"
-            ? String(data.programme_id) || null
-            : null,
+        programme_id: applicationType === "programme" ? programme.id || null : null,
         scholarship_id:
-          applicationType === "scholarship"
-            ? String(data.scholarship_id) || null
-            : null,
+          applicationType === "scholarship" ? scholarship.id || null : null,
         stage: data.stage as (typeof stages)[number],
         priority: data.priority as (typeof priorities)[number],
         intake: String(data.intake) || null,
@@ -205,42 +192,22 @@ export function CreateApplication({
             />
           </label>
           {applicationType === "programme" ? (
-            <label>
-              <span className="required-field-label">
-                Programme opportunity
-              </span>
-              <Select
-                name="programme_id"
+            <div>
+              <EntityCombobox
+                queryKey={["catalogue", "programmes", "application-create"]}
+                search={async (search, signal) =>
+                  (await catalogueApi.programmes({ search }, signal)).items.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    hint: item.degree_level,
+                  }))
+                }
+                label="Programme opportunity"
+                placeholder="Search programmes…"
+                value={programme.id}
+                valueLabel={programme.name}
+                onChange={(id, name) => setProgramme({ id, name })}
                 required
-                defaultValue={
-                  defaults?.catalogueType === "programme"
-                    ? defaults.catalogueId
-                    : ""
-                }
-                disabled={programmes.isPending}
-                placeholder={
-                  programmes.isPending
-                    ? "Loading programmes…"
-                    : "Select a programme"
-                }
-                options={[
-                  ...(defaults?.catalogueType === "programme" &&
-                  defaults.catalogueId &&
-                  !programmes.data?.items.some(
-                    (item) => item.id === defaults.catalogueId,
-                  )
-                    ? [
-                        {
-                          value: defaults.catalogueId,
-                          label: defaults.title || "Selected programme",
-                        },
-                      ]
-                    : []),
-                  ...(programmes.data?.items.map((item) => ({
-                    value: item.id,
-                    label: item.name,
-                  })) ?? []),
-                ]}
               />
               <small>
                 Can’t find it?{" "}
@@ -252,45 +219,25 @@ export function CreateApplication({
                   Add a private programme
                 </Link>
               </small>
-            </label>
+            </div>
           ) : null}
           {applicationType === "scholarship" ? (
-            <label>
-              <span className="required-field-label">
-                Scholarship opportunity
-              </span>
-              <Select
-                name="scholarship_id"
+            <div>
+              <EntityCombobox
+                queryKey={["catalogue", "scholarships", "application-create"]}
+                search={async (search, signal) =>
+                  (await catalogueApi.scholarships({ search }, signal)).items.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    hint: item.provider_name,
+                  }))
+                }
+                label="Scholarship opportunity"
+                placeholder="Search scholarships…"
+                value={scholarship.id}
+                valueLabel={scholarship.name}
+                onChange={(id, name) => setScholarship({ id, name })}
                 required
-                defaultValue={
-                  defaults?.catalogueType === "scholarship"
-                    ? defaults.catalogueId
-                    : ""
-                }
-                disabled={scholarships.isPending}
-                placeholder={
-                  scholarships.isPending
-                    ? "Loading scholarships…"
-                    : "Select a scholarship"
-                }
-                options={[
-                  ...(defaults?.catalogueType === "scholarship" &&
-                  defaults.catalogueId &&
-                  !scholarships.data?.items.some(
-                    (item) => item.id === defaults.catalogueId,
-                  )
-                    ? [
-                        {
-                          value: defaults.catalogueId,
-                          label: defaults.title || "Selected scholarship",
-                        },
-                      ]
-                    : []),
-                  ...(scholarships.data?.items.map((item) => ({
-                    value: item.id,
-                    label: item.name + (item.provider_name ? ` — ${item.provider_name}` : ""),
-                  })) ?? []),
-                ]}
               />
               <small>
                 Can’t find it?{" "}
@@ -302,14 +249,7 @@ export function CreateApplication({
                   Add a private scholarship
                 </Link>
               </small>
-            </label>
-          ) : null}
-          {(applicationType === "programme" && programmes.isError) ||
-          (applicationType === "scholarship" && scholarships.isError) ? (
-            <p className="form-error wide" role="alert">
-              The catalogue choices could not be loaded. Close this form and try
-              again, or add the opportunity from the Catalogue page.
-            </p>
+            </div>
           ) : null}
           <label>
             <span className="required-field-label">Stage</span>

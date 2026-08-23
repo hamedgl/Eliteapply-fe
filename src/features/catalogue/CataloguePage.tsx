@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -21,6 +21,7 @@ import {
 import { EmptyState } from "../../components/data-display/EmptyState";
 import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
 import { CountryCombobox } from "../../components/filters/CountryCombobox";
+import { EntityCombobox } from "../../components/filters/EntityCombobox";
 import { countryName } from "../../lib/countries";
 import { formatDate } from "../applications/model";
 import {
@@ -68,6 +69,22 @@ export function CataloguePage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(() => params.get("create") === "1");
+  // A same-route "?create=1" link (e.g. the "Add a private institution
+  // first" prompt below) only changes the URL — this component stays
+  // mounted, so the lazy useState above never re-runs. Re-sync whenever the
+  // param actually appears.
+  const createRequested = params.get("create") === "1";
+  useEffect(() => {
+    if (createRequested) setCreating(true);
+  }, [createRequested]);
+  const closeCreating = () => {
+    setCreating(false);
+    if (params.get("create") === "1") {
+      const next = new URLSearchParams(params);
+      next.delete("create");
+      setParams(next, { replace: true });
+    }
+  };
   const [reportingTarget, setReportingTarget] = useState<{
     entityType: "institution" | "programme" | "scholarship";
     entityId: string;
@@ -264,9 +281,9 @@ export function CataloguePage() {
       {creating ? (
         <CatalogueCreateDialog
           kind={kind}
-          onClose={() => setCreating(false)}
+          onClose={closeCreating}
           onCreated={() => {
-            setCreating(false);
+            closeCreating();
             void q.refetch();
           }}
         />
@@ -493,17 +510,13 @@ function CatalogueCreateDialog({
 }) {
   const [error, setError] = useState("");
   const [countryCode, setCountryCode] = useState("");
-  const institutions = useQuery({
-    queryKey: queryKeys.catalogue("institutions", { surface: "catalogue-create" }),
-    queryFn: ({ signal }) => catalogueApi.institutions({}, signal),
-    enabled: kind !== "institutions",
-  });
+  const [institution, setInstitution] = useState({ id: "", name: "" });
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name"));
     const source = String(data.get("source")) || null;
-    const institutionId = String(data.get("institution_id")) || null;
+    const institutionId = institution.id || null;
     try {
       if (kind === "institutions")
         await catalogueApi.createInstitution({
@@ -575,28 +588,28 @@ function CatalogueCreateDialog({
               </label>
             </>
           ) : (
-            <label className="wide">
-              Institution {kind === "scholarships" ? "(optional)" : ""}
-              <select name="institution_id" required={kind === "programmes"} disabled={institutions.isPending}>
-                <option value="">
-                  {institutions.isPending
-                    ? "Loading institutions…"
-                    : kind === "programmes"
-                      ? "Select an institution"
-                      : "No institution"}
-                </option>
-                {institutions.data?.items.map((institution) => (
-                  <option key={institution.id} value={institution.id}>
-                    {institution.name}
-                  </option>
-                ))}
-              </select>
-              {!institutions.isPending && !institutions.data?.items.length ? (
-                <small>
-                  <Link to="/app/catalogue?kind=institutions&create=1">Add a private institution first</Link>
-                </small>
-              ) : null}
-            </label>
+            <div className="wide">
+              <EntityCombobox
+                queryKey={["catalogue", "institutions", "catalogue-create"]}
+                search={async (search, signal) =>
+                  (await catalogueApi.institutions({ search }, signal)).items.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    hint: item.country_code ? countryName(item.country_code) : null,
+                  }))
+                }
+                label={`Institution ${kind === "scholarships" ? "(optional)" : ""}`}
+                placeholder="Search institutions…"
+                value={institution.id}
+                valueLabel={institution.name}
+                onChange={(id, name) => setInstitution({ id, name })}
+                required={kind === "programmes"}
+              />
+              <small>
+                Can’t find it?{" "}
+                <Link to="/app/catalogue?kind=institutions&create=1">Add a private institution first</Link>
+              </small>
+            </div>
           )}
           {kind === "programmes" ? (
             <>
