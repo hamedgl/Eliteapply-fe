@@ -22,7 +22,7 @@ const AppShell = lazy(() =>
     })),
   ),
   ProductPreviewPage = lazy(() =>
-    import("../features/landing/LandingPage").then((x) => ({
+    import("../features/landing/ProductPreviewPage").then((x) => ({
       default: x.ProductPreviewPage,
     })),
   ),

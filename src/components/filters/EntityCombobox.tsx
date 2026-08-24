@@ -1,9 +1,11 @@
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Loader2, X } from "lucide-react";
 import { useDismiss } from "../../lib/dom-hooks";
 
 export type EntityOption = { id: string; name: string; hint?: string | null };
+
+const DEBOUNCE_MS = 180;
 
 /**
  * Searchable combobox over any human-readable entity (institution, programme,
@@ -31,13 +33,20 @@ export function EntityCombobox({
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(draft), DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [draft]);
+
   const query = useQuery({
-    queryKey: [...queryKey, draft],
-    queryFn: ({ signal }) => search(draft, signal),
+    queryKey: [...queryKey, debounced],
+    queryFn: ({ signal }) => search(debounced, signal),
     enabled: open,
     staleTime: 60_000,
   });

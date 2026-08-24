@@ -1,14 +1,14 @@
 import { useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2 } from "lucide-react";
-import { intelligenceApi } from "../../../lib/api/phase2";
-import { queryKeys } from "../../../lib/api/queryKeys";
 import { useApplicationReadiness, useDismiss } from "../hooks";
 import { label, type ApplicationReadinessSummary } from "../model";
 
 /**
- * Compact readiness indicator for a single application.
- * Displays the real eligibility & readiness score, fetched and cached per app.
+ * Compact readiness indicator for a single application. The ring and
+ * percentage use the readiness summary already embedded in the applications
+ * list/board response — free. The detailed issue list (blocking issues,
+ * missing documents, warnings) isn't in that summary, so it's fetched only
+ * when the user actually opens the popover, not eagerly for every row.
  */
 export function ReadinessIndicator({
   appId,
@@ -22,27 +22,18 @@ export function ReadinessIndicator({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const readinessQuery = useApplicationReadiness(appId, Boolean(appId));
-  const eligibilityQuery = useQuery({
-    queryKey: queryKeys.eligibility(appId),
-    queryFn: () => intelligenceApi.currentEligibility(appId),
-    enabled: Boolean(appId),
-    retry: false,
-    staleTime: 60_000,
-  });
+  const readinessQuery = useApplicationReadiness(appId, open);
 
   useDismiss([rootRef], () => setOpen(false), open);
 
   const readiness_percent =
-    eligibilityQuery.data?.readiness_score !== undefined
-      ? Math.max(0, Math.min(100, eligibilityQuery.data.readiness_score))
-      : readinessQuery.data?.readiness_percent !== undefined
-        ? readinessQuery.data.readiness_percent
-        : (readinessData?.overall_score ?? readinessPercent ?? 0);
+    readinessQuery.data?.readiness_percent !== undefined
+      ? readinessQuery.data.readiness_percent
+      : (readinessData?.overall_score ?? readinessPercent ?? 0);
 
   const overall_state =
-    readinessData?.overall_state ??
     readinessQuery.data?.overall_state ??
+    readinessData?.overall_state ??
     (readiness_percent >= 80 ? "ready" : readiness_percent >= 40 ? "in_progress" : "not_ready");
 
   const blocking_issues = readinessQuery.data?.blocking_issues ?? [];
@@ -51,7 +42,7 @@ export function ReadinessIndicator({
   const issues = [...blocking_issues, ...missing_required_documents, ...warnings];
   const needsAttention = overall_state === "blocked" || overall_state === "not_ready";
   const hasEmbeddedData = readinessPercent !== undefined || Boolean(readinessData);
-  const isLoading = !hasEmbeddedData && readinessQuery.isPending && eligibilityQuery.isPending;
+  const isLoading = !hasEmbeddedData && open && readinessQuery.isPending;
 
   if (isLoading)
     return (
@@ -66,8 +57,8 @@ export function ReadinessIndicator({
         type="button"
         className={`apps-readiness apps-readiness-${overall_state}`}
         aria-expanded={open}
-        aria-label={`${readiness_percent}% ready, ${label(overall_state)}. ${issues.length ? "Show missing items" : ""}`}
-        onClick={() => issues.length && setOpen((v) => !v)}
+        aria-label={`${readiness_percent}% ready, ${label(overall_state)}. ${needsAttention ? "Show missing items" : ""}`}
+        onClick={() => needsAttention && setOpen((v) => !v)}
       >
         <svg viewBox="0 0 32 32" className="apps-readiness-ring" aria-hidden="true">
           <circle cx="16" cy="16" r="13" className="apps-readiness-ring-track" />
@@ -88,14 +79,18 @@ export function ReadinessIndicator({
           {readiness_percent}%
         </span>
       </button>
-      {open && issues.length ? (
+      {open ? (
         <div className="apps-readiness-popover" role="dialog" aria-label="Missing items">
           <strong>{label(overall_state)}</strong>
-          <ul>
-            {issues.slice(0, 5).map((issue) => (
-              <li key={issue}>{issue}</li>
-            ))}
-          </ul>
+          {readinessQuery.isPending ? (
+            <p>Checking…</p>
+          ) : issues.length ? (
+            <ul>
+              {issues.slice(0, 5).map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
     </div>

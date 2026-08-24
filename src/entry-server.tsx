@@ -1,10 +1,8 @@
 import { Suspense } from "react";
 import { renderToString } from "react-dom/server";
 import { Route, Routes, StaticRouter } from "react-router-dom";
-import {
-  LandingPage,
-  ProductPreviewPage,
-} from "./features/landing/LandingPage";
+import { LandingPage } from "./features/landing/LandingPage";
+import { ProductPreviewPage } from "./features/landing/ProductPreviewPage";
 import {
   MarketingNotFoundPage,
   MarketingRoute,
