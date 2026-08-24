@@ -51,6 +51,7 @@ import { ApplicationsBoard } from "./components/ApplicationsBoard";
 import { BulkActionBar } from "./components/BulkActionBar";
 import { ApplicationsSkeleton } from "./components/ApplicationsSkeleton";
 import { OnboardingEmptyState } from "./components/EmptyStates";
+import { ArchiveApplicationDialog } from "./components/ArchiveApplicationDialog";
 import { DeleteApplicationDialog } from "./components/DeleteApplicationDialog";
 import { CreateApplication, DuplicateApplication } from "./components/ApplicationDialogs";
 import type { ActionKind } from "./components/RowActionMenu";
@@ -117,6 +118,7 @@ export function ApplicationsPage() {
   const [bulkTags, setBulkTags] = useState("");
   const [duplicateApp, setDuplicateApp] = useState<Application | null>(null);
   const [deletingApp, setDeletingApp] = useState<Application | null>(null);
+  const [archivingApp, setArchivingApp] = useState<Application | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [operationError, setOperationError] = useState("");
@@ -379,13 +381,10 @@ export function ApplicationsPage() {
       setDeletingApp(app);
       return;
     }
-    if (
-      kind === "archive" &&
-      !window.confirm(
-        `Archive “${app.title}”? Its current stage will be kept for a future restore.`,
-      )
-    )
+    if (kind === "archive") {
+      setArchivingApp(app);
       return;
+    }
     action.mutate({ app, kind });
   };
   const moveApplication = (app: Application, next: string) => {
@@ -814,6 +813,19 @@ export function ApplicationsPage() {
             setDeletingApp(null);
             action.mutate({ app, kind: "archive" });
           }}
+        />
+      ) : null}
+      {archivingApp ? (
+        <ArchiveApplicationDialog
+          app={archivingApp}
+          pending={action.isPending}
+          onCancel={() => setArchivingApp(null)}
+          onConfirm={() =>
+            action.mutate(
+              { app: archivingApp, kind: "archive" },
+              { onSuccess: () => setArchivingApp(null) },
+            )
+          }
         />
       ) : null}
     </div>

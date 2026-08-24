@@ -42,6 +42,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
+import { ConfirmationDialog } from "../../components/actions/ConfirmationDialog";
 import { AdminRoutePageSkeleton } from "../../components/page/PageSkeleton";
 import {
   useEffect,
@@ -2327,6 +2328,10 @@ function QueuesPage() {
 
 function LaunchReadinessPage() {
   const queryClient = useQueryClient();
+  const [pendingSave, setPendingSave] = useState<{
+    gate: LaunchGate;
+    body: Parameters<typeof adminApi.updateGate>[1];
+  } | null>(null);
   const readiness = useQuery({
     queryKey: ["admin", "launch-readiness"],
     queryFn: ({ signal }) => adminApi.readiness(signal),
@@ -2365,15 +2370,12 @@ function LaunchReadinessPage() {
     const notes = String(data.get("notes") ?? "").trim() || null;
     if (status === "passed" && !evidence_reference) return;
     if ((status === "failed" || status === "waived") && !notes) return;
-    if (
-      (status === "passed" || status === "waived") &&
-      !confirm(`Move ${humanize(gate.key)} to ${status}?`)
-    )
+    const body = { status, evidence_reference, notes };
+    if (status === "passed" || status === "waived") {
+      setPendingSave({ gate, body });
       return;
-    update.mutate({
-      key: gate.key,
-      body: { status, evidence_reference, notes },
-    });
+    }
+    update.mutate({ key: gate.key, body });
   }
 
   return (
@@ -2474,6 +2476,24 @@ function LaunchReadinessPage() {
         )}
         {update.isError ? <InlineError error={update.error} /> : null}
       </AdminPanelSection>
+      {pendingSave ? (
+        <ConfirmationDialog
+          title={`Move ${humanize(pendingSave.gate.key)} to ${pendingSave.body.status}?`}
+          confirmLabel="Confirm"
+          pendingLabel="Saving…"
+          pending={update.isPending}
+          danger={false}
+          onCancel={() => setPendingSave(null)}
+          onConfirm={() =>
+            update.mutate(
+              { key: pendingSave.gate.key, body: pendingSave.body },
+              { onSuccess: () => setPendingSave(null) },
+            )
+          }
+        >
+          <p>This updates the server-owned launch readiness decision.</p>
+        </ConfirmationDialog>
+      ) : null}
     </>
   );
 }

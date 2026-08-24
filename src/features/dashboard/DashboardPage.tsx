@@ -30,7 +30,13 @@ import { discoveryApi, documentsApi, profileApi } from "../../lib/api/phase2";
 import { MatchCard } from "../catalogue/components/MatchCard";
 import { AiNotice } from "../../components/common/AiNotice";
 import "../catalogue/discovery.css";
-import { interviewsApi, referencesApi, writingApi } from "../../lib/api/phase3";
+import {
+  interviewsApi,
+  referencesApi,
+  remindersApi,
+  storiesApi,
+  writingApi,
+} from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
 import {
@@ -161,6 +167,19 @@ export function DashboardPage() {
     queryKey: [...queryKeys.interviews, "workspace-guide"],
     queryFn: () => interviewsApi.list(),
   });
+  const savedSearchesQuery = useQuery({
+    queryKey: [...queryKeys.savedSearches, "workspace-guide"],
+    queryFn: () => discoveryApi.savedSearches(),
+  });
+  const storiesQuery = useQuery({
+    // Existence check only, matching the writingQuery/referencesQuery pattern above.
+    queryKey: [...queryKeys.stories(), "workspace-guide"],
+    queryFn: () => storiesApi.stories(),
+  });
+  const calendarFeedQuery = useQuery({
+    queryKey: ["calendar-feed", "status", "workspace-guide"],
+    queryFn: () => remindersApi.feedStatus(),
+  });
 
   if (query.isPending) return <GeneratedPageSkeleton page="dashboard" />;
 
@@ -227,6 +246,10 @@ export function DashboardPage() {
     (item) => (item.link_count ?? item.linked_application_ids?.length ?? 0) > 0,
   );
   const writingDocuments = writingQuery.data?.items ?? [];
+  const savedSearches = Array.isArray(savedSearchesQuery.data)
+    ? savedSearchesQuery.data
+    : [];
+  const stories = storiesQuery.data?.items ?? [];
   const references = Array.isArray(referencesQuery.data?.items)
     ? referencesQuery.data.items
     : [];
@@ -274,6 +297,18 @@ export function DashboardPage() {
                   draft.target_countries.some((country) => country.trim()),
               ),
             ),
+          ),
+        },
+        {
+          label: "Explore the catalogue",
+          detail: "Browse institutions, programmes and scholarships",
+          explain:
+            "Complete once you have saved a search in the catalogue, or added an application.",
+          href: "/app/catalogue",
+          status: getSetupStatus(
+            savedSearchesQuery.isPending,
+            savedSearchesQuery.isError,
+            savedSearches.length > 0 || applicationCount > 0,
           ),
         },
         {
@@ -358,6 +393,17 @@ export function DashboardPage() {
               (applicationCount > 0 && dashboard.missing_documents === 0),
           ),
         },
+        {
+          label: "Connect your calendar",
+          detail: "Sync deadlines with Google, Outlook or Apple Calendar",
+          explain: "Complete once you have an active calendar subscription link.",
+          href: "/app/reminders",
+          status: getSetupStatus(
+            calendarFeedQuery.isPending,
+            calendarFeedQuery.isError,
+            Boolean(calendarFeedQuery.data?.active),
+          ),
+        },
       ],
     },
     {
@@ -405,6 +451,17 @@ export function DashboardPage() {
             hasCompletedInterview,
           ),
         },
+        {
+          label: "Build your Story Bank",
+          detail: "Save reusable material for essays and statements",
+          explain: "Complete once you have saved at least one story.",
+          href: "/app/stories",
+          status: getSetupStatus(
+            storiesQuery.isPending,
+            storiesQuery.isError,
+            stories.length > 0,
+          ),
+        },
       ],
     },
   ];
@@ -430,13 +487,19 @@ export function DashboardPage() {
     documentsQuery.isPending ||
     writingQuery.isPending ||
     referencesQuery.isPending ||
-    interviewsQuery.isPending;
+    interviewsQuery.isPending ||
+    savedSearchesQuery.isPending ||
+    storiesQuery.isPending ||
+    calendarFeedQuery.isPending;
   const setupProgressError =
     profileQuery.isError ||
     documentsQuery.isError ||
     writingQuery.isError ||
     referencesQuery.isError ||
-    interviewsQuery.isError;
+    interviewsQuery.isError ||
+    savedSearchesQuery.isError ||
+    storiesQuery.isError ||
+    calendarFeedQuery.isError;
 
   return (
     <div className="page dashboard">
@@ -462,6 +525,9 @@ export function DashboardPage() {
                 writingQuery.refetch(),
                 referencesQuery.refetch(),
                 interviewsQuery.refetch(),
+                savedSearchesQuery.refetch(),
+                storiesQuery.refetch(),
+                calendarFeedQuery.refetch(),
               ])
             }
             refreshing={
@@ -470,7 +536,10 @@ export function DashboardPage() {
               documentsQuery.isFetching ||
               writingQuery.isFetching ||
               referencesQuery.isFetching ||
-              interviewsQuery.isFetching
+              interviewsQuery.isFetching ||
+              savedSearchesQuery.isFetching ||
+              storiesQuery.isFetching ||
+              calendarFeedQuery.isFetching
             }
           />
           <WorkspacePageGuideButton />
@@ -774,20 +843,29 @@ export function DashboardPage() {
                   if (writingQuery.isError) void writingQuery.refetch();
                   if (referencesQuery.isError) void referencesQuery.refetch();
                   if (interviewsQuery.isError) void interviewsQuery.refetch();
+                  if (savedSearchesQuery.isError) void savedSearchesQuery.refetch();
+                  if (storiesQuery.isError) void storiesQuery.refetch();
+                  if (calendarFeedQuery.isError) void calendarFeedQuery.refetch();
                 }}
                 disabled={
                   profileQuery.isFetching ||
                   documentsQuery.isFetching ||
                   writingQuery.isFetching ||
                   referencesQuery.isFetching ||
-                  interviewsQuery.isFetching
+                  interviewsQuery.isFetching ||
+                  savedSearchesQuery.isFetching ||
+                  storiesQuery.isFetching ||
+                  calendarFeedQuery.isFetching
                 }
               >
                 {profileQuery.isFetching ||
                 documentsQuery.isFetching ||
                 writingQuery.isFetching ||
                 referencesQuery.isFetching ||
-                interviewsQuery.isFetching
+                interviewsQuery.isFetching ||
+                savedSearchesQuery.isFetching ||
+                storiesQuery.isFetching ||
+                calendarFeedQuery.isFetching
                   ? "Checking…"
                   : "Retry progress check"}
               </button>

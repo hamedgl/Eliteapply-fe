@@ -772,6 +772,13 @@ export function WritingEditor() {
       null,
     ),
     [exportError, setExportError] = useState(""),
+    [duplicating, setDuplicating] = useState(false),
+    [duplicateError, setDuplicateError] = useState(""),
+    [linking, setLinking] = useState(false),
+    [linkError, setLinkError] = useState(""),
+    [confirmingDelete, setConfirmingDelete] = useState(false),
+    [deleting, setDeleting] = useState(false),
+    [deleteError, setDeleteError] = useState(""),
     [quality, setQuality] = useState<S["QualityAnalysisResponse"] | null>(null),
     [analyzing, setAnalyzing] = useState(false),
     [analyzeError, setAnalyzeError] = useState(""),
@@ -1056,12 +1063,24 @@ export function WritingEditor() {
           <button
             className="icon-only"
             aria-label="Duplicate document"
+            disabled={duplicating}
             onClick={async () => {
-              const next = await writingApi.duplicate(id, {
-                title_suffix: " (copy)",
-                keep_application_link: true,
-              });
-              nav(`/app/writing/${next.id}`);
+              setDuplicating(true);
+              setDuplicateError("");
+              try {
+                const next = await writingApi.duplicate(id, {
+                  title_suffix: " (copy)",
+                  keep_application_link: true,
+                });
+                nav(`/app/writing/${next.id}`);
+              } catch (caught) {
+                setDuplicateError(
+                  caught instanceof Error
+                    ? caught.message
+                    : "Could not duplicate this document. Try again shortly.",
+                );
+                setDuplicating(false);
+              }
             }}
           >
             <Copy />
@@ -1069,14 +1088,7 @@ export function WritingEditor() {
           <button
             className="icon-only"
             aria-label="Delete document"
-            onClick={async () => {
-              if (
-                confirm("Delete this writing document? This cannot be undone.")
-              ) {
-                await writingApi.remove(id);
-                nav("/app/writing");
-              }
-            }}
+            onClick={() => setConfirmingDelete(true)}
           >
             <Trash2 />
           </button>
@@ -1092,6 +1104,16 @@ export function WritingEditor() {
       {exportError ? (
         <p className="form-error writing-sync-error" role="alert">
           {exportError}
+        </p>
+      ) : null}
+      {duplicateError ? (
+        <p className="form-error writing-sync-error" role="alert">
+          {duplicateError}
+        </p>
+      ) : null}
+      {deleteError ? (
+        <p className="form-error writing-sync-error" role="alert">
+          {deleteError}
         </p>
       ) : null}
       <div className="editor-grid">
@@ -1161,14 +1183,32 @@ export function WritingEditor() {
                   : "")
               : "Standalone document"}
           </p>
+          {linkError ? (
+            <p className="form-error writing-sync-error" role="alert">
+              {linkError}
+            </p>
+          ) : null}
           {q.data.application_id ? (
             <button
+              disabled={linking}
               onClick={async () => {
-                const next = await writingApi.detach(
-                  id,
-                  q.data.application_id!,
-                );
-                qc.setQueryData(queryKeys.writingDocument(id), next);
+                setLinking(true);
+                setLinkError("");
+                try {
+                  const next = await writingApi.detach(
+                    id,
+                    q.data.application_id!,
+                  );
+                  qc.setQueryData(queryKeys.writingDocument(id), next);
+                } catch (caught) {
+                  setLinkError(
+                    caught instanceof Error
+                      ? caught.message
+                      : "Could not detach the application. Try again shortly.",
+                  );
+                } finally {
+                  setLinking(false);
+                }
               }}
             >
               Detach application
@@ -1197,11 +1237,23 @@ export function WritingEditor() {
                 }
               />
               <button
-                disabled={!attachPick.id}
+                disabled={!attachPick.id || linking}
                 onClick={async () => {
-                  const next = await writingApi.attach(id, attachPick.id);
-                  qc.setQueryData(queryKeys.writingDocument(id), next);
-                  setAttachPick({ id: "", name: "" });
+                  setLinking(true);
+                  setLinkError("");
+                  try {
+                    const next = await writingApi.attach(id, attachPick.id);
+                    qc.setQueryData(queryKeys.writingDocument(id), next);
+                    setAttachPick({ id: "", name: "" });
+                  } catch (caught) {
+                    setLinkError(
+                      caught instanceof Error
+                        ? caught.message
+                        : "Could not attach the application. Try again shortly.",
+                    );
+                  } finally {
+                    setLinking(false);
+                  }
                 }}
               >
                 Attach application
@@ -1419,6 +1471,33 @@ export function WritingEditor() {
               </ul>
             </div>
           ) : null}
+        </ConfirmationDialog>
+      ) : null}
+      {confirmingDelete ? (
+        <ConfirmationDialog
+          title="Delete this writing document?"
+          confirmLabel="Delete document"
+          pendingLabel="Deleting…"
+          pending={deleting}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={async () => {
+            setDeleting(true);
+            setDeleteError("");
+            try {
+              await writingApi.remove(id);
+              nav("/app/writing");
+            } catch (caught) {
+              setDeleteError(
+                caught instanceof Error
+                  ? caught.message
+                  : "Could not delete this document. Try again shortly.",
+              );
+              setDeleting(false);
+              setConfirmingDelete(false);
+            }
+          }}
+        >
+          <p>This cannot be undone.</p>
         </ConfirmationDialog>
       ) : null}
     </div>

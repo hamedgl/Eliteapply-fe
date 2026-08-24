@@ -53,7 +53,13 @@ export function DuplicateApplication({
         >
           <label>
             Title suffix
-            <input name="suffix" defaultValue="(copy)" required autoFocus />
+            <input
+              name="suffix"
+              defaultValue="(copy)"
+              required
+              maxLength={50}
+              autoFocus
+            />
           </label>
           <label className="check-field">
             <input name="requirements" type="checkbox" /> Copy requirements
@@ -84,6 +90,7 @@ export function CreateApplication({
 }) {
   const qc = useQueryClient();
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [applicationType, setApplicationType] = useState<
     (typeof types)[number]
   >(
@@ -104,6 +111,7 @@ export function CreateApplication({
   });
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
     const data = Object.fromEntries(new FormData(event.currentTarget));
     const requiresOpportunity =
       applicationType === "programme" || applicationType === "scholarship";
@@ -117,6 +125,7 @@ export function CreateApplication({
       setError(`Select a ${applicationType} opportunity.`);
       return;
     }
+    setSubmitting(true);
     try {
       await applicationsApi.create({
         mutation_id: mutationId,
@@ -146,6 +155,7 @@ export function CreateApplication({
       onClose();
     } catch (caught) {
       setError(readableApiError(caught));
+      setSubmitting(false);
     }
   }
   return (
@@ -169,6 +179,7 @@ export function CreateApplication({
               name="title"
               required
               minLength={2}
+              maxLength={400}
               autoFocus
               defaultValue={defaults?.title}
               placeholder="e.g. Gates Cambridge Scholarship 2027"
@@ -277,7 +288,7 @@ export function CreateApplication({
           </label>
           <label>
             <span>Intake</span>
-            <input name="intake" placeholder="Autumn 2027" />
+            <input name="intake" maxLength={100} placeholder="Autumn 2027" />
           </label>
           <label>
             <span>Primary deadline</span>
@@ -285,7 +296,12 @@ export function CreateApplication({
           </label>
           <label className="wide">
             <span>Source URL</span>
-            <input name="source_url" type="url" placeholder="https://" />
+            <input
+              name="source_url"
+              type="url"
+              maxLength={2083}
+              placeholder="https://"
+            />
           </label>
           <label className="wide">
             <span>Tags</span>
@@ -293,7 +309,12 @@ export function CreateApplication({
           </label>
           <label className="wide">
             <span>Notes</span>
-            <textarea name="notes" rows={4} placeholder="Add notes..." />
+            <textarea
+              name="notes"
+              rows={4}
+              maxLength={10000}
+              placeholder="Add notes..."
+            />
           </label>
           {error ? (
             <p className="form-error wide" role="alert">
@@ -301,10 +322,12 @@ export function CreateApplication({
             </p>
           ) : null}
           <div className="dialog-actions wide">
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={onClose} disabled={submitting}>
               Cancel
             </button>
-            <button className="primary">Create application</button>
+            <button className="primary" disabled={submitting}>
+              {submitting ? "Creating…" : "Create application"}
+            </button>
           </div>
         </form>
       </section>

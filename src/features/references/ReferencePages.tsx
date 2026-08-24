@@ -32,6 +32,7 @@ import { ReferenceFilterDrawer } from "./components/ReferenceFilterDrawer";
 import { ReferencesTable } from "./components/ReferencesTable";
 import { ReferencesSkeleton } from "./components/ReferencesSkeleton";
 import { OnboardingEmptyState } from "./components/ReferencesEmptyStates";
+import { CancelReferenceDialog } from "./components/CancelReferenceDialog";
 import { RevokeReferenceDialog } from "./components/RevokeReferenceDialog";
 import { SendReminderDialog } from "./components/SendReminderDialog";
 import { EditReferenceDialog } from "./components/EditReferenceDialog";
@@ -75,6 +76,7 @@ export function ReferencesPage() {
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [remindingId, setRemindingId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editError, setEditError] = useState("");
   const [attachingId, setAttachingId] = useState<string | null>(null);
@@ -99,6 +101,7 @@ export function ReferencesPage() {
   const viewing = findById(viewingId);
   const reminding = findById(remindingId);
   const revoking = findById(revokingId);
+  const canceling = findById(cancelingId);
   const editing = findById(editingId);
   const attaching = findById(attachingId);
 
@@ -116,6 +119,7 @@ export function ReferencesPage() {
       setNotice(actionNotice[variables.kind]);
       setRemindingId(null);
       setRevokingId(null);
+      setCancelingId(null);
     },
   });
   const editMutation = useMutation({
@@ -181,12 +185,7 @@ export function ReferencesPage() {
     if (kind === "edit") return setEditingId(reference.id);
     if (kind === "attach") return setAttachingId(reference.id);
     if (kind === "resend") return actionMutation.mutate({ id: reference.id, kind: "resend" });
-    if (kind === "cancel") {
-      if (window.confirm("Cancel this pending request? The referee will no longer be able to respond.")) {
-        actionMutation.mutate({ id: reference.id, kind: "cancel" });
-      }
-      return;
-    }
+    if (kind === "cancel") return setCancelingId(reference.id);
     if (kind === "certificate" || kind === "download") {
       const filename = `reference-${reference.public_id}${kind === "certificate" ? "-certificate" : ""}.pdf`;
       (kind === "certificate"
@@ -350,6 +349,15 @@ export function ReferencesPage() {
         />
       ) : null}
 
+      {canceling ? (
+        <CancelReferenceDialog
+          reference={canceling}
+          pending={actionMutation.isPending}
+          onCancel={() => setCancelingId(null)}
+          onConfirm={() => actionMutation.mutate({ id: canceling.id, kind: "cancel" })}
+        />
+      ) : null}
+
       {editing ? (
         <EditReferenceDialog
           reference={editing}
@@ -459,6 +467,7 @@ export function ReferenceDetail() {
   const qc = useQueryClient();
   const [reminding, setReminding] = useState(false);
   const [revoking, setRevoking] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
   const [attaching, setAttaching] = useState(false);
@@ -480,6 +489,7 @@ export function ReferenceDetail() {
       setNotice(actionNotice[kind]);
       setReminding(false);
       setRevoking(false);
+      setCanceling(false);
     },
   });
   const editMutation = useMutation({
@@ -547,12 +557,7 @@ export function ReferenceDetail() {
     if (kind === "edit") return setEditing(true);
     if (kind === "attach") return setAttaching(true);
     if (kind === "resend") return actionMutation.mutate("resend");
-    if (kind === "cancel") {
-      if (window.confirm("Cancel this pending request? The referee will no longer be able to respond.")) {
-        actionMutation.mutate("cancel");
-      }
-      return;
-    }
+    if (kind === "cancel") return setCanceling(true);
     if (kind === "certificate" || kind === "download") {
       const filename = `reference-${item.public_id}${kind === "certificate" ? "-certificate" : ""}.pdf`;
       (kind === "certificate"
@@ -601,6 +606,14 @@ export function ReferenceDetail() {
           pending={actionMutation.isPending}
           onCancel={() => setRevoking(false)}
           onConfirm={() => actionMutation.mutate("revoke")}
+        />
+      ) : null}
+      {canceling ? (
+        <CancelReferenceDialog
+          reference={item}
+          pending={actionMutation.isPending}
+          onCancel={() => setCanceling(false)}
+          onConfirm={() => actionMutation.mutate("cancel")}
         />
       ) : null}
       {editing ? (
