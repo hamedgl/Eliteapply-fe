@@ -42,24 +42,18 @@ function LinkedInIcon() {
  * No client-side SDK/popup: matches the same pattern as email/password login, which
  * already runs through the httpOnly refresh-cookie + CSRF-cookie flow.
  *
- * Terms/age acceptance is only sent from "register" mode, where the disclosure below
- * is actually shown. A "login" click that happens to hit a brand-new email must not
- * silently record an attestation the user never saw — the backend rejects that case
- * (no terms/age param on a new signup) and ConsentGate picks it up after the user
- * completes registration properly.
+ * The disclosure is shown in both modes because Google may return an email that has not
+ * used EliteApply before; that click must still be able to create the account.
  */
-function startOAuth(
+function oauthUrl(
   provider: "google" | "linkedin",
-  mode: "login" | "register",
   returnTo: string | null,
 ) {
   const params = new URLSearchParams();
   if (returnTo?.startsWith("/app")) params.set("return_to", returnTo);
-  if (mode === "register") {
-    params.set("accepted_terms_version", productConfig.legal.currentTermsVersion);
-    params.set("age_confirmed", "true");
-  }
-  window.location.href = `${productConfig.apiBaseUrl}/auth/oauth/${provider}/init?${params.toString()}`;
+  params.set("accepted_terms_version", productConfig.legal.currentTermsVersion);
+  params.set("age_confirmed", "true");
+  return `${productConfig.apiBaseUrl}/auth/oauth/${provider}/init?${params.toString()}`;
 }
 
 export function OAuthButtons({
@@ -73,31 +67,27 @@ export function OAuthButtons({
   return (
     <div className="oauth-block">
       <div className="oauth-buttons">
-        <button
-          type="button"
+        <a
           className="oauth-button"
-          onClick={() => startOAuth("google", mode, returnTo)}
+          href={oauthUrl("google", returnTo)}
         >
           <GoogleIcon /> {verb} with Google
-        </button>
-        <button
-          type="button"
+        </a>
+        <a
           className="oauth-button"
-          onClick={() => startOAuth("linkedin", mode, returnTo)}
+          href={oauthUrl("linkedin", returnTo)}
         >
           <LinkedInIcon /> {verb} with LinkedIn
-        </button>
+        </a>
       </div>
       <div className="oauth-divider">
         <span>or {mode === "login" ? "sign in" : "continue"} with email</span>
       </div>
-      {mode === "register" && (
-        <p className="oauth-consent">
-          By continuing with Google or LinkedIn, you confirm you meet the
-          minimum age to use EliteApply and agree to our{" "}
-          <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.
-        </p>
-      )}
+      <p className="oauth-consent">
+        By continuing with Google or LinkedIn, you confirm you meet the
+        minimum age to use EliteApply and agree to our{" "}
+        <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.
+      </p>
     </div>
   );
 }

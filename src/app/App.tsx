@@ -10,7 +10,6 @@ import {
   useRouteError,
 } from "react-router-dom";
 import { useSession } from "../lib/auth/session";
-import { GoogleOneTapPrompt } from "../features/auth/GoogleOneTapPrompt";
 import { RoutePageSkeleton } from "../components/page/PageSkeleton";
 
 const AppShell = lazy(() =>
@@ -277,15 +276,8 @@ function AppRouteError() {
   );
 }
 
-// Pathless root: One Tap greets anonymous visitors on every public route (it gates itself
-// once a session exists), instead of only on /login and /register.
 function RootLayout() {
-  return (
-    <>
-      <GoogleOneTapPrompt />
-      <Outlet />
-    </>
-  );
+  return <Outlet />;
 }
 
 const routes = [
