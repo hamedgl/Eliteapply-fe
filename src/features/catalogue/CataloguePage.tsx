@@ -509,10 +509,13 @@ function CatalogueCreateDialog({
   onCreated: () => void;
 }) {
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [countryCode, setCountryCode] = useState("");
   const [institution, setInstitution] = useState({ id: "", name: "" });
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name"));
     const source = String(data.get("source")) || null;
@@ -558,6 +561,7 @@ function CatalogueCreateDialog({
       onCreated();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Record could not be created.");
+      setSubmitting(false);
     }
   }
   return (
@@ -575,7 +579,13 @@ function CatalogueCreateDialog({
         <form className="form-grid" onSubmit={submit}>
           <label className="wide">
             Name
-            <input name="name" required minLength={2} autoFocus />
+            <input
+              name="name"
+              required
+              minLength={2}
+              maxLength={kind === "institutions" ? 300 : 400}
+              autoFocus
+            />
           </label>
           {kind === "institutions" ? (
             <>
@@ -584,7 +594,7 @@ function CatalogueCreateDialog({
               </div>
               <label>
                 Institution type
-                <input name="institution_type" placeholder="University, college…" />
+                <input name="institution_type" maxLength={40} placeholder="University, college…" />
               </label>
             </>
           ) : (
@@ -615,31 +625,31 @@ function CatalogueCreateDialog({
             <>
               <label>
                 Degree level
-                <input name="degree_level" />
+                <input name="degree_level" maxLength={50} />
               </label>
               <label>
                 Field of study
-                <input name="field_of_study" />
+                <input name="field_of_study" maxLength={200} />
               </label>
               <label>
                 Duration
-                <input name="duration" placeholder="2 years" />
+                <input name="duration" maxLength={100} placeholder="2 years" />
               </label>
               <label>
                 Delivery mode
-                <input name="delivery_mode" placeholder="On campus, online, hybrid…" />
+                <input name="delivery_mode" maxLength={50} placeholder="On campus, online, hybrid…" />
               </label>
               <label>
                 Language
-                <input name="language" placeholder="English" />
+                <input name="language" maxLength={100} placeholder="English" />
               </label>
               <label>
                 Tuition
-                <input name="tuition" placeholder="£12,000/year" />
+                <input name="tuition" maxLength={200} placeholder="£12,000/year" />
               </label>
               <label>
                 Intake
-                <input name="intake" placeholder="Autumn 2027" />
+                <input name="intake" maxLength={100} placeholder="Autumn 2027" />
               </label>
             </>
           ) : null}
@@ -647,11 +657,11 @@ function CatalogueCreateDialog({
             <>
               <label>
                 Provider
-                <input name="provider_name" />
+                <input name="provider_name" maxLength={300} />
               </label>
               <label>
                 Funding type
-                <input name="funding_type" placeholder="Full tuition, partial, stipend…" />
+                <input name="funding_type" maxLength={100} placeholder="Full tuition, partial, stipend…" />
               </label>
               <label>
                 Application deadline
@@ -662,17 +672,17 @@ function CatalogueCreateDialog({
               </label>
               <label className="wide">
                 Award summary
-                <textarea name="award_summary" rows={3} />
+                <textarea name="award_summary" maxLength={5000} rows={3} />
               </label>
               <label className="wide">
                 Eligibility
-                <textarea name="eligibility" rows={3} />
+                <textarea name="eligibility" maxLength={5000} rows={3} />
               </label>
             </>
           ) : null}
           <label className="wide">
             Source URL
-            <input name="source" type="url" />
+            <input name="source" type="url" maxLength={2083} />
           </label>
           {error ? (
             <p className="form-error wide" role="alert">
@@ -680,11 +690,14 @@ function CatalogueCreateDialog({
             </p>
           ) : null}
           <div className="dialog-actions wide">
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={onClose} disabled={submitting}>
               Cancel
             </button>
-            <button className="primary" disabled={kind === "institutions" && !countryCode}>
-              Create private record
+            <button
+              className="primary"
+              disabled={submitting || (kind === "institutions" && !countryCode)}
+            >
+              {submitting ? "Creating…" : "Create private record"}
             </button>
           </div>
         </form>
@@ -705,44 +718,54 @@ function CatalogueEditDialog({
   onSaved: (item: CatalogueItem) => void;
 }) {
   const meta = itemMeta(item);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setError("");
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name"));
-    if (kind === "institutions")
-      onSaved(
-        await catalogueApi.updateInstitution(item.id, {
-          name,
-          institution_type: String(data.get("institution_type")) || null,
-        }),
-      );
-    else if (kind === "programmes")
-      onSaved(
-        await catalogueApi.updateProgramme(item.id, {
-          name,
-          degree_level: String(data.get("degree_level")) || null,
-          field_of_study: String(data.get("field_of_study")) || null,
-          duration: String(data.get("duration")) || null,
-          delivery_mode: String(data.get("delivery_mode")) || null,
-          language: String(data.get("language")) || null,
-          tuition: String(data.get("tuition")) || null,
-          intake: String(data.get("intake")) || null,
-        }),
-      );
-    else
-      onSaved(
-        await catalogueApi.updateScholarship(item.id, {
-          name,
-          provider_name: String(data.get("provider_name")) || null,
-          award_summary: String(data.get("award_summary")) || null,
-          deadline_at: data.get("deadline_at")
-            ? new Date(`${String(data.get("deadline_at"))}T12:00:00Z`).toISOString()
-            : null,
-          funding_type: String(data.get("funding_type")) || null,
-          eligibility: String(data.get("eligibility")) || null,
-          is_open: data.get("is_open") === "on",
-        }),
-      );
+    try {
+      if (kind === "institutions")
+        onSaved(
+          await catalogueApi.updateInstitution(item.id, {
+            name,
+            institution_type: String(data.get("institution_type")) || null,
+          }),
+        );
+      else if (kind === "programmes")
+        onSaved(
+          await catalogueApi.updateProgramme(item.id, {
+            name,
+            degree_level: String(data.get("degree_level")) || null,
+            field_of_study: String(data.get("field_of_study")) || null,
+            duration: String(data.get("duration")) || null,
+            delivery_mode: String(data.get("delivery_mode")) || null,
+            language: String(data.get("language")) || null,
+            tuition: String(data.get("tuition")) || null,
+            intake: String(data.get("intake")) || null,
+          }),
+        );
+      else
+        onSaved(
+          await catalogueApi.updateScholarship(item.id, {
+            name,
+            provider_name: String(data.get("provider_name")) || null,
+            award_summary: String(data.get("award_summary")) || null,
+            deadline_at: data.get("deadline_at")
+              ? new Date(`${String(data.get("deadline_at"))}T12:00:00Z`).toISOString()
+              : null,
+            funding_type: String(data.get("funding_type")) || null,
+            eligibility: String(data.get("eligibility")) || null,
+            is_open: data.get("is_open") === "on",
+          }),
+        );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Record could not be saved.");
+      setSubmitting(false);
+    }
   }
   return (
     <div className="apps-dialog-backdrop" role="presentation">
@@ -756,43 +779,49 @@ function CatalogueEditDialog({
         <form className="form-grid" onSubmit={submit}>
           <label className="wide">
             Name
-            <input name="name" required defaultValue={item.name} autoFocus />
+            <input
+              name="name"
+              required
+              maxLength={kind === "institutions" ? 300 : 400}
+              defaultValue={item.name}
+              autoFocus
+            />
           </label>
           {kind === "institutions" ? (
             <label>
               Institution type
-              <input name="institution_type" defaultValue={meta.institution_type ?? ""} placeholder="University, college…" />
+              <input name="institution_type" maxLength={40} defaultValue={meta.institution_type ?? ""} placeholder="University, college…" />
             </label>
           ) : null}
           {kind === "programmes" ? (
             <>
               <label>
                 Degree level
-                <input name="degree_level" defaultValue={meta.degree_level ?? ""} />
+                <input name="degree_level" maxLength={50} defaultValue={meta.degree_level ?? ""} />
               </label>
               <label>
                 Field of study
-                <input name="field_of_study" defaultValue={meta.field_of_study ?? ""} />
+                <input name="field_of_study" maxLength={200} defaultValue={meta.field_of_study ?? ""} />
               </label>
               <label>
                 Duration
-                <input name="duration" defaultValue={meta.duration ?? ""} placeholder="2 years" />
+                <input name="duration" maxLength={100} defaultValue={meta.duration ?? ""} placeholder="2 years" />
               </label>
               <label>
                 Delivery mode
-                <input name="delivery_mode" defaultValue={meta.delivery_mode ?? ""} placeholder="On campus, online, hybrid…" />
+                <input name="delivery_mode" maxLength={50} defaultValue={meta.delivery_mode ?? ""} placeholder="On campus, online, hybrid…" />
               </label>
               <label>
                 Language
-                <input name="language" defaultValue={meta.language ?? ""} placeholder="English" />
+                <input name="language" maxLength={100} defaultValue={meta.language ?? ""} placeholder="English" />
               </label>
               <label>
                 Tuition
-                <input name="tuition" defaultValue={meta.tuition ?? ""} placeholder="£12,000/year" />
+                <input name="tuition" maxLength={200} defaultValue={meta.tuition ?? ""} placeholder="£12,000/year" />
               </label>
               <label>
                 Intake
-                <input name="intake" defaultValue={meta.intake ?? ""} placeholder="Autumn 2027" />
+                <input name="intake" maxLength={100} defaultValue={meta.intake ?? ""} placeholder="Autumn 2027" />
               </label>
             </>
           ) : null}
@@ -800,11 +829,11 @@ function CatalogueEditDialog({
             <>
               <label>
                 Provider
-                <input name="provider_name" defaultValue={meta.provider_name ?? ""} />
+                <input name="provider_name" maxLength={300} defaultValue={meta.provider_name ?? ""} />
               </label>
               <label>
                 Funding type
-                <input name="funding_type" defaultValue={meta.funding_type ?? ""} placeholder="Full tuition, partial, stipend…" />
+                <input name="funding_type" maxLength={100} defaultValue={meta.funding_type ?? ""} placeholder="Full tuition, partial, stipend…" />
               </label>
               <label>
                 Application deadline
@@ -815,19 +844,26 @@ function CatalogueEditDialog({
               </label>
               <label className="wide">
                 Award summary
-                <textarea name="award_summary" defaultValue={meta.award_summary ?? ""} rows={3} />
+                <textarea name="award_summary" maxLength={5000} defaultValue={meta.award_summary ?? ""} rows={3} />
               </label>
               <label className="wide">
                 Eligibility
-                <textarea name="eligibility" defaultValue={meta.eligibility ?? ""} rows={3} />
+                <textarea name="eligibility" maxLength={5000} defaultValue={meta.eligibility ?? ""} rows={3} />
               </label>
             </>
           ) : null}
+          {error ? (
+            <p className="form-error wide" role="alert">
+              {error}
+            </p>
+          ) : null}
           <div className="dialog-actions wide">
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={onClose} disabled={submitting}>
               Cancel
             </button>
-            <button className="primary">Save changes</button>
+            <button className="primary" disabled={submitting}>
+              {submitting ? "Saving…" : "Save changes"}
+            </button>
           </div>
         </form>
       </section>

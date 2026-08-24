@@ -11,12 +11,11 @@ import {
 import { useMemo } from "react";
 import {Link} from "react-router-dom";
 import { track } from "../../../lib/analytics/track";
-import { applicationsApi, intelligenceApi } from "../../../lib/api/phase2";
+import { applicationsApi } from "../../../lib/api/phase2";
 import { platformApi, type DashboardApplicationItem } from "../../../lib/api/platform";
 import { queryKeys } from "../../../lib/api/queryKeys";
 import type { Application } from "../../applications/model";
 import { resolveWorkspaceTab } from "../../applications/ApplicationWorkspace";
-import { useApplicationReadiness } from "../../applications/hooks";
 
 export type ReadinessState =
   | "ready"
@@ -197,7 +196,26 @@ export function processDashboardReadinessItem(
       ? rawProgrammeName
       : null;
 
-  const readinessState = (item.readiness_state ?? "on_track") as ReadinessState;
+  /*
+   * The backend's readiness_state enum has no "overdue" value, so a past-deadline
+   * application would otherwise show a contradictory non-overdue badge next to an
+   * "Overdue by N days" deadline line. Derive overdue/due_soon from the deadline
+   * first — same priority order as deriveReadinessState below — and only fall
+   * back to the backend's own state for everything else it already accounts for.
+   */
+  const isSubmitted =
+    item.stage === "submitted" ||
+    item.stage === "under_review" ||
+    Boolean(item.submitted_at);
+  const readinessState: ReadinessState = isSubmitted
+    ? "on_track"
+    : readinessPercentage >= 100
+      ? "ready"
+      : daysUntilDeadline !== null && daysUntilDeadline < 0
+        ? "overdue"
+        : daysUntilDeadline !== null && daysUntilDeadline <= 7
+          ? "due_soon"
+          : ((item.readiness_state ?? "on_track") as ReadinessState);
   const primaryMissingRequirement = item.primary_missing_requirement ?? null;
 
   const href = normalizeApplicationHref(item.recommended_action?.href, item.id);
@@ -595,43 +613,11 @@ function ApplicationReadinessRow({
   item: ProcessedApplicationItem;
   onItemClick: (item: ProcessedApplicationItem) => void;
 }) {
-  const readinessQuery = useApplicationReadiness(item.id, Boolean(item.id));
-  const eligibilityQuery = useQuery({
-    queryKey: queryKeys.eligibility(item.id),
-    queryFn: () => intelligenceApi.currentEligibility(item.id),
-    enabled: Boolean(item.id),
-    retry: false,
-    staleTime: 60_000,
-  });
-
-  const readinessData = readinessQuery.data;
-  const eligibilityData = eligibilityQuery.data;
-
-  const percentage =
-    eligibilityData?.readiness_score !== undefined
-      ? Math.max(0, Math.min(100, eligibilityData.readiness_score))
-      : (readinessData?.readiness_percent ?? item.readinessPercentage);
-
-  const missingReq =
-    readinessData?.blocking_issues?.[0] ??
-    readinessData?.missing_required_documents?.[0] ??
-    readinessData?.incomplete_requirements?.[0] ??
-    item.primaryMissingRequirement;
-
-  const isSubmitted = item.status === "submitted" || item.status === "under_review";
-  const state: ReadinessState = isSubmitted
-    ? "on_track"
-    : percentage >= 100
-      ? "ready"
-      : item.daysUntilDeadline !== null && item.daysUntilDeadline < 0
-        ? "overdue"
-        : item.daysUntilDeadline !== null && item.daysUntilDeadline <= 7
-          ? "due_soon"
-          : (readinessData?.blocking_issues?.length ||
-             readinessData?.missing_required_documents?.length ||
-             missingReq)
-            ? "needs_attention"
-            : "on_track";
+  // The dashboard batch endpoint already carries percentage, state and the
+  // top missing requirement for every item — no per-row fetch needed here.
+  const percentage = item.readinessPercentage;
+  const missingReq = item.primaryMissingRequirement;
+  const state = item.readinessState;
 
   const actionLabel =
     state === "ready"

@@ -209,6 +209,42 @@ describe("ApplicationReadinessCard - Unit Functions", () => {
     });
   });
 
+  it("derives overdue from the deadline even though the backend enum has no overdue value", () => {
+    const fixedNow = new Date("2026-07-01T00:00:00Z");
+    const dashboardItem: DashboardApplicationItem = {
+      id: "app-overdue-1",
+      title: "Overdue University",
+      application_type: "programme",
+      institution_id: "inst-2",
+      programme_id: "prog-2",
+      scholarship_id: null,
+      stage: "preparing",
+      priority: "normal",
+      intake: null,
+      primary_deadline_at: "2026-06-20T00:00:00Z",
+      source_url: null,
+      notes: null,
+      tags: [],
+      version: 1,
+      created_at: "2026-05-01T00:00:00Z",
+      updated_at: "2026-06-10T00:00:00Z",
+      institution_display_name: "Overdue University",
+      readiness_percent: 60,
+      // Backend enum has no "overdue" value — this must not leak through as the
+      // displayed state next to an "Overdue by N days" deadline line.
+      readiness_state: "on_track",
+      primary_missing_requirement: null,
+      recommended_action: {
+        label: "Continue application",
+        href: "/app/applications/app-overdue-1",
+      },
+    };
+
+    const processed = processDashboardReadinessItem(dashboardItem, fixedNow);
+    expect(processed.readinessState).toBe("overdue");
+    expect(processed.daysUntilDeadline).toBeLessThan(0);
+  });
+
   it("calculates days until deadline accurately", () => {
     const fixedNow = new Date("2026-07-01T00:00:00Z");
     expect(calculateDaysUntilDeadline("2026-07-09T23:59:59Z", fixedNow)).toBe(8);

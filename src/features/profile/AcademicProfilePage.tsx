@@ -230,8 +230,12 @@ export function AcademicProfilePage() {
             page — retry now, or keep editing and we’ll try again on your next
             change.
           </p>
-          <button type="button" onClick={() => save.mutate(draft)}>
-            Retry save
+          <button
+            type="button"
+            onClick={() => save.mutate(draft)}
+            disabled={save.isPending}
+          >
+            {save.isPending ? "Retrying…" : "Retry save"}
           </button>
         </div>
       ) : null}

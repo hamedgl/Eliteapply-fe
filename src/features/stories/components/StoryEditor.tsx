@@ -88,24 +88,24 @@ export function StoryEditor({
           </label>
           <label>
             Title
-            <input value={title} onChange={(event) => setTitle(event.target.value)} required minLength={2} autoFocus />
+            <input value={title} onChange={(event) => setTitle(event.target.value)} required minLength={2} maxLength={250} autoFocus />
           </label>
 
           <label className="wide">
             Situation
-            <textarea value={situation} onChange={(event) => setSituation(event.target.value)} required minLength={2} rows={2} />
+            <textarea value={situation} onChange={(event) => setSituation(event.target.value)} required minLength={2} maxLength={10000} rows={2} />
           </label>
           <label className="wide">
             Action
-            <textarea value={action} onChange={(event) => setAction(event.target.value)} required minLength={2} rows={2} />
+            <textarea value={action} onChange={(event) => setAction(event.target.value)} required minLength={2} maxLength={10000} rows={2} />
           </label>
           <label className="wide">
             Outcome
-            <textarea value={outcome} onChange={(event) => setOutcome(event.target.value)} required minLength={2} rows={2} />
+            <textarea value={outcome} onChange={(event) => setOutcome(event.target.value)} required minLength={2} maxLength={10000} rows={2} />
           </label>
           <label className="wide">
             Reflection <span className="story-field-optional">(optional)</span>
-            <textarea value={reflection} onChange={(event) => setReflection(event.target.value)} rows={2} />
+            <textarea value={reflection} onChange={(event) => setReflection(event.target.value)} maxLength={10000} rows={2} />
           </label>
 
           <label>

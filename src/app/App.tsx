@@ -11,18 +11,30 @@ import {
 } from "react-router-dom";
 import { useSession } from "../lib/auth/session";
 import { GoogleOneTapPrompt } from "../features/auth/GoogleOneTapPrompt";
-import {
-  LandingPage,
-  ProductPreviewPage,
-} from "../features/landing/LandingPage";
-import {
-  MarketingNotFoundPage,
-  MarketingRoute as MarketingPage,
-} from "../features/marketing/MarketingPages";
 import { RoutePageSkeleton } from "../components/page/PageSkeleton";
 
 const AppShell = lazy(() =>
     import("../components/AppShell").then((x) => ({ default: x.AppShell })),
+  ),
+  LandingPage = lazy(() =>
+    import("../features/landing/LandingPage").then((x) => ({
+      default: x.LandingPage,
+    })),
+  ),
+  ProductPreviewPage = lazy(() =>
+    import("../features/landing/LandingPage").then((x) => ({
+      default: x.ProductPreviewPage,
+    })),
+  ),
+  MarketingPage = lazy(() =>
+    import("../features/marketing/MarketingPages").then((x) => ({
+      default: x.MarketingRoute,
+    })),
+  ),
+  MarketingNotFoundPage = lazy(() =>
+    import("../features/marketing/MarketingPages").then((x) => ({
+      default: x.MarketingNotFoundPage,
+    })),
   ),
   AuthPage = lazy(() =>
     import("../features/auth/AuthPage").then((x) => ({ default: x.AuthPage })),
@@ -113,17 +125,17 @@ const AppShell = lazy(() =>
     })),
   ),
   WritingLibrary = lazy(() =>
-    import("../features/writing/WritingPages").then((x) => ({
+    import("../features/writing/WritingLibraryPage").then((x) => ({
       default: x.WritingLibrary,
     })),
   ),
   NewWriting = lazy(() =>
-    import("../features/writing/WritingPages").then((x) => ({
+    import("../features/writing/WritingLibraryPage").then((x) => ({
       default: x.NewWriting,
     })),
   ),
   WritingEditor = lazy(() =>
-    import("../features/writing/WritingPages").then((x) => ({
+    import("../features/writing/WritingEditorPage").then((x) => ({
       default: x.WritingEditor,
     })),
   ),
@@ -277,28 +289,28 @@ function RootLayout() {
 }
 
 const routes = [
-  { path: "/", element: <LandingPage /> },
-  { path: "/product-preview", element: <ProductPreviewPage /> },
-  { path: "/features/*", element: <MarketingPage /> },
-  { path: "/how-it-works", element: <MarketingPage /> },
-  { path: "/for-students", element: <MarketingPage /> },
-  { path: "/pricing", element: <MarketingPage /> },
-  { path: "/security", element: <MarketingPage /> },
-  { path: "/about", element: <MarketingPage /> },
-  { path: "/contact", element: <MarketingPage /> },
-  { path: "/resources/*", element: <MarketingPage /> },
+  { path: "/", element: load(<LandingPage />) },
+  { path: "/product-preview", element: load(<ProductPreviewPage />) },
+  { path: "/features/*", element: load(<MarketingPage />) },
+  { path: "/how-it-works", element: load(<MarketingPage />) },
+  { path: "/for-students", element: load(<MarketingPage />) },
+  { path: "/pricing", element: load(<MarketingPage />) },
+  { path: "/security", element: load(<MarketingPage />) },
+  { path: "/about", element: load(<MarketingPage />) },
+  { path: "/contact", element: load(<MarketingPage />) },
+  { path: "/resources/*", element: load(<MarketingPage />) },
   {
     path: "/scholarship-application-tracker",
-    element: <MarketingPage />,
+    element: load(<MarketingPage />),
   },
   {
     path: "/scholarship-application-organiser",
-    element: <MarketingPage />,
+    element: load(<MarketingPage />),
   },
-  { path: "/scholarship-deadline-tracker", element: <MarketingPage /> },
+  { path: "/scholarship-deadline-tracker", element: load(<MarketingPage />) },
   {
     path: "/scholarship-application-checklist",
-    element: <MarketingPage />,
+    element: load(<MarketingPage />),
   },
   {
     path: "/login",
@@ -320,10 +332,10 @@ const routes = [
   { path: "/forgot-password", element: load(<AuthPage mode="forgot" />) },
   { path: "/reset-password", element: load(<ResetPasswordPage />) },
   { path: "/auth/callback", element: load(<OAuthCallbackPage />) },
-  { path: "/terms", element: <MarketingPage /> },
-  { path: "/privacy", element: <MarketingPage /> },
-  { path: "/accessibility", element: <MarketingPage /> },
-  { path: "/ai-transparency", element: <MarketingPage /> },
+  { path: "/terms", element: load(<MarketingPage />) },
+  { path: "/privacy", element: load(<MarketingPage />) },
+  { path: "/accessibility", element: load(<MarketingPage />) },
+  { path: "/ai-transparency", element: load(<MarketingPage />) },
   { path: "/share/:token", element: load(<SharedWriting />) },
   {
     path: "/collaborator-invitations/:token/accept",
@@ -381,7 +393,7 @@ const routes = [
       { path: "unavailable", element: <Unavailable /> },
     ],
   },
-  { path: "*", element: <MarketingNotFoundPage /> },
+  { path: "*", element: load(<MarketingNotFoundPage />) },
 ];
 
 const router = createBrowserRouter([{ element: <RootLayout />, children: routes }]);
