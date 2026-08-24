@@ -443,7 +443,10 @@ export function DashboardPage() {
       <header className="dashboard-header">
         <div>
           <p className="dashboard-context">Application workspace</p>
-          <h1>Good morning{firstName ? `, ${firstName}` : ""}</h1>
+          <h1>
+            {greeting()}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
           <p>
             Keep your next steps, deadlines and supporting materials moving in
             one place.
@@ -1167,6 +1170,13 @@ function getRecommendation(action: string) {
     href: "/app/applications",
     action: "Review applications",
   };
+}
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 function humanize(value: string) {
