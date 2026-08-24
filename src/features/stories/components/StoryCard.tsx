@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../../components/data-display/SampleBadge";
 import { useState } from "react";
 import {
   ChevronDown,
@@ -73,6 +74,7 @@ export function StoryCard({
       >
         <div className="story-card-heading">
           <h3>{story.title}</h3>
+          <SampleBadge isSample={story.is_sample} />
           {isArchived ? (
             <StatusBadge tone="grey">Archived</StatusBadge>
           ) : (

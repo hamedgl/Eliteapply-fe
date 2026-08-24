@@ -54,6 +54,13 @@ export const usersApi = {
   avatar: uploadAvatar,
   removeAvatar: () =>
     avatarRequest<Profile>("/api/avatar", { method: "DELETE" }),
+  /**
+   * Clears `sample_data_seeded_at` server-side, which is what suppresses the
+   * first-login sample-data notice. Returns the updated profile; the seeded rows
+   * themselves are untouched and keep their `is_sample` badge.
+   */
+  dismissSampleNotice: () =>
+    apiRequest<Profile>("/users/me/dismiss-sample-notice", { method: "POST" }),
   export: () => apiRequest<Response>("/users/me/export", { raw: true }),
   requestDelete: () =>
     apiRequest("/users/me/delete-request", { method: "POST" }),

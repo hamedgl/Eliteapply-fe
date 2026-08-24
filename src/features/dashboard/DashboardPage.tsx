@@ -39,6 +39,7 @@ import {
 } from "../../lib/api/phase3";
 import { queryKeys } from "../../lib/api/queryKeys";
 import { useSession } from "../../lib/auth/session";
+import { SampleDataNotice } from "./components/SampleDataNotice";
 import {
   EventManager,
   type CalendarEvent,
@@ -513,6 +514,7 @@ export function DashboardPage() {
 
   return (
     <div className="page dashboard">
+      <SampleDataNotice />
       <header className="dashboard-header">
         <div>
           <p className="dashboard-context">Application workspace</p>

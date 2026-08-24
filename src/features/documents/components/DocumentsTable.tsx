@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../../components/data-display/SampleBadge";
 import { Link } from "react-router-dom";
 import {
   Download,
@@ -105,6 +106,7 @@ export function DocumentsTable({
                         <Link to={`/app/documents/${doc.id}`} className="apps-row-title">
                           {doc.display_name}
                         </Link>
+                        <SampleBadge isSample={doc.is_sample} />
                         <span className="apps-row-subtitle">
                           v{doc.version} · {formatBytes(doc.size_bytes)} · Added {formatDate(doc.created_at)}
                         </span>

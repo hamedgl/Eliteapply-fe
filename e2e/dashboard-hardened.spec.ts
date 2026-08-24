@@ -14,6 +14,9 @@ const user = {
   is_admin: false,
   consent_version: currentTermsVersion,
   consent_at: "2026-01-01T00:00:00Z",
+  // ConsentGate trips on a missing age confirmation as well as a stale terms version;
+  // without this the gate's modal covers the dashboard and swallows every click.
+  age_confirmed_at: "2026-01-01T00:00:00Z",
   marketing_opt_in: false,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
@@ -44,7 +47,14 @@ const entitlement = {
   purchased_tokens_remaining: 0,
 };
 
+// Null unless a test opts in: the sample-data notice is driven entirely by this
+// field, so every other dashboard test keeps its existing (notice-free) layout.
+let seededAt: string | null = null;
+let dismissCalls = 0;
+
 test.beforeEach(async ({ page }) => {
+  seededAt = null;
+  dismissCalls = 0;
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
     if (url.endsWith("/auth/refresh")) {
@@ -52,7 +62,15 @@ test.beforeEach(async ({ page }) => {
         json: { access_token: "test", id_token: "test", expires_in: 3600 },
       });
     }
-    if (url.endsWith("/users/me")) return route.fulfill({ json: user });
+    if (url.endsWith("/users/me/dismiss-sample-notice")) {
+      dismissCalls += 1;
+      seededAt = null;
+      return route.fulfill({ json: { ...user, sample_data_seeded_at: null } });
+    }
+    if (url.endsWith("/users/me"))
+      return route.fulfill({
+        json: { ...user, sample_data_seeded_at: seededAt },
+      });
     if (url.endsWith("/platform/capabilities")) {
       return route.fulfill({ json: [] });
     }
@@ -72,7 +90,13 @@ test.beforeEach(async ({ page }) => {
         json: { items: [], has_more: false, next_cursor: null, total: 0 },
       });
     }
-    return route.fulfill({ json: {} });
+    // The dashboard loads several cursor-paginated lists (writing, stories,
+    // interviews, references, reminders). An unmatched `{}` gives them no `items`
+    // array, and the page crashes into its error boundary before rendering anything —
+    // which silently broke every assertion in this file. Default to a valid empty page.
+    return route.fulfill({
+      json: { items: [], has_more: false, next_cursor: null, total: 0 },
+    });
   });
 });
 
@@ -615,4 +639,38 @@ test("mobile app navigation is touch-safe and closes with Escape", async ({
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test("explains seeded starter data once, and dismissal survives a reload", async ({
+  page,
+}) => {
+  seededAt = "2026-08-24T10:00:00Z";
+  await page.goto("/app/dashboard");
+
+  const notice = page.getByRole("heading", {
+    name: "We added a few examples to get you started",
+  });
+  await expect(notice).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Dismiss the sample data notice" })
+    .click();
+  await expect(notice).toBeHidden();
+  expect(dismissCalls).toBe(1);
+
+  // Dismissal is server state (the API clears sample_data_seeded_at), not a local
+  // flag, so it must hold across a fresh load rather than reappearing.
+  await page.goto("/app/dashboard");
+  await expect(notice).toBeHidden();
+});
+
+test("does not mention sample data for an account that was never seeded", async ({
+  page,
+}) => {
+  await page.goto("/app/dashboard");
+  await expect(
+    page.getByRole("heading", {
+      name: "We added a few examples to get you started",
+    }),
+  ).toBeHidden();
 });

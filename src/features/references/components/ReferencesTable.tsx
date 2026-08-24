@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../../components/data-display/SampleBadge";
 import { StatusBadge } from "../../../components/data-display/StatusBadge";
 import { formatDate } from "../../applications/model";
 import {
@@ -91,6 +92,7 @@ function ReferenceRow({
         <button type="button" className="apps-row-title apps-row-title-button" onClick={onView}>
           {reference.referee_name}
         </button>
+        <SampleBadge isSample={reference.is_sample} />
         <span className="apps-row-subtitle">
           {reference.referee_role}
           {reference.institution ? ` · ${reference.institution}` : " · Institution not provided"}

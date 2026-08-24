@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../components/data-display/SampleBadge";
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -96,6 +97,7 @@ export function InterviewsPage() {
                       </span>
                     </div>
                     <h2>{interviewTypeLabel(item.interview_type)}</h2>
+                    <SampleBadge isSample={item.is_sample} />
                     <ProgressBar
                       percent={progressPercent(item)}
                       label={`${interviewTypeLabel(item.interview_type)} progress`}

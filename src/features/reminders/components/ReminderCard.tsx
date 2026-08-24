@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../../components/data-display/SampleBadge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -84,6 +85,7 @@ export function ReminderCard({
       <div className="reminders-card-body">
         <div className="reminders-card-heading">
           <h3>{reminder.title}</h3>
+          <SampleBadge isSample={reminder.is_sample} />
           {isCompleted ? (
             <StatusBadge tone="green">Completed</StatusBadge>
           ) : cancelled ? (

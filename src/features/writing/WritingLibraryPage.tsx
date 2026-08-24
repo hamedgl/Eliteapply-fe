@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../components/data-display/SampleBadge";
 import { useMemo, useState } from "react";
 import {
   useInfiniteQuery,
@@ -401,6 +402,7 @@ export function WritingLibrary({
                     >
                       {document.title}
                     </Link>
+                    <SampleBadge isSample={document.is_sample} />
                     <p className="writing-card-meta">
                       {words.toLocaleString()} word{words === 1 ? "" : "s"}
                       <span aria-hidden="true">·</span>

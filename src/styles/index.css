@@ -8554,6 +8554,76 @@ select option {
   min-height: 128px;
 }
 
+.dashboard-sample-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--app-blue-soft);
+  border-radius: 12px;
+  background: var(--app-blue-soft);
+  color: var(--app-text);
+}
+.dashboard-sample-notice > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.15rem;
+  color: var(--app-blue);
+}
+.dashboard-sample-notice > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dashboard-sample-notice h2 {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.dashboard-sample-notice p {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--app-muted);
+}
+.dashboard-sample-notice p .apps-stage-pill {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  vertical-align: baseline;
+}
+.dashboard-sample-notice a {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--app-blue);
+}
+.dashboard-sample-notice-dismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--app-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.dashboard-sample-notice-dismiss:hover:not(:disabled) {
+  color: var(--app-text);
+  background: var(--app-surface);
+}
+.dashboard-sample-notice-dismiss:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.dashboard-sample-notice-dismiss svg {
+  width: 15px;
+  height: 15px;
+}
+
 .dashboard-header {
   min-width: 0;
   padding-bottom: 1.75rem;

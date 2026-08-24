@@ -1,3 +1,4 @@
+import { SampleBadge } from "../../../components/data-display/SampleBadge";
 import { Copy, Pencil, RefreshCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { OverflowMenu } from "../../../components/actions/OverflowMenu";
 import { formatDate } from "../../applications/model";
@@ -26,6 +27,7 @@ export function SavedSearchCard({
     <article className="apps-card discovery-saved-card">
       <div>
         <h3>{search.name}</h3>
+        <SampleBadge isSample={search.is_sample} />
         <p className="discovery-saved-summary">{describeFilters(search.entity_type, filters, countryName)}</p>
         <p className="discovery-saved-meta">
           {search.last_run_at ? `Last run ${formatDate(search.last_run_at)}` : "Not run yet"}

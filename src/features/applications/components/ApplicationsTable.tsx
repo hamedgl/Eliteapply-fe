@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { formatDate, type Application } from "../model";
+import { SampleBadge } from "../../../components/data-display/SampleBadge";
 import { useApplicationSubtitle } from "../hooks";
 import { StagePill, TypeTag, PriorityDot, DeadlineCell } from "./Badges";
 import { ReadinessIndicator } from "./ReadinessIndicator";
@@ -116,6 +117,7 @@ function ApplicationRow({
         <Link to={openPath} className="apps-row-title">
           {app.title}
         </Link>
+        <SampleBadge isSample={app.is_sample} />
         {subtitle.isLoading ? (
           <span className="apps-row-subtitle apps-row-subtitle-loading" />
         ) : subtitle.name ? (
