@@ -86,7 +86,11 @@ export type UsageResponse = {
 
 export type AdminAction = {
   id: string;
-  admin_user_id: string;
+  /**
+   * Null once the acting admin's own account has been erased: the audit row survives,
+   * its attribution does not. Never null for a live admin.
+   */
+  admin_user_id: string | null;
   action: string;
   target_type: string;
   target_id: string;

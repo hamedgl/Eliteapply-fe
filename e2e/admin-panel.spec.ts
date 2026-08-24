@@ -122,6 +122,18 @@ async function mockAdminApi(page: Page, currentUser = admin) {
             metadata_safe: { rollout_percentage: 25 },
             created_at: "2026-07-19T08:32:00Z",
           },
+          {
+            // The acting admin has since erased their own account: the audit row
+            // survives with a null actor. Rendering this used to crash the page.
+            id: "00000000-0000-4000-8000-000000000005",
+            admin_user_id: null,
+            action: "catalogue_merged",
+            target_type: "institution",
+            target_id: "00000000-0000-4000-8000-0000000000aa",
+            reason: "Duplicate record",
+            metadata_safe: {},
+            created_at: "2026-07-19T08:33:00Z",
+          },
         ]),
       });
     }
@@ -204,6 +216,12 @@ test("renders independent operational signals and remains overflow-safe", async 
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Recent admin actions" }),
+  ).toBeVisible();
+  // An audit row whose actor has since erased their own account still renders. This
+  // used to crash the whole page: a null admin_user_id reached shortId(), which reads
+  // value.length.
+  await expect(
+    page.getByTitle("This admin's account has been erased"),
   ).toBeVisible();
   await expect(page.getByText("9 of 12")).toBeVisible();
   // The production badge is gated on a production API base URL, so it is

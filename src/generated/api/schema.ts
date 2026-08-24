@@ -3580,6 +3580,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/dismiss-sample-notice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss the one-time 'we added sample data for you' notice */
+        post: operations["dismiss_sample_notice_api_v1_users_me_dismiss_sample_notice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/avatar/complete": {
         parameters: {
             query?: never;
@@ -3874,6 +3891,11 @@ export interface components {
             /** Disclaimer */
             disclaimer: string;
             /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
+            /**
              * Created At
              * Format: date-time
              */
@@ -4165,6 +4187,11 @@ export interface components {
              */
             resend_count: number;
             /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
+            /**
              * Version
              * @default 1
              */
@@ -4269,11 +4296,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /**
-             * Admin User Id
-             * Format: uuid
-             */
-            admin_user_id: string;
+            /** Admin User Id */
+            admin_user_id?: string | null;
             /** Action */
             action: string;
             /** Target Type */
@@ -4590,6 +4614,11 @@ export interface components {
             submitted_at?: string | null;
             /** Pre Archive Stage */
             pre_archive_stage?: string | null;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /** Version */
             version: number;
             /**
@@ -5178,6 +5207,11 @@ export interface components {
             submitted_at?: string | null;
             /** Pre Archive Stage */
             pre_archive_stage?: string | null;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /** Version */
             version: number;
             /**
@@ -5448,6 +5482,11 @@ export interface components {
             id: string;
             /** Malware Status */
             malware_status: string;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /**
              * Version
              * @default 1
@@ -6445,6 +6484,11 @@ export interface components {
             next_step: string | null;
             /** Complete */
             complete: boolean;
+            /**
+             * Has Sample Data
+             * @default false
+             */
+            has_sample_data: boolean;
         };
         /**
          * OperationDetail
@@ -7307,6 +7351,11 @@ export interface components {
             status: string;
             /** Snoozed Until */
             snoozed_until: string | null;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /** Version */
             version: number;
             /**
@@ -7616,6 +7665,11 @@ export interface components {
             notify_on_new_matches: boolean;
             /** Last Run At */
             last_run_at: string | null;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /**
              * Created At
              * Format: date-time
@@ -8084,6 +8138,11 @@ export interface components {
              * @default false
              */
             is_archived: boolean;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /** Linked Application Ids */
             linked_application_ids?: string[];
             /** Linked Document Ids */
@@ -8474,6 +8533,8 @@ export interface components {
             consent_at?: string | null;
             /** Age Confirmed At */
             age_confirmed_at: string | null;
+            /** Sample Data Seeded At */
+            sample_data_seeded_at?: string | null;
             /**
              * Marketing Opt In
              * @default false
@@ -8716,6 +8777,11 @@ export interface components {
             };
             /** Status */
             status: string;
+            /**
+             * Is Sample
+             * @default false
+             */
+            is_sample: boolean;
             /** Version */
             version: number;
             /**
@@ -16951,6 +17017,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_sample_notice_api_v1_users_me_dismiss_sample_notice_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileResponse"];
                 };
             };
         };

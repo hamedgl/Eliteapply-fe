@@ -696,7 +696,7 @@ function OverviewAudit({
                     <Timestamp value={item.created_at} />
                   </td>
                   <td>
-                    <CopyableId value={item.admin_user_id} />
+                    <AdminActorId value={item.admin_user_id} />
                   </td>
                   <td>{humanize(item.action)}</td>
                   <td>
@@ -2589,7 +2589,7 @@ function AuditLogPage() {
                         <Timestamp value={item.created_at} />
                       </td>
                       <td>
-                        <CopyableId value={item.admin_user_id} />
+                        <AdminActorId value={item.admin_user_id} />
                       </td>
                       <td>{humanize(item.action)}</td>
                       <td>
@@ -2727,6 +2727,20 @@ function Timestamp({ value }: { value: string }) {
       }).format(date)}
     </time>
   );
+}
+
+function AdminActorId({ value }: { value: string | null }) {
+  // Null means the admin who took this action has since erased their own account.
+  // The audit row deliberately outlives them (see AdminActionAudit on the API side),
+  // so render the absence rather than dropping the row or crashing on a missing id.
+  if (!value) {
+    return (
+      <span className="admin-erased-actor" title="This admin's account has been erased">
+        erased
+      </span>
+    );
+  }
+  return <CopyableId value={value} />;
 }
 
 function CopyableId({ value }: { value: string }) {

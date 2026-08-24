@@ -14013,6 +14013,32 @@
         }
       }
     },
+    "/api/v1/users/me/dismiss-sample-notice": {
+      "post": {
+        "tags": [
+          "User Profiles"
+        ],
+        "summary": "Dismiss the one-time 'we added sample data for you' notice",
+        "operationId": "dismiss_sample_notice_api_v1_users_me_dismiss_sample_notice_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/me/avatar/complete": {
       "post": {
         "tags": [
@@ -14844,6 +14870,11 @@
             "type": "string",
             "title": "Disclaimer"
           },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -15622,6 +15653,11 @@
             "title": "Resend Count",
             "default": 0
           },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
+          },
           "version": {
             "type": "integer",
             "title": "Version",
@@ -15981,8 +16017,15 @@
             "title": "Id"
           },
           "admin_user_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Admin User Id"
           },
           "action": {
@@ -16015,7 +16058,6 @@
         "type": "object",
         "required": [
           "id",
-          "admin_user_id",
           "action",
           "target_type",
           "target_id",
@@ -16950,6 +16992,11 @@
               }
             ],
             "title": "Pre Archive Stage"
+          },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
           },
           "version": {
             "type": "integer",
@@ -18679,6 +18726,11 @@
             ],
             "title": "Pre Archive Stage"
           },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
+          },
           "version": {
             "type": "integer",
             "title": "Version"
@@ -19457,6 +19509,11 @@
           "malware_status": {
             "type": "string",
             "title": "Malware Status"
+          },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
           },
           "version": {
             "type": "integer",
@@ -22134,6 +22191,11 @@
           "complete": {
             "type": "boolean",
             "title": "Complete"
+          },
+          "has_sample_data": {
+            "type": "boolean",
+            "title": "Has Sample Data",
+            "default": false
           }
         },
         "type": "object",
@@ -24516,6 +24578,11 @@
             ],
             "title": "Snoozed Until"
           },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
+          },
           "version": {
             "type": "integer",
             "title": "Version"
@@ -25488,6 +25555,11 @@
               }
             ],
             "title": "Last Run At"
+          },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
           },
           "created_at": {
             "type": "string",
@@ -26850,6 +26922,11 @@
             "title": "Is Archived",
             "default": false
           },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
+          },
           "linked_application_ids": {
             "items": {
               "type": "string",
@@ -28176,6 +28253,18 @@
             ],
             "title": "Age Confirmed At"
           },
+          "sample_data_seeded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Data Seeded At"
+          },
           "marketing_opt_in": {
             "type": "boolean",
             "title": "Marketing Opt In",
@@ -28862,6 +28951,11 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
           },
           "version": {
             "type": "integer",

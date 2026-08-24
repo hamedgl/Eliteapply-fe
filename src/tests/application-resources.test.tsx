@@ -45,6 +45,7 @@ const workspace = {
     id: applicationId,
     title: "MSc AI",
     application_type: "programme",
+    is_sample: false,
     institution_id: null,
     programme_id: null,
     scholarship_id: null,
