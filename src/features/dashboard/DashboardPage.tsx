@@ -358,6 +358,16 @@ export function DashboardPage() {
               sectionDone("research", draft.research.length > 0),
           ),
         },
+        {
+          label: "Add languages",
+          detail: "List languages you speak, with certifications if you have them",
+          explain:
+            "Complete once the languages section of your academic profile has at least one entry.",
+          href: "/app/academic-profile",
+          status: profileStatus(
+            sectionDone("languages", draft.languages.length > 0),
+          ),
+        },
       ],
     },
     {
