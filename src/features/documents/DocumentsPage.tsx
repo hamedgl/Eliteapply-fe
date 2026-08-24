@@ -524,7 +524,7 @@ export function DocumentDetailPage() {
 
   return (
     <div className="page document-detail-page">
-      <Link className="back" to="/app/documents">
+      <Link className="apps-back-link" to="/app/documents">
         <ArrowLeft aria-hidden="true" /> Documents
       </Link>
       <PageHeader

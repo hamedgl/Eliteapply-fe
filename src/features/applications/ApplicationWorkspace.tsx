@@ -372,7 +372,7 @@ export function ApplicationWorkspace() {
     <div className="page apps-page detail-page">
       <header className="detail-application-header">
         <div className="detail-header-topline">
-          <Link to="/app/applications" className="detail-back-link">
+          <Link to="/app/applications" className="apps-back-link">
             <ArrowLeft aria-hidden="true" /> Back to applications
           </Link>
           <div className="detail-header-actions">
@@ -3827,7 +3827,7 @@ function ReadOnlyCollaboratorWorkspace({
     <div className="page apps-page detail-page">
       <header className="detail-application-header">
         <div className="detail-header-topline">
-          <Link to="/app/applications" className="detail-back-link">
+          <Link to="/app/applications" className="apps-back-link">
             <ArrowLeft aria-hidden="true" /> Back to applications
           </Link>
           <WorkspacePageGuideButton />

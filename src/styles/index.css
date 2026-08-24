@@ -1479,15 +1479,6 @@ th {
   font-size: 0.875rem;
   font-weight: 600;
 }
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 1.5rem;
-}
-.back svg {
-  width: 16px;
-}
 .workspace-header {
   display: flex;
   align-items: flex-start;

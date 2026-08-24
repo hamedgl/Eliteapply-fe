@@ -196,7 +196,7 @@ export function NewInterviewPage() {
 
   return (
     <div className="page apps-page">
-      <Link className="iv-back" to="/app/interviews">
+      <Link className="apps-back-link" to="/app/interviews">
         <ArrowLeft aria-hidden="true" /> Practice history
       </Link>
       <PageHeader

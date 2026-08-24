@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Plus, Sparkles, X } from "lucide-react";
 import { Select } from "../../components/ui/select";
 import { AiNotice } from "../../components/common/AiNotice";
 import { ApiError } from "../../lib/api/errors";
@@ -570,8 +570,8 @@ export function ReferenceDetail() {
   return (
     <div className="page reference-detail-page">
       <div className="workspace-page-inline-heading">
-        <Link to="/app/references" className="apps-inline-link">
-          ← References
+        <Link to="/app/references" className="apps-back-link">
+          <ArrowLeft aria-hidden="true" /> References
         </Link>
         <WorkspacePageGuideButton />
       </div>
@@ -650,8 +650,8 @@ export function NewReference() {
     <div className="page">
       <div className="workspace-page-inline-heading">
         <div>
-          <Link to="/app/references" className="apps-inline-link">
-            ← References
+          <Link to="/app/references" className="apps-back-link">
+            <ArrowLeft aria-hidden="true" /> References
           </Link>
           <h1>Request reference</h1>
         </div>

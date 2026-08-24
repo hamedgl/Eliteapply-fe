@@ -1,23 +1,5 @@
 /* Interview practice — additions on top of the shared workspace design system. */
 
-.iv-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
-  color: var(--app-muted);
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.iv-back:hover {
-  color: var(--app-blue);
-}
-.iv-back svg {
-  width: 15px;
-  height: 15px;
-}
-
 .iv-form-error {
   margin: 0;
   color: var(--app-red);

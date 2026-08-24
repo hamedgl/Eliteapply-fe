@@ -59,16 +59,30 @@
   gap: 1rem;
 }
 
-.detail-back-link {
+/* Shared "return to the list" affordance for every detail/sub page — one
+   look app-wide instead of the five ad-hoc variants this replaced. */
+.apps-back-link {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   gap: 0.45rem;
+  margin-bottom: 0.5rem;
   color: var(--app-text);
   font-weight: 650;
+  text-decoration: none;
+  transition: color var(--app-duration) var(--app-ease);
 }
 
-.detail-back-link svg,
+.apps-back-link:hover {
+  color: var(--app-blue);
+}
+
+.apps-back-link svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
 .detail-inline-error svg,
 .detail-security-note svg,
 .detail-quiet-success svg {

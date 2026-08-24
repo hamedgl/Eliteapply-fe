@@ -342,7 +342,7 @@ function CatalogueDetail({ kind, id }: { kind: Kind; id: string }) {
 
   return (
     <div className="page apps-page catalogue-detail">
-      <Link className="back" to={`/app/catalogue?kind=${kind}`}>
+      <Link className="apps-back-link" to={`/app/catalogue?kind=${kind}`}>
         <ArrowLeft aria-hidden="true" /> Back to {kindLabel[kind].toLowerCase()}
       </Link>
       <PageHeader
