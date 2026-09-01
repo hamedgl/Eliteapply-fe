@@ -114,33 +114,29 @@ export function LandingPage() {
       <section className="phase-one-hero" id="main-content" tabIndex={-1}>
         <div className="phase-one-hero-copy">
           <p className="hero-category">
-            AI-Powered Scholarship Application Platform
+            Built for funded master&rsquo;s, PhD and fellowship applications
           </p>
           <h1>
-            Plan, write and submit stronger scholarship applications with AI.
+            Keep every scholarship application on track, from the first
+            requirement to the final submission.
           </h1>
           <p>
-            Turn every opportunity into a clear application plan with an{" "}
-            <strong className="hero-ai-term">
-              AI-powered scholarship writing assistant
-            </strong>
-            , intelligent evidence matching, and{" "}
-            <strong className="hero-ai-term">
-              AI feedback before submission
-            </strong>
-            —all while keeping your experience and voice authentic.
+            EliteApply breaks each prompt into a checklist, ties your evidence to
+            the claims it supports, and shows what is still missing before the
+            deadline. You write the application; it keeps track of the rest.
           </p>
           <div className="phase-one-actions">
             <Link className="landing-button" to="/register" reloadDocument>
-              Start with AI — Free <ArrowRight aria-hidden="true" />
+              Create your free workspace <ArrowRight aria-hidden="true" />
             </Link>
-            <a className="landing-button secondary" href="#how-it-works">
-              See how it works
+            <a className="landing-button secondary" href="#sample-workspace">
+              Try the sample workspace
             </a>
           </div>
           <p className="phase-one-assurance">
-            <span>AI-guided, evidence-based and always under your control</span>
-            <span>No credit card required</span>
+            <span>Free while in early access</span>
+            <span>No credit card</span>
+            <span>Your data stays yours</span>
           </p>
         </div>
         <HeroFocusPreview />
@@ -149,6 +145,8 @@ export function LandingPage() {
       <CredibilityStrip />
 
       <ProblemOutcome />
+
+      <WorkedExample />
 
       <section
         className="capabilities"
@@ -570,21 +568,21 @@ function CredibilityStrip() {
 
 const withoutItems = [
   "Deadlines spread across tabs, emails and calendars",
-  "Repeated requirements copied into notes",
-  "Drafts with unclear versions",
-  "Evidence and documents stored in different places",
-  "Reference requests followed up manually",
-  "Duplicate effort retyping details for every application",
-  "Final checks performed under pressure",
+  "The same requirements copied by hand into notes",
+  "Several drafts open and no clear latest version",
+  "Evidence and documents saved in different places",
+  "Reference requests you have to remember to chase",
+  "Retyping the same details for every application",
+  "Final checks done in a rush the night before",
 ] as const;
 
 const withItems = [
-  "AI turns scholarship requirements into actionable tasks",
-  "AI-powered writing assistant strengthens every statement",
-  "AI matches your evidence to each application requirement",
-  "Drafts, documents and references stay intelligently connected",
-  "AI flags missing information and unsupported claims",
-  "AI feedback improves your application before submission",
+  "Every requirement becomes a task you can check off",
+  "Each draft sits with the prompt it answers and the notes behind it",
+  "Your evidence links to the specific claims it supports",
+  "Drafts, documents and references stay attached to the right application",
+  "An AI check catches gaps and unsupported claims while there is time to fix them",
+  "A clarity pass on your writing before you submit, kept in your own words",
 ] as const;
 
 const withMediaTags = [
@@ -598,14 +596,15 @@ function ProblemOutcome() {
   return (
     <section className="problem-outcome" aria-labelledby="problem-title">
       <header className="problem-heading">
-        <p className="section-context">From scattered to AI-structured</p>
+        <p className="section-context">Where applications slip</p>
         <h2 id="problem-title">
-          Turn scholarship application <span>chaos</span> into an{" "}
-          <strong>AI-guided</strong> submission plan.
+          Applications fail on the <span>small missing pieces</span>, not the{" "}
+          <strong>big ideas</strong>.
         </h2>
         <p>
-          EliteApply combines intelligent planning, AI writing support and
-          pre-submission feedback—so you always know what to do next.
+          A funded application can list dozens of separate requirements across
+          essays, documents, references and eligibility rules. EliteApply keeps
+          every one of them in view.
         </p>
       </header>
       <div className="comparison-flow">
@@ -616,7 +615,7 @@ function ProblemOutcome() {
             </span>
             <div>
               <h3>Without EliteApply</h3>
-              <p>Disconnected. Manual. Stressful.</p>
+              <p>Everything in a different place, updated by hand.</p>
             </div>
           </header>
           <img
@@ -648,8 +647,8 @@ function ProblemOutcome() {
               <Check />
             </span>
             <div>
-              <h3>With EliteApply AI</h3>
-              <p>Guided. Connected. Submission-ready.</p>
+              <h3>With EliteApply</h3>
+              <p>One place, updated as you work.</p>
             </div>
           </header>
           <img
@@ -677,6 +676,78 @@ function ProblemOutcome() {
             ))}
           </ul>
         </article>
+      </div>
+    </section>
+  );
+}
+
+
+const workedExampleRequirements = [
+  { text: "Stay under the 800-word limit", state: "tracked" as const },
+  {
+    text: "One specific leadership experience",
+    note: "Debate society role is already in your evidence",
+    state: "linked" as const,
+  },
+  {
+    text: "A disagreement you handled, and what came of it",
+    note: "Reflection notes from that term are linked",
+    state: "linked" as const,
+  },
+  {
+    text: "What it changed about how you work with a team",
+    state: "open" as const,
+  },
+  { text: "A first draft", state: "missing" as const },
+];
+
+const workedExampleStatus = {
+  tracked: "Tracked",
+  linked: "Evidence linked",
+  open: "Needs your input",
+  missing: "Not started",
+};
+
+function WorkedExample() {
+  return (
+    <section className="worked-example" aria-labelledby="worked-example-title">
+      <header className="phase-one-section-heading">
+        <p className="section-context">One prompt, broken down</p>
+        <h2 id="worked-example-title">
+          Paste a prompt. Get back the list of things it asks for.
+        </h2>
+        <p>
+          One essay prompt an applicant might see, and the checklist EliteApply
+          pulls from it.
+        </p>
+      </header>
+      <div className="worked-example-grid">
+        <figure className="worked-example-prompt">
+          <figcaption>Essay prompt</figcaption>
+          <blockquote>
+            In up to 800 words, describe a time you led a group through
+            disagreement. Explain what you decided, what happened, and how it
+            shaped the way you work toward shared goals.
+          </blockquote>
+        </figure>
+        <ol className="worked-example-list">
+          {workedExampleRequirements.map((req) => (
+            <li key={req.text} className={`we-${req.state}`}>
+              <span className="we-mark" aria-hidden="true">
+                {req.state === "linked" ? (
+                  <Check />
+                ) : req.state === "missing" ? (
+                  <X />
+                ) : null}
+              </span>
+              <span className="we-body">
+                <strong>{req.text}</strong>
+                {req.note ? <small>{req.note}</small> : null}
+                <em>{workedExampleStatus[req.state]}</em>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
@@ -819,8 +890,9 @@ function StudentUseCases() {
           Built for serious applications at every stage.
         </h2>
         <p>
-          One flexible structure for different application types—without
-          pretending every process is identical.
+          Undergraduate awards, funded master&rsquo;s and PhD places,
+          fellowships and grants all work differently. The workspace fits around
+          each one rather than forcing a single template.
         </p>
       </header>
       <div className="use-case-layout">
@@ -1103,19 +1175,20 @@ function ProductNote() {
           Built around the real structure of applications.
         </h2>
         <p>
-          EliteApply connects requirements, evidence, written materials,
-          documents, references and deadlines so you can present your best work.
+          EliteApply holds the requirements, evidence, drafts, documents,
+          references and deadlines for each application in one place.
         </p>
         <p>
-          It does not promise outcomes, influence selection decisions or replace
-          your voice. You remain the author of your application.
+          It will not predict your chances or write the application for you.
+          Those stay with you and the selection committee.
         </p>
       </div>
       <aside>
         <span>Pricing</span>
-        <strong>Free to start while EliteApply is in early access.</strong>
+        <strong>Free while EliteApply is in early access.</strong>
         <p>
-          Paid plans are not currently available. No credit card is required.
+          Paid plans are not currently available, and nothing you build now is
+          tied to a plan later. No credit card is required.
         </p>
         <Link className="landing-button" to="/register" reloadDocument>
           Start free <ArrowRight aria-hidden="true" />
@@ -1231,7 +1304,7 @@ function PhaseOneFooter() {
         <Link to="/contact">Contact</Link>
       </nav>
       <div className="footer-bottom">
-        <span>© 2026 Executive Precision Era · EliteApply</span>
+        <span>© 2026 EliteApply</span>
         <Link to="/login" reloadDocument>
           Sign in
         </Link>

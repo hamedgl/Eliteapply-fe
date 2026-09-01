@@ -31,7 +31,7 @@ test("landing page stays self-contained and semantically ordered", async ({
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Plan, write and submit stronger scholarship applications with AI.",
+      name: "Keep every scholarship application on track, from the first requirement to the final submission.",
     }),
   ).toBeVisible();
   await expect(
@@ -324,7 +324,7 @@ test("marketing layout reflows without page overflow at supported widths", async
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Plan, write and submit stronger scholarship applications with AI.",
+        name: "Keep every scholarship application on track, from the first requirement to the final submission.",
       }),
     ).toBeVisible();
     expect(
