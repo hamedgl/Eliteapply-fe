@@ -77,9 +77,12 @@ export function LandingPage() {
       return;
     }
 
+    // The workflow section is often several viewports tall (especially on
+    // narrow screens), so a fractional threshold can never be met and the tour
+    // would never auto-advance. Trigger as soon as it is meaningfully on-screen.
     const observer = new IntersectionObserver(
       ([entry]) => setTourVisible(entry.isIntersecting),
-      { threshold: 0.35 },
+      { threshold: 0, rootMargin: "0px 0px -20% 0px" },
     );
     const section = guidedRef.current;
     if (section) observer.observe(section);
@@ -89,7 +92,9 @@ export function LandingPage() {
   useEffect(() => {
     if (tourPaused || tourHovered || !tourVisible || reduceMotion) return;
     const timer = window.setTimeout(
-      () => setActiveGuide((current) => (current + 1) % guideSteps.length),
+      // Cycle over the array the board actually indexes, not guideSteps (a
+      // separate list) — a length mismatch would push activeGuide out of range.
+      () => setActiveGuide((current) => (current + 1) % workflowStageDetails.length),
       4800,
     );
     return () => window.clearTimeout(timer);
@@ -452,7 +457,7 @@ function HeroFocusPreview() {
           className="hero-next-action"
           type="button"
           aria-expanded={actionPanelOpen}
-          aria-controls="hero-action-panel"
+          aria-controls={actionPanelOpen ? "hero-action-panel" : undefined}
           onClick={() => setActionPanelOpen((open) => !open)}
         >
           <ClipboardCheck aria-hidden="true" />
@@ -1284,7 +1289,8 @@ function GuidedWorkflowBoard({
   });
   const completedCount = stageTasks.filter((task) => task.done).length;
   const totalCount = stageTasks.length;
-  const completionPct = Math.round((completedCount / totalCount) * 100);
+  const completionPct =
+    totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const progress = baselineProgress.map((value, index) =>
     index === activeGuide ? completionPct : value,
   );
@@ -1302,10 +1308,14 @@ function GuidedWorkflowBoard({
   }
 
   function handleRailKeyDown(event: React.KeyboardEvent<HTMLOListElement>) {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    const count = workflowStageDetails.length;
+    let next: number;
+    if (event.key === "ArrowRight") next = (activeGuide + 1) % count;
+    else if (event.key === "ArrowLeft") next = (activeGuide - 1 + count) % count;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = count - 1;
+    else return;
     event.preventDefault();
-    const delta = event.key === "ArrowRight" ? 1 : -1;
-    const next = (activeGuide + delta + guideSteps.length) % guideSteps.length;
     onSelect(next);
     railRef.current
       ?.querySelector<HTMLButtonElement>(`#workflow-stage-tab-${next}`)
@@ -1465,7 +1475,7 @@ function GuidedWorkflowBoard({
                   <button
                     type="button"
                     aria-label={`Open ${item.title} stage`}
-                    aria-pressed={index === activeGuide}
+                    aria-current={index === activeGuide ? "step" : undefined}
                     onClick={() => onSelect(index)}
                   >
                     <span>{index + 1}</span>
