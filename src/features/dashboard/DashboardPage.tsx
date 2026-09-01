@@ -650,7 +650,11 @@ export function DashboardPage() {
                 </ul>
                 <div
                   className={`dashboard-stage-detail ${
-                    activeDonutStage ? "is-active" : "is-hint"
+                    activeDonutStage &&
+                    dashboard.applications_by_stage[activeDonutStage] !==
+                      undefined
+                      ? "is-active"
+                      : "is-hint"
                   }`}
                   id="application-stage-detail"
                   role="status"
@@ -1136,7 +1140,12 @@ const DEADLINE_KIND_LABELS: Record<Deadline["kind"], string> = {
 
 function toDeadlineEvent(deadline: Deadline, index: number): CalendarEvent {
   return {
-    id: `dashboard-deadline:${deadline.application_id || index}:${deadline.kind}`,
+    // One application can carry several deadlines of the same kind (e.g. two
+    // requirement_due), so key on the specific requirement/task and fall back to
+    // the list index to keep every event id unique.
+    id: `dashboard-deadline:${deadline.application_id || "app"}:${deadline.kind}:${
+      deadline.requirement_id ?? deadline.task_id ?? index
+    }`,
     title: deadline.application_title,
     description: DEADLINE_KIND_LABELS[deadline.kind] ?? "Deadline",
     startAt: deadline.due_at,

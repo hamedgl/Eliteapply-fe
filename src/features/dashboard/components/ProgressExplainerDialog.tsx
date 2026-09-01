@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import { Check, Circle, X } from "lucide-react";
 import type { ProfileCompletionBreakdown } from "../../../lib/api/platform";
+import { useModalDialog } from "../../../lib/dom-hooks";
 
 export type ExplainedStep = {
   label: string;
@@ -30,10 +32,13 @@ export function ProgressExplainerDialog({
   const guidePercent = steps.length
     ? Math.round((completed / steps.length) * 100)
     : 0;
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef, onClose);
 
   return (
     <div className="apps-dialog-backdrop" role="presentation" onClick={onClose}>
       <div
+        ref={panelRef}
         className="apps-dialog progress-explainer"
         role="dialog"
         aria-modal="true"
