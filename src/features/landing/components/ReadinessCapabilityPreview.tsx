@@ -281,7 +281,7 @@ export function ReadinessCapabilityPreview() {
             {readinessPct}%
           </strong>{" "}
           {readinessPct === 100
-            ? "ready for final submission! 🎉"
+            ? "ready for final submission"
             : "ready for final review"}
         </span>
         <small>

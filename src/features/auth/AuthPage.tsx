@@ -12,15 +12,17 @@ import "./auth-form.css";
 type Mode = "login" | "register" | "confirm" | "forgot";
 
 const copy = {
-  login: ["Welcome back", "Continue your applications with clarity."],
+  login: ["Welcome back", "Continue your applications with clarity.", "Sign in"],
   register: [
     "Create your EliteApply account",
     "Build one calm home for every application.",
+    "Create account",
   ],
-  confirm: ["Confirm your email", "Enter the code sent to your inbox."],
+  confirm: ["Confirm your email", "Enter the code sent to your inbox.", "Confirm email"],
   forgot: [
     "Reset your password",
     "We’ll send a one-time code to your email.",
+    "Send reset code",
   ],
 } as const;
 
@@ -104,7 +106,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
     }
   }
 
-  const [title, subtitle] = copy[mode];
+  const [title, subtitle, submitLabel] = copy[mode];
 
   useEffect(() => {
     document.title = `${title} | EliteApply`;
@@ -118,7 +120,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         </Link>
         <div>
           <h2>
-            Your applications
+            Your applications.
             <br />
             One clear system.
           </h2>
@@ -246,7 +248,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
             </p>
           )}
           <button className="primary" type="submit" disabled={busy}>
-            {busy ? "Please wait…" : title}
+            {busy ? "Please wait…" : submitLabel}
           </button>
           <div className="auth-links">
             {mode === "login" ? (

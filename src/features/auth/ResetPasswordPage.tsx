@@ -22,7 +22,7 @@ function AuthBrand() {
       </Link>
       <div>
         <h2>
-          Your applications
+          Your applications.
           <br />
           One clear system.
         </h2>

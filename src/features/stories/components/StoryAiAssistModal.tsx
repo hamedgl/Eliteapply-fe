@@ -173,9 +173,9 @@ export function StoryAiAssistModal({
             </div>
           ) : (
             <div className="ai-assist-result">
-              <h4>AI Suggestion</h4>
+              <h4>AI suggestion</h4>
               {result.explanation ? (
-                <p className="apps-dialog-subtext story-ai-explanation">💡 {result.explanation}</p>
+                <p className="apps-dialog-subtext story-ai-explanation">{result.explanation}</p>
               ) : null}
 
               <div className="story-ai-compare">

@@ -290,7 +290,7 @@ export function ReferencesCapabilityPreview() {
                   className="tracker-filter-chip"
                   style={{ fontSize: "0.72rem", background: "var(--m-canvas)" }}
                 >
-                  📄 {ctx}
+                  {ctx}
                 </span>
               ))}
             </div>
@@ -310,7 +310,7 @@ export function ReferencesCapabilityPreview() {
               {selectedRef.status === "Confirmed"
                 ? "✓ Reference is confirmed and ready."
                 : selectedRef.status === "Follow-up due"
-                  ? "⚠️ Overdue for follow-up message."
+                  ? "Follow-up is overdue."
                   : "Request portal is active."}
             </span>
             <div style={{ display: "flex", gap: "0.5rem" }}>

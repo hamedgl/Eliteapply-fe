@@ -97,6 +97,10 @@ button,
 input {
   font: inherit;
 }
+/* Fieldsets default to min-width: min-content, so a long option label overflows the page. */
+fieldset {
+  min-width: 0;
+}
 input[type="checkbox"],
 input[type="radio"] {
   width: auto;
@@ -821,6 +825,11 @@ small {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   align-items: start;
+}
+@media (max-width: 480px) {
+  .form-row-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .settings-form .form-actions {
   display: flex;
@@ -6959,7 +6968,8 @@ th {
 }
 
 .billing-plans article > small {
-  grid-column: 2;
+  grid-column: 1 / -1;
+  max-width: 72ch;
   color: var(--app-muted);
 }
 
@@ -11743,6 +11753,8 @@ select option {
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
+  flex: none;
 }
 
 .app-shell .settings header nav a:hover {
@@ -11841,13 +11853,15 @@ select option {
   display: flex;
 }
 .password-field input {
-  padding-right: 2.6rem;
+  flex: 1;
+  min-width: 0;
+  padding-right: 2.9rem;
 }
 .password-toggle {
   position: absolute;
   inset-block: 0;
-  inset-inline-end: 0.7rem;
-  width: 18px;
+  inset-inline-end: 0.2rem;
+  width: 2.5rem;
   border: 0;
   background: transparent;
   padding: 0;
@@ -16077,7 +16091,7 @@ body:has(.admin-shell) {
   gap: 0.8rem;
   border-bottom: 1px solid var(--m-line);
 }
-.mkt2-pricing-body > article svg {
+.mkt2-pricing-body > article li svg {
   width: 19px;
   color: var(--m-success);
 }
@@ -19929,7 +19943,7 @@ body:has(.admin-shell) {
 }
 .tool-comparison table {
   width: 100%;
-  min-width: 760px;
+  min-width: 620px;
   border-collapse: separate;
   border-spacing: 0;
   color: var(--m-text-strong);
@@ -19937,8 +19951,9 @@ body:has(.admin-shell) {
 }
 .tool-comparison th,
 .tool-comparison td {
-  min-width: 116px;
-  padding: 0.85rem;
+  min-width: 96px;
+  padding: 0.75rem;
+  white-space: normal;
   border: 1px solid var(--m-line);
   text-align: left;
   vertical-align: middle;
@@ -20253,6 +20268,7 @@ body:has(.admin-shell) {
   grid-column: 1 / -1;
   padding-top: 1.5rem;
   display: flex;
+  align-items: center;
   justify-content: space-between;
   color: var(--m-inverse-muted);
   border-top: 1px solid #ffffff2e;

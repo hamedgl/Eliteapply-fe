@@ -693,12 +693,6 @@
 }
 
 @media (max-width: 640px) {
-  .docs-page .apps-header-actions,
-  .docs-page .apps-header-actions > button,
-  .document-detail-page .apps-header-actions,
-  .document-detail-page .apps-header-actions > button {
-    width: 100%;
-  }
   .docs-scan-panel {
     padding: 1rem;
   }

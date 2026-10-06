@@ -329,7 +329,7 @@ function TrackerProof() {
     if (nextIncomplete) {
       toggleRequirement(app.id, nextIncomplete.id);
     } else {
-      setToastMessage(`All requirements for ${app.name} are already complete! 🎉`);
+      setToastMessage(`All requirements for ${app.name} are already complete.`);
     }
   }
 
@@ -1040,7 +1040,7 @@ function ReadinessProof() {
         <div>
           <strong>
             {scorePercent === 100
-              ? "100% Ready for final submission! 🎉"
+              ? "Ready for final submission"
               : "Work still needs attention"}
           </strong>
           <div className="mkt2-progress-track">
@@ -1369,9 +1369,9 @@ const STUDENT_CASES: StudentCaseData[] = [
         detail: "STEM Olympiad Medal, Debate Society Captain, 120 Hrs Volunteering",
       },
       connectedFeatures: [
-        { name: "Requirements", path: "/features/requirements" },
-        { name: "Evidence Vault", path: "/features/evidence" },
-        { name: "Readiness Check", path: "/features/readiness" },
+        { name: "Requirements", path: "/features/scholarship-application-tracker" },
+        { name: "Evidence Vault", path: "/features/document-organiser" },
+        { name: "Readiness Check", path: "/features/submission-readiness" },
       ],
     },
   },
@@ -1415,9 +1415,9 @@ const STUDENT_CASES: StudentCaseData[] = [
         detail: "Draft 3 active · AI Polish verified · Authorship intact",
       },
       connectedFeatures: [
-        { name: "Statement Workspace", path: "/features/writing" },
-        { name: "Document Organiser", path: "/features/documents" },
-        { name: "Tracker", path: "/features/tracker" },
+        { name: "Statement Workspace", path: "/features/personal-statement-workspace" },
+        { name: "Document Organiser", path: "/features/document-organiser" },
+        { name: "Tracker", path: "/features/scholarship-application-tracker" },
       ],
     },
   },
@@ -1461,9 +1461,9 @@ const STUDENT_CASES: StudentCaseData[] = [
         detail: "Prof. H. Vance (Submitted) · Dr. A. Chen (Submitted)",
       },
       connectedFeatures: [
-        { name: "Writing Workspace", path: "/features/writing" },
-        { name: "Reference Tracker", path: "/features/references" },
-        { name: "Organiser", path: "/features/organiser" },
+        { name: "Writing Workspace", path: "/features/personal-statement-workspace" },
+        { name: "Reference Tracker", path: "/features/reference-tracking" },
+        { name: "Organiser", path: "/scholarship-application-organiser" },
       ],
     },
   },
@@ -1507,9 +1507,9 @@ const STUDENT_CASES: StudentCaseData[] = [
         detail: "Provider: Oct 15 23:59 CEST · Local: Oct 15 22:59 UTC+1",
       },
       connectedFeatures: [
-        { name: "Deadlines & Timezone", path: "/features/deadlines" },
-        { name: "Document Organiser", path: "/features/documents" },
-        { name: "Readiness Review", path: "/features/readiness" },
+        { name: "Deadlines & Timezone", path: "/scholarship-deadline-tracker" },
+        { name: "Document Organiser", path: "/features/document-organiser" },
+        { name: "Readiness Review", path: "/features/submission-readiness" },
       ],
     },
   },
@@ -1553,9 +1553,9 @@ const STUDENT_CASES: StudentCaseData[] = [
         detail: "5 of 5 dimensions clear · Final readiness check complete",
       },
       connectedFeatures: [
-        { name: "Readiness Review", path: "/features/readiness" },
-        { name: "Evidence Vault", path: "/features/evidence" },
-        { name: "Requirements", path: "/features/requirements" },
+        { name: "Readiness Review", path: "/features/submission-readiness" },
+        { name: "Evidence Vault", path: "/features/document-organiser" },
+        { name: "Requirements", path: "/features/scholarship-application-tracker" },
       ],
     },
   },

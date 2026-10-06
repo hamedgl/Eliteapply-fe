@@ -427,7 +427,7 @@ export function DocumentsCapabilityPreview() {
           >
             <span style={{ fontSize: "0.75rem", color: "var(--m-muted)" }}>
               {selectedDoc.status === "Update needed"
-                ? "⚠️ Needs newer document version for 2026 application cycle."
+                ? "Needs a newer version for the 2026 application cycle."
                 : "Document is connected and verified."}
             </span>
             <button

@@ -48,17 +48,17 @@ export function StoryCard({
   const menuItems: OverflowMenuItem[] = [
     { key: "edit", label: "Edit", icon: Pencil, onClick: onEdit },
     ...(onAiAssist
-      ? [{ key: "ai_assist", label: "AI Polish & Assist", icon: Sparkles, onClick: onAiAssist }]
+      ? [{ key: "ai_assist", label: "AI polish and assist", icon: Sparkles, onClick: onAiAssist }]
       : []),
     ...(onLinkEntities
-      ? [{ key: "link_entities", label: "Link Apps & Docs", icon: Link2, onClick: onLinkEntities }]
+      ? [{ key: "link_entities", label: "Link applications and documents", icon: Link2, onClick: onLinkEntities }]
       : []),
     { key: "duplicate", label: "Duplicate", icon: Copy, onClick: onDuplicate },
     { key: "divider1", divider: true },
     ...(isArchived && onUnarchive
-      ? [{ key: "unarchive", label: "Unarchive Story", icon: ArchiveRestore, onClick: onUnarchive }]
+      ? [{ key: "unarchive", label: "Unarchive story", icon: ArchiveRestore, onClick: onUnarchive }]
       : !isArchived && onArchive
-        ? [{ key: "archive", label: "Archive Story", icon: Archive, onClick: onArchive }]
+        ? [{ key: "archive", label: "Archive story", icon: Archive, onClick: onArchive }]
         : []),
     { key: "divider2", divider: true },
     { key: "delete", label: "Delete", icon: Trash2, danger: true, onClick: onDelete },
@@ -91,7 +91,8 @@ export function StoryCard({
           </span>
           {linkedAppsCount > 0 || linkedDocsCount > 0 ? (
             <span>
-              🔗 {linkedAppsCount} app{linkedAppsCount === 1 ? "" : "s"}, {linkedDocsCount} doc{linkedDocsCount === 1 ? "" : "s"}
+              <Link2 aria-hidden="true" />
+              {linkedAppsCount} app{linkedAppsCount === 1 ? "" : "s"}, {linkedDocsCount} doc{linkedDocsCount === 1 ? "" : "s"}
             </span>
           ) : null}
           <span>
@@ -157,7 +158,7 @@ export function StoryCard({
             type="button"
             className="apps-row-open story-ai-assist-button"
             onClick={onAiAssist}
-            title="AI Polish & Assist"
+            title="AI polish and assist"
           >
             <Sparkles aria-hidden="true" />
             AI Assist

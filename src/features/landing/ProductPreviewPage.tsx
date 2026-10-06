@@ -14,6 +14,8 @@ import {
   Link2,
   ListChecks,
   LayoutDashboard,
+  List,
+  ListOrdered,
   MapPin,
   Pause,
   PenLine,
@@ -845,8 +847,8 @@ function WritingDemo() {
           <span>H2</span>
           <b>B</b>
           <em>I</em>
-          <span>☷</span>
-          <span>☰</span>
+          <ListOrdered aria-hidden="true" size={15} />
+          <List aria-hidden="true" size={15} />
         </div>
         <article>
           <h3>Advancing equitable access through research and community.</h3>

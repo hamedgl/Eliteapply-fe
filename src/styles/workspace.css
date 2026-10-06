@@ -1480,8 +1480,10 @@
 }
 
 @media (max-width: 900px) {
+  /* backdrop-filter would make this the containing block for the fixed mobile primary action. */
   .detail-application-header {
     position: static;
+    backdrop-filter: none;
   }
   .detail-tabs {
     top: var(--app-navigation-height);
@@ -1756,16 +1758,9 @@
     border-color 160ms ease,
     box-shadow 160ms ease;
 }
-.apps-summary-item:hover {
+button.apps-summary-item:hover {
   border-color: var(--app-line-strong);
   box-shadow: 0 2px 8px rgb(16 27 59 / 6%);
-}
-.apps-summary-item:disabled {
-  cursor: default;
-}
-.apps-summary-item:disabled:hover {
-  border-color: var(--app-line);
-  box-shadow: none;
 }
 .apps-summary-item svg {
   grid-row: 1 / 3;
@@ -1794,7 +1789,7 @@
   gap: 0.65rem;
   margin-top: 1.5rem;
   padding: 0.75rem 0.85rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 .apps-toolbar > *:not(.apps-toolbar-search) {
   flex: none;
@@ -3326,6 +3321,9 @@ label:has(> :is(input, select, textarea):required) > span:first-child::after,
   .apps-toolbar .view-toggle {
     margin-right: 0;
     overflow-x: auto;
+  }
+  .apps-toolbar-search {
+    flex-basis: auto;
   }
   .apps-quick-filter,
   .apps-sort {

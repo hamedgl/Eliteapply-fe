@@ -142,14 +142,6 @@
   border-color: color-mix(in srgb, var(--app-blue) 25%, var(--app-line));
   background: color-mix(in srgb, var(--app-blue-soft) 48%, var(--app-surface));
 }
-.notif-card.is-unread::before {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: 3px;
-  background: var(--app-blue);
-  content: "";
-}
 
 .notif-unread-dot {
   display: block;
