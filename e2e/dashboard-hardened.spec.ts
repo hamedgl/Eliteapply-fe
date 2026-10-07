@@ -117,7 +117,7 @@ test("dashboard turns empty backend state into clear next actions", async ({
   ).toHaveAttribute("href", "/app/academic-profile");
   await expect(
     page.getByRole("link", { name: "Add your first application" }),
-  ).toHaveAttribute("href", "/app/applications");
+  ).toHaveAttribute("href", "/app/applications?create=1");
   await expect(
     page.getByRole("progressbar", { name: "Academic profile completion" }),
   ).toHaveAttribute("aria-valuenow", "0");
@@ -264,7 +264,7 @@ test("mobile dashboard keeps the progress gauge and drawer contained", async ({
     name: "Academic profile completion",
   });
   const title = page.getByRole("heading", {
-    name: "Build your academic profile",
+    name: "Complete your academic profile",
   });
   const [ringBox, titleBox] = await Promise.all([
     ring.boundingBox(),

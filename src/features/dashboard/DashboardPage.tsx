@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowRight,
   CalendarDays,
   Check,
@@ -8,7 +9,6 @@ import {
   FileText,
   FolderKanban,
   Plus,
-  Sparkles,
   X,
 } from "lucide-react";
 import {
@@ -20,7 +20,6 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import dashboardFocusIllustration from "../../assets/dashboard-focus-illustration.webp";
-import recommendationIllustration from "../../assets/recommendation-illustration.webp";
 import {
   platformApi,
   safeDashboard,
@@ -102,6 +101,9 @@ function assignStageColors(stages: Record<string, number>) {
   return colors;
 }
 
+// `?create=1` opens the new-application form directly instead of the list.
+const NEW_APPLICATION_HREF = "/app/applications?create=1";
+
 const recommendationRoutes: Record<
   string,
   { title: string; detail: string; href: string; action: string }
@@ -117,7 +119,7 @@ const recommendationRoutes: Record<
     title: "Add your first application",
     detail:
       "Capture the opportunity and deadline, then turn its requirements into a clear plan.",
-    href: "/app/applications",
+    href: NEW_APPLICATION_HREF,
     action: "Add application",
   },
   upload_documents: {
@@ -492,7 +494,6 @@ export function DashboardPage() {
   // The ring reports the server's academic-profile score; the guide counts its
   // own steps. Showing the step count as "profile progress" conflated the two.
   const profilePercent = dashboard.profile_completion_percent; // already clamped by safeDashboard
-  const profileComplete = profilePercent >= 100;
   const setupProgressPending =
     profileQuery.isPending ||
     documentsQuery.isPending ||
@@ -512,12 +513,283 @@ export function DashboardPage() {
     storiesQuery.isError ||
     calendarFeedQuery.isError;
 
+  const overviewPanel = (
+    <DashboardSurface
+      icon={FolderKanban}
+      title="Applications overview"
+      action={
+        <Link to="/app/applications">
+          View all <ArrowRight aria-hidden="true" />
+        </Link>
+      }
+    >
+      {applicationCount > 0 ? (
+        <div className="dashboard-donut-row">
+          <div className="dashboard-donut">
+            <ApplicationsDonut
+              stages={dashboard.applications_by_stage}
+              total={applicationCount}
+              colors={stageColors}
+              activeStage={activeDonutStage}
+              onStageChange={setActiveDonutStage}
+            />
+            <div className="dashboard-donut-copy">
+              <strong>{applicationCount}</strong>
+              <span>Total</span>
+            </div>
+          </div>
+          <div className="dashboard-stage-panel">
+            <ul className="dashboard-legend">
+              {Object.entries(dashboard.applications_by_stage)
+                .sort((a, b) => b[1] - a[1])
+                .map(([stage, count]) => (
+                  <li key={stage}>
+                    <button
+                      type="button"
+                      className={
+                        activeDonutStage === stage ? "is-active" : undefined
+                      }
+                      aria-pressed={activeDonutStage === stage}
+                      onClick={() => setActiveDonutStage(stage)}
+                      onFocus={() => setActiveDonutStage(stage)}
+                      onBlur={() => setActiveDonutStage(null)}
+                      onMouseEnter={() => setActiveDonutStage(stage)}
+                      onMouseLeave={() => setActiveDonutStage(null)}
+                    >
+                      <i
+                        style={{ background: stageColors.get(stage) }}
+                        aria-hidden="true"
+                      />
+                      <span>{humanize(stage)}</span>
+                      <strong>{count}</strong>
+                    </button>
+                  </li>
+                ))}
+            </ul>
+            <div
+              className={`dashboard-stage-detail ${
+                activeDonutStage &&
+                dashboard.applications_by_stage[activeDonutStage] !==
+                  undefined
+                  ? "is-active"
+                  : "is-hint"
+              }`}
+              id="application-stage-detail"
+              role="status"
+              aria-live="polite"
+            >
+              {activeDonutStage &&
+              dashboard.applications_by_stage[activeDonutStage] !==
+                undefined ? (
+                <>
+                  <div>
+                    <i
+                      style={{
+                        background: stageColors.get(activeDonutStage),
+                      }}
+                      aria-hidden="true"
+                    />
+                    <strong>{humanize(activeDonutStage)}</strong>
+                    <span>
+                      {dashboard.applications_by_stage[activeDonutStage]} of{" "}
+                      {applicationCount}
+                    </span>
+                  </div>
+                  <p>{stageDescription(activeDonutStage)}</p>
+                </>
+              ) : (
+                <p>Hover, tap or focus a colour to see what its stage means.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <EmptyState
+          icon={FolderKanban}
+          title="Start with one application"
+          detail="Add a scholarship, programme, fellowship or grant. EliteApply will keep its deadline and requirements together."
+          href={NEW_APPLICATION_HREF}
+          action="Add your first application"
+        />
+      )}
+    </DashboardSurface>
+  );
+
+  const snapshotPanel = (
+    <section className="dashboard-snapshot">
+      <header>
+        <h2>Workspace snapshot</h2>
+      </header>
+      <div className="dashboard-snapshot-grid">
+        <StatTile
+          icon={AlertTriangle}
+          label="Overdue tasks"
+          value={dashboard.tasks.overdue}
+          href="/app/applications"
+          urgent={dashboard.tasks.overdue > 0}
+        />
+        <StatTile
+          icon={CheckSquare2}
+          label="Open tasks"
+          value={dashboard.open_tasks}
+          href="/app/applications"
+        />
+        <StatTile
+          icon={FileText}
+          label="Documents to review"
+          value={dashboard.missing_documents}
+          href="/app/documents"
+        />
+        <StatTile
+          icon={CalendarDays}
+          label="Upcoming deadlines"
+          value={dashboard.upcoming_deadlines.length}
+          href="/app/reminders?view=calendar"
+        />
+      </div>
+    </section>
+  );
+
+  const deadlinesPanel = (
+    <DashboardSurface
+      icon={CalendarDays}
+      title="Upcoming deadlines"
+      action={
+        dashboard.upcoming_deadlines.length > 0 ? (
+          <Link to="/app/reminders?view=calendar">
+            Open calendar <ArrowRight aria-hidden="true" />
+          </Link>
+        ) : null
+      }
+    >
+      {deadlineEvents.length > 0 ? (
+        <EventManager
+          compact
+          events={deadlineEvents}
+          initialDate={firstDeadline}
+          onEventSelect={(event) => {
+            const href = (event.source as { href?: string })?.href;
+            if (href) navigate(href);
+          }}
+        />
+      ) : (
+        <EmptyState
+          icon={CalendarDays}
+          title="No deadlines to manage yet"
+          detail="Deadlines will appear here as soon as you add them to an application."
+          href="/app/applications"
+          action="Go to applications"
+        />
+      )}
+    </DashboardSurface>
+  );
+
+  const guidePanel = (
+    <section
+      className="setup-checklist"
+      aria-labelledby="workspace-guide-title"
+    >
+      <header>
+        <h2 id="workspace-guide-title">Workspace guide</h2>
+        <span aria-live="polite">
+          {setupProgressPending
+            ? "Checking progress…"
+            : `${completedSetupItems}/${totalSetupItems} complete`}
+        </span>
+      </header>
+      <GuidePhaseProgress
+        pages={setupPages}
+        activeIndex={visiblePhaseIndex}
+      />
+      <div className="setup-page-intro">
+        <div aria-live="polite">
+          <span>
+            Phase {visiblePhaseIndex + 1} of {setupPages.length}
+          </span>
+          <h3>{setupPage.title}</h3>
+        </div>
+        <div className="setup-page-controls">
+          <button
+            type="button"
+            aria-label="Previous"
+            disabled={visiblePhaseIndex === 0}
+            onClick={() =>
+              setSelectedPhaseIndex(Math.max(0, visiblePhaseIndex - 1))
+            }
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next"
+            disabled={visiblePhaseIndex === setupPages.length - 1}
+            onClick={() =>
+              setSelectedPhaseIndex(
+                Math.min(setupPages.length - 1, visiblePhaseIndex + 1),
+              )
+            }
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      {setupPage.items.map((item) => (
+        <SetupRow {...item} key={item.label} />
+      ))}
+      {setupProgressError ? (
+        <div className="setup-sync-error" role="alert">
+          <p>Some progress could not be checked.</p>
+          <button
+            type="button"
+            onClick={() => {
+              if (profileQuery.isError) void profileQuery.refetch();
+              if (documentsQuery.isError) void documentsQuery.refetch();
+              if (writingQuery.isError) void writingQuery.refetch();
+              if (referencesQuery.isError) void referencesQuery.refetch();
+              if (interviewsQuery.isError) void interviewsQuery.refetch();
+              if (savedSearchesQuery.isError) void savedSearchesQuery.refetch();
+              if (storiesQuery.isError) void storiesQuery.refetch();
+              if (calendarFeedQuery.isError) void calendarFeedQuery.refetch();
+            }}
+            disabled={
+              profileQuery.isFetching ||
+              documentsQuery.isFetching ||
+              writingQuery.isFetching ||
+              referencesQuery.isFetching ||
+              interviewsQuery.isFetching ||
+              savedSearchesQuery.isFetching ||
+              storiesQuery.isFetching ||
+              calendarFeedQuery.isFetching
+            }
+          >
+            {profileQuery.isFetching ||
+            documentsQuery.isFetching ||
+            writingQuery.isFetching ||
+            referencesQuery.isFetching ||
+            interviewsQuery.isFetching ||
+            savedSearchesQuery.isFetching ||
+            storiesQuery.isFetching ||
+            calendarFeedQuery.isFetching
+              ? "Checking…"
+              : "Retry progress check"}
+          </button>
+        </div>
+      ) : null}
+      <button
+        type="button"
+        className="setup-view-all"
+        onClick={() => setShowAllSteps(true)}
+      >
+        View all steps <ArrowRight aria-hidden="true" />
+      </button>
+    </section>
+  );
+
   return (
     <div className="page dashboard">
       <SampleDataNotice />
       <header className="dashboard-header">
         <div>
-          <p className="dashboard-context">Application workspace</p>
           <h1>
             {greeting()}
             {firstName ? `, ${firstName}` : ""}
@@ -555,7 +827,7 @@ export function DashboardPage() {
             }
           />
           <WorkspacePageGuideButton />
-          <Link className="primary dashboard-add" to="/app/applications">
+          <Link className="primary dashboard-add" to={NEW_APPLICATION_HREF}>
             <Plus aria-hidden="true" /> Add application
           </Link>
         </div>
@@ -565,19 +837,11 @@ export function DashboardPage() {
         <ProfileProgressRing percent={profilePercent} />
         <div className="dashboard-focus-copy">
           <span>Next responsible action</span>
-          <h2 id="profile-title">
-            {profileComplete
-              ? "Your academic profile is ready"
-              : "Build your academic profile"}
-          </h2>
-          <p>
-            {profileComplete
-              ? "Review it before using the profile across new applications."
-              : "Add your education and academic history once, then reuse it across applications."}
-          </p>
+          <h2 id="profile-title">{recommendation.title}</h2>
+          <p>{recommendation.detail}</p>
           <div className="dashboard-focus-actions">
-            <Link className="dashboard-focus-primary" to="/app/academic-profile">
-              {profileComplete ? "Review profile" : "Continue profile"}
+            <Link className="dashboard-focus-primary" to={recommendation.href}>
+              {recommendation.action}
               <ArrowRight aria-hidden="true" />
             </Link>
             <button
@@ -595,155 +859,26 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <div className="dashboard-summary-row">
-        <DashboardSurface
-          icon={FolderKanban}
-          title="Applications overview"
-          action={
-            <Link to="/app/applications">
-              View all <ArrowRight aria-hidden="true" />
-            </Link>
-          }
-        >
-          {applicationCount > 0 ? (
-            <div className="dashboard-donut-row">
-              <div className="dashboard-donut">
-                <ApplicationsDonut
-                  stages={dashboard.applications_by_stage}
-                  total={applicationCount}
-                  colors={stageColors}
-                  activeStage={activeDonutStage}
-                  onStageChange={setActiveDonutStage}
-                />
-                <div className="dashboard-donut-copy">
-                  <strong>{applicationCount}</strong>
-                  <span>Total</span>
-                </div>
-              </div>
-              <div className="dashboard-stage-panel">
-                <ul className="dashboard-legend">
-                  {Object.entries(dashboard.applications_by_stage)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([stage, count]) => (
-                      <li key={stage}>
-                        <button
-                          type="button"
-                          className={
-                            activeDonutStage === stage ? "is-active" : undefined
-                          }
-                          aria-pressed={activeDonutStage === stage}
-                          onClick={() => setActiveDonutStage(stage)}
-                          onFocus={() => setActiveDonutStage(stage)}
-                          onBlur={() => setActiveDonutStage(null)}
-                          onMouseEnter={() => setActiveDonutStage(stage)}
-                          onMouseLeave={() => setActiveDonutStage(null)}
-                        >
-                          <i
-                            style={{ background: stageColors.get(stage) }}
-                            aria-hidden="true"
-                          />
-                          <span>{humanize(stage)}</span>
-                          <strong>{count}</strong>
-                        </button>
-                      </li>
-                    ))}
-                </ul>
-                <div
-                  className={`dashboard-stage-detail ${
-                    activeDonutStage &&
-                    dashboard.applications_by_stage[activeDonutStage] !==
-                      undefined
-                      ? "is-active"
-                      : "is-hint"
-                  }`}
-                  id="application-stage-detail"
-                  role="status"
-                  aria-live="polite"
-                >
-                  {activeDonutStage &&
-                  dashboard.applications_by_stage[activeDonutStage] !==
-                    undefined ? (
-                    <>
-                      <div>
-                        <i
-                          style={{
-                            background: stageColors.get(activeDonutStage),
-                          }}
-                          aria-hidden="true"
-                        />
-                        <strong>{humanize(activeDonutStage)}</strong>
-                        <span>
-                          {dashboard.applications_by_stage[activeDonutStage]} of{" "}
-                          {applicationCount}
-                        </span>
-                      </div>
-                      <p>{stageDescription(activeDonutStage)}</p>
-                    </>
-                  ) : (
-                    <p>Hover, tap or focus a colour to see what its stage means.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <EmptyState
-              icon={FolderKanban}
-              title="Start with one application"
-              detail="Add a scholarship, programme, fellowship or grant. EliteApply will keep its deadline and requirements together."
-              href="/app/applications"
-              action="Add your first application"
-            />
-          )}
-        </DashboardSurface>
-
-        <section className="dashboard-snapshot">
-          <header>
-            <h2>Workspace snapshot</h2>
-            <span>Live account data</span>
-          </header>
-          <div className="dashboard-snapshot-grid">
-            <StatTile
-              icon={FolderKanban}
-              label="Applications"
-              value={applicationCount}
-            />
-            <StatTile
-              icon={CheckSquare2}
-              label="Open tasks"
-              value={dashboard.open_tasks}
-            />
-            <StatTile
-              icon={FileText}
-              label="Documents to review"
-              value={dashboard.missing_documents}
-            />
-            <StatTile
-              icon={CalendarDays}
-              label="Upcoming deadlines"
-              value={dashboard.upcoming_deadlines.length}
-            />
+      {applicationCount > 0 ? (
+        <>
+          <div className="dashboard-priority-row">
+            <ApplicationReadinessCard />
+            {deadlinesPanel}
           </div>
-        </section>
-
-        <section className="dashboard-recommendation">
-          <span className="dashboard-recommendation-label">
-            <Sparkles aria-hidden="true" /> Recommended next step
-          </span>
-          <h2>{recommendation.title}</h2>
-          <p>{recommendation.detail}</p>
-          <Link className="secondary-action" to={recommendation.href}>
-            {recommendation.action} <ArrowRight aria-hidden="true" />
-          </Link>
-          <img
-            className="dashboard-recommendation-art"
-            src={recommendationIllustration}
-            alt=""
-            width={140}
-            height={140}
-            aria-hidden="true"
-          />
-        </section>
-      </div>
+          <div className="dashboard-top-row">
+            {overviewPanel}
+            {snapshotPanel}
+            {guidePanel}
+          </div>
+        </>
+      ) : (
+        // A new account has no deadlines, readiness or counts to show yet, so
+        // lead with the guide instead of a wall of empty panels.
+        <div className="dashboard-top-row dashboard-pair-row">
+          {guidePanel}
+          {overviewPanel}
+        </div>
+      )}
 
       {recommendationsQuery.data?.items.length ? (
         <section className="dashboard-snapshot dashboard-matches">
@@ -762,140 +897,6 @@ export function DashboardPage() {
         </section>
       ) : null}
 
-      <div className="dashboard-top-row">
-        <DashboardSurface
-          icon={CalendarDays}
-          title="Upcoming deadlines"
-          action={
-            dashboard.upcoming_deadlines.length > 0 ? (
-              <Link to="/app/reminders?view=calendar">
-                Open calendar <ArrowRight aria-hidden="true" />
-              </Link>
-            ) : null
-          }
-        >
-          {deadlineEvents.length > 0 ? (
-            <EventManager
-              compact
-              events={deadlineEvents}
-              initialDate={firstDeadline}
-              onEventSelect={(event) => {
-                const href = (event.source as { href?: string })?.href;
-                if (href) navigate(href);
-              }}
-            />
-          ) : (
-            <EmptyState
-              icon={CalendarDays}
-              title="No deadlines to manage yet"
-              detail="Deadlines will appear here as soon as you add them to an application."
-              href="/app/applications"
-              action="Go to applications"
-            />
-          )}
-        </DashboardSurface>
-
-        <ApplicationReadinessCard />
-
-        <section
-          className="setup-checklist"
-          aria-labelledby="workspace-guide-title"
-        >
-          <header>
-            <h2 id="workspace-guide-title">Workspace guide</h2>
-            <span aria-live="polite">
-              {setupProgressPending
-                ? "Checking progress…"
-                : `${completedSetupItems}/${totalSetupItems} complete`}
-            </span>
-          </header>
-          <GuidePhaseProgress
-            pages={setupPages}
-            activeIndex={visiblePhaseIndex}
-          />
-          <div className="setup-page-intro">
-            <div aria-live="polite">
-              <span>
-                Phase {visiblePhaseIndex + 1} of {setupPages.length}
-              </span>
-              <h3>{setupPage.title}</h3>
-            </div>
-            <div className="setup-page-controls">
-              <button
-                type="button"
-                aria-label="Previous"
-                disabled={visiblePhaseIndex === 0}
-                onClick={() =>
-                  setSelectedPhaseIndex(Math.max(0, visiblePhaseIndex - 1))
-                }
-              >
-                <ChevronRight aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label="Next"
-                disabled={visiblePhaseIndex === setupPages.length - 1}
-                onClick={() =>
-                  setSelectedPhaseIndex(
-                    Math.min(setupPages.length - 1, visiblePhaseIndex + 1),
-                  )
-                }
-              >
-                <ChevronRight aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          {setupPage.items.map((item) => (
-            <SetupRow {...item} key={item.label} />
-          ))}
-          {setupProgressError ? (
-            <div className="setup-sync-error" role="alert">
-              <p>Some progress could not be checked.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (profileQuery.isError) void profileQuery.refetch();
-                  if (documentsQuery.isError) void documentsQuery.refetch();
-                  if (writingQuery.isError) void writingQuery.refetch();
-                  if (referencesQuery.isError) void referencesQuery.refetch();
-                  if (interviewsQuery.isError) void interviewsQuery.refetch();
-                  if (savedSearchesQuery.isError) void savedSearchesQuery.refetch();
-                  if (storiesQuery.isError) void storiesQuery.refetch();
-                  if (calendarFeedQuery.isError) void calendarFeedQuery.refetch();
-                }}
-                disabled={
-                  profileQuery.isFetching ||
-                  documentsQuery.isFetching ||
-                  writingQuery.isFetching ||
-                  referencesQuery.isFetching ||
-                  interviewsQuery.isFetching ||
-                  savedSearchesQuery.isFetching ||
-                  storiesQuery.isFetching ||
-                  calendarFeedQuery.isFetching
-                }
-              >
-                {profileQuery.isFetching ||
-                documentsQuery.isFetching ||
-                writingQuery.isFetching ||
-                referencesQuery.isFetching ||
-                interviewsQuery.isFetching ||
-                savedSearchesQuery.isFetching ||
-                storiesQuery.isFetching ||
-                calendarFeedQuery.isFetching
-                  ? "Checking…"
-                  : "Retry progress check"}
-              </button>
-            </div>
-          ) : null}
-          <button
-            type="button"
-            className="setup-view-all"
-            onClick={() => setShowAllSteps(true)}
-          >
-            View all steps <ArrowRight aria-hidden="true" />
-          </button>
-        </section>
-      </div>
 
       {showProgressExplainer ? (
         <ProgressExplainerDialog
@@ -1197,13 +1198,20 @@ function StatTile({
   icon: Icon,
   label,
   value,
+  href,
+  urgent = false,
 }: {
   icon: ComponentType<{ "aria-hidden"?: boolean }>;
   label: string;
   value: number;
+  href: string;
+  urgent?: boolean;
 }) {
   return (
-    <div className="dashboard-stat-tile">
+    <Link
+      className={`dashboard-stat-tile${urgent ? " is-urgent" : ""}`}
+      to={href}
+    >
       <div>
         <strong>{value}</strong>
         <span aria-hidden="true">
@@ -1211,7 +1219,7 @@ function StatTile({
         </span>
       </div>
       <p>{label}</p>
-    </div>
+    </Link>
   );
 }
 
